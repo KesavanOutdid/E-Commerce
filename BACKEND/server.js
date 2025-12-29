@@ -1,51 +1,67 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
+
 const { connectToDatabase } = require('./config/db');
 const { setupSwagger } = require('./config/swagger');
 const { connectRedis, closeRedis } = require('./services/redisService');
 const { verifyEmailConnection } = require('./services/emailService');
 const { startEmailJobService } = require('./services/emailJobService');
 const logger = require('./utils/logger');
-const fs = require('fs');
-const path = require('path');
 
 dotenv.config();
 
+/* -------------------- Create logs directory -------------------- */
 const logsDir = path.join(__dirname, 'logs');
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir);
 }
 
+/* -------------------- App Init -------------------- */
 const app = express();
 const requestLogger = require('./middleware/requestLogger');
 
+/* -------------------- Middlewares -------------------- */
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
+/* -------------------- Swagger -------------------- */
 setupSwagger(app);
 
+/* -------------------- Routes -------------------- */
+// Auth & Roles
 const authRoutes = require('./routes/auth/authRoutes');
 const adminRoutes = require('./routes/auth/admin/adminRoutes');
 const userRoutes = require('./routes/auth/user/userRoutes');
 const sellerRoutes = require('./routes/auth/seller/sellerRoutes');
+
+// Business Routes
+const categoryRoutes = require('./routes/categories/categoryRoutes');
+const productRoutes = require('./routes/products/productRoutes');
 const cartRoutes = require('./routes/cart/cartRoutes');
 const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 
+/* -------------------- Route Mounting -------------------- */
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/seller', sellerRoutes);
+
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 
+/* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     message: 'E-Commerce API Server',
     services: {
       database: 'Connected',
@@ -57,13 +73,14 @@ app.get('/', (req, res) => {
 });
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    success: true, 
+  res.json({
+    success: true,
     status: 'healthy',
     timestamp: new Date().toISOString()
   });
 });
 
+/* -------------------- Server Startup -------------------- */
 const PORT = process.env.PORT || 5000;
 
 async function startServer() {
@@ -77,26 +94,26 @@ async function startServer() {
       await connectRedis();
       logger.info('✓ Redis connected');
     } catch (error) {
-      logger.warn('Redis connection failed. Continuing without Redis caching.');
+      logger.warn('Redis connection failed. Continuing without Redis.');
     }
 
     try {
       await verifyEmailConnection();
       logger.info('✓ Email service verified');
     } catch (error) {
-      logger.warn('Email service verification failed. Email features may not work.');
+      logger.warn('Email service verification failed.');
     }
 
     try {
       await startEmailJobService();
       logger.info('✓ Email job service started');
     } catch (error) {
-      logger.warn('Email job service failed to start. Background email processing disabled.');
+      logger.warn('Email job service failed to start.');
     }
 
     app.listen(PORT, () => {
       logger.info(`✓ Server running on port ${PORT}`);
-      logger.info(`✓ Swagger documentation available at http://localhost:${PORT}/api-docs`);
+      logger.info(`✓ Swagger docs: http://localhost:${PORT}/api-docs`);
       logger.info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       logger.info('All services started successfully!');
     });
