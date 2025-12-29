@@ -23,7 +23,7 @@ async function getAdminProfile(req, res) {
     const roleNames = await Promise.all(
       (user.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
@@ -82,7 +82,7 @@ async function updateAdminProfile(req, res) {
     const roleNames = await Promise.all(
       (updatedUser.value.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 

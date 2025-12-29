@@ -24,7 +24,7 @@ async function getUserProfile(req, res) {
     const roleNames = await Promise.all(
       (user.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
@@ -83,7 +83,7 @@ async function updateUserProfile(req, res) {
     const roleNames = await Promise.all(
       (updatedUser.value.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
@@ -111,12 +111,12 @@ async function updateUserProfile(req, res) {
 async function addRole(req, res) {
   try {
     const userId = req.userId;
-    const { role_id } = req.body;
+    const { roleId } = req.body;
 
-    if (!role_id) {
+    if (!roleId) {
       return res.status(400).json({
         success: false,
-        message: 'role_id is required'
+        message: 'roleId is required'
       });
     }
 
@@ -128,22 +128,22 @@ async function addRole(req, res) {
       });
     }
 
-    if (user.roles.includes(role_id)) {
+    if (user.roles.includes(roleId)) {
       return res.status(400).json({
         success: false,
         message: 'User already has this role'
       });
     }
 
-    const roleExists = await Role.findById(role_id);
+    const roleExists = await Role.findById(roleId);
     if (!roleExists) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role_id'
+        message: 'Invalid roleId'
       });
     }
 
-    const updatedRoles = [...user.roles, role_id];
+    const updatedRoles = [...user.roles, roleId];
     await User.update(userId, { 
       roles: updatedRoles,
       updatedBy: req.userEmail 
@@ -152,19 +152,19 @@ async function addRole(req, res) {
     const roleNames = await Promise.all(
       updatedRoles.map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
     const updatedUser = await User.findByUserId(userId);
-    const access_token = generateAccessToken(updatedUser, roleNames.filter(Boolean));
+    const accessToken = generateAccessToken(updatedUser, roleNames.filter(Boolean));
 
     return res.status(200).json({
       success: true,
       message: 'Role added successfully',
       data: {
-        access_token,
-        token_type: 'bearer',
+        accessToken,
+        tokenType: 'bearer',
         userId: updatedUser.userId,
         roles: updatedRoles,
         roleNames: roleNames.filter(Boolean),

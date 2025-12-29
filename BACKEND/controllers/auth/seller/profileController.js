@@ -39,7 +39,7 @@ async function getSellerProfile(req, res) {
     const roleNames = await Promise.all(
       (user.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
@@ -120,7 +120,7 @@ async function updateSellerProfile(req, res) {
     const roleNames = await Promise.all(
       (updatedUser.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 

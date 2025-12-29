@@ -24,7 +24,7 @@ async function getUsers(req, res) {
         const roleNames = await Promise.all(
           (user.roles || []).map(async (roleId) => {
             const role = await Role.findById(roleId);
-            return role ? role.role_name : null;
+            return role ? role.roleName : null;
           })
         );
         delete user.password;
@@ -94,10 +94,10 @@ async function addUser(req, res) {
       if (!roleExists) {
         return res.status(400).json({
           success: false,
-          message: `Invalid role_id: ${roleId}`
+          message: `Invalid roleId: ${roleId}`
         });
       }
-      roleNames.push(roleExists.role_name);
+      roleNames.push(roleExists.roleName);
     }
 
     const userId = uuidv4();
@@ -162,10 +162,10 @@ async function updateUser(req, res) {
         if (!roleExists) {
           return res.status(400).json({
             success: false,
-            message: `Invalid role_id: ${roleId}`
+            message: `Invalid roleId: ${roleId}`
           });
         }
-        roleNames.push(roleExists.role_name);
+        roleNames.push(roleExists.roleName);
       }
       updateData.roles = userRoles;
     }
@@ -178,7 +178,7 @@ async function updateUser(req, res) {
       roleNames = await Promise.all(
         updatedUser.value.roles.map(async (roleId) => {
           const role = await Role.findById(roleId);
-          return role ? role.role_name : null;
+          return role ? role.roleName : null;
         })
       );
       roleNames = roleNames.filter(Boolean);

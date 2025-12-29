@@ -9,6 +9,7 @@ const { setupSwagger } = require('./config/swagger');
 const { connectRedis, closeRedis } = require('./services/redisService');
 const { verifyEmailConnection } = require('./services/emailService');
 const { startEmailJobService } = require('./services/emailJobService');
+const { seedDatabase } = require('./scripts/seedData');
 const logger = require('./utils/logger');
 
 dotenv.config();
@@ -34,7 +35,6 @@ setupSwagger(app);
 
 /* -------------------- Routes -------------------- */
 // Auth & Roles
-const authRoutes = require('./routes/auth/authRoutes');
 const adminRoutes = require('./routes/auth/admin/adminRoutes');
 const userRoutes = require('./routes/auth/user/userRoutes');
 const sellerRoutes = require('./routes/auth/seller/sellerRoutes');
@@ -47,7 +47,6 @@ const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 
 /* -------------------- Route Mounting -------------------- */
-app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/seller', sellerRoutes);
@@ -87,8 +86,11 @@ async function startServer() {
   try {
     logger.info('Starting E-Commerce API Server...');
 
-    await connectToDatabase();
+    const db = await connectToDatabase();
     logger.info('✓ Database connected');
+
+    await seedDatabase(db);
+    logger.info('✓ Database seeding completed');
 
     try {
       await connectRedis();

@@ -86,11 +86,110 @@ const sendOrderStatusUpdate = async (userEmail, orderId, status) => {
     return await sendEmail(userEmail, subject, html);
 };
 
+const sendEmailWithRetry = async (to, subject, html, text = '', retries = 3) => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const result = await sendEmail(to, subject, html, text);
+            if (result.success) {
+                logger.info(`Email sent successfully to ${to} on attempt ${attempt}`);
+                return result;
+            }
+            logger.warn(`Email attempt ${attempt} failed for ${to}`);
+        } catch (error) {
+            logger.error(`Email attempt ${attempt} error for ${to}:`, error);
+        }
+        
+        if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
+    }
+    
+    logger.error(`Failed to send email to ${to} after ${retries} attempts`);
+    return { success: false, error: 'Max retries exceeded' };
+};
+
+const sendOtpEmail = async (to, otpCode, purpose = 'verification') => {
+    const subject = purpose === 'reset' ? 'Password Reset OTP' : 'Registration OTP';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #333;">Your OTP Code</h1>
+            <p>Hello,</p>
+            <p>Your OTP for ${purpose === 'reset' ? 'password reset' : 'registration'} is:</p>
+            <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+                <h2 style="color: #007bff; letter-spacing: 8px; font-size: 32px; margin: 0;">${otpCode}</h2>
+            </div>
+            <p><strong>This OTP will expire in 3 minutes.</strong></p>
+            <p>If you didn't request this, please ignore this email.</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 12px;">This is an automated email. Please do not reply.</p>
+        </div>
+    `;
+    const text = `Your OTP is: ${otpCode}. It will expire in 3 minutes.`;
+    
+    sendEmailWithRetry(to, subject, html, text).catch(err => {
+        logger.error('OTP email background send error:', err);
+    });
+};
+
+const sendWelcomeEmail = async (to, firstName) => {
+    const subject = 'Welcome to E-Commerce!';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #333;">Welcome to E-Commerce, ${firstName}!</h1>
+            <p>Thank you for registering with us.</p>
+            <p>Your account has been successfully created. You can now:</p>
+            <ul>
+                <li>Browse our products</li>
+                <li>Add items to your cart</li>
+                <li>Place orders</li>
+                <li>Track your deliveries</li>
+            </ul>
+            <p>Start shopping now and enjoy exclusive deals!</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 12px;">This is an automated email. Please do not reply.</p>
+        </div>
+    `;
+    const text = `Welcome to E-Commerce, ${firstName}! Your account has been successfully created.`;
+    
+    sendEmailWithRetry(to, subject, html, text).catch(err => {
+        logger.error('Welcome email background send error:', err);
+    });
+};
+
+const sendLoginNotification = async (to, firstName, loginDetails) => {
+    const subject = 'New Login to Your Account';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h1 style="color: #333;">New Login Detected</h1>
+            <p>Hello ${firstName},</p>
+            <p>We detected a new login to your account:</p>
+            <ul>
+                <li><strong>Time:</strong> ${loginDetails.time}</li>
+                <li><strong>IP Address:</strong> ${loginDetails.ip || 'Unknown'}</li>
+                <li><strong>Device:</strong> ${loginDetails.device || 'Unknown'}</li>
+            </ul>
+            <p>If this was you, you can safely ignore this email.</p>
+            <p>If you don't recognize this login, please reset your password immediately.</p>
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+            <p style="color: #666; font-size: 12px;">This is an automated email. Please do not reply.</p>
+        </div>
+    `;
+    const text = `New login detected to your account at ${loginDetails.time}. If this wasn't you, please reset your password.`;
+    
+    sendEmailWithRetry(to, subject, html, text).catch(err => {
+        logger.error('Login notification background send error:', err);
+    });
+};
+
 module.exports = {
     transporter,
     verifyEmailConnection,
     sendEmail,
+    sendEmailWithRetry,
     sendOrderConfirmation,
     sendPaymentConfirmation,
-    sendOrderStatusUpdate
+    sendOrderStatusUpdate,
+    sendOtpEmail,
+    sendWelcomeEmail,
+    sendLoginNotification
 };

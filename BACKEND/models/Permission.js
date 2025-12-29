@@ -8,16 +8,16 @@ class Permission {
 
   static async create(permissionData) {
     const permission = {
-      role_id: permissionData.role_id,
+      roleId: permissionData.roleId,
       module: permissionData.module,
       submodule: permissionData.submodule || null,
-      can_create: permissionData.can_create || false,
-      can_view: permissionData.can_view || false,
-      can_update: permissionData.can_update || false,
-      can_delete: permissionData.can_delete || false,
+      canCreate: permissionData.canCreate || false,
+      canView: permissionData.canView || false,
+      canUpdate: permissionData.canUpdate || false,
+      canDelete: permissionData.canDelete || false,
       status: permissionData.status !== undefined ? permissionData.status : true,
-      created_at: new Date(),
-      updated_at: new Date()
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     const result = await this.collection().insertOne(permission);
@@ -28,25 +28,26 @@ class Permission {
     return await this.collection().findOne({ _id: new ObjectId(id) });
   }
 
-  static async findByRole(role_id) {
-    return await this.collection().find({ role_id, status: true }).toArray();
+  static async findByRole(roleId) {
+    return await this.collection().find({ roleId, status: true }).toArray();
   }
 
-  static async findByRoleAndModule(role_id, module, submodule = null) {
+  static async findByRoleAndModule(roleId, module, submodule = null) {
     return await this.collection().findOne({
-      role_id,
+      roleId,
       module,
       submodule,
       status: true
     });
   }
 
-  static async checkPermission(role_id, module, submodule, action) {
+  static async checkPermission(roleId, module, submodule, action) {
+    const capitalizedAction = action.charAt(0).toUpperCase() + action.slice(1);
     const permission = await this.collection().findOne({
-      role_id,
+      roleId,
       module,
       submodule: submodule || null,
-      [`can_${action}`]: true,
+      [`can${capitalizedAction}`]: true,
       status: true
     });
     return !!permission;
@@ -54,7 +55,7 @@ class Permission {
 
   static async upsert(permissionData) {
     const existing = await this.findByRoleAndModule(
-      permissionData.role_id,
+      permissionData.roleId,
       permissionData.module,
       permissionData.submodule
     );
@@ -72,18 +73,18 @@ class Permission {
       { 
         $set: {
           ...updateData,
-          updated_at: new Date()
+          updatedAt: new Date()
         }
       },
       { returnDocument: 'after' }
     );
   }
 
-  static async bulkUpsert(role_id, permissionsArray) {
+  static async bulkUpsert(roleId, permissionsArray) {
     const results = [];
     for (const perm of permissionsArray) {
       const result = await this.upsert({
-        role_id,
+        roleId,
         ...perm
       });
       results.push(result);
@@ -95,8 +96,8 @@ class Permission {
     return await this.collection().deleteOne({ _id: new ObjectId(id) });
   }
 
-  static async deleteByRole(role_id) {
-    return await this.collection().deleteMany({ role_id });
+  static async deleteByRole(roleId) {
+    return await this.collection().deleteMany({ roleId });
   }
 }
 

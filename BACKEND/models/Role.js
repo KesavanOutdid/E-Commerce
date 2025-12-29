@@ -9,17 +9,17 @@ class Role {
   static async create(roleData) {
     const maxRole = await this.collection()
       .find()
-      .sort({ role_id: -1 })
+      .sort({ roleId: -1 })
       .limit(1)
       .toArray();
 
     const role = {
-      role_id: maxRole.length > 0 ? maxRole[0].role_id + 1 : 1,
-      role_name: roleData.role_name,
-      created_by: roleData.created_by,
-      created_time: new Date(),
-      modified_by: null,
-      modified_at: null,
+      roleId: maxRole.length > 0 ? maxRole[0].roleId + 1 : 1,
+      roleName: roleData.roleName,
+      createdBy: roleData.createdBy,
+      createdAt: new Date(),
+      modifiedBy: null,
+      modifiedAt: null,
       status: true
     };
 
@@ -27,12 +27,12 @@ class Role {
     return { ...role, _id: result.insertedId };
   }
 
-  static async findById(role_id) {
-    return await this.collection().findOne({ role_id });
+  static async findById(roleId) {
+    return await this.collection().findOne({ roleId });
   }
 
-  static async findByName(role_name) {
-    return await this.collection().findOne({ role_name });
+  static async findByName(roleName) {
+    return await this.collection().findOne({ roleName });
   }
 
   static async findAll(filter = {}, options = {}) {
@@ -48,27 +48,27 @@ class Role {
     return await this.collection().countDocuments({ ...filter, status: true });
   }
 
-  static async update(role_id, updateData) {
+  static async update(roleId, updateData) {
     return await this.collection().findOneAndUpdate(
-      { role_id },
+      { roleId },
       { 
         $set: {
           ...updateData,
-          modified_at: new Date()
+          modifiedAt: new Date()
         }
       },
       { returnDocument: 'after' }
     );
   }
 
-  static async softDelete(role_id, deletedBy) {
+  static async softDelete(roleId, deletedBy) {
     return await this.collection().findOneAndUpdate(
-      { role_id },
+      { roleId },
       { 
         $set: { 
           status: false,
-          modified_by: deletedBy,
-          modified_at: new Date()
+          modifiedBy: deletedBy,
+          modifiedAt: new Date()
         }
       },
       { returnDocument: 'after' }

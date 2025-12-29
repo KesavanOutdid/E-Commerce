@@ -1,8 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
-const User = require('../../models/User');
-const Role = require('../../models/Role');
-const RegistrationOtp = require('../../models/RegistrationOtp');
-const { generateAccessToken } = require('../../utils/jwtUtils');
+const User = require('../../../models/User');
+const Role = require('../../../models/Role');
+const RegistrationOtp = require('../../../models/RegistrationOtp');
+const { generateAccessToken } = require('../../../utils/jwtUtils');
+const { sendOtpEmail, sendWelcomeEmail } = require('../../../services/emailService');
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -35,7 +36,7 @@ async function sendRegistrationOtp(req, res) {
           success: false,
           message: 'Please wait before requesting another OTP',
           data: {
-            resend_available_in_sec: Math.ceil((30000 - timeSinceCreated) / 1000)
+            resendAvailableInSec: Math.ceil((30000 - timeSinceCreated) / 1000)
           }
         });
       }
@@ -49,20 +50,21 @@ async function sendRegistrationOtp(req, res) {
       otpCode
     });
 
-    console.log(`📧 Registration OTP for ${email}: ${otpCode}`);
+    console.log(`📧 User Registration OTP for ${email}: ${otpCode}`);
+    sendOtpEmail(email, otpCode, 'verification');
 
     return res.status(200).json({
       success: true,
       message: 'OTP sent to email',
       data: {
         email,
-        expires_in_sec: 180,
-        resend_available_in_sec: 30
+        expiresInSec: 180,
+        resendAvailableInSec: 30
       }
     });
 
   } catch (error) {
-    console.error('Send OTP error:', error);
+    console.error('User send OTP error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -73,7 +75,7 @@ async function sendRegistrationOtp(req, res) {
 
 async function register(req, res) {
   try {
-    const { firstName, lastName, email, phone, password, otpCode, roles } = req.body;
+    const { firstName, lastName, email, phone, password, otpCode } = req.body;
 
     if (!firstName || !lastName || !email || !password || !otpCode) {
       return res.status(400).json({
@@ -108,18 +110,6 @@ async function register(req, res) {
       }
     }
 
-    const userRoles = Array.isArray(roles) ? roles : [3];
-    
-    for (const roleId of userRoles) {
-      const roleExists = await Role.findById(roleId);
-      if (!roleExists) {
-        return res.status(400).json({
-          success: false,
-          message: `Invalid role_id: ${roleId}`
-        });
-      }
-    }
-
     const userId = uuidv4();
     const newUser = await User.create({
       userId,
@@ -128,30 +118,28 @@ async function register(req, res) {
       email,
       phone: phone ? phone.replace(/^\+91/, '') : null,
       password,
-      roles: userRoles,
+      roles: [3],
       createdBy: email
     });
 
     await RegistrationOtp.deleteByEmail(email);
 
-    const roleNames = await Promise.all(
-      userRoles.map(async (roleId) => {
-        const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
-      })
-    );
+    const role = await Role.findById(3);
+    const roleNames = role ? [role.roleName] : [];
 
-    const access_token = generateAccessToken(newUser, roleNames.filter(Boolean));
+    const accessToken = generateAccessToken(newUser, roleNames);
+
+    sendWelcomeEmail(newUser.email, newUser.firstName);
 
     return res.status(201).json({
       success: true,
       message: 'User registered successfully',
       data: {
-        access_token,
-        token_type: 'bearer',
+        accessToken,
+        tokenType: 'bearer',
         userId: newUser.userId,
-        roles: userRoles,
-        roleNames: roleNames.filter(Boolean),
+        roles: [3],
+        roleNames,
         email: newUser.email,
         phone: newUser.phone,
         firstName: newUser.firstName,
@@ -160,7 +148,7 @@ async function register(req, res) {
     });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('User registration error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

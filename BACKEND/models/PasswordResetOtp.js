@@ -3,7 +3,7 @@ const { ObjectId } = require('mongodb');
 
 class PasswordResetOtp {
   static collection() {
-    return getDB().collection('password_reset_otps');
+    return getDB().collection('passwordResetOtps');
   }
 
   static async create(otpData) {

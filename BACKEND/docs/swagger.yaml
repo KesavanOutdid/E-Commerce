@@ -90,104 +90,38 @@ components:
             accountHolderName:
               type: string
 
+    Role:
+      type: object
+      properties:
+        roleId:
+          type: integer
+        roleName:
+          type: string
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        modifiedBy:
+          type: string
+        modifiedAt:
+          type: string
+          format: date-time
+        status:
+          type: boolean
+
 security:
   - bearerAuth: []
 
 paths:
-  /api/auth/register/send-otp:
-    post:
-      tags:
-        - Authentication
-      summary: Send OTP for registration
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - email
-              properties:
-                email:
-                  type: string
-                  format: email
-      responses:
-        '200':
-          description: OTP sent successfully
-        '429':
-          description: Please wait before requesting another OTP
-
-  /api/auth/register:
-    post:
-      tags:
-        - Authentication
-      summary: Register new user
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - firstName
-                - lastName
-                - email
-                - password
-                - otpCode
-              properties:
-                firstName:
-                  type: string
-                lastName:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                phone:
-                  type: string
-                password:
-                  type: string
-                otpCode:
-                  type: string
-                roles:
-                  type: array
-                  items:
-                    type: integer
-                  description: Optional. Defaults to [3] for Customer
-                  example: [2, 3]
-      responses:
-        '201':
-          description: User registered successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  message:
-                    type: string
-                  data:
-                    type: object
-                    properties:
-                      access_token:
-                        type: string
-                      userId:
-                        type: string
-                      roles:
-                        type: array
-                        items:
-                          type: integer
-                      roleNames:
-                        type: array
-                        items:
-                          type: string
+  # ============================================================
+  # ADMIN ENDPOINTS
+  # ============================================================
 
   /api/admin/login:
     post:
       tags:
-        - Admin
+        - Admin - Authentication
       summary: Admin login
       security: []
       requestBody:
@@ -203,17 +137,53 @@ paths:
                 identifier:
                   type: string
                   description: Email or phone number
+                  example: admin@gmail.com
                 password:
                   type: string
+                  example: admin123
       responses:
         '200':
           description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      accessToken:
+                        type: string
+                      tokenType:
+                        type: string
+                      userId:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                      roleNames:
+                        type: array
+                        items:
+                          type: string
+                      email:
+                        type: string
+                      phone:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
 
-  /api/user/login:
+  /api/admin/forgot-password:
     post:
       tags:
-        - User
-      summary: Customer login
+        - Admin - Authentication
+      summary: Request password reset OTP for admin
       security: []
       requestBody:
         required: true
@@ -222,22 +192,38 @@ paths:
             schema:
               type: object
               required:
-                - identifier
-                - password
+                - email
               properties:
-                identifier:
+                email:
                   type: string
-                password:
-                  type: string
+                  format: email
       responses:
         '200':
-          description: Login successful
+          description: OTP sent to email if it exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      otpRef:
+                        type: string
+                      expiresInSec:
+                        type: integer
+                      resendAvailableInSec:
+                        type: integer
 
-  /api/seller/login:
+  /api/admin/validate-otp:
     post:
       tags:
-        - Seller
-      summary: Seller login
+        - Admin - Authentication
+      summary: Validate OTP for password reset
       security: []
       requestBody:
         required: true
@@ -246,22 +232,44 @@ paths:
             schema:
               type: object
               required:
-                - identifier
-                - password
+                - otp
+                - otpRef
               properties:
-                identifier:
+                otp:
                   type: string
-                password:
+                otpRef:
                   type: string
       responses:
         '200':
-          description: Login successful
+          description: OTP validated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      resetToken:
+                        type: string
 
-  /api/user/add-role:
+  /api/admin/set-new-password:
     post:
       tags:
-        - User
-      summary: Add additional role to user account
+        - Admin - Authentication
+      summary: Set new password using reset token
+      security: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer {resetToken}
       requestBody:
         required: true
         content:
@@ -269,15 +277,149 @@ paths:
             schema:
               type: object
               required:
-                - role_id
+                - newPassword
+                - confirmPassword
               properties:
-                role_id:
-                  type: integer
-                  description: Role ID to add (1=Admin, 2=Seller, 3=Customer)
-                  example: 2
+                newPassword:
+                  type: string
+                confirmPassword:
+                  type: string
       responses:
         '200':
-          description: Role added successfully with new token
+          description: Password updated successfully
+
+  /api/admin/profile:
+    get:
+      tags:
+        - Admin - Profile
+      summary: Get admin profile
+      responses:
+        '200':
+          description: Profile retrieved successfully
+
+    put:
+      tags:
+        - Admin - Profile
+      summary: Update admin profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+
+  /api/admin/roles:
+    get:
+      tags:
+        - Admin - Roles Management
+      summary: Get all roles
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Role'
+                  pagination:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      pageSize:
+                        type: integer
+                      totalItems:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      tags:
+        - Admin - Roles Management
+      summary: Create new role
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roleName
+              properties:
+                roleName:
+                  type: string
+                  example: Moderator
+      responses:
+        '201':
+          description: Role created successfully
+
+  /api/admin/roles/{roleId}:
+    put:
+      tags:
+        - Admin - Roles Management
+      summary: Update role by ID
+      parameters:
+        - in: path
+          name: roleId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roleName
+              properties:
+                roleName:
+                  type: string
+      responses:
+        '200':
+          description: Role updated successfully
+
+    delete:
+      tags:
+        - Admin - Roles Management
+      summary: Delete role by ID (soft delete)
+      parameters:
+        - in: path
+          name: roleId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Role deleted successfully
 
   /api/admin/users:
     get:
@@ -308,28 +450,6 @@ paths:
       responses:
         '200':
           description: Users retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  pagination:
-                    type: object
-                    properties:
-                      currentPage:
-                        type: integer
-                      pageSize:
-                        type: integer
-                      totalItems:
-                        type: integer
-                      totalPages:
-                        type: integer
 
     post:
       tags:
@@ -399,6 +519,289 @@ paths:
         '200':
           description: User updated successfully
 
+  /api/admin/seller/{userId}/commission:
+    put:
+      tags:
+        - Admin - Seller Management
+      summary: Manage seller (approve KYC, approve go-live, reject, update commission)
+      description: Unified endpoint for all seller management operations - approve KYC, approve go-live with commission, reject KYC, or update commission
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, approve-golive, reject, update-commission]
+                  description: Action to perform
+                commissionPercentage:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  description: Required when action=approve-golive or action=update-commission
+                reason:
+                  type: string
+                  description: Optional reason when action=reject
+            examples:
+              approve:
+                value:
+                  action: approve
+              approve-golive:
+                value:
+                  action: approve-golive
+                  commissionPercentage: 10
+              reject:
+                value:
+                  action: reject
+                  reason: Invalid documents
+              update-commission:
+                value:
+                  action: update-commission
+                  commissionPercentage: 15
+      responses:
+        '200':
+          description: Seller updated successfully
+
+  # ============================================================
+  # SELLER ENDPOINTS
+  # ============================================================
+
+  /api/seller/login:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Seller login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email or phone number
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+
+  /api/seller/register/send-otp:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Send OTP for seller registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP sent successfully
+        '429':
+          description: Please wait before requesting another OTP
+
+  /api/seller/register:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Register new seller
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - otpCode
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                otpCode:
+                  type: string
+      responses:
+        '201':
+          description: Seller registered successfully
+
+  /api/seller/google/config:
+    get:
+      tags:
+        - Seller - Authentication
+      summary: Get Google OAuth configuration
+      security: []
+      responses:
+        '200':
+          description: Google client ID retrieved
+
+  /api/seller/google/login:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Seller Google login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - idToken
+              properties:
+                idToken:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '201':
+          description: New seller account created and logged in
+
+  /api/seller/forgot-password:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Request password reset OTP for seller
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP sent to email if it exists
+
+  /api/seller/validate-otp:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Validate OTP for password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - otp
+                - otpRef
+              properties:
+                otp:
+                  type: string
+                otpRef:
+                  type: string
+      responses:
+        '200':
+          description: OTP validated successfully
+
+  /api/seller/set-new-password:
+    post:
+      tags:
+        - Seller - Authentication
+      summary: Set new password using reset token
+      security: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer {resetToken}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newPassword
+                - confirmPassword
+              properties:
+                newPassword:
+                  type: string
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password updated successfully
+
+  /api/seller/profile:
+    get:
+      tags:
+        - Seller - Profile
+      summary: Get seller profile
+      responses:
+        '200':
+          description: Profile retrieved successfully
+
+    put:
+      tags:
+        - Seller - Profile
+      summary: Update seller profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+
   /api/seller/kyc/request:
     post:
       tags:
@@ -440,43 +843,10 @@ paths:
     get:
       tags:
         - Seller - KYC
-      summary: Get KYC status
+      summary: Get seller profile with KYC status
       responses:
         '200':
-          description: KYC status retrieved
-
-  /api/admin/kyc:
-    get:
-      tags:
-        - Admin - KYC Management
-      summary: Get KYC requests with filters
-      description: Unified endpoint to get all, pending, or pending go-live KYC requests
-      parameters:
-        - in: query
-          name: status
-          schema:
-            type: string
-            enum: [all, pending, pending-golive]
-            default: all
-          description: Filter by status (all, pending, pending-golive)
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-        - in: query
-          name: kycApproved
-          schema:
-            type: boolean
-          description: Optional filter by KYC approval status (only when status=all)
-      responses:
-        '200':
-          description: KYC requests retrieved successfully
+          description: Seller profile and KYC status retrieved
           content:
             application/json:
               schema:
@@ -484,39 +854,162 @@ paths:
                 properties:
                   success:
                     type: boolean
+                  message:
+                    type: string
                   data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Seller'
-                  pagination:
                     type: object
+                    properties:
+                      userId:
+                        type: string
+                      firstName:
+                        type: string
+                      lastName:
+                        type: string
+                      email:
+                        type: string
+                      phone:
+                        type: string
+                      shopName:
+                        type: string
+                      gstin:
+                        type: string
+                      panNumber:
+                        type: string
+                      bankDetails:
+                        type: object
+                        properties:
+                          accountNumber:
+                            type: string
+                          ifscCode:
+                            type: string
+                          bankName:
+                            type: string
+                          accountHolderName:
+                            type: string
+                      kycApproved:
+                        type: boolean
+                      kycApprovedBy:
+                        type: string
+                      kycApprovedAt:
+                        type: string
+                        format: date-time
+                      onboardingCompleted:
+                        type: boolean
+                      isLive:
+                        type: boolean
+                      commissionPercentage:
+                        type: number
+                      goLiveApprovedBy:
+                        type: string
+                      goLiveApprovedAt:
+                        type: string
+                        format: date-time
 
-  /api/admin/kyc/{userId}:
+  # ============================================================
+  # USER (CUSTOMER) ENDPOINTS
+  # ============================================================
+
+  /api/user/login:
+    post:
+      tags:
+        - User - Authentication
+      summary: Customer login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email or phone number
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+
+  /api/user/register/send-otp:
+    post:
+      tags:
+        - User - Authentication
+      summary: Send OTP for user registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP sent successfully
+        '429':
+          description: Please wait before requesting another OTP
+
+  /api/user/register:
+    post:
+      tags:
+        - User - Authentication
+      summary: Register new customer
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - otpCode
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                otpCode:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+
+  /api/user/google/config:
     get:
       tags:
-        - Admin - KYC Management
-      summary: Get KYC details for specific seller
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
+        - User - Authentication
+      summary: Get Google OAuth configuration
+      security: []
       responses:
         '200':
-          description: KYC details retrieved
+          description: Google client ID retrieved
 
-    put:
+  /api/user/google/login:
+    post:
       tags:
-        - Admin - KYC Management
-      summary: Update KYC status (approve, approve-golive, reject)
-      description: Unified endpoint to approve KYC, approve go-live, or reject KYC
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
+        - User - Authentication
+      summary: User Google login
+      security: []
       requestBody:
         required: true
         content:
@@ -524,49 +1017,24 @@ paths:
             schema:
               type: object
               required:
-                - action
+                - idToken
               properties:
-                action:
+                idToken:
                   type: string
-                  enum: [approve, approve-golive, reject]
-                  description: Action to perform
-                commissionPercentage:
-                  type: number
-                  minimum: 0
-                  maximum: 100
-                  description: Required when action=approve-golive
-                reason:
+                phone:
                   type: string
-                  description: Optional reason when action=reject
-            examples:
-              approve:
-                value:
-                  action: approve
-              approve-golive:
-                value:
-                  action: approve-golive
-                  commissionPercentage: 10
-              reject:
-                value:
-                  action: reject
-                  reason: Invalid documents
       responses:
         '200':
-          description: KYC status updated successfully
-        '400':
-          description: Invalid action or missing required fields
+          description: Login successful
+        '201':
+          description: New user account created and logged in
 
-  /api/admin/seller/{userId}/commission:
-    put:
+  /api/user/forgot-password:
+    post:
       tags:
-        - Admin - Seller Management
-      summary: Update seller commission percentage
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
+        - User - Authentication
+      summary: Request password reset OTP for user
+      security: []
       requestBody:
         required: true
         content:
@@ -574,13 +1042,117 @@ paths:
             schema:
               type: object
               required:
-                - commissionPercentage
+                - email
               properties:
-                commissionPercentage:
-                  type: number
-                  minimum: 0
-                  maximum: 100
-                  example: 15
+                email:
+                  type: string
+                  format: email
       responses:
         '200':
-          description: Commission updated successfully
+          description: OTP sent to email if it exists
+
+  /api/user/validate-otp:
+    post:
+      tags:
+        - User - Authentication
+      summary: Validate OTP for password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - otp
+                - otpRef
+              properties:
+                otp:
+                  type: string
+                otpRef:
+                  type: string
+      responses:
+        '200':
+          description: OTP validated successfully
+
+  /api/user/set-new-password:
+    post:
+      tags:
+        - User - Authentication
+      summary: Set new password using reset token
+      security: []
+      parameters:
+        - in: header
+          name: Authorization
+          required: true
+          schema:
+            type: string
+          description: Bearer {resetToken}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newPassword
+                - confirmPassword
+              properties:
+                newPassword:
+                  type: string
+                confirmPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password updated successfully
+
+  /api/user/profile:
+    get:
+      tags:
+        - User - Profile
+      summary: Get user profile
+      responses:
+        '200':
+          description: Profile retrieved successfully
+
+    put:
+      tags:
+        - User - Profile
+      summary: Update user profile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+      responses:
+        '200':
+          description: Profile updated successfully
+
+  /api/user/add-role:
+    post:
+      tags:
+        - User - Profile
+      summary: Add additional role to user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - roleId
+              properties:
+                roleId:
+                  type: integer
+                  description: Role ID to add (1=Admin, 2=Seller, 3=Customer)
+                  example: 2
+      responses:
+        '200':
+          description: Role added successfully with new token

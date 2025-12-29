@@ -103,6 +103,11 @@ async function getKycStatus(req, res) {
         success: true,
         message: 'No KYC request found',
         data: {
+          userId: user.userId,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phone: user.phone,
           kycApproved: false,
           onboardingCompleted: false,
           isLive: false
@@ -114,11 +119,23 @@ async function getKycStatus(req, res) {
       success: true,
       message: 'KYC status retrieved successfully',
       data: {
+        userId: user.userId,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        shopName: sellerInfo.shopName,
+        gstin: sellerInfo.gstin,
+        panNumber: sellerInfo.panNumber,
+        bankDetails: sellerInfo.bankDetails,
         kycApproved: sellerInfo.kycApproved,
+        kycApprovedBy: sellerInfo.kycApprovedBy,
+        kycApprovedAt: sellerInfo.kycApprovedAt,
         onboardingCompleted: sellerInfo.onboardingCompleted,
         isLive: sellerInfo.isLive,
-        approvedBy: sellerInfo.approvedBy,
-        approvedAt: sellerInfo.approvedAt
+        commissionPercentage: sellerInfo.commissionPercentage,
+        goLiveApprovedBy: sellerInfo.goLiveApprovedBy,
+        goLiveApprovedAt: sellerInfo.goLiveApprovedAt
       }
     });
 

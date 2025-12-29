@@ -204,14 +204,8 @@ async function updateKycStatus(req, res) {
 async function updateCommission(req, res) {
   try {
     const { userId } = req.params;
-    const { commissionPercentage } = req.body;
-
-    if (commissionPercentage === undefined || commissionPercentage < 0 || commissionPercentage > 100) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid commission percentage (0-100) is required'
-      });
-    }
+    const { commissionPercentage, action, reason } = req.body;
+    const adminEmail = req.userEmail;
 
     const seller = await Seller.findByUserId(userId);
     if (!seller) {
@@ -221,16 +215,90 @@ async function updateCommission(req, res) {
       });
     }
 
-    const updatedSeller = await Seller.update(userId, { commissionPercentage });
+    const user = await User.findByUserId(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    if (!user.roles || !user.roles.includes(2)) {
+      return res.status(400).json({
+        success: false,
+        message: 'User is not a seller'
+      });
+    }
+
+    let updatedSeller;
+    let message;
+
+    if (action === 'approve') {
+      if (seller.kycApproved) {
+        return res.status(400).json({
+          success: false,
+          message: 'KYC already approved'
+        });
+      }
+
+      updatedSeller = await Seller.approveKyc(userId, adminEmail);
+      message = 'KYC approved successfully. Pending go-live approval.';
+
+    } else if (action === 'approve-golive') {
+      if (commissionPercentage === undefined || commissionPercentage < 0 || commissionPercentage > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid commission percentage (0-100) is required for go-live approval'
+        });
+      }
+
+      if (!seller.kycApproved) {
+        return res.status(400).json({
+          success: false,
+          message: 'KYC must be approved before go-live approval'
+        });
+      }
+
+      if (seller.isLive) {
+        return res.status(400).json({
+          success: false,
+          message: 'Seller is already live'
+        });
+      }
+
+      updatedSeller = await Seller.approveGoLive(userId, adminEmail, commissionPercentage);
+      message = 'Seller approved to go live successfully';
+
+    } else if (action === 'reject') {
+      updatedSeller = await Seller.rejectKyc(userId, adminEmail, reason);
+      message = 'KYC rejected successfully';
+
+    } else if (action === 'update-commission') {
+      if (commissionPercentage === undefined || commissionPercentage < 0 || commissionPercentage > 100) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid commission percentage (0-100) is required'
+        });
+      }
+
+      updatedSeller = await Seller.update(userId, { commissionPercentage });
+      message = 'Commission percentage updated successfully';
+
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid action is required (approve, approve-golive, reject, update-commission)'
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Commission percentage updated successfully',
-      data: updatedSeller.value
+      message,
+      data: updatedSeller.value || updatedSeller
     });
 
   } catch (error) {
-    console.error('Update commission error:', error);
+    console.error('Update seller error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -240,8 +308,5 @@ async function updateCommission(req, res) {
 }
 
 module.exports = {
-  getKycRequests,
-  getKycRequestDetails,
-  updateKycStatus,
   updateCommission
 };

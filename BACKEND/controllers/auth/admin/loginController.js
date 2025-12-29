@@ -1,6 +1,7 @@
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
 const { generateAccessToken } = require('../../../utils/jwtUtils');
+const { sendLoginNotification } = require('../../../services/emailService');
 
 async function adminLogin(req, res) {
   try {
@@ -55,20 +56,26 @@ async function adminLogin(req, res) {
     const roleNames = await Promise.all(
       user.roles.map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
     await User.updateLastLogin(user.userId);
 
-    const access_token = generateAccessToken(user, roleNames.filter(Boolean));
+    const accessToken = generateAccessToken(user, roleNames.filter(Boolean));
+
+    sendLoginNotification(user.email, user.firstName, {
+      time: new Date().toLocaleString(),
+      ip: req.ip || req.connection.remoteAddress,
+      device: req.headers['user-agent'] || 'Unknown'
+    });
 
     return res.status(200).json({
       success: true,
       message: 'Admin logged in successfully',
       data: {
-        access_token,
-        token_type: 'bearer',
+        accessToken,
+        tokenType: 'bearer',
         userId: user.userId,
         roles: user.roles,
         roleNames: roleNames.filter(Boolean),

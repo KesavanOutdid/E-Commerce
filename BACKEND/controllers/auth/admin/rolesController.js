@@ -33,16 +33,16 @@ async function getRoles(req, res) {
 
 async function createRole(req, res) {
   try {
-    const { role_name } = req.body;
+    const { roleName } = req.body;
 
-    if (!role_name) {
+    if (!roleName) {
       return res.status(400).json({
         success: false,
         message: 'Role name is required'
       });
     }
 
-    const existingRole = await Role.findByName(role_name);
+    const existingRole = await Role.findByName(roleName);
     if (existingRole) {
       return res.status(400).json({
         success: false,
@@ -51,8 +51,8 @@ async function createRole(req, res) {
     }
 
     const newRole = await Role.create({
-      role_name,
-      created_by: req.userEmail || 'admin'
+      roleName,
+      createdBy: req.userEmail || 'admin'
     });
 
     return res.status(201).json({
@@ -73,17 +73,17 @@ async function createRole(req, res) {
 
 async function updateRole(req, res) {
   try {
-    const { role_id } = req.params;
-    const { role_name } = req.body;
+    const { roleId } = req.params;
+    const { roleName } = req.body;
 
-    if (!role_name) {
+    if (!roleName) {
       return res.status(400).json({
         success: false,
         message: 'Role name is required'
       });
     }
 
-    const role = await Role.findById(parseInt(role_id));
+    const role = await Role.findById(parseInt(roleId));
     if (!role) {
       return res.status(404).json({
         success: false,
@@ -91,9 +91,9 @@ async function updateRole(req, res) {
       });
     }
 
-    const updatedRole = await Role.update(parseInt(role_id), {
-      role_name,
-      modified_by: req.userEmail || 'admin'
+    const updatedRole = await Role.update(parseInt(roleId), {
+      roleName,
+      modifiedBy: req.userEmail || 'admin'
     });
 
     return res.status(200).json({
@@ -114,9 +114,9 @@ async function updateRole(req, res) {
 
 async function deleteRole(req, res) {
   try {
-    const { role_id } = req.params;
+    const { roleId } = req.params;
 
-    const role = await Role.findById(parseInt(role_id));
+    const role = await Role.findById(parseInt(roleId));
     if (!role) {
       return res.status(404).json({
         success: false,
@@ -124,14 +124,14 @@ async function deleteRole(req, res) {
       });
     }
 
-    if (parseInt(role_id) <= 3) {
+    if (parseInt(roleId) <= 3) {
       return res.status(403).json({
         success: false,
         message: 'Cannot delete default roles'
       });
     }
 
-    await Role.softDelete(parseInt(role_id), req.userEmail || 'admin');
+    await Role.softDelete(parseInt(roleId), req.userEmail || 'admin');
 
     return res.status(200).json({
       success: true,

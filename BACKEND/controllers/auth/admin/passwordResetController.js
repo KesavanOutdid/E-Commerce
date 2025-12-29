@@ -1,7 +1,8 @@
-const User = require('../../models/User');
-const Role = require('../../models/Role');
-const PasswordResetOtp = require('../../models/PasswordResetOtp');
-const { generateResetToken, verifyResetToken } = require('../../utils/jwtUtils');
+const User = require('../../../models/User');
+const Role = require('../../../models/Role');
+const PasswordResetOtp = require('../../../models/PasswordResetOtp');
+const { generateResetToken, verifyResetToken } = require('../../../utils/jwtUtils');
+const { sendOtpEmail } = require('../../../services/emailService');
 
 function generateOTP() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -24,9 +25,21 @@ async function forgotPassword(req, res) {
         success: true,
         message: 'OTP sent to email if it exists',
         data: {
-          otp_ref: null,
-          expires_in_sec: 180,
-          resend_available_in_sec: 30
+          otpRef: null,
+          expiresInSec: 180,
+          resendAvailableInSec: 30
+        }
+      });
+    }
+
+    if (!user.roles || !user.roles.includes(1)) {
+      return res.status(200).json({
+        success: true,
+        message: 'OTP sent to email if it exists',
+        data: {
+          otpRef: null,
+          expiresInSec: 180,
+          resendAvailableInSec: 30
         }
       });
     }
@@ -39,7 +52,7 @@ async function forgotPassword(req, res) {
           success: false,
           message: 'Please wait before requesting another OTP',
           data: {
-            resend_available_in_sec: Math.ceil((30000 - timeSinceCreated) / 1000)
+            resendAvailableInSec: Math.ceil((30000 - timeSinceCreated) / 1000)
           }
         });
       }
@@ -54,20 +67,21 @@ async function forgotPassword(req, res) {
       otpCode
     });
 
-    console.log(`📧 Password Reset OTP for ${email}: ${otpCode}`);
+    console.log(`📧 Admin Password Reset OTP for ${email}: ${otpCode}`);
+    sendOtpEmail(email, otpCode, 'reset');
 
     return res.status(200).json({
       success: true,
       message: 'OTP sent to email if it exists',
       data: {
-        otp_ref: otpRecord._id.toString(),
-        expires_in_sec: 180,
-        resend_available_in_sec: 30
+        otpRef: otpRecord._id.toString(),
+        expiresInSec: 180,
+        resendAvailableInSec: 30
       }
     });
 
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error('Admin forgot password error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -78,16 +92,16 @@ async function forgotPassword(req, res) {
 
 async function validateOtp(req, res) {
   try {
-    const { otp, otp_ref } = req.body;
+    const { otp, otpRef } = req.body;
 
-    if (!otp || !otp_ref) {
+    if (!otp || !otpRef) {
       return res.status(400).json({
         success: false,
         message: 'OTP and OTP reference are required'
       });
     }
 
-    const otpRecord = await PasswordResetOtp.verify(otp_ref, otp);
+    const otpRecord = await PasswordResetOtp.verify(otpRef, otp);
     if (!otpRecord) {
       return res.status(400).json({
         success: false,
@@ -95,7 +109,7 @@ async function validateOtp(req, res) {
       });
     }
 
-    const reset_token = generateResetToken({
+    const resetToken = generateResetToken({
       userId: otpRecord.userId,
       email: otpRecord.email
     });
@@ -106,12 +120,12 @@ async function validateOtp(req, res) {
       success: true,
       message: 'OTP validated',
       data: {
-        reset_token
+        resetToken
       }
     });
 
   } catch (error) {
-    console.error('Validate OTP error:', error);
+    console.error('Admin validate OTP error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -122,7 +136,7 @@ async function validateOtp(req, res) {
 
 async function setNewPassword(req, res) {
   try {
-    const { new_password, confirm_password } = req.body;
+    const { newPassword, confirmPassword } = req.body;
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
@@ -132,14 +146,14 @@ async function setNewPassword(req, res) {
       });
     }
 
-    if (!new_password || !confirm_password) {
+    if (!newPassword || !confirmPassword) {
       return res.status(400).json({
         success: false,
         message: 'New password and confirm password are required'
       });
     }
 
-    if (new_password !== confirm_password) {
+    if (newPassword !== confirmPassword) {
       return res.status(400).json({
         success: false,
         message: 'Passwords do not match'
@@ -164,7 +178,14 @@ async function setNewPassword(req, res) {
       });
     }
 
-    await User.updatePassword(user.userId, new_password, user.email);
+    if (!user.roles || !user.roles.includes(1)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized: Admin access only'
+      });
+    }
+
+    await User.updatePassword(user.userId, newPassword, user.email);
     await PasswordResetOtp.deleteByUserId(user.userId);
 
     const updatedUser = await User.findByUserId(user.userId);
@@ -172,7 +193,7 @@ async function setNewPassword(req, res) {
     const roleNames = await Promise.all(
       (updatedUser.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
-        return role ? role.role_name : null;
+        return role ? role.roleName : null;
       })
     );
 
@@ -192,7 +213,7 @@ async function setNewPassword(req, res) {
     });
 
   } catch (error) {
-    console.error('Set new password error:', error);
+    console.error('Admin set new password error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',

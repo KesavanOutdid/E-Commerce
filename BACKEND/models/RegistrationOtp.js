@@ -3,7 +3,7 @@ const { ObjectId } = require('mongodb');
 
 class RegistrationOtp {
   static collection() {
-    return getDB().collection('registration_otps');
+    return getDB().collection('registrationOtps');
   }
 
   static async create(otpData) {

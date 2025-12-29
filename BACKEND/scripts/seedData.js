@@ -1,32 +1,29 @@
-const { connectToDatabase } = require('../config/db');
-const { v4: uuidv4 } = require('uuid');
-
 const defaultRoles = [
   {
-    role_id: 1,
-    role_name: 'Admin',
-    created_by: 'system',
-    created_time: new Date(),
-    modified_by: null,
-    modified_at: null,
+    roleId: 1,
+    roleName: 'Admin',
+    createdBy: 'system',
+    createdAt: new Date(),
+    modifiedBy: null,
+    modifiedAt: null,
     status: true
   },
   {
-    role_id: 2,
-    role_name: 'Seller',
-    created_by: 'system',
-    created_time: new Date(),
-    modified_by: null,
-    modified_at: null,
+    roleId: 2,
+    roleName: 'Seller',
+    createdBy: 'system',
+    createdAt: new Date(),
+    modifiedBy: null,
+    modifiedAt: null,
     status: true
   },
   {
-    role_id: 3,
-    role_name: 'Customer',
-    created_by: 'system',
-    created_time: new Date(),
-    modified_by: null,
-    modified_at: null,
+    roleId: 3,
+    roleName: 'Customer',
+    createdBy: 'system',
+    createdAt: new Date(),
+    modifiedBy: null,
+    modifiedAt: null,
     status: true
   }
 ];
@@ -50,14 +47,12 @@ const defaultAdmin = {
   updatedBy: 'system'
 };
 
-async function seedDatabase() {
+async function seedDatabase(db) {
   try {
     console.log('🌱 Starting database seeding...');
     
-    const db = await connectToDatabase();
-    
     const rolesCollection = db.collection('roles');
-    const existingRole = await rolesCollection.findOne({ role_id: 1 });
+    const existingRole = await rolesCollection.findOne({ roleId: 1 });
     
     if (!existingRole) {
       await rolesCollection.insertMany(defaultRoles);
@@ -78,7 +73,7 @@ async function seedDatabase() {
       console.log('⚠️  Admin user already exists, skipping...');
     }
     
-    await rolesCollection.createIndex({ role_id: 1 }, { unique: true });
+    await rolesCollection.createIndex({ roleId: 1 }, { unique: true });
     await rolesCollection.createIndex({ status: 1 });
     
     await usersCollection.createIndex({ userId: 1 }, { unique: true });
@@ -89,11 +84,10 @@ async function seedDatabase() {
     console.log('✅ Database indexes created');
     
     console.log('🎉 Database seeding completed!');
-    process.exit(0);
   } catch (error) {
     console.error('❌ Error seeding database:', error);
-    process.exit(1);
+    throw error;
   }
 }
 
-seedDatabase();
+module.exports = { seedDatabase };
