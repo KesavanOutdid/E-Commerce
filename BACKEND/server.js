@@ -18,17 +18,27 @@ if (!fs.existsSync(logsDir)) {
 }
 
 const app = express();
+const requestLogger = require('./middleware/requestLogger');
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestLogger);
 
 setupSwagger(app);
 
+const authRoutes = require('./routes/auth/authRoutes');
+const adminRoutes = require('./routes/auth/admin/adminRoutes');
+const userRoutes = require('./routes/auth/user/userRoutes');
+const sellerRoutes = require('./routes/auth/seller/sellerRoutes');
 const cartRoutes = require('./routes/cart/cartRoutes');
 const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 
+app.use('/api/auth', authRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/seller', sellerRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);

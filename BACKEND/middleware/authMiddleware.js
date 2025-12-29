@@ -6,9 +6,9 @@ module.exports = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.userId = decoded.userId || decoded.id;
-        req.userObjectId = decoded.id;
-        req.roleId = decoded.roleId;
+        req.userId = decoded.userId;
+        req.roles = decoded.roles;
+        req.roleNames = decoded.roleNames;
         req.userEmail = decoded.email;
         next();
     } catch (err) {

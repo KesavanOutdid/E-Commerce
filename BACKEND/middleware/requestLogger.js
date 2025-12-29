@@ -1,21 +1,48 @@
-const winston = require('winston');
 const path = require('path');
+const fs = require('fs');
 
-const logsDirectory = 'Log';
-const logFilename = path.join(logsDirectory, 'DataLog.log');
+const logsDir = path.join(__dirname, '../logs');
+if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+}
 
-// Configure the logger
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp({ format: 'DD/MM/YYYY HH:mm:ss' }),
-        winston.format.printf(({ level, message, timestamp }) => {
-            return `${timestamp} [${level.toUpperCase()}]: ${message}`;
-        })
-    ),
-    transports: [
-        new winston.transports.File({ filename: logFilename })
-    ]
-});
+const logFilePath = path.join(logsDir, 'api-requests.log');
 
-module.exports = logger;
+const requestLogger = (req, res, next) => {
+    const startTime = Date.now();
+
+    const originalSend = res.send;
+    res.send = function(data) {
+        res.send = originalSend;
+        
+        const responseTime = Date.now() - startTime;
+        const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19);
+        
+        let extraInfo = '';
+        try {
+            const responseData = typeof data === 'string' ? JSON.parse(data) : data;
+            
+            if (responseData.data?.otpCode) {
+                extraInfo = ` | OTP: ${responseData.data.otpCode}`;
+            }
+            
+            if (responseData.message) {
+                extraInfo += ` | ${responseData.message}`;
+            }
+        } catch (e) {
+            // Ignore parsing errors
+        }
+        
+        const logEntry = `${timestamp} ${req.method} ${req.originalUrl} - ${res.statusCode} (${responseTime}ms)${extraInfo}\n`;
+        
+        console.log(logEntry.trim());
+        
+        fs.appendFileSync(logFilePath, logEntry);
+
+        return res.send(data);
+    };
+
+    next();
+};
+
+module.exports = requestLogger;
