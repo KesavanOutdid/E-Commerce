@@ -1,0 +1,586 @@
+openapi: 3.0.0
+info:
+  title: E-Commerce Multi-Vendor Platform API
+  version: 1.0.0
+  description: Complete API documentation for E-Commerce Multi-Vendor Platform with multi-role system and KYC approval workflow
+  contact:
+    name: API Support
+    email: info@outdidunified.com
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        roles:
+          type: array
+          items:
+            type: integer
+          description: Array of role IDs (1=Admin, 2=Seller, 3=Customer)
+        roleNames:
+          type: array
+          items:
+            type: string
+        status:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Seller:
+      type: object
+      properties:
+        userId:
+          type: string
+        shopName:
+          type: string
+        gstin:
+          type: string
+        panNumber:
+          type: string
+        kycApproved:
+          type: boolean
+        kycApprovedBy:
+          type: string
+        kycApprovedAt:
+          type: string
+          format: date-time
+        isLive:
+          type: boolean
+        commissionPercentage:
+          type: number
+          minimum: 0
+          maximum: 100
+        goLiveApprovedBy:
+          type: string
+        goLiveApprovedAt:
+          type: string
+          format: date-time
+        bankDetails:
+          type: object
+          properties:
+            accountNumber:
+              type: string
+            ifscCode:
+              type: string
+            bankName:
+              type: string
+            accountHolderName:
+              type: string
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/auth/register/send-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Send OTP for registration
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: OTP sent successfully
+        '429':
+          description: Please wait before requesting another OTP
+
+  /api/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - otpCode
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                password:
+                  type: string
+                otpCode:
+                  type: string
+                roles:
+                  type: array
+                  items:
+                    type: integer
+                  description: Optional. Defaults to [3] for Customer
+                  example: [2, 3]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      access_token:
+                        type: string
+                      userId:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: integer
+                      roleNames:
+                        type: array
+                        items:
+                          type: string
+
+  /api/admin/login:
+    post:
+      tags:
+        - Admin
+      summary: Admin login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                  description: Email or phone number
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+
+  /api/user/login:
+    post:
+      tags:
+        - User
+      summary: Customer login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+
+  /api/seller/login:
+    post:
+      tags:
+        - Seller
+      summary: Seller login
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - identifier
+                - password
+              properties:
+                identifier:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+
+  /api/user/add-role:
+    post:
+      tags:
+        - User
+      summary: Add additional role to user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - role_id
+              properties:
+                role_id:
+                  type: integer
+                  description: Role ID to add (1=Admin, 2=Seller, 3=Customer)
+                  example: 2
+      responses:
+        '200':
+          description: Role added successfully with new token
+
+  /api/admin/users:
+    get:
+      tags:
+        - Admin - User Management
+      summary: Get all users with pagination and filters
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: role
+          schema:
+            type: integer
+          description: Filter by role ID (1=Admin, 2=Seller, 3=Customer)
+        - in: query
+          name: status
+          schema:
+            type: boolean
+          description: Filter by active/inactive status
+      responses:
+        '200':
+          description: Users retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  pagination:
+                    type: object
+                    properties:
+                      currentPage:
+                        type: integer
+                      pageSize:
+                        type: integer
+                      totalItems:
+                        type: integer
+                      totalPages:
+                        type: integer
+
+    post:
+      tags:
+        - Admin - User Management
+      summary: Add new user (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - firstName
+                - lastName
+                - email
+                - password
+                - roles
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                email:
+                  type: string
+                phone:
+                  type: string
+                password:
+                  type: string
+                roles:
+                  type: array
+                  items:
+                    type: integer
+      responses:
+        '201':
+          description: User added successfully
+
+  /api/admin/users/{userId}:
+    put:
+      tags:
+        - Admin - User Management
+      summary: Update user details
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+                phone:
+                  type: string
+                roles:
+                  type: array
+                  items:
+                    type: integer
+                status:
+                  type: boolean
+      responses:
+        '200':
+          description: User updated successfully
+
+  /api/seller/kyc/request:
+    post:
+      tags:
+        - Seller - KYC
+      summary: Submit KYC request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - shopName
+                - gstin
+                - panNumber
+              properties:
+                shopName:
+                  type: string
+                gstin:
+                  type: string
+                panNumber:
+                  type: string
+                bankDetails:
+                  type: object
+                  properties:
+                    accountNumber:
+                      type: string
+                    ifscCode:
+                      type: string
+                    bankName:
+                      type: string
+                    accountHolderName:
+                      type: string
+      responses:
+        '200':
+          description: KYC request submitted successfully
+
+  /api/seller/kyc/status:
+    get:
+      tags:
+        - Seller - KYC
+      summary: Get KYC status
+      responses:
+        '200':
+          description: KYC status retrieved
+
+  /api/admin/kyc:
+    get:
+      tags:
+        - Admin - KYC Management
+      summary: Get KYC requests with filters
+      description: Unified endpoint to get all, pending, or pending go-live KYC requests
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [all, pending, pending-golive]
+            default: all
+          description: Filter by status (all, pending, pending-golive)
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: kycApproved
+          schema:
+            type: boolean
+          description: Optional filter by KYC approval status (only when status=all)
+      responses:
+        '200':
+          description: KYC requests retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Seller'
+                  pagination:
+                    type: object
+
+  /api/admin/kyc/{userId}:
+    get:
+      tags:
+        - Admin - KYC Management
+      summary: Get KYC details for specific seller
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: KYC details retrieved
+
+    put:
+      tags:
+        - Admin - KYC Management
+      summary: Update KYC status (approve, approve-golive, reject)
+      description: Unified endpoint to approve KYC, approve go-live, or reject KYC
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+              properties:
+                action:
+                  type: string
+                  enum: [approve, approve-golive, reject]
+                  description: Action to perform
+                commissionPercentage:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  description: Required when action=approve-golive
+                reason:
+                  type: string
+                  description: Optional reason when action=reject
+            examples:
+              approve:
+                value:
+                  action: approve
+              approve-golive:
+                value:
+                  action: approve-golive
+                  commissionPercentage: 10
+              reject:
+                value:
+                  action: reject
+                  reason: Invalid documents
+      responses:
+        '200':
+          description: KYC status updated successfully
+        '400':
+          description: Invalid action or missing required fields
+
+  /api/admin/seller/{userId}/commission:
+    put:
+      tags:
+        - Admin - Seller Management
+      summary: Update seller commission percentage
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - commissionPercentage
+              properties:
+                commissionPercentage:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  example: 15
+      responses:
+        '200':
+          description: Commission updated successfully

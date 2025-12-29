@@ -5,7 +5,7 @@ const { adminLogin } = require('../../../controllers/auth/admin/loginController'
 const { getUsers, addUser, updateUser } = require('../../../controllers/auth/admin/usersController');
 const { getRoles, createRole, updateRole, deleteRole } = require('../../../controllers/auth/admin/rolesController');
 const { getAdminProfile, updateAdminProfile } = require('../../../controllers/auth/admin/profileController');
-const { getPendingKycRequests, getAllKycRequests, getKycRequestDetails, approveKyc, rejectKyc } = require('../../../controllers/auth/admin/kycController');
+const { getKycRequests, getKycRequestDetails, updateKycStatus, updateCommission } = require('../../../controllers/auth/admin/kycController');
 
 router.post('/login', adminLogin);
 
@@ -21,10 +21,9 @@ router.post('/roles', authMiddleware, createRole);
 router.put('/roles/:role_id', authMiddleware, updateRole);
 router.delete('/roles/:role_id', authMiddleware, deleteRole);
 
-router.get('/kyc/pending', authMiddleware, getPendingKycRequests);
-router.get('/kyc/all', authMiddleware, getAllKycRequests);
+router.get('/kyc', authMiddleware, getKycRequests);
 router.get('/kyc/:userId', authMiddleware, getKycRequestDetails);
-router.post('/kyc/:userId/approve', authMiddleware, approveKyc);
-router.post('/kyc/:userId/reject', authMiddleware, rejectKyc);
+router.put('/kyc/:userId', authMiddleware, updateKycStatus);
+router.put('/seller/:userId/commission', authMiddleware, updateCommission);
 
 module.exports = router;

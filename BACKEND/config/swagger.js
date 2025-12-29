@@ -1,13 +1,15 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
 
 const options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'E-Commerce API',
+            title: 'E-Commerce Multi-Vendor Platform API',
             version: '1.0.0',
-            description: 'E-Commerce API with Cart, Orders, and Payments',
+            description: 'Complete API for E-Commerce Multi-Vendor Platform with Multi-Role System, KYC Approval Workflow, and Commission Management',
             contact: {
                 name: 'API Support',
                 email: 'info@outdidunified.com'
@@ -95,6 +97,52 @@ const options = {
                         updatedAt: { type: 'string', format: 'date-time' }
                     }
                 },
+                User: {
+                    type: 'object',
+                    properties: {
+                        userId: { type: 'string', format: 'uuid' },
+                        firstName: { type: 'string' },
+                        lastName: { type: 'string' },
+                        email: { type: 'string', format: 'email' },
+                        phone: { type: 'string' },
+                        roles: {
+                            type: 'array',
+                            items: { type: 'integer' },
+                            description: 'Array of role IDs (1=Admin, 2=Seller, 3=Customer)'
+                        },
+                        roleNames: {
+                            type: 'array',
+                            items: { type: 'string' }
+                        },
+                        status: { type: 'boolean' },
+                        createdAt: { type: 'string', format: 'date-time' }
+                    }
+                },
+                Seller: {
+                    type: 'object',
+                    properties: {
+                        userId: { type: 'string' },
+                        shopName: { type: 'string' },
+                        gstin: { type: 'string' },
+                        panNumber: { type: 'string' },
+                        kycApproved: { type: 'boolean' },
+                        kycApprovedBy: { type: 'string' },
+                        kycApprovedAt: { type: 'string', format: 'date-time' },
+                        isLive: { type: 'boolean' },
+                        commissionPercentage: { type: 'number', minimum: 0, maximum: 100 },
+                        goLiveApprovedBy: { type: 'string' },
+                        goLiveApprovedAt: { type: 'string', format: 'date-time' },
+                        bankDetails: {
+                            type: 'object',
+                            properties: {
+                                accountNumber: { type: 'string' },
+                                ifscCode: { type: 'string' },
+                                bankName: { type: 'string' },
+                                accountHolderName: { type: 'string' }
+                            }
+                        }
+                    }
+                },
                 Error: {
                     type: 'object',
                     properties: {
@@ -110,21 +158,28 @@ const options = {
             }
         ]
     },
-    apis: ['./routes/**/*.js', './controllers/**/*.js']
+    apis: ['./routes/**/*.js', './controllers/**/*.js', './docs/swagger.yaml']
 };
 
 const swaggerSpec = swaggerJsdoc(options);
 
 const setupSwagger = (app) => {
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml'));
+    
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
         explorer: true,
         customCss: '.swagger-ui .topbar { display: none }',
-        customSiteTitle: 'E-Commerce API Documentation'
+        customSiteTitle: 'E-Commerce Multi-Vendor Platform API',
+        swaggerOptions: {
+            persistAuthorization: true,
+            tagsSorter: 'alpha',
+            operationsSorter: 'alpha'
+        }
     }));
     
     app.get('/api-docs.json', (req, res) => {
         res.setHeader('Content-Type', 'application/json');
-        res.send(swaggerSpec);
+        res.send(swaggerDocument);
     });
 };
 

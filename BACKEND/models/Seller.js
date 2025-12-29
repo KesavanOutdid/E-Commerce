@@ -13,14 +13,16 @@ class Seller {
       gstin: sellerData.gstin || null,
       panNumber: sellerData.panNumber || null,
       kycApproved: sellerData.kycApproved || false,
+      kycApprovedBy: sellerData.kycApprovedBy || null,
+      kycApprovedAt: sellerData.kycApprovedAt || null,
       onboardingCompleted: sellerData.onboardingCompleted || false,
       isLive: sellerData.isLive || false,
-      commissionPercentage: sellerData.commissionPercentage || 10,
+      commissionPercentage: sellerData.commissionPercentage || null,
+      goLiveApprovedBy: sellerData.goLiveApprovedBy || null,
+      goLiveApprovedAt: sellerData.goLiveApprovedAt || null,
       bankDetails: sellerData.bankDetails || null,
       createdAt: new Date(),
-      updatedAt: new Date(),
-      approvedBy: sellerData.approvedBy || null,
-      approvedAt: sellerData.approvedAt || null
+      updatedAt: new Date()
     };
 
     const result = await this.collection().insertOne(seller);
@@ -58,9 +60,8 @@ class Seller {
       { 
         $set: { 
           kycApproved: true,
-          isLive: true,
-          approvedBy,
-          approvedAt: new Date(),
+          kycApprovedBy: approvedBy,
+          kycApprovedAt: new Date(),
           updatedAt: new Date()
         }
       },
@@ -68,15 +69,32 @@ class Seller {
     );
   }
 
-  static async rejectKyc(userId, approvedBy) {
+  static async approveGoLive(userId, approvedBy, commissionPercentage) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $set: { 
+          isLive: true,
+          commissionPercentage: commissionPercentage || 10,
+          goLiveApprovedBy: approvedBy,
+          goLiveApprovedAt: new Date(),
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async rejectKyc(userId, rejectedBy, reason) {
     return await this.collection().findOneAndUpdate(
       { userId },
       { 
         $set: { 
           kycApproved: false,
           isLive: false,
-          approvedBy,
-          approvedAt: new Date(),
+          kycRejectedBy: rejectedBy,
+          kycRejectedAt: new Date(),
+          kycRejectionReason: reason,
           updatedAt: new Date()
         }
       },
