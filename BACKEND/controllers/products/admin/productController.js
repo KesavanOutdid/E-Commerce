@@ -1,19 +1,17 @@
 const Product = require('../../../models/Product');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 
-exports.createProduct = async (req, res) => {
+exports.createAdminProduct = async (req, res) => {
   try {
-    // Only Sellers (role 2) and Admins (role 1) can create products
-    if (req.roleId !== 1 && req.roleId !== 2) {
+    if (req.roleId !== 1) {
       return res.status(403).json({ 
         success: false, 
-        message: 'Only sellers and admins can create products' 
+        message: 'Only admins can create products' 
       });
     }
 
-    const { productName, slug, categoryId, price, stock, subCategoryId, userId, roleId } = req.body;
+    const { productName, slug, categoryId, price, stock, subCategoryId, userId } = req.body;
 
-    // Validation
     if (!productName || !slug || !categoryId || price === undefined || stock === undefined || !userId) {
       return res.status(400).json({ 
         success: false, 
@@ -21,7 +19,6 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    // MULTI-SELLER LOGIC: Check if product with same slug already exists to get its masterProductId
     const existingMaster = await Product.collection().findOne({ slug: slug });
     const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
 
@@ -30,28 +27,74 @@ exports.createProduct = async (req, res) => {
       productName,
       categoryId,
       subCategoryId,
-      masterProductId: masterProductId, // Link to the same "Master" product
-      // If Admin (role 1) use userId from body, if Seller (role 2) ALWAYS use their own req.userId
-      userId: req.roleId === 1 ? userId : req.userId,
-      // Store roleId from body in DB
-      roleId: roleId,
-      approvalStatus: req.roleId === 1 ? 'approved' : 'pending',
+      masterProductId: masterProductId,
+      userId: userId,
+      roleId: 1,
       status: true
     };
+    
     const product = await Product.create(productData);
 
-    // Invalidate product listing cache
     await deleteCachePattern('products:list:*');
 
     res.status(201).json({ 
       success: true, 
-      message: 'Product created successfully',
+      message: 'Product created successfully by admin',
       data: product 
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+exports.createSellerProduct = async (req, res) => {
+  try {
+    if (req.roleId !== 2) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only sellers can create products' 
+      });
+    }
+
+    const { productName, slug, categoryId, price, stock, subCategoryId } = req.body;
+
+    if (!productName || !slug || !categoryId || price === undefined || stock === undefined) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'productName, slug, categoryId, price, and stock are required fields' 
+      });
+    }
+
+    const existingMaster = await Product.collection().findOne({ slug: slug });
+    const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
+
+    const productData = {
+      ...req.body,
+      productName,
+      categoryId,
+      subCategoryId,
+      masterProductId: masterProductId,
+      userId: req.userId,
+      roleId: 2,
+      approvalStatus: 'pending',
+      status: true
+    };
+    
+    const product = await Product.create(productData);
+
+    await deleteCachePattern('products:list:*');
+
+    res.status(201).json({ 
+      success: true, 
+      message: 'Product created successfully, awaiting approval',
+      data: product 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 
 exports.getProducts = async (req, res) => {
   try {

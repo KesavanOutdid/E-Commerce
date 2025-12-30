@@ -1,0 +1,639 @@
+{
+	"info": {
+		"_postman_id": "e-commerce-products-collection",
+		"name": "E-Commerce Products APIs",
+		"description": "Complete products API collection for E-Commerce platform including Admin, Seller, and Website endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "PRODUCTS - WEBSITE",
+			"item": [
+				{
+					"name": "1. Get All Products",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.data && response.data.products.length > 0) {",
+									"        pm.environment.set(\"product_id\", response.data.products[0].product._id);",
+									"        console.log(\"✅ Products fetched successfully. First product ID saved.\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/products?page=1&limit=10&categoryId=&subCategoryId=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "categoryId",
+									"value": "",
+									"disabled": true
+								},
+								{
+									"key": "subCategoryId",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Fetch approved products for website with pagination. Shows cheapest seller price and seller count. Results cached for 1 hour."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Product by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Product details fetched successfully with other sellers.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Get product details by ID including other sellers offering the same product."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PRODUCTS - ADMIN",
+			"item": [
+				{
+					"name": "1. Create Product (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set(\"admin_product_id\", response.data._id);",
+									"    console.log(\"✅ Admin product created successfully and auto-approved.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productName\": \"Premium Wireless Headphones\",\n  \"slug\": \"premium-wireless-headphones\",\n  \"categoryId\": \"{{category_id}}\",\n  \"subCategoryId\": \"{{subcategory_id}}\",\n  \"price\": 4999,\n  \"stock\": 100,\n  \"description\": \"High-quality wireless headphones with noise cancellation\",\n  \"userId\": \"{{admin_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"admin"
+							]
+						},
+						"description": "Create a product as admin. Product is automatically approved and visible on website (no approval needed)."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get Products (Admin/Seller View)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Products fetched successfully.\");",
+									"    if (response.data && response.data.products.length > 0) {",
+									"        console.log(`Total products: ${response.data.pagination.total}`);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin?page=1&limit=10&approvalStatus=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"admin"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "approvalStatus",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get products for authenticated user. Admin sees all products, sellers see their own + admin products. Optional filters: approvalStatus (approved/rejected/pending)."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Update Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Product updated successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productName\": \"Premium Wireless Headphones v2\",\n  \"price\": 5499,\n  \"stock\": 150,\n  \"description\": \"Updated high-quality wireless headphones with advanced noise cancellation\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Update product details. Sellers can only update their own products. Supports partial updates."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Update Product Approval Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    console.log(\"✅ Product approval status updated successfully.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Product approval status updated successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approvalStatus\": \"approved\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}/approval",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}",
+								"approval"
+							]
+						},
+						"description": "Update approval status (approved/rejected). Only admin can perform this. Rejection requires rejectionReason."
+					},
+					"response": []
+				},
+				{
+					"name": "5. Approve Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Product approved successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approvalStatus\": \"approved\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}/approval",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}",
+								"approval"
+							]
+						},
+						"description": "Approve a product to make it visible on the website."
+					},
+					"response": []
+				},
+				{
+					"name": "6. Reject Product",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approvalStatus\": \"rejected\",\n  \"rejectionReason\": \"Product images do not meet quality standards\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}/approval",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}",
+								"approval"
+							]
+						},
+						"description": "Reject a product. Rejection reason is required."
+					},
+					"response": []
+				},
+				{
+					"name": "7. Delete Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log(\"✅ Product deleted successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Delete a product. Sellers can only delete their own products. Admins can delete any product."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "PRODUCTS - SELLER",
+			"item": [
+				{
+					"name": "1. Create Product (Seller)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    pm.environment.set(\"seller_product_id\", response.data._id);",
+									"    console.log(\"✅ Seller product created successfully. Awaiting admin approval.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productName\": \"Wireless Earbuds Pro\",\n  \"slug\": \"wireless-earbuds-pro\",\n  \"categoryId\": \"{{category_id}}\",\n  \"subCategoryId\": \"{{subcategory_id}}\",\n  \"price\": 3499,\n  \"stock\": 50,\n  \"description\": \"Premium wireless earbuds with 24-hour battery life\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"seller"
+							]
+						},
+						"description": "Create a product as seller. Product starts in 'pending' approval status and must be approved by admin before appearing on website."
+					},
+					"response": []
+				},
+				{
+					"name": "2. Get My Products",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Seller products fetched successfully.\");",
+									"    if (response.data && response.data.products.length > 0) {",
+									"        console.log(`Your products: ${response.data.pagination.total}`);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin?page=1&limit=10&approvalStatus=",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"admin"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "approvalStatus",
+									"value": "",
+									"disabled": true
+								}
+							]
+						},
+						"description": "Get seller's own products plus admin products. Can filter by approvalStatus: pending, approved, rejected."
+					},
+					"response": []
+				},
+				{
+					"name": "3. Update My Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    console.log(\"✅ Product updated successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"price\": 3299,\n  \"stock\": 75,\n  \"description\": \"Premium wireless earbuds with 30-hour battery life and active noise cancellation\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Update own product details. Can only update products you created."
+					},
+					"response": []
+				},
+				{
+					"name": "4. Delete My Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    console.log(\"✅ Product deleted successfully.\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/{{product_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"{{product_id}}"
+							]
+						},
+						"description": "Delete own product. Can only delete products you created."
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -4,21 +4,32 @@ const { deleteCachePattern, deleteCache } = require('../../../services/redisServ
 
 exports.createCategory = async (req, res) => {
   try {
-    const { name, slug, parentName, level, attributes } = req.body;
+    const { name, slug, parentId, level, attributes, createdBy } = req.body;
     
     // Validation
-    if (!name || !slug || level === undefined) {
+    if (!name || !slug || level === undefined || createdBy === undefined) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Name, slug, and level are required fields' 
+        message: 'Name, slug, level, and createdBy are required fields' 
       });
     }
     
-    let parentId = null;
-    if (parentName) {
-      const parentCategory = await Category.find({ name: parentName });
-      if (parentCategory && parentCategory.length > 0) {
-        parentId = parentCategory[0].categoryId;
+    // Level 2+ requires parentId
+    if (level > 1 && !parentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'parentId is required for subcategories (level 2+)' 
+      });
+    }
+    
+    // Validate parentId if provided
+    if (parentId) {
+      const parentCategory = await Category.findById(parentId);
+      if (!parentCategory) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Parent category not found' 
+        });
       }
     }
 
@@ -27,9 +38,8 @@ exports.createCategory = async (req, res) => {
       slug,
       parentId,
       level,
-      status: true, // Automatically set to true on creation
-      createdBy: req.userId,
-      updatedBy: req.userId
+      status: true,
+      createdBy
     };
 
     const category = await Category.create(categoryData);
@@ -58,7 +68,7 @@ exports.createCategory = async (req, res) => {
 
 exports.updateCategory = async (req, res) => {
   try {
-    const { name, slug, level, status } = req.body;
+    const { name, slug, level, status, updatedBy } = req.body;
 
     // Check if body is empty
     if (Object.keys(req.body).length === 0) {
@@ -73,9 +83,13 @@ exports.updateCategory = async (req, res) => {
     if (slug !== undefined && !slug) return res.status(400).json({ success: false, message: 'Slug cannot be empty' });
 
     const updateData = {
-      ...req.body,
-      updatedBy: req.userId
+      ...req.body
     };
+    
+    delete updateData.updatedBy;
+    if (updatedBy) {
+      updateData.updatedBy = updatedBy;
+    }
     const category = await Category.update(req.params.id, updateData);
     
     // Invalidate caches

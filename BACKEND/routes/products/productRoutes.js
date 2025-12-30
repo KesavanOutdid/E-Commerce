@@ -5,7 +5,8 @@ const adminProductController = require('../../controllers/products/admin/product
 const websiteProductController = require('../../controllers/products/website/productController');
 
 // Admin/Seller Routes
-router.post('/', authMiddleware, adminProductController.createProduct);
+router.post('/admin', authMiddleware, adminProductController.createAdminProduct);
+router.post('/seller', authMiddleware, adminProductController.createSellerProduct);
 router.get('/admin', authMiddleware, adminProductController.getProducts);
 router.put('/:id', authMiddleware, adminProductController.updateProduct);
 router.patch('/:id/approval', authMiddleware, adminProductController.updateApprovalStatus);
