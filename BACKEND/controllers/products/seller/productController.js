@@ -2,6 +2,7 @@ const Product = require('../../../models/Product');
 const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 const { slugify } = require('../../../utils/help');
+const { ObjectId } = require('mongodb');
 
 exports.createProduct = async (req, res) => {
   try {
@@ -30,12 +31,12 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    // if (!req.files || req.files.length === 0) {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'At least one product image is required' 
-    //   });
-    // }
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'At least one product image is required' 
+      });
+    }
 
     const category = await SubCategory.findById(subCategoryId);
     if (!category) {
@@ -62,6 +63,20 @@ exports.createProduct = async (req, res) => {
     }
 
     const normalizedSlug = slugify(productName);
+
+    // Check if the product already exists for THIS seller
+    const duplicateCheck = await Product.collection().findOne({ 
+      slug: normalizedSlug,
+      userId: ObjectId.isValid(userId) ? new ObjectId(userId) : userId
+    });
+
+    if (duplicateCheck) {
+      return res.status(409).json({
+        success: false,
+        message: 'You have already created a product with this name'
+      });
+    }
+
     const existingMaster = await Product.collection().findOne({ 
       slug: { $regex: new RegExp(`^${normalizedSlug}$`, 'i') } 
     });
