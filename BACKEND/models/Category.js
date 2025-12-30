@@ -15,8 +15,8 @@ class Category {
       parentId: categoryData.parentId || null, // Stores UUID of parent
       level: categoryData.level, // 1 = Category, 2 = Subcategory, 3 = Child
       status: categoryData.status !== undefined ? categoryData.status : true,
-      createdBy: categoryData.createdBy ? new ObjectId(categoryData.createdBy) : null,
-      updatedBy: categoryData.updatedBy ? new ObjectId(categoryData.updatedBy) : null,
+      createdBy: categoryData.createdBy||null , 
+      updatedBy: categoryData.updatedBy|| null ,
       createdAt: new Date(),
       updatedAt: new Date()
     };
