@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
+const Seller = require('../../../models/Seller');
 const { generateAccessToken } = require('../../../utils/jwtUtils');
 const { sendWelcomeEmail, sendLoginNotification } = require('../../../services/emailService');
 
@@ -129,6 +130,16 @@ async function googleAuthentication(req, res) {
       password: generatedPassword,
       roles: [2],
       createdBy: email
+    });
+
+    // Automatically create seller info
+    const shopName = firstName ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1)}'s Shop` : 'New Shop';
+    await Seller.create({
+      userId,
+      shopName,
+      onboardingCompleted: false,
+      isLive: false,
+      kycApproved: false
     });
 
     const role = await Role.findById(2);

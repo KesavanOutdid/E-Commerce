@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
+const Seller = require('../../../models/Seller');
 
 async function getUsers(req, res) {
   try {
@@ -27,10 +28,17 @@ async function getUsers(req, res) {
             return role ? role.roleName : null;
           })
         );
+
+        let sellerInfo = null;
+        if (user.roles && user.roles.includes(2)) {
+          sellerInfo = await Seller.findByUserId(user.userId);
+        }
+
         delete user.password;
         return {
           ...user,
-          roleNames: roleNames.filter(Boolean)
+          roleNames: roleNames.filter(Boolean),
+          sellerInfo
         };
       })
     );
@@ -49,6 +57,51 @@ async function getUsers(req, res) {
 
   } catch (error) {
     console.error('Get users error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+}
+
+async function getUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const user = await User.findByUserId(userId);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const roleNames = await Promise.all(
+      (user.roles || []).map(async (roleId) => {
+        const role = await Role.findById(roleId);
+        return role ? role.roleName : null;
+      })
+    );
+
+    let sellerInfo = null;
+    if (user.roles && user.roles.includes(2)) {
+      sellerInfo = await Seller.findByUserId(userId);
+    }
+
+    delete user.password;
+
+    return res.status(200).json({
+      success: true,
+      message: 'User retrieved successfully',
+      data: {
+        ...user,
+        roleNames: roleNames.filter(Boolean),
+        sellerInfo
+      }
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
     return res.status(500).json({
       success: false,
       message: 'Internal server error',
@@ -112,6 +165,18 @@ async function addUser(req, res) {
       createdBy: req.userEmail || 'admin'
     });
 
+    // Automatically create seller info if user has Seller role (ID 2)
+    if (userRoles.includes(2)) {
+      const shopName = firstName ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1)}'s Shop` : 'New Shop';
+      await Seller.create({
+        userId,
+        shopName,
+        onboardingCompleted: false,
+        isLive: false,
+        kycApproved: false
+      });
+    }
+
     delete newUser.password;
 
     return res.status(201).json({
@@ -174,6 +239,22 @@ async function updateUser(req, res) {
 
     const updatedUser = await User.update(userId, updateData);
 
+    // If role updated to include Seller (ID 2), check if Seller profile exists
+    if (updateData.roles && updateData.roles.includes(2)) {
+      const existingSeller = await Seller.findByUserId(userId);
+      if (!existingSeller) {
+        const firstName = updatedUser.value.firstName || '';
+        const shopName = firstName ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1)}'s Shop` : 'New Shop';
+        await Seller.create({
+          userId,
+          shopName,
+          onboardingCompleted: false,
+          isLive: false,
+          kycApproved: false
+        });
+      }
+    }
+
     if (roles === undefined && updatedUser.value.roles) {
       roleNames = await Promise.all(
         updatedUser.value.roles.map(async (roleId) => {
@@ -205,8 +286,39 @@ async function updateUser(req, res) {
   }
 }
 
+async function deleteUser(req, res) {
+  try {
+    const { userId } = req.params;
+
+    const user = await User.findByUserId(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    await User.delete(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete user error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   getUsers,
+  getUser,
   addUser,
-  updateUser
+  updateUser,
+  deleteUser
 };

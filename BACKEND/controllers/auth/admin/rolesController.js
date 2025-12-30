@@ -31,6 +31,34 @@ async function getRoles(req, res) {
   }
 }
 
+async function getRole(req, res) {
+  try {
+    const { roleId } = req.params;
+    const role = await Role.findById(parseInt(roleId));
+
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        message: 'Role not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Role retrieved successfully',
+      data: role
+    });
+
+  } catch (error) {
+    console.error('Get role error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+}
+
 async function createRole(req, res) {
   try {
     const { roleName } = req.body;
@@ -74,14 +102,7 @@ async function createRole(req, res) {
 async function updateRole(req, res) {
   try {
     const { roleId } = req.params;
-    const { roleName } = req.body;
-
-    if (!roleName) {
-      return res.status(400).json({
-        success: false,
-        message: 'Role name is required'
-      });
-    }
+    const { status } = req.body;
 
     const role = await Role.findById(parseInt(roleId));
     if (!role) {
@@ -91,10 +112,15 @@ async function updateRole(req, res) {
       });
     }
 
-    const updatedRole = await Role.update(parseInt(roleId), {
-      roleName,
+    const updateData = {
       modifiedBy: req.userEmail || 'admin'
-    });
+    };
+
+    if (status !== undefined) {
+      updateData.status = status;
+    }
+
+    const updatedRole = await Role.update(parseInt(roleId), updateData);
 
     return res.status(200).json({
       success: true,
@@ -150,6 +176,7 @@ async function deleteRole(req, res) {
 
 module.exports = {
   getRoles,
+  getRole,
   createRole,
   updateRole,
   deleteRole

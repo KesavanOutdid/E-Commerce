@@ -146,6 +146,10 @@ class User {
   static async count(filter = {}) {
     return await this.collection().countDocuments(filter);
   }
+
+  static async delete(userId) {
+    return await this.collection().deleteOne({ userId });
+  }
 }
 
 module.exports = User;

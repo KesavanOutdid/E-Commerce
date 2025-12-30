@@ -38,14 +38,15 @@ class Role {
   static async findAll(filter = {}, options = {}) {
     const { skip = 0, limit = 10 } = options;
     return await this.collection()
-      .find({ ...filter, status: true })
+      .find(filter)
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .toArray();
   }
 
   static async count(filter = {}) {
-    return await this.collection().countDocuments({ ...filter, status: true });
+    return await this.collection().countDocuments(filter);
   }
 
   static async update(roleId, updateData) {

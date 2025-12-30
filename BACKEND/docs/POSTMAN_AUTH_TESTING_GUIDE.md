@@ -2,7 +2,7 @@
 
 Complete guide for testing all authentication endpoints in the E-Commerce API using Postman.
 
-**Base URL**: `http://localhost:5000`
+**Base URL**: `http://localhost:90000`
 
 ---
 
@@ -26,7 +26,7 @@ Complete guide for testing all authentication endpoints in the E-Commerce API us
 
 | Variable | Initial Value | Current Value |
 |----------|--------------|---------------|
-| `base_url` | `http://localhost:5000` | `http://localhost:5000` |
+| `base_url` | `http://localhost:90000` | `http://localhost:90000` |
 | `user_token` | *(leave empty)* | *(auto-set)* |
 | `seller_token` | *(leave empty)* | *(auto-set)* |
 | `admin_token` | *(leave empty)* | *(auto-set)* |

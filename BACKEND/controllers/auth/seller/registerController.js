@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require('uuid');
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
+const Seller = require('../../../models/Seller');
 const RegistrationOtp = require('../../../models/RegistrationOtp');
 const { generateAccessToken } = require('../../../utils/jwtUtils');
 const { sendOtpEmail, sendWelcomeEmail } = require('../../../services/emailService');
@@ -122,6 +123,15 @@ async function register(req, res) {
       createdBy: email
     });
 
+    // Automatically create seller info with null shop name
+    const sellerInfo = await Seller.create({
+      userId,
+      shopName: null,
+      onboardingCompleted: false,
+      isLive: false,
+      kycApproved: false
+    });
+
     await RegistrationOtp.deleteByEmail(email);
 
     const role = await Role.findById(2);
@@ -143,7 +153,8 @@ async function register(req, res) {
         email: newUser.email,
         phone: newUser.phone,
         firstName: newUser.firstName,
-        lastName: newUser.lastName
+        lastName: newUser.lastName,
+        sellerInfo
       }
     });
 
