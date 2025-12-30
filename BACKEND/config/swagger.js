@@ -2,6 +2,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const path = require('path');
+const { getNetworkIPs } = require('../utils/networkUtils');
 
 const options = {
     definition: {
@@ -15,12 +16,32 @@ const options = {
                 email: 'info@outdidunified.com'
             }
         },
-        servers: [
-            {
-                url: process.env.API_URL || 'http://localhost:5000',
-                description: 'Development server'
-            }
-        ],
+        servers: (() => {
+            const PORT = process.env.PORT || 9000;
+            const networkIPs = getNetworkIPs();
+            const servers = [
+                {
+                    url: `http://localhost:${PORT}`,
+                    description: 'Local server'
+                }
+            ];
+
+            networkIPs.lan.forEach((ip, index) => {
+                servers.push({
+                    url: `http://${ip}:${PORT}`,
+                    description: `Network Access (LAN${networkIPs.lan.length > 1 ? ` ${index + 1}` : ''})`
+                });
+            });
+
+            networkIPs.wsl.forEach((ip, index) => {
+                servers.push({
+                    url: `http://${ip}:${PORT}`,
+                    description: `Network Access (WSL${networkIPs.wsl.length > 1 ? ` ${index + 1}` : ''})`
+                });
+            });
+
+            return servers;
+        })(),
         components: {
             securitySchemes: {
                 bearerAuth: {
@@ -165,6 +186,31 @@ const swaggerSpec = swaggerJsdoc(options);
 
 const setupSwagger = (app) => {
     const swaggerDocument = YAML.load(path.join(__dirname, '../docs/swagger.yaml'));
+    
+    const PORT = process.env.PORT || 9000;
+    const networkIPs = getNetworkIPs();
+    const servers = [
+        {
+            url: `http://localhost:${PORT}`,
+            description: 'Local server'
+        }
+    ];
+
+    networkIPs.lan.forEach((ip, index) => {
+        servers.push({
+            url: `http://${ip}:${PORT}`,
+            description: `Network Access (LAN${networkIPs.lan.length > 1 ? ` ${index + 1}` : ''})`
+        });
+    });
+
+    networkIPs.wsl.forEach((ip, index) => {
+        servers.push({
+            url: `http://${ip}:${PORT}`,
+            description: `Network Access (WSL${networkIPs.wsl.length > 1 ? ` ${index + 1}` : ''})`
+        });
+    });
+
+    swaggerDocument.servers = servers;
     
     app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
         explorer: true,

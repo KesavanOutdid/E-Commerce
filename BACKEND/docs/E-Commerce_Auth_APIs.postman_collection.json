@@ -1,0 +1,1611 @@
+{
+	"info": {
+		"_postman_id": "e-commerce-auth-collection",
+		"name": "E-Commerce Auth APIs",
+		"description": "Complete authentication API collection for E-Commerce platform including User, Seller, and Admin authentication flows.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "USER Authentication",
+			"item": [
+				{
+					"name": "1. Registration Flow",
+					"item": [
+						{
+							"name": "Send Registration OTP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    const requestBody = JSON.parse(pm.request.body.raw);",
+											"    pm.environment.set(\"test_email\", requestBody.email);",
+											"    console.log(\"✅ OTP sent successfully. Check backend console for OTP code.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/register/send-otp",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"register",
+										"send-otp"
+									]
+								},
+								"description": "Send OTP to email for user registration. OTP is valid for 180 seconds."
+							},
+							"response": []
+						},
+						{
+							"name": "Complete Registration",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"user_token\", response.data.accessToken);",
+											"    pm.environment.set(\"user_id\", response.data.userId);",
+											"    console.log(\"✅ User registered successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"9876543210\",\n  \"password\": \"SecurePass@123\",\n  \"otpCode\": \"123456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/register",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"register"
+									]
+								},
+								"description": "Complete user registration with OTP verification. Returns access token."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Login",
+					"item": [
+						{
+							"name": "Login with Email",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"user_token\", response.data.accessToken);",
+											"    pm.environment.set(\"user_id\", response.data.userId);",
+											"    console.log(\"✅ User logged in successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"identifier\": \"john.doe@example.com\",\n  \"password\": \"SecurePass@123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"login"
+									]
+								},
+								"description": "Login with email or phone number and password."
+							},
+							"response": []
+						},
+						{
+							"name": "Login with Phone",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"user_token\", response.data.accessToken);",
+											"    pm.environment.set(\"user_id\", response.data.userId);",
+											"    console.log(\"✅ User logged in successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"identifier\": \"9876543210\",\n  \"password\": \"SecurePass@123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"login"
+									]
+								},
+								"description": "Login with phone number (with or without +91 prefix)."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Password Reset",
+					"item": [
+						{
+							"name": "Forgot Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    if (response.data.otpRef) {",
+											"        pm.environment.set(\"otp_ref\", response.data.otpRef);",
+											"        console.log(\"✅ Password reset OTP sent. Check backend console for OTP.\");",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/forgot-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"forgot-password"
+									]
+								},
+								"description": "Request password reset OTP. OTP valid for 180 seconds."
+							},
+							"response": []
+						},
+						{
+							"name": "Validate OTP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"reset_token\", response.data.resetToken);",
+											"    console.log(\"✅ OTP validated. Reset token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"otp\": \"123456\",\n  \"otpRef\": \"{{otp_ref}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/validate-otp",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"validate-otp"
+									]
+								},
+								"description": "Validate OTP and receive reset token."
+							},
+							"response": []
+						},
+						{
+							"name": "Set New Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log(\"✅ Password updated successfully. You can now login with new password.\");",
+											"    pm.environment.set(\"reset_token\", \"\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{reset_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"newPassword\": \"NewSecurePass@456\",\n  \"confirmPassword\": \"NewSecurePass@456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/set-new-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"set-new-password"
+									]
+								},
+								"description": "Set new password using reset token from OTP validation."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Google Authentication",
+					"item": [
+						{
+							"name": "Get Google Config",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/user/google/config",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"google",
+										"config"
+									]
+								},
+								"description": "Get Google OAuth Client ID for frontend integration."
+							},
+							"response": []
+						},
+						{
+							"name": "Google Login/Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200 || pm.response.code === 201) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"user_token\", response.data.accessToken);",
+											"    pm.environment.set(\"user_id\", response.data.userId);",
+											"    console.log(\"✅ Google authentication successful. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"idToken\": \"PASTE_GOOGLE_ID_TOKEN_HERE\",\n  \"phone\": \"9876543210\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/google/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"google",
+										"login"
+									]
+								},
+								"description": "Login or register using Google OAuth token. Creates new user if email doesn't exist."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Profile Management",
+					"item": [
+						{
+							"name": "Get Profile",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/user/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"profile"
+									]
+								},
+								"description": "Get authenticated user's profile information."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"phone\": \"9999888877\",\n  \"profileImage\": \"https://example.com/profile.jpg\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"profile"
+									]
+								},
+								"description": "Update user profile information (partial updates supported)."
+							},
+							"response": []
+						},
+						{
+							"name": "Add Role",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"user_token\", response.data.accessToken);",
+											"    console.log(\"✅ Role added successfully. New token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{user_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleId\": 2\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/user/add-role",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"user",
+										"add-role"
+									]
+								},
+								"description": "Add additional role to user (e.g., add Seller role to existing User). Returns new token with updated roles."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "SELLER Authentication",
+			"item": [
+				{
+					"name": "1. Registration Flow",
+					"item": [
+						{
+							"name": "Send Registration OTP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    const requestBody = JSON.parse(pm.request.body.raw);",
+											"    pm.environment.set(\"test_email\", requestBody.email);",
+											"    console.log(\"✅ OTP sent successfully. Check backend console for OTP code.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"seller@shop.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/register/send-otp",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"register",
+										"send-otp"
+									]
+								},
+								"description": "Send OTP to email for seller registration."
+							},
+							"response": []
+						},
+						{
+							"name": "Complete Registration",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 201) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"seller_token\", response.data.accessToken);",
+											"    pm.environment.set(\"seller_id\", response.data.userId);",
+											"    console.log(\"✅ Seller registered successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"email\": \"seller@shop.com\",\n  \"phone\": \"9123456789\",\n  \"password\": \"SellerPass@123\",\n  \"otpCode\": \"123456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/register",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"register"
+									]
+								},
+								"description": "Complete seller registration with OTP verification."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Login",
+					"item": [
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"seller_token\", response.data.accessToken);",
+											"    pm.environment.set(\"seller_id\", response.data.userId);",
+											"    console.log(\"✅ Seller logged in successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"identifier\": \"seller@shop.com\",\n  \"password\": \"SellerPass@123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"login"
+									]
+								},
+								"description": "Login with email or phone number and password."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. Password Reset",
+					"item": [
+						{
+							"name": "Forgot Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    if (response.data.otpRef) {",
+											"        pm.environment.set(\"otp_ref\", response.data.otpRef);",
+											"        console.log(\"✅ Password reset OTP sent. Check backend console for OTP.\");",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"seller@shop.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/forgot-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"forgot-password"
+									]
+								},
+								"description": "Request password reset OTP."
+							},
+							"response": []
+						},
+						{
+							"name": "Validate OTP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"reset_token\", response.data.resetToken);",
+											"    console.log(\"✅ OTP validated. Reset token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"otp\": \"123456\",\n  \"otpRef\": \"{{otp_ref}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/validate-otp",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"validate-otp"
+									]
+								},
+								"description": "Validate OTP and receive reset token."
+							},
+							"response": []
+						},
+						{
+							"name": "Set New Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log(\"✅ Password updated successfully.\");",
+											"    pm.environment.set(\"reset_token\", \"\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{reset_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"newPassword\": \"NewSellerPass@456\",\n  \"confirmPassword\": \"NewSellerPass@456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/set-new-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"set-new-password"
+									]
+								},
+								"description": "Set new password using reset token."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Google Authentication",
+					"item": [
+						{
+							"name": "Get Google Config",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/api/seller/google/config",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"google",
+										"config"
+									]
+								},
+								"description": "Get Google OAuth Client ID."
+							},
+							"response": []
+						},
+						{
+							"name": "Google Login/Register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200 || pm.response.code === 201) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"seller_token\", response.data.accessToken);",
+											"    pm.environment.set(\"seller_id\", response.data.userId);",
+											"    console.log(\"✅ Google authentication successful. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"idToken\": \"PASTE_GOOGLE_ID_TOKEN_HERE\",\n  \"phone\": \"9123456789\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/google/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"google",
+										"login"
+									]
+								},
+								"description": "Login or register using Google OAuth token."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Profile Management",
+					"item": [
+						{
+							"name": "Get Profile",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{seller_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/seller/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"profile"
+									]
+								},
+								"description": "Get authenticated seller's profile."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{seller_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"Jane Updated\",\n  \"lastName\": \"Smith Updated\",\n  \"phone\": \"9111222333\",\n  \"profileImage\": \"https://example.com/seller-profile.jpg\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"profile"
+									]
+								},
+								"description": "Update seller profile information."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "6. KYC Management",
+					"item": [
+						{
+							"name": "Submit KYC Request",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{seller_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"shopName\": \"Jane's Fashion Store\",\n  \"gstin\": \"29ABCDE1234F1Z5\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"bankDetails\": {\n    \"accountNumber\": \"1234567890\",\n    \"ifscCode\": \"HDFC0001234\",\n    \"accountHolderName\": \"Jane Smith\",\n    \"bankName\": \"HDFC Bank\"\n  }\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/seller/kyc/request",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"kyc",
+										"request"
+									]
+								},
+								"description": "Submit KYC request with business details. Requires admin approval to go live."
+							},
+							"response": []
+						},
+						{
+							"name": "Get KYC Status",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{seller_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/seller/kyc/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"seller",
+										"kyc",
+										"status"
+									]
+								},
+								"description": "Get current KYC status and approval details."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "ADMIN Authentication",
+			"item": [
+				{
+					"name": "1. Login & Profile",
+					"item": [
+						{
+							"name": "Login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"admin_token\", response.data.accessToken);",
+											"    pm.environment.set(\"admin_id\", response.data.userId);",
+											"    console.log(\"✅ Admin logged in successfully. Token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"identifier\": \"admin@ecommerce.com\",\n  \"password\": \"Admin@123\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/login",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"login"
+									]
+								},
+								"description": "Admin login with email or phone and password."
+							},
+							"response": []
+						},
+						{
+							"name": "Get Profile",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"profile"
+									]
+								},
+								"description": "Get admin profile information."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Profile",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"System Updated\",\n  \"lastName\": \"Admin Updated\",\n  \"phone\": \"9000000099\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/profile",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"profile"
+									]
+								},
+								"description": "Update admin profile information."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "2. Password Reset",
+					"item": [
+						{
+							"name": "Forgot Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    if (response.data.otpRef) {",
+											"        pm.environment.set(\"otp_ref\", response.data.otpRef);",
+											"        console.log(\"✅ Password reset OTP sent. Check backend console for OTP.\");",
+											"    }",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"admin@ecommerce.com\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/forgot-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"forgot-password"
+									]
+								},
+								"description": "Request password reset OTP for admin."
+							},
+							"response": []
+						},
+						{
+							"name": "Validate OTP",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    const response = pm.response.json();",
+											"    pm.environment.set(\"reset_token\", response.data.resetToken);",
+											"    console.log(\"✅ OTP validated. Reset token saved.\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"otp\": \"123456\",\n  \"otpRef\": \"{{otp_ref}}\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/validate-otp",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"validate-otp"
+									]
+								},
+								"description": "Validate OTP and receive reset token."
+							},
+							"response": []
+						},
+						{
+							"name": "Set New Password",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    console.log(\"✅ Password updated successfully.\");",
+											"    pm.environment.set(\"reset_token\", \"\");",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{reset_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"newPassword\": \"NewAdminPass@456\",\n  \"confirmPassword\": \"NewAdminPass@456\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/set-new-password",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"set-new-password"
+									]
+								},
+								"description": "Set new password using reset token."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "3. User Management",
+					"item": [
+						{
+							"name": "Get All Users",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/users?page=1&limit=10",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"users"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										},
+										{
+											"key": "role",
+											"value": "3",
+											"disabled": true
+										},
+										{
+											"key": "status",
+											"value": "true",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Get all users with pagination and optional filters (role, status)."
+							},
+							"response": []
+						},
+						{
+							"name": "Add User",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"testuser@example.com\",\n  \"phone\": \"9555666777\",\n  \"password\": \"TestPass@123\",\n  \"roles\": [3]\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/users",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"users"
+									]
+								},
+								"description": "Create a new user with specified roles. Roles: 1=Admin, 2=Seller, 3=User"
+							},
+							"response": []
+						},
+						{
+							"name": "Update User",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"firstName\": \"Test Updated\",\n  \"lastName\": \"User Updated\",\n  \"phone\": \"9444555666\",\n  \"roles\": [3, 2],\n  \"status\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/users/:userId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"users",
+										":userId"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "PASTE_USER_ID_HERE"
+										}
+									]
+								},
+								"description": "Update user information including roles and status. Partial updates supported."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "4. Role Management",
+					"item": [
+						{
+							"name": "Get All Roles",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/roles?page=1&limit=10",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"roles"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "1"
+										},
+										{
+											"key": "limit",
+											"value": "10"
+										}
+									]
+								},
+								"description": "Get all roles with pagination."
+							},
+							"response": []
+						},
+						{
+							"name": "Create Role",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleName\": \"Manager\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/roles",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"roles"
+									]
+								},
+								"description": "Create a new role."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Role",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"roleName\": \"Store Manager\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/roles/:roleId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"roles",
+										":roleId"
+									],
+									"variable": [
+										{
+											"key": "roleId",
+											"value": "4"
+										}
+									]
+								},
+								"description": "Update role name."
+							},
+							"response": []
+						},
+						{
+							"name": "Delete Role",
+							"request": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/roles/:roleId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"roles",
+										":roleId"
+									],
+									"variable": [
+										{
+											"key": "roleId",
+											"value": "4"
+										}
+									]
+								},
+								"description": "Soft delete a role. Cannot delete default roles (1, 2, 3)."
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "5. Seller KYC Management",
+					"item": [
+						{
+							"name": "Approve KYC & Set Commission",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"commissionPercentage\": 15,\n  \"kycApproved\": true\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/seller/:userId/commission",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"seller",
+										":userId",
+										"commission"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{seller_id}}"
+										}
+									]
+								},
+								"description": "Approve seller KYC and set commission percentage. Auto sets isLive to true when kycApproved is true."
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				},
+				"description": "Check API server health status."
+			},
+			"response": []
+		}
+	]
+}
