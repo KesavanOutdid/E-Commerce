@@ -1,0 +1,278 @@
+{
+	"info": {
+		"_postman_id": "product-management-collection",
+		"name": "E-Commerce Product APIs",
+		"description": "API collection for Product Management including Admin, Seller, and Website/Public flows.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Admin Products",
+			"item": [
+				{
+					"name": "Create Admin Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "images", "type": "file", "src": [] },
+								{ "key": "productName", "value": "Admin Product Name", "type": "text" },
+								{ "key": "slug", "value": "admin-product-slug", "type": "text" },
+								{ "key": "categoryId", "value": "CategoryID_UUID", "type": "text" },
+								{ "key": "subCategoryId", "value": "SubCategoryID_UUID", "type": "text" },
+								{ "key": "price", "value": "100", "type": "text" },
+								{ "key": "stock", "value": "50", "type": "text" },
+								{ "key": "description", "value": "Long description", "type": "text" },
+								{ "key": "shortDescription", "value": "Short description", "type": "text" },
+								{ "key": "attributes", "value": "[{\"name\": \"RAM\", \"value\": \"8GB\"}, {\"name\": \"Storage\", \"value\": \"256GB\"}]", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "admin"]
+						}
+					}
+				},
+				{
+					"name": "Get All Products (Admin)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/getproducts?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "admin", "getproducts"],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Product (Admin)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "images", "type": "file", "src": [] },
+								{ "key": "productName", "value": "Updated Name", "type": "text" },
+								{ "key": "price", "value": "150", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "admin", ":id"],
+							"variable": [{ "key": "id", "value": "product_id_here" }]
+						}
+					}
+				},
+				{
+					"name": "Update Approval Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"approvalStatus\": \"approved\",\n  \"rejectionReason\": \"\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/:id/approval",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "admin", ":id", "approval"],
+							"variable": [{ "key": "id", "value": "product_id_here" }]
+						}
+					}
+				},
+				{
+					"name": "Delete Product (Admin)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "admin", ":id"],
+							"variable": [{ "key": "id", "value": "product_id_here" }]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Seller Products",
+			"item": [
+				{
+					"name": "Create Seller Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "images", "type": "file", "src": [] },
+								{ "key": "userId", "value": "{{seller_user_id}}", "type": "text" },
+								{ "key": "productName", "value": "Seller Product Name", "type": "text" },
+								{ "key": "slug", "value": "seller-product-slug", "type": "text" },
+								{ "key": "categoryId", "value": "CategoryID_UUID", "type": "text" },
+								{ "key": "price", "value": "120", "type": "text" },
+								{ "key": "stock", "value": "20", "type": "text" },
+								{ "key": "description", "value": "Seller description", "type": "text" },
+								{ "key": "shortDescription", "value": "Seller short description", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "seller"]
+						}
+					}
+				},
+				{
+					"name": "Get My Products (Seller)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/getproducts?userId={{seller_user_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "seller", "getproducts"],
+							"query": [{ "key": "userId", "value": "{{seller_user_id}}" }]
+						}
+					}
+				},
+				{
+					"name": "Update My Product (Seller)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "images", "type": "file", "src": [] },
+								{ "key": "productName", "value": "Updated Seller Product", "type": "text" },
+								{ "key": "price", "value": "130", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "seller", ":id"],
+							"variable": [{ "key": "id", "value": "product_id_here" }]
+						}
+					}
+				},
+				{
+					"name": "Delete My Product (Seller)",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "seller", ":id"],
+							"variable": [{ "key": "id", "value": "product_id_here" }]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Website Products",
+			"item": [
+				{
+					"name": "Get All Products (Public)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/products",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products"]
+						}
+					}
+				},
+				{
+					"name": "Get Product Detail (Public)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/products/:id",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", ":id"],
+							"variable": [{ "key": "id", "value": "product_id_or_slug" }]
+						}
+					}
+				},
+				{
+					"name": "Get Products by SubCategory (Public)",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/products/subcategory/:subCategoryId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "products", "subcategory", ":subCategoryId"],
+							"variable": [{ "key": "subCategoryId", "value": "sub_category_uuid_here" }]
+						}
+					}
+				}
+			]
+		}
+	]
+}

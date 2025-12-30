@@ -5,14 +5,14 @@ const { slugify } = require('../../../utils/help');
 
 exports.createProduct = async (req, res) => {
   try {
-    if (req.roleId !== 1) {
+    if (req.roleId !== 2) {
       return res.status(403).json({ 
         success: false, 
-        message: 'Only admins can create products' 
+        message: 'Only sellers can create products' 
       });
     }
 
-    const { productName, mainCategoryId, subCategoryId, price, stock, description, shortDescription,createdBy } = req.body;
+    const { productName, mainCategoryId, subCategoryId, price, stock, description, shortDescription, userId,createdby } = req.body;
     let { attributes } = req.body;
 
     if (typeof attributes === 'string') {
@@ -23,10 +23,10 @@ exports.createProduct = async (req, res) => {
       }
     }
 
-    if (!productName || !mainCategoryId || !subCategoryId || price === undefined || stock === undefined) {
+    if (!productName || !mainCategoryId || !subCategoryId || price === undefined || stock === undefined || !userId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'productName, mainCategoryId, subCategoryId, price, and stock are required fields' 
+        message: 'productName, mainCategoryId, subCategoryId, price, stock, and userId are required fields' 
       });
     }
 
@@ -78,12 +78,12 @@ exports.createProduct = async (req, res) => {
       mainCategoryId,
       subCategoryId,
       masterProductId: masterProductId,
-      userId: req.userId,
+      userId,
       images: images,
       attributes: attributes || [],
-      roleId: 1,
-      status: true,
-      createdby: createdBy
+      roleId: 2,
+      approvalStatus: 'pending',
+      status: true,createdby
     };
     
     const product = await Product.create(productData);
@@ -95,7 +95,7 @@ exports.createProduct = async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Product created successfully by admin',
+      message: 'Product created successfully, awaiting approval',
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -104,7 +104,15 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    let query = {};
+    const filterUserId = req.query.userId || req.userId;
+
+    // Seller sees their own products (or specified userId) OR Admin products
+    let query = {
+      $or: [
+        { userId: filterUserId },
+        { roleId: 1 }
+      ]
+    };
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -117,7 +125,7 @@ exports.getProducts = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'All products fetched successfully',
+      message: 'Seller products fetched successfully',
       data: {
         products,
         pagination: {
@@ -135,7 +143,7 @@ exports.getProducts = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { productName, price, stock, description, shortDescription, updatedby } = req.body;
+    const { productName, price, stock, description, shortDescription,updatedby } = req.body;
 
     if (Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
       return res.status(400).json({ 
@@ -149,6 +157,14 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    // Seller ownership check
+    if (existingProduct.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You can only update your own products' 
+      });
+    }
+
     const updateData = { ...req.body, updatedby };
     if (productName) {
       updateData.slug = slugify(productName);
@@ -159,10 +175,7 @@ exports.updateProduct = async (req, res) => {
     }
 
     const product = await Product.update(req.params.id, updateData);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
+    
     await deleteCachePattern('products:list:*');
     await deleteCache(`products:detail:${req.params.id}`);
 
@@ -170,8 +183,7 @@ exports.updateProduct = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'Product updated successfully',
-    });
+      message: 'Product updated successfully'    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -184,6 +196,13 @@ exports.deleteProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    if (product.userId.toString() !== req.userId.toString()) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'You can only delete your own products' 
+      });
+    }
+
     await Product.delete(req.params.id);
     
     await deleteCachePattern('products:list:*');
@@ -193,62 +212,6 @@ exports.deleteProduct = async (req, res) => {
       success: true, 
       message: 'Product deleted successfully' 
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-exports.updateApprovalStatus = async (req, res) => {
-  try {
-    if (req.roleId !== 1) {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Only admin can perform this action' 
-      });
-    }
-
-    const { id } = req.params;
-    const { approvalStatus, rejectionReason } = req.body;
-
-    if (!id) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Product ID is required' 
-      });
-    }
-
-    if (!['approved', 'rejected'].includes(approvalStatus)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid status. Must be "approved" or "rejected"' 
-      });
-    }
-
-    if (approvalStatus === 'rejected' && !rejectionReason) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Rejection reason is required when status is "rejected"' 
-      });
-    }
-
-    const updateData = { 
-      approvalStatus, 
-      rejectionReason: approvalStatus === 'rejected' ? rejectionReason : null 
-    };
-    
-    const product = await Product.update(id, updateData);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    await deleteCachePattern('products:list:*');
-    await deleteCache(`products:detail:${req.params.id}`);
-
-    const { _id, ...responseData } = product;
-
-    res.status(200).json({ 
-      success: true, 
-      message: `Product ${approvalStatus} successfully`    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

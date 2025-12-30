@@ -1,9 +1,44 @@
 const Product = require('../../../models/Product');
 const { getCache, setCache } = require('../../../services/redisService');
 
+// Helper for aggregation pipeline to avoid duplication
+const getProductAggregationPipeline = (matchQuery, skip, limitNum) => {
+  return [
+    { $match: matchQuery },
+    { $sort: { price: 1 } },
+    { 
+      $group: {
+        _id: "$slug",
+        cheapestListing: { $first: "$$ROOT" },
+        sellerCount: { $sum: 1 },
+        minPrice: { $min: "$price" }
+      }
+    },
+    {
+      $facet: {
+        data: [
+          { $skip: skip },
+          { $limit: limitNum },
+          { 
+            $project: {
+              _id: 0,
+              product: "$cheapestListing",
+              sellerCount: 1,
+              minPrice: 1
+            }
+          }
+        ],
+        totalCount: [
+          { $count: "count" }
+        ]
+      }
+    }
+  ];
+};
+
 exports.getProducts = async (req, res) => {
   try {
-    const cacheKey = `products:list:website:${JSON.stringify(req.query)}`;
+    const cacheKey = `products:list:website:all:${JSON.stringify(req.query)}`;
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
@@ -14,52 +49,25 @@ exports.getProducts = async (req, res) => {
       });
     }
 
-    const { categoryId, subCategoryId, page = 1, limit = 10 } = req.query;
+    const { categoryId, page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
+    // Filter: Admin products (roleId 1) OR Approved Seller products (roleId 2)
     let matchQuery = { 
-      approvalStatus: 'approved',
+      $or: [
+        { roleId: 1 },
+        { roleId: 2, approvalStatus: 'approved' }
+      ],
       status: true 
     };
     
     if (categoryId) matchQuery.categoryId = categoryId;
-    if (subCategoryId) matchQuery.subCategoryId = subCategoryId;
 
-    // Use aggregation to group by slug (Master Product Identity)
-    // and pick the cheapest seller for the list view, with pagination
-    const aggregationResult = await Product.collection().aggregate([
-      { $match: matchQuery },
-      { $sort: { price: 1 } },
-      { 
-        $group: {
-          _id: "$slug",
-          cheapestListing: { $first: "$$ROOT" },
-          sellerCount: { $sum: 1 },
-          minPrice: { $min: "$price" }
-        }
-      },
-      {
-        $facet: {
-          data: [
-            { $skip: skip },
-            { $limit: limitNum },
-            { 
-              $project: {
-                _id: 0,
-                product: "$cheapestListing",
-                sellerCount: 1,
-                minPrice: 1
-              }
-            }
-          ],
-          totalCount: [
-            { $count: "count" }
-          ]
-        }
-      }
-    ]).toArray();
+    const aggregationResult = await Product.collection().aggregate(
+      getProductAggregationPipeline(matchQuery, skip, limitNum)
+    ).toArray();
 
     const products = aggregationResult[0].data;
     const total = aggregationResult[0].totalCount[0]?.count || 0;
@@ -78,7 +86,65 @@ exports.getProducts = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'Products fetched successfully',
+      message: 'All approved products fetched successfully',
+      data: responseData 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getProductsBySubCategory = async (req, res) => {
+  try {
+    const { subCategoryId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    
+    const cacheKey = `products:list:website:subcategory:${subCategoryId}:${page}:${limit}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Subcategory products fetched successfully (from cache)',
+        data: cachedData 
+      });
+    }
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    let matchQuery = { 
+      subCategoryId: subCategoryId,
+      $or: [
+        { roleId: 1 },
+        { roleId: 2, approvalStatus: 'approved' }
+      ],
+      status: true 
+    };
+
+    const aggregationResult = await Product.collection().aggregate(
+      getProductAggregationPipeline(matchQuery, skip, limitNum)
+    ).toArray();
+
+    const products = aggregationResult[0].data;
+    const total = aggregationResult[0].totalCount[0]?.count || 0;
+    
+    const responseData = {
+      products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
+    };
+    
+    await setCache(cacheKey, responseData, 3600);
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Products for subcategory ${subCategoryId} fetched successfully`,
       data: responseData 
     });
   } catch (error) {
@@ -100,7 +166,10 @@ exports.getProductById = async (req, res) => {
     }
 
     const product = await Product.findById(req.params.id);
-    if (!product || product.approvalStatus !== 'approved' || product.status !== true) {
+    // Check if it's admin or approved seller product
+    const isApproved = product && (product.roleId === 1 || (product.roleId === 2 && product.approvalStatus === 'approved'));
+    
+    if (!product || !isApproved || product.status !== true) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
@@ -108,7 +177,10 @@ exports.getProductById = async (req, res) => {
     const otherSellers = await Product.collection().find({
       slug: product.slug,
       _id: { $ne: product._id },
-      approvalStatus: 'approved',
+      $or: [
+        { roleId: 1 },
+        { roleId: 2, approvalStatus: 'approved' }
+      ],
       status: true
     }).toArray();
 

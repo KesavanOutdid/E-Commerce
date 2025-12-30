@@ -2,21 +2,19 @@ const { getDB } = require('../config/db');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
 
-class Category {
+class MainCategory {
   static collection() {
-    return getDB().collection('categories');
+    return getDB().collection('main_categories');
   }
 
-  static async create(categoryData) {
+  static async create(data) {
     const category = {
-      categoryId: crypto.randomUUID(), // Automatically generate UUID
-      name: categoryData.name,
-      slug: categoryData.slug,
-      parentId: categoryData.parentId || null, // Stores UUID of parent
-      level: categoryData.level, // 1 = Category, 2 = Subcategory, 3 = Child
-      status: categoryData.status !== undefined ? categoryData.status : true,
-      createdBy: categoryData.createdBy||null , 
-      updatedBy: categoryData.updatedBy|| null ,
+      categoryId: crypto.randomUUID(),
+      name: data.name,
+      slug: data.slug,
+      level: 1,
+      status: data.status !== undefined ? data.status : true,
+      createdBy: data.createdBy || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -39,15 +37,10 @@ class Category {
   }
 
   static async findById(id) {
-    // Try finding by _id (ObjectId) or categoryId (UUID)
     const query = ObjectId.isValid(id) 
       ? { $or: [{ _id: new ObjectId(id) }, { categoryId: id }] }
       : { categoryId: id };
     return await this.collection().findOne(query);
-  }
-
-  static async findByUuid(uuid) {
-    return await this.collection().findOne({ categoryId: uuid });
   }
 
   static async update(id, updateData) {
@@ -55,11 +48,6 @@ class Category {
       ...updateData,
       updatedAt: new Date()
     };
-
-    if (updateData.updatedBy) {
-      update.updatedBy = new ObjectId(updateData.updatedBy);
-    }
-
     const query = ObjectId.isValid(id) 
       ? { $or: [{ _id: new ObjectId(id) }, { categoryId: id }] }
       : { categoryId: id };
@@ -73,8 +61,9 @@ class Category {
   }
 
   static async delete(id) {
-    return await this.collection().deleteOne({ _id: new ObjectId(id) });
+    const query = ObjectId.isValid(id) ? { _id: new ObjectId(id) } : { categoryId: id };
+    return await this.collection().deleteOne(query);
   }
 }
 
-module.exports = Category;
+module.exports = MainCategory;

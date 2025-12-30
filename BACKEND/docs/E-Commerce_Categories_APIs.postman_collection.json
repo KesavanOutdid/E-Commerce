@@ -1,27 +1,25 @@
 {
 	"info": {
-		"_postman_id": "e-commerce-categories-collection",
-		"name": "E-Commerce Categories APIs",
-		"description": "Complete categories API collection for E-Commerce platform including Admin and Website endpoints.",
+		"_postman_id": "e-commerce-split-collection",
+		"name": "E-Commerce Categories & Products APIs (Split)",
+		"description": "API collection with separate Category and Subcategory endpoints.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "CATEGORIES - WEBSITE",
+			"name": "1. MAIN CATEGORIES",
 			"item": [
 				{
-					"name": "1. Get All Categories",
+					"name": "Add Main Category",
 					"event": [
 						{
 							"listen": "test",
 							"script": {
 								"exec": [
-									"if (pm.response.code === 200) {",
+									"if (pm.response.code === 201) {",
 									"    const response = pm.response.json();",
-									"    if (response.data && response.data.categories.length > 0) {",
-									"        pm.environment.set(\"category_id\", response.data.categories[0]._id);",
-									"        console.log(\"✅ Categories fetched successfully. First category ID saved.\");",
-									"    }",
+									"    pm.environment.set(\"main_category_id\", response.data.categoryId || response.data._id);",
+									"    console.log(\"✅ Main category created successfully. ID saved.\");",
 									"}"
 								],
 								"type": "text/javascript"
@@ -29,181 +27,38 @@
 						}
 					],
 					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/api/categories?page=1&limit=10",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"categories"
-							],
-							"query": [
-								{
-									"key": "page",
-									"value": "1"
-								},
-								{
-									"key": "limit",
-									"value": "10"
-								}
-							]
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Electronics\",\n  \"slug\": \"electronics\",\n  \"createdBy\": \"{{admin_id}}\"\n}"
 						},
-						"description": "Fetch all active categories with pagination. Results are cached for 1 hour."
-					},
-					"response": []
-				},
-				{
-					"name": "2. Get Category by ID",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const response = pm.response.json();",
-									"    console.log(\"✅ Category fetched successfully with attributes.\");",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/categories/{{category_id}}",
+							"raw": "{{base_url}}/api/categories/main",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"categories",
-								"{{category_id}}"
+								"main"
 							]
 						},
-						"description": "Get category details by ID including all attributes."
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "CATEGORIES - ADMIN",
-			"item": [
-				{
-					"name": "1. Create Category",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"    const response = pm.response.json();",
-									"    pm.environment.set(\"new_category_id\", response.data._id);",
-									"    console.log(\"✅ Category created successfully. ID saved.\");",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{admin_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Electronics\",\n  \"slug\": \"electronics\",\n  \"level\": 1,\n  \"createdBy\": \"{{admin_id}}\",\n  \"attributes\": [\n    {\n      \"name\": \"Brand\",\n      \"type\": \"text\",\n      \"required\": true\n    },\n    {\n      \"name\": \"Color\",\n      \"type\": \"text\",\n      \"required\": false\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/categories",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"categories"
-							]
-						},
-						"description": "Create a new category. Level 1 = main category, Level 2+ = subcategory (requires parentId)."
+						"description": "Create a top-level category (Level 1)."
 					},
 					"response": []
 				},
 				{
-					"name": "2. Create Subcategory",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 201) {",
-									"    const response = pm.response.json();",
-									"    pm.environment.set(\"subcategory_id\", response.data._id);",
-									"    console.log(\"✅ Subcategory created successfully.\");",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "Authorization",
-								"value": "Bearer {{admin_token}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"name\": \"Smartphones\",\n  \"slug\": \"smartphones\",\n  \"parentId\": \"{{category_id}}\",\n  \"level\": 2,\n  \"createdBy\": \"{{admin_id}}\",\n  \"attributes\": [\n    {\n      \"name\": \"RAM\",\n      \"type\": \"text\",\n      \"required\": true\n    },\n    {\n      \"name\": \"Storage\",\n      \"type\": \"text\",\n      \"required\": true\n    }\n  ]\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/categories",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"categories"
-							]
-						},
-						"description": "Create a subcategory (Level 2+). Requires parent category ID."
-					},
-					"response": []
-				},
-				{
-					"name": "3. Update Category",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    const response = pm.response.json();",
-									"    console.log(\"✅ Category updated successfully.\");",
-									"}"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "Update Main Category",
 					"request": {
 						"method": "PUT",
 						"header": [
@@ -218,25 +73,73 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Electronics Updated\",\n  \"slug\": \"electronics-updated\",\n  \"status\": true,\n  \"updatedBy\": \"{{admin_id}}\"\n}"
+							"raw": "{\n  \"name\": \"Electronics v2\"\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/categories/{{category_id}}",
+							"raw": "{{base_url}}/api/categories/main/{{main_category_id}}",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"categories",
-								"{{category_id}}"
+								"main",
+								"{{main_category_id}}"
 							]
-						},
-						"description": "Update category details. Supports partial updates."
+						}
 					},
 					"response": []
 				},
 				{
-					"name": "4. Add Attributes to Category",
+					"name": "View Main Categories",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/categories/main",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"main"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Main Category",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/categories/main/{{main_category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"main",
+								"{{main_category_id}}"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. SUBCATEGORIES",
+			"item": [
+				{
+					"name": "Add Subcategory",
 					"event": [
 						{
 							"listen": "test",
@@ -244,7 +147,8 @@
 								"exec": [
 									"if (pm.response.code === 201) {",
 									"    const response = pm.response.json();",
-									"    console.log(\"✅ Attributes added successfully.\");",
+									"    pm.environment.set(\"subcategory_id\", response.data.categoryId || response.data._id);",
+									"    console.log(\"✅ Subcategory created successfully. ID saved.\");",
 									"}"
 								],
 								"type": "text/javascript"
@@ -265,39 +169,112 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"attributes\": [\n    {\n      \"name\": \"Warranty\",\n      \"type\": \"text\",\n      \"required\": false\n    },\n    {\n      \"name\": \"Model Year\",\n      \"type\": \"text\",\n      \"required\": false\n    }\n  ]\n}"
+							"raw": "{\n  \"name\": \"Smartphones\",\n  \"slug\": \"smartphones\",\n  \"parentId\": \"{{main_category_id}}\",\n  \"createdBy\": \"{{admin_id}}\",\n  \"attributes\": [\n    { \"name\": \"RAM\", \"slug\": \"ram\", \"type\": \"text\", \"required\": true }\n  ]\n}"
 						},
 						"url": {
-							"raw": "{{base_url}}/api/categories/{{category_id}}/attributes",
+							"raw": "{{base_url}}/api/categories/sub",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"categories",
-								"{{category_id}}",
-								"attributes"
+								"sub"
 							]
 						},
-						"description": "Add new attributes to an existing category."
+						"description": "Create a subcategory (Level 2) under a main category. Attributes are stored directly in this document."
 					},
 					"response": []
 				},
 				{
-					"name": "5. Delete Category",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"if (pm.response.code === 200) {",
-									"    console.log(\"✅ Category and its attributes deleted successfully.\");",
-									"}"
-								],
-								"type": "text/javascript"
+					"name": "Update Subcategory",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
 							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Premium Smartphones\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/sub/{{subcategory_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"sub",
+								"{{subcategory_id}}"
+							]
 						}
-					],
+					},
+					"response": []
+				},
+				{
+					"name": "Add Attributes to Subcategory",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"attributes\": [\n    { \"name\": \"RAM\", \"slug\": \"ram\", \"type\": \"text\", \"required\": true },\n    { \"name\": \"Storage\", \"slug\": \"storage\", \"type\": \"text\", \"required\": true }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/categories/sub/{{subcategory_id}}/attributes",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"sub",
+								"{{subcategory_id}}",
+								"attributes"
+							]
+						},
+						"description": "Add or replace attributes array for a specific category."
+					},
+					"response": []
+				},
+				{
+					"name": "View Subcategories of Parent",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/api/categories/sub/{{main_category_id}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"categories",
+								"sub",
+								"{{main_category_id}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Subcategory",
 					"request": {
 						"method": "DELETE",
 						"header": [
@@ -307,21 +284,22 @@
 							}
 						],
 						"url": {
-							"raw": "{{base_url}}/api/categories/{{category_id}}",
+							"raw": "{{base_url}}/api/categories/sub/{{subcategory_id}}",
 							"host": [
 								"{{base_url}}"
 							],
 							"path": [
 								"api",
 								"categories",
-								"{{category_id}}"
+								"sub",
+								"{{subcategory_id}}"
 							]
-						},
-						"description": "Delete a category and all its associated attributes."
+						}
 					},
 					"response": []
 				}
 			]
 		}
+	
 	]
 }

@@ -1,5 +1,5 @@
-const Category = require('../../../models/Category');
-const CategoryAttribute = require('../../../models/CategoryAttribute');
+const MainCategory = require('../../../models/MainCategory');
+const SubCategory = require('../../../models/SubCategory');
 const { getCache, setCache } = require('../../../services/redisService');
 
 exports.getCategories = async (req, res) => {
@@ -15,16 +15,23 @@ exports.getCategories = async (req, res) => {
       });
     }
 
-    const { page = 1, limit = 10, ...filters } = req.query;
+    const { page = 1, limit = 10, type = 'main', ...filters } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const query = { ...filters, status: true };
+    const query = { 
+      $or: [
+        { status: true },
+        { status: 'true' }
+      ],
+      ...filters 
+    };
+    const Model = type === 'sub' ? SubCategory : MainCategory;
 
     const [categories, total] = await Promise.all([
-      Category.find(query, { skip, limit: limitNum }),
-      Category.count(query)
+      Model.find(query, { skip, limit: limitNum }),
+      Model.count(query)
     ]);
     
     const responseData = {
@@ -49,33 +56,35 @@ exports.getCategories = async (req, res) => {
   }
 };
 
-exports.getCategoryById = async (req, res) => {
+
+exports.getSubcategoriesByParent = async (req, res) => {
   try {
-    const cacheKey = `categories:detail:${req.params.id}`;
-    const cachedData = await getCache(cacheKey);
-
-    if (cachedData) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'Category fetched successfully (from cache)',
-        data: cachedData 
-      });
+    const { parentId } = req.params;
+    const parent = await MainCategory.findById(parentId);
+    if (!parent) {
+      return res.status(404).json({ success: false, message: 'Parent category not found' });
     }
+    
+    const subcategories = await SubCategory.find({ parentId: parent.categoryId, status: true });
+    res.status(200).json({ success: true, data: subcategories });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
-    const category = await Category.findById(req.params.id);
-    if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found' });
+exports.getSubcategoryAttributes = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subcategory = await SubCategory.findById(id);
+
+    if (!subcategory) {
+      return res.status(404).json({ success: false, message: 'Subcategory not found' });
     }
-
-    const attributes = await CategoryAttribute.findByCategoryId(req.params.id);
-    const data = { ...category, attributes };
-
-    await setCache(cacheKey, data, 3600);
 
     res.status(200).json({ 
       success: true, 
-      message: 'Category fetched successfully',
-      data 
+      message: 'Attributes fetched successfully',
+      data: subcategory.attributes || [] 
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

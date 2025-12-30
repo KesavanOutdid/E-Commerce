@@ -22,6 +22,7 @@
     "google-auth-library": "^10.5.0",
     "jsonwebtoken": "^9.0.0",
     "mongodb": "^5.0.0",
+    "multer": "^2.0.2",
     "nodemailer": "^6.9.7",
     "redis": "^4.6.10",
     "swagger-jsdoc": "^6.2.8",

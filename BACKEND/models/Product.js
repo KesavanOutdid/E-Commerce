@@ -13,14 +13,16 @@ class Product {
       productName: productData.productName,
       slug: productData.slug,
       description: productData.description,
-      categoryId: productData.categoryId, // Storing Category UUID
+      shortDescription: productData.shortDescription,
+      mainCategoryId: productData.mainCategoryId || productData.categoryId, // Storing Category UUID
       subCategoryId: productData.subCategoryId || null, // Storing Subcategory UUID
       masterProductId: productData.masterProductId || null, // Grouping identical products
-      userId: new ObjectId(productData.userId),
+      userId: ObjectId.isValid(productData.userId) ? new ObjectId(productData.userId) : productData.userId,
       price: productData.price,
       salePrice: productData.salePrice,
       stock: productData.stock || 0,
       images: productData.images || [],
+      roleId: productData.roleId || null,
       //  DYNAMIC ATTRIBUTES
       attributes: (productData.attributes || []).map(attr => ({
         attributeId: ObjectId.isValid(attr.attributeId) ? new ObjectId(attr.attributeId) : attr.attributeId,
@@ -29,11 +31,13 @@ class Product {
       })),
       avgRating: productData.avgRating || 0,
       totalReviews: productData.totalReviews || 0,
-      approvalStatus: productData.approvalStatus || 'pending',
-      rejectionReason: productData.rejectionReason || null,
+      ...(productData.roleId === 2 && {
+        approvalStatus: productData.approvalStatus || 'pending',
+        rejectionReason: productData.rejectionReason || null,
+      }),
+      createdby: productData.createdby || null,
       status: productData.status !== undefined ? productData.status : true,
-      createdAt: new Date(),
-      updatedAt: new Date()
+      createdAt: new Date()
     };
     const result = await this.collection().insertOne(product);
     return { ...product, _id: result.insertedId };
@@ -45,7 +49,12 @@ class Product {
       if (!obj || typeof obj !== 'object') return;
 
       if (obj.userId && typeof obj.userId === 'string' && ObjectId.isValid(obj.userId)) {
-        obj.userId = new ObjectId(obj.userId);
+        const oid = new ObjectId(obj.userId);
+        obj.$or = [
+          { userId: oid },
+          { userId: obj.userId }
+        ];
+        delete obj.userId;
       }
 
       // Handle arrays like $or, $and
@@ -74,7 +83,12 @@ class Product {
     const convertUserIds = (obj) => {
       if (!obj || typeof obj !== 'object') return;
       if (obj.userId && typeof obj.userId === 'string' && ObjectId.isValid(obj.userId)) {
-        obj.userId = new ObjectId(obj.userId);
+        const oid = new ObjectId(obj.userId);
+        obj.$or = [
+          { userId: oid },
+          { userId: obj.userId }
+        ];
+        delete obj.userId;
       }
       Object.keys(obj).forEach(key => {
         if (Array.isArray(obj[key])) {
@@ -101,8 +115,21 @@ class Product {
       updatedAt: new Date()
     };
 
-    if (updateData.userId && ObjectId.isValid(updateData.userId)) {
-      update.userId = new ObjectId(updateData.userId);
+    if (updateData.categoryId) {
+      update.mainCategoryId = updateData.categoryId;
+      delete update.categoryId;
+    }
+    
+    if (updateData.mainCategoryId) {
+      update.mainCategoryId = updateData.mainCategoryId;
+    }
+
+    if (updateData.userId) {
+      update.userId = ObjectId.isValid(updateData.userId) ? new ObjectId(updateData.userId) : updateData.userId;
+    }
+
+    if (updateData.roleId) {
+      update.roleId = updateData.roleId;
     }
     
     if (updateData.attributes) {
@@ -126,7 +153,10 @@ class Product {
   }
 
   static async delete(id) {
-    return await this.collection().deleteOne({ _id: new ObjectId(id) });
+    const query = ObjectId.isValid(id) 
+      ? { $or: [{ _id: new ObjectId(id) }, { productId: id }] }
+      : { productId: id };
+    return await this.collection().deleteOne(query);
   }
 }
 
