@@ -12,6 +12,7 @@ class MainCategory {
       categoryId: crypto.randomUUID(),
       name: data.name,
       slug: data.slug,
+      image: data.image || null,
       level: 1,
       status: data.status !== undefined ? data.status : true,
       createdBy: data.createdBy || null,

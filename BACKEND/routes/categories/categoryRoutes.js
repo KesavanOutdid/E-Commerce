@@ -2,11 +2,12 @@ const express = require('express');
 const router = express.Router();
 const adminCategoryController = require('../../controllers/categories/admin/categoryController');
 const websiteCategoryController = require('../../controllers/categories/website/categoryController');
-const authmiddleware = require('../../middlewares/authMiddleware');
+const authmiddleware = require('../../middleware/authMiddleware');
+const categoryUpload = require('../../middleware/categoryUploadMiddleware');
 
 // --- MAIN CATEGORY ROUTES ---
-router.post('/main',authmiddleware, adminCategoryController.createMainCategory);
-router.put('/main/:id',authmiddleware, adminCategoryController.updateMainCategory);
+router.post('/main', authmiddleware, categoryUpload.single('image'), adminCategoryController.createMainCategory);
+router.put('/main/:id', authmiddleware, categoryUpload.single('image'), adminCategoryController.updateMainCategory);
 router.delete('/main/:id',authmiddleware, adminCategoryController.deleteMainCategory);
 router.get('/main', adminCategoryController.getMainCategories);
 

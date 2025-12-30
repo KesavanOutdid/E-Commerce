@@ -16,7 +16,9 @@ exports.createMainCategory = async (req, res) => {
     const existing = await MainCategory.find({ $or: [{ name }, { slug }] });
     if (existing.length > 0) return res.status(409).json({ success: false, message: 'Category already exists' });
 
-    const category = await MainCategory.create({ name, slug, createdBy });
+    const image = req.file ? `/uploads/categories/${req.file.filename}` : null;
+
+    const category = await MainCategory.create({ name, slug, createdBy, image });
     await deleteCachePattern('categories:list:*');
 
     res.status(201).json({ success: true, message: 'Main category created', data: category });
@@ -41,6 +43,9 @@ exports.updateMainCategory = async (req, res) => {
       updateData.slug = slugify(name);
     }
     if (status !== undefined) updateData.status = status;
+    if (req.file) {
+      updateData.image = `/uploads/categories/${req.file.filename}`;
+    }
 
     const updatedCategory = await MainCategory.update(id, updateData);
     await deleteCachePattern('categories:list:*');
