@@ -30,7 +30,7 @@ exports.createMainCategory = async (req, res) => {
 exports.updateMainCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, status } = req.body;
+    const { name, status, updatedby } = req.body;
 
     const category = await MainCategory.findById(id);
     if (!category) {
@@ -43,6 +43,7 @@ exports.updateMainCategory = async (req, res) => {
       updateData.slug = slugify(name);
     }
     if (status !== undefined) updateData.status = status;
+    if (updatedby) updateData.updatedby = updatedby;
     if (req.file) {
       updateData.image = `/uploads/categories/${req.file.filename}`;
     }
