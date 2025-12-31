@@ -36,6 +36,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum) => {
   ];
 };
 
+// Fetch all approved products for website
 exports.getProducts = async (req, res) => {
   try {
     const cacheKey = `products:list:website:all:${JSON.stringify(req.query)}`;
