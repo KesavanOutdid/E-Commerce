@@ -17,7 +17,12 @@ export const useUserEdit = (userId) => {
     email: '',
     phone: '',
     roles: [],
-    status: true
+    status: true,
+    sellerInfo: {
+      kycApproved: false,
+      isLive: false,
+      commissionPercentage: 10
+    }
   });
 
   const fetchUser = useCallback(async () => {
@@ -32,7 +37,16 @@ export const useUserEdit = (userId) => {
           email: user.email || '',
           phone: user.phone || '',
           roles: user.roles || [],
-          status: user.status ?? true
+          status: user.status ?? true,
+          sellerInfo: user.sellerInfo ? {
+            kycApproved: user.sellerInfo.kycApproved ?? false,
+            isLive: user.sellerInfo.isLive ?? false,
+            commissionPercentage: user.sellerInfo.commissionPercentage ?? 10
+          } : {
+            kycApproved: false,
+            isLive: false,
+            commissionPercentage: 10
+          }
         };
         setFormData(data);
         setInitialData(data);
@@ -70,7 +84,26 @@ export const useUserEdit = (userId) => {
       // Check if dirty by comparing with initialData
       if (initialData) {
         const hasChanges = Object.keys(initialData).some((key) => {
-          if (Array.isArray(initialData[key])) {
+          if (typeof initialData[key] === 'object' && initialData[key] !== null) {
+            return JSON.stringify(initialData[key]) !== JSON.stringify(newData[key]);
+          }
+          return initialData[key] !== newData[key];
+        });
+        setIsDirty(hasChanges);
+      }
+      
+      return newData;
+    });
+  };
+
+  const updateSellerData = (field, value) => {
+    setFormData((prev) => {
+      const newSellerInfo = { ...prev.sellerInfo, [field]: value };
+      const newData = { ...prev, sellerInfo: newSellerInfo };
+      
+      if (initialData) {
+        const hasChanges = Object.keys(initialData).some((key) => {
+          if (typeof initialData[key] === 'object' && initialData[key] !== null) {
             return JSON.stringify(initialData[key]) !== JSON.stringify(newData[key]);
           }
           return initialData[key] !== newData[key];
@@ -100,7 +133,7 @@ export const useUserEdit = (userId) => {
   };
 
   const handleCancel = () => {
-    navigate(`/users/${userId}`);
+    navigate(-1);
   };
 
   return {
@@ -110,6 +143,7 @@ export const useUserEdit = (userId) => {
     roles,
     isDirty,
     updateFormData,
+    updateSellerData,
     handleSubmit,
     handleCancel
   };

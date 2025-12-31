@@ -280,7 +280,7 @@ const ProductAdd = () => {
         <MainCard
             title={isEdit ? 'Edit Product' : 'Add Product'}
             secondary={
-                <Button startIcon={<IconArrowLeft />} onClick={() => navigate('/products/list')}>
+                <Button startIcon={<IconArrowLeft />} onClick={() => navigate(-1)}>
                     Back
                 </Button>
             }
@@ -496,7 +496,7 @@ const ProductAdd = () => {
 
                     <Grid item xs={12}>
                         <Stack direction="row" spacing={2} justifyContent="flex-end">
-                            <Button variant="outlined" onClick={() => navigate('/products/list')}>
+                            <Button variant="outlined" onClick={() => navigate(-1)}>
                                 Cancel
                             </Button>
                             <Button type="submit" variant="contained" color="primary">

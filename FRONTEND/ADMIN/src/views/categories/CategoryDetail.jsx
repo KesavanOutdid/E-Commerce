@@ -81,7 +81,7 @@ const CategoryDetail = () => {
         return (
             <Box sx={{ p: 3 }}>
                 <Typography color="error">Category not found</Typography>
-                <Button startIcon={<IconArrowLeft />} onClick={() => window.history.back()} sx={{ mt: 2 }}>
+                <Button startIcon={<IconArrowLeft />} onClick={() => navigate(-1)} sx={{ mt: 2 }}>
                     Go Back
                 </Button>
             </Box>
@@ -112,7 +112,7 @@ const CategoryDetail = () => {
             <MainCard
                 title={
                     <Stack direction="row" alignItems="center" spacing={1}>
-                        <IconButton onClick={() => window.history.back()} size="small">
+                        <IconButton onClick={() => navigate(-1)} size="small">
                             <IconArrowLeft />
                         </IconButton>
                         <Typography variant="h3">{category.name}</Typography>

@@ -33,7 +33,7 @@ const UpdateProfile = () => {
     <MainCard
       title="Update Profile"
       secondary={
-        <Button variant="outlined" startIcon={<IconArrowLeft />} onClick={() => navigate('/user/view-profile')}>
+        <Button variant="outlined" startIcon={<IconArrowLeft />} onClick={() => navigate(-1)}>
           Back to Profile
         </Button>
       }
@@ -96,7 +96,7 @@ const UpdateProfile = () => {
 
           <Grid item xs={12}>
             <Stack direction="row" spacing={2} justifyContent="flex-end">
-              <Button variant="outlined" color="secondary" onClick={() => navigate('/user/view-profile')}>
+              <Button variant="outlined" color="secondary" onClick={() => navigate(-1)}>
                 Cancel
               </Button>
               <Button

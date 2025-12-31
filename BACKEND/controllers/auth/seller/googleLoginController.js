@@ -93,6 +93,9 @@ async function googleAuthentication(req, res) {
 
       await User.updateLastLogin(user.userId);
 
+      const sellerInfo = await Seller.findByUserId(user.userId);
+      const kycApproved = sellerInfo ? sellerInfo.kycApproved : false;
+
       const accessToken = generateAccessToken(user, roleNames.filter(Boolean));
 
       sendLoginNotification(user.email, user.firstName, {
@@ -113,7 +116,8 @@ async function googleAuthentication(req, res) {
           email: user.email,
           phone: user.phone,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
+          kycApproved: kycApproved
         }
       });
     }
@@ -166,7 +170,8 @@ async function googleAuthentication(req, res) {
         email: newUser.email,
         phone: newUser.phone,
         firstName: newUser.firstName,
-        lastName: newUser.lastName
+        lastName: newUser.lastName,
+        kycApproved: false
       }
     });
 

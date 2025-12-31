@@ -46,7 +46,7 @@ export const useUserDetail = (userId) => {
   };
 
   const handleBackToUsers = () => {
-    navigate('/users');
+    navigate(-1);
   };
 
   const handleEditUser = () => {

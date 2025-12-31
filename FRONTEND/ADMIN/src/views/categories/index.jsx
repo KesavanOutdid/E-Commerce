@@ -122,10 +122,15 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View"> {/* Changed color to info, added size */}
+                                            <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View">
                                                 <IconEye size={18} />
                                             </IconButton>
-                                          
+                                            <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit">
+                                                <IconEdit size={18} />
+                                            </IconButton>
+                                            <IconButton color="error" size="small" onClick={() => handleDeleteCategory(category._id || category.id)} title="Delete">
+                                                <IconTrash size={18} />
+                                            </IconButton>
                                         </Stack>
                                     </TableCell>
                                 </TableRow>

@@ -22,7 +22,7 @@ import { useUserEdit } from '../../hooks/users/UserEditHooks';
 
 const UserEdit = () => {
   const { userId } = useParams();
-  const { formData, loading, saving, roles, isDirty, updateFormData, handleSubmit, handleCancel } = useUserEdit(userId);
+  const { formData, loading, saving, roles, isDirty, updateFormData, updateSellerData, handleSubmit, handleCancel } = useUserEdit(userId);
 
   if (loading) {
     return (
@@ -33,6 +33,8 @@ const UserEdit = () => {
       </MainCard>
     );
   }
+
+  const isSeller = formData.roles.includes(2);
 
   return (
     <MainCard
@@ -119,9 +121,51 @@ const UserEdit = () => {
                   color="primary"
                 />
               }
-              label={formData.status ? 'Active' : 'Inactive'}
+              label={formData.status ? 'Account Active' : 'Account Inactive'}
             />
           </Grid>
+
+          {isSeller && (
+            <>
+              <Grid item xs={12}>
+                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Seller Approvals</Typography>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.sellerInfo.kycApproved}
+                      onChange={(e) => updateSellerData('kycApproved', e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label={formData.sellerInfo.kycApproved ? 'KYC Approved' : 'KYC Pending'}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.sellerInfo.isLive}
+                      onChange={(e) => updateSellerData('isLive', e.target.checked)}
+                      color="success"
+                    />
+                  }
+                  label={formData.sellerInfo.isLive ? 'Shop Is Live' : 'Shop Offline'}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Commission Percentage (%)"
+                  type="number"
+                  value={formData.sellerInfo.commissionPercentage}
+                  onChange={(e) => updateSellerData('commissionPercentage', parseFloat(e.target.value))}
+                />
+              </Grid>
+            </>
+          )}
+
           <Grid item xs={12}>
             <Stack direction="row" spacing={2} justifyContent="flex-end">
               <Button variant="outlined" color="secondary" onClick={handleCancel}>

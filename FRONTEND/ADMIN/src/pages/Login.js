@@ -38,28 +38,17 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axiosInstance.post('/api/admin/login', formData);
+      const result = await login(formData.identifier, formData.password);
 
-      if (response.data?.success) {
-        const { accessToken, userId, firstName, lastName, email, roles, roleNames } = response.data.data;
-
-        const userData = {
-          userId,
-          firstName,
-          lastName,
-          email,
-          roles,
-          roleNames,
-        };
-
-        login(userData, accessToken);
+      if (result.success) {
         showToast('Login successful!', 'success');
         navigate('/dashboard');
+      } else {
+        showErrorAlert(result.message || 'Login failed. Please check your credentials.', 'Login Failed');
       }
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error.response?.data?.message || 'Login failed. Please check your credentials.';
-      showErrorAlert(errorMessage, 'Login Failed');
+      showErrorAlert('An unexpected error occurred. Please try again.', 'Login Failed');
     } finally {
       setLoading(false);
     }
