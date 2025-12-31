@@ -1,5 +1,6 @@
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
+const Seller = require('../../../models/Seller');
 const { generateAccessToken } = require('../../../utils/jwtUtils');
 const { sendLoginNotification } = require('../../../services/emailService');
 
@@ -60,6 +61,9 @@ async function sellerLogin(req, res) {
       })
     );
 
+    const sellerInfo = await Seller.findByUserId(user.userId);
+    const kycApproved = sellerInfo ? sellerInfo.kycApproved : false;
+
     await User.updateLastLogin(user.userId);
 
     const accessToken = generateAccessToken(user, roleNames.filter(Boolean));
@@ -82,7 +86,8 @@ async function sellerLogin(req, res) {
         email: user.email,
         phone: user.phone,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        kycApproved: kycApproved
       }
     });
 

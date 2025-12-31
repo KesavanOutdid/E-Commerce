@@ -103,7 +103,7 @@ const ProductDetail = () => {
         return (
             <MainCard>
                 <Typography variant="h3">Product not found</Typography>
-                <Button onClick={() => navigate('/products/list')} sx={{ mt: 2 }}>Back to List</Button>
+                <Button onClick={() => navigate(-1)} sx={{ mt: 2 }}>Go Back</Button>
             </MainCard>
         );
     }
@@ -127,7 +127,7 @@ const ProductDetail = () => {
         <MainCard
             title={
                 <Stack direction="row" alignItems="center" spacing={1}>
-                    <Button onClick={() => navigate('/products/list')} sx={{ minWidth: 0, p: 1 }}>
+                    <Button onClick={() => navigate(-1)} sx={{ minWidth: 0, p: 1 }}>
                         <IconArrowLeft />
                     </Button>
                     <Typography variant="h3">{product.productName}</Typography>

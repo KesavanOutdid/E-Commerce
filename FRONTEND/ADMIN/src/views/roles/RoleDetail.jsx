@@ -81,7 +81,7 @@ const RoleDetail = () => {
           Role not found
         </Typography>
         <Button variant="contained" startIcon={<IconArrowLeft />} onClick={handleBackToRoles} sx={{ mt: 2 }}>
-          Back to Roles
+          Go Back
         </Button>
       </MainCard>
     );

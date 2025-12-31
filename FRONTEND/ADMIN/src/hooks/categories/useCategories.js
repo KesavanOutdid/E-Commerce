@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from '../../utils/axiosInstance';
 import { API_ENDPOINTS } from '../../config/apiConfig';
+import { useAuth } from '../../contexts/AuthContext';
 import Swal from 'sweetalert2';
 
 export const useCategories = () => {
+    const { user } = useAuth();
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(true);
     const [pagination, setPagination] = useState({
@@ -19,8 +21,14 @@ export const useCategories = () => {
         name: '',
         image: '',
         status: true,
-        createdBy: 'admin@gmail.com'
+        createdBy: user?.email || ''
     });
+
+    useEffect(() => {
+        if (user?.email) {
+            setFormData(prev => ({ ...prev, createdBy: user.email }));
+        }
+    }, [user]);
 
     const fetchCategories = useCallback(async (page = 1) => {
         try {

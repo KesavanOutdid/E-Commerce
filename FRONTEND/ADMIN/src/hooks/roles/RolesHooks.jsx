@@ -170,7 +170,7 @@ export const useRoleDetail = (roleId) => {
   };
 
   const handleBackToRoles = () => {
-    navigate('/roles');
+    navigate(-1);
   };
 
   return {

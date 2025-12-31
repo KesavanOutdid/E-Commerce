@@ -66,7 +66,7 @@ const UserDetail = () => {
           User not found
         </Typography>
         <Button variant="contained" startIcon={<IconArrowLeft />} onClick={handleBackToUsers} sx={{ mt: 2 }}>
-          Back to Users
+          Go Back
         </Button>
       </MainCard>
     );

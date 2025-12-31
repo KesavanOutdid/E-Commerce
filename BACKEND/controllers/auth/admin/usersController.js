@@ -201,7 +201,7 @@ async function addUser(req, res) {
 async function updateUser(req, res) {
   try {
     const { userId } = req.params;
-    const { firstName, lastName, phone, roles, status } = req.body;
+    const { firstName, lastName, phone, roles, status, sellerInfo } = req.body;
 
     const user = await User.findByUserId(userId);
     if (!user) {
@@ -239,19 +239,46 @@ async function updateUser(req, res) {
 
     const updatedUser = await User.update(userId, updateData);
 
+    // Handle Seller Info Update
+    let updatedSellerInfo = null;
+    if (sellerInfo) {
+      const sellerUpdateData = { ...sellerInfo };
+      
+      // If kycApproved is being changed to true, set approvedBy and approvedAt
+      if (sellerInfo.kycApproved === true) {
+        sellerUpdateData.kycApprovedBy = req.userEmail || 'admin';
+        sellerUpdateData.kycApprovedAt = new Date();
+      }
+      
+      // If isLive is being changed to true, set goLiveApprovedBy and goLiveApprovedAt
+      if (sellerInfo.isLive === true) {
+        sellerUpdateData.goLiveApprovedBy = req.userEmail || 'admin';
+        sellerUpdateData.goLiveApprovedAt = new Date();
+        if (sellerUpdateData.commissionPercentage === undefined) {
+            sellerUpdateData.commissionPercentage = 10;
+        }
+      }
+
+      const result = await Seller.update(userId, sellerUpdateData);
+      updatedSellerInfo = result.value;
+    } else if (user.roles && user.roles.includes(2)) {
+        updatedSellerInfo = await Seller.findByUserId(userId);
+    }
+
     // If role updated to include Seller (ID 2), check if Seller profile exists
     if (updateData.roles && updateData.roles.includes(2)) {
       const existingSeller = await Seller.findByUserId(userId);
       if (!existingSeller) {
-        const firstName = updatedUser.value.firstName || '';
-        const shopName = firstName ? `${firstName.charAt(0).toUpperCase() + firstName.slice(1)}'s Shop` : 'New Shop';
-        await Seller.create({
+        const fName = updatedUser.value.firstName || '';
+        const shopName = fName ? `${fName.charAt(0).toUpperCase() + fName.slice(1)}'s Shop` : 'New Shop';
+        const result = await Seller.create({
           userId,
           shopName,
           onboardingCompleted: false,
           isLive: false,
           kycApproved: false
         });
+        updatedSellerInfo = result;
       }
     }
 
@@ -272,7 +299,8 @@ async function updateUser(req, res) {
       message: 'User updated successfully',
       data: {
         ...updatedUser.value,
-        roleNames
+        roleNames,
+        sellerInfo: updatedSellerInfo
       }
     });
 
