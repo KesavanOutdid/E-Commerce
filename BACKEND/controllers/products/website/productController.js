@@ -1,4 +1,6 @@
 const Product = require('../../../models/Product');
+const User = require('../../../models/User');
+const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
 
 
@@ -187,10 +189,45 @@ exports.getProductById = async (req, res) => {
       status: { $in: [true, "true"] }
     }).toArray();
 
+    // Fetch user details for the main product and other sellers
+    const allSellerIds = [product.userId, ...otherSellers.map(s => s.userId)];
+    const uniqueSellerIds = [...new Set(allSellerIds.filter(id => id))];
+    
+    const users = await User.collection().find({
+      $or: [
+        { userId: { $in: uniqueSellerIds } },
+        { _id: { $in: uniqueSellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
+      ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach(u => {
+      const name = `${u.firstName} ${u.lastName}`.trim();
+      if (u.userId) userMap.set(u.userId.toString(), name);
+      if (u._id) userMap.set(u._id.toString(), name);
+    });
+
+    const getSellerName = (userId) => {
+      if (!userId) return null;
+      return userMap.get(userId.toString()) || null;
+    };
+
+    const otherSellersWithNames = otherSellers.map(seller => {
+      const sellerData = { ...seller };
+      if (seller.roleId === 2) {
+        sellerData.sellerName = getSellerName(seller.userId);
+      }
+      return sellerData;
+    });
+
     const responseData = {
       ...product,
-      otherSellers: otherSellers
+      otherSellers: otherSellersWithNames
     };
+
+    if (product.roleId === 2) {
+      responseData.sellerName = getSellerName(product.userId);
+    }
 
     await setCache(cacheKey, responseData, 3600);
 
