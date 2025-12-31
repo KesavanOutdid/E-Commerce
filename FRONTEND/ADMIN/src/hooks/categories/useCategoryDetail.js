@@ -96,7 +96,18 @@ export const useCategoryDetail = (categoryId) => {
 
     const handleUpdateCategory = async () => {
         try {
-            const response = await axios.put(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), formData);
+            const data = new FormData();
+            data.append('name', formData.name);
+            data.append('status', formData.status);
+            data.append('createdBy', formData.createdBy);
+
+            if (formData.image instanceof File) {
+                data.append('image', formData.image);
+            }
+
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
+            const response = await axios.put(API_ENDPOINTS.CATEGORIES.UPDATE(categoryId), data, config);
             if (response.data.success) {
                 Swal.fire('Success', 'Category updated successfully', 'success');
                 fetchCategoryDetail();

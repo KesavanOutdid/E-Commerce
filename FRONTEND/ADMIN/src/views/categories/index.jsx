@@ -19,15 +19,22 @@ import {
     Stack,
     CircularProgress,
     Switch,
-    FormControlLabel
+    FormControlLabel,
+    Paper,
+    Avatar,
+    Chip
 } from '@mui/material';
-import { IconPlus, IconEdit, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconPlus, IconEdit, IconTrash, IconEye, IconCategory } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useCategories } from '../../hooks/categories/useCategories';
 
-const Categories = () => {
+import { API_BASE_URL } from '../../config/apiConfig';
+
+const BASE_URL = API_BASE_URL.replace('/api', '');
+
+const Categories = () => { // Renamed component from Categories to CategoriesPage
     const {
         categories,
         loading,
@@ -45,41 +52,62 @@ const Categories = () => {
 
     const navigate = useNavigate();
 
+    const handleImageChange = (e) => { // Added handleImageChange function
+        const file = e.target.files[0];
+        if (file) {
+            updateFormData('image', file);
+        }
+    };
+
     return (
-        <MainCard
-            title="Category Management"
-            secondary={
-                <Button
-                    variant="contained"
-                    color="primary"
-                    startIcon={<IconPlus />}
-                    onClick={() => handleOpenDialog()}
-                >
+        <MainCard title="Categories"> {/* Changed title */}
+            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}> {/* Moved button outside MainCard secondary prop */}
+                <Button variant="contained" startIcon={<IconPlus />} onClick={() => handleOpenDialog()}>
                     Add Category
                 </Button>
-            }
-        >
-            {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                    <CircularProgress />
-                </Box>
-            ) : (
-                <TableContainer>
-                    <Table>
-                        <TableHead>
+            </Box>
+
+            <TableContainer component={Paper}> {/* Wrapped TableContainer with Paper */}
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>SNo</TableCell>
+                            <TableCell>Image</TableCell> {/* Added Image column */}
+                            <TableCell>Name</TableCell>
+                            <TableCell>Created By</TableCell>
+                            <TableCell>Updated By</TableCell>
+                            <TableCell>Status</TableCell>
+                            <TableCell align="center">Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {loading ? ( // Added loading state handling
                             <TableRow>
-                                <TableCell>SNo</TableCell>
-                                <TableCell>Name</TableCell>
-                                <TableCell>Created By</TableCell>
-                                <TableCell>Updated By</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell align="center">Actions</TableCell>
+                                <TableCell colSpan={7} align="center">
+                                    <CircularProgress />
+                                </TableCell>
                             </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {categories.map((category, index) => (
+                        ) : categories.length === 0 ? ( // Adjusted colSpan for no categories found
+                            <TableRow>
+                                <TableCell colSpan={7} align="center">
+                                    <Typography variant="body1" sx={{ py: 3 }}>
+                                        No categories found
+                                    </Typography>
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            categories.map((category, index) => (
                                 <TableRow key={category._id || category.id}>
-                                    <TableCell>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
+                                    <TableCell>{index + 1 + (pagination.currentPage - 1) * pagination.pageSize}</TableCell> {/* Adjusted SNo calculation */}
+                                    <TableCell> {/* Added Image cell */}
+                                        <Avatar
+                                            src={category.image ? `${BASE_URL}${category.image}` : ''}
+                                            alt={category.name}
+                                            variant="rounded"
+                                        >
+                                            <IconCategory />
+                                        </Avatar>
+                                    </TableCell>
                                     <TableCell>
                                         <Typography variant="subtitle1" fontWeight={500}>
                                             {category.name}
@@ -88,44 +116,31 @@ const Categories = () => {
                                     <TableCell>{category.createdBy || '-'}</TableCell>
                                     <TableCell>{category.updatedby || '-'}</TableCell>
                                     <TableCell>
-                                        <Typography
-                                            variant="body2"
-                                            sx={{
-                                                fontWeight: 600,
-                                                color: category.status ? 'success.main' : 'error.main'
-                                            }}
-                                        >
-                                            {category.status ? 'Active' : 'Inactive'}
-                                        </Typography>
+                                        <Chip // Replaced Typography with Chip for status
+                                            label={category.status ? 'Active' : 'Inactive'}
+                                            color={category.status ? 'success' : 'default'}
+                                            size="small"
+                                        />
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="secondary" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View">
-                                                <IconEye />
+                                            <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View"> {/* Changed color to info, added size */}
+                                                <IconEye size={18} />
                                             </IconButton>
-                                            <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit">
-                                                <IconEdit />
+                                            <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit"> {/* Added size */}
+                                                <IconEdit size={18} />
                                             </IconButton>
-                                            <IconButton color="error" size="small" onClick={() => handleDeleteCategory(category._id || category.id)} title="Delete">
-                                                <IconTrash />
+                                            <IconButton color="error" size="small" onClick={() => handleDeleteCategory(category._id || category.id)} title="Delete"> {/* Added size */}
+                                                <IconTrash size={18} />
                                             </IconButton>
                                         </Stack>
                                     </TableCell>
                                 </TableRow>
-                            ))}
-                            {categories.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={5} align="center">
-                                        <Typography variant="body1" sx={{ py: 3 }}>
-                                            No categories found
-                                        </Typography>
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            )}
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
 
             {!loading && pagination.totalItems > 0 && (
                 <TablePagination
@@ -139,13 +154,42 @@ const Categories = () => {
             )}
 
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-                <DialogTitle>{editMode ? 'Edit Category' : 'Add New Category'}</DialogTitle>
+                <DialogTitle>{editMode ? 'Edit Category' : 'Add Category'}</DialogTitle> {/* Changed title */}
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}> {/* Added image preview */}
+                            <Box
+                                component="img"
+                                src={
+                                    formData.image instanceof File
+                                        ? URL.createObjectURL(formData.image)
+                                        : formData.image
+                                            ? `${BASE_URL}${formData.image}`
+                                            : 'https://via.placeholder.com/150'
+                                }
+                                sx={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 1 }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}> {/* Added file input button */}
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                fullWidth
+                                startIcon={<IconPlus />}
+                            >
+                                Upload Image
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            </Button>
+                        </Grid>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
-                                label="Category Name"
+                                label="Name" // Changed label
                                 value={formData.name}
                                 onChange={(e) => updateFormData('name', e.target.value)}
                                 required

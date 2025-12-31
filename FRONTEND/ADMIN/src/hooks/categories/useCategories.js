@@ -96,15 +96,30 @@ export const useCategories = () => {
 
     const handleSubmit = async () => {
         try {
+            const data = new FormData();
+            data.append('name', formData.name);
+            data.append('status', formData.status);
+            data.append('createdBy', formData.createdBy);
+
+            // Append image only if it is a File object (new upload)
+            // If it's a string, it means it's an existing URL, so we don't send it as 'image' file
+            // The backend update logic usually keeps old image if new one isn't provided.
+            if (formData.image instanceof File) {
+                data.append('image', formData.image);
+            }
+
+            // Headers for multipart/form-data are automatically set by axios when simple FormData is passed
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+
             if (editMode && currentCategory) {
-                const response = await axios.put(API_ENDPOINTS.CATEGORIES.UPDATE(currentCategory._id || currentCategory.id), formData);
+                const response = await axios.put(API_ENDPOINTS.CATEGORIES.UPDATE(currentCategory._id || currentCategory.id), data, config);
                 if (response.data.success) {
                     Swal.fire('Success', 'Category updated successfully', 'success');
                     fetchCategories(pagination.currentPage);
                     handleCloseDialog();
                 }
             } else {
-                const response = await axios.post(API_ENDPOINTS.CATEGORIES.CREATE, formData);
+                const response = await axios.post(API_ENDPOINTS.CATEGORIES.CREATE, data, config);
                 if (response.data.success) {
                     Swal.fire('Success', 'Category created successfully', 'success');
                     fetchCategories(pagination.currentPage);
@@ -112,6 +127,7 @@ export const useCategories = () => {
                 }
             }
         } catch (error) {
+            console.error(error);
             Swal.fire('Error', error.response?.data?.message || 'Operation failed', 'error');
         }
     };

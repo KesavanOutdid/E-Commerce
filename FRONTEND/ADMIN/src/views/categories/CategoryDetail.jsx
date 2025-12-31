@@ -1,3 +1,4 @@
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -30,47 +31,9 @@ import { IconArrowLeft, IconEdit, IconTrash, IconPlus, IconChevronDown } from '@
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useCategoryDetail } from '../../hooks/categories/useCategoryDetail';
+import { API_BASE_URL } from '../../config/apiConfig';
 
-const DetailItem = ({ label, value, status }) => (
-    <Box sx={{ mb: 3 }}>
-        <Typography
-            variant="caption"
-            sx={{
-                color: 'text.secondary',
-                fontWeight: 500,
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                display: 'block',
-                mb: 0.5
-            }}
-        >
-            {label}
-        </Typography>
-        {status !== undefined ? (
-            <Typography
-                variant="body1"
-                sx={{
-                    fontWeight: 600,
-                    color: status ? 'success.main' : 'error.main',
-                    fontSize: '1rem'
-                }}
-            >
-                {status ? 'Active' : 'Inactive'}
-            </Typography>
-        ) : (
-            <Typography
-                variant="body1"
-                sx={{
-                    fontWeight: 600,
-                    color: 'text.primary',
-                    fontSize: '1rem'
-                }}
-            >
-                {value || '-'}
-            </Typography>
-        )}
-    </Box>
-);
+const BASE_URL = API_BASE_URL.replace('/api', '');
 
 const CategoryDetail = () => {
     const { categoryId } = useParams();
@@ -99,42 +62,77 @@ const CategoryDetail = () => {
         handleAttributeChange
     } = useCategoryDetail(categoryId);
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            updateFormData('image', file);
+        }
+    };
+
     if (loading) {
         return (
-            <MainCard title="Category Details">
-                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-                    <CircularProgress />
-                </Box>
-            </MainCard>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+                <CircularProgress />
+            </Box>
         );
     }
 
     if (!category) {
         return (
-            <MainCard title="Category Details">
-                <Typography variant="h6" color="error">
-                    Category not found
-                </Typography>
-                <Button variant="contained" startIcon={<IconArrowLeft />} onClick={() => navigate('/categories')} sx={{ mt: 2 }}>
-                    Back to Categories
+            <Box sx={{ p: 3 }}>
+                <Typography color="error">Category not found</Typography>
+                <Button startIcon={<IconArrowLeft />} onClick={() => window.history.back()} sx={{ mt: 2 }}>
+                    Go Back
                 </Button>
-            </MainCard>
+            </Box>
         );
     }
+
+    const DetailItem = ({ label, value, status }) => (
+        <Box sx={{ mb: 2 }}>
+            <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
+                {label}
+            </Typography>
+            {status !== undefined ? (
+                <Chip
+                    label={status ? 'Active' : 'Inactive'}
+                    color={status ? 'success' : 'default'}
+                    size="small"
+                />
+            ) : (
+                <Typography variant="body1" fontWeight={500}>
+                    {value || '-'}
+                </Typography>
+            )}
+        </Box>
+    );
 
     return (
         <>
             <MainCard
-                title={category.name}
+                title={
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <IconButton onClick={() => window.history.back()} size="small">
+                            <IconArrowLeft />
+                        </IconButton>
+                        <Typography variant="h3">{category.name}</Typography>
+                    </Stack>
+                }
                 secondary={
                     <Stack direction="row" spacing={1}>
-                        <Button variant="outlined" startIcon={<IconArrowLeft />} onClick={() => navigate('/categories')}>
-                            Back
-                        </Button>
-                        <Button variant="contained" color="primary" startIcon={<IconEdit />} onClick={handleEditCategory}>
+                        <Button
+                            variant="contained"
+                            startIcon={<IconEdit />}
+                            onClick={handleEditCategory}
+                        >
                             Edit
                         </Button>
-                        <Button variant="contained" color="error" startIcon={<IconTrash />} onClick={handleDeleteCategory}>
+                        <Button
+                            variant="outlined"
+                            color="error"
+                            startIcon={<IconTrash />}
+                            onClick={handleDeleteCategory}
+                        >
                             Delete
                         </Button>
                     </Stack>
@@ -147,23 +145,37 @@ const CategoryDetail = () => {
                                 Basic Information
                             </Typography>
                         </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Name" value={category.name} />
+
+                        <Grid item xs={12} md={4} sx={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+                            <Box
+                                component="img"
+                                src={category.image ? `${BASE_URL}${category.image}` : 'https://via.placeholder.com/150'}
+                                alt={category.name}
+                                sx={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 2, border: '1px solid #eee' }}
+                            />
                         </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Status" status={category.status} />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Created By" value={category.createdBy} />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Updated By" value={category.updatedby} />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Created At" value={category.createdAt ? new Date(category.createdAt).toLocaleString() : '-'} />
-                        </Grid>
-                        <Grid item xs={12} md={4}>
-                            <DetailItem label="Updated At" value={category.updatedAt ? new Date(category.updatedAt).toLocaleString() : '-'} />
+
+                        <Grid item xs={12} md={8}>
+                            <Grid container spacing={2}>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Name" value={category.name} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Status" status={category.status} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Created By" value={category.createdBy} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Updated By" value={category.updatedby} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Created At" value={category.createdAt ? new Date(category.createdAt).toLocaleString() : '-'} />
+                                </Grid>
+                                <Grid item xs={12} md={6}>
+                                    <DetailItem label="Updated At" value={category.updatedAt ? new Date(category.updatedAt).toLocaleString() : '-'} />
+                                </Grid>
+                            </Grid>
                         </Grid>
 
                         {/* Sub Categories Section */}
@@ -225,21 +237,29 @@ const CategoryDetail = () => {
                                             <AccordionDetails sx={{ pt: 0 }}>
                                                 <Divider sx={{ mb: 2 }} />
                                                 <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
-                                                    Specifications (Attributes)
+                                                    Specifications
                                                 </Typography>
                                                 {sub.attributes && sub.attributes.length > 0 ? (
-                                                    <Grid container spacing={1}>
-                                                        {sub.attributes.map((attr, idx) => (
-                                                            <Grid item key={idx}>
-                                                                <Chip
-                                                                    label={`${attr.name} (${attr.type}) ${attr.required ? 'Required: Yes' : 'Required: No'}`}
-                                                                    size="small"
-                                                                    variant="filled"
-                                                                    sx={{ borderRadius: '4px' }}
-                                                                />
-                                                            </Grid>
-                                                        ))}
-                                                    </Grid>
+                                                    <TableContainer sx={{ border: '1px solid #f0f0f0', borderRadius: 1, maxWidth: '100%' }}>
+                                                        <Table size="small">
+                                                            <TableHead>
+                                                                <TableRow sx={{ backgroundColor: '#fafafa' }}>
+                                                                    <TableCell sx={{ fontWeight: 'bold' }}>Name</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+                                                                    <TableCell sx={{ fontWeight: 'bold' }}>Required</TableCell>
+                                                                </TableRow>
+                                                            </TableHead>
+                                                            <TableBody>
+                                                                {sub.attributes.map((attr, idx) => (
+                                                                    <TableRow key={idx} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                                                        <TableCell>{attr.name}</TableCell>
+                                                                        <TableCell>{attr.type}</TableCell>
+                                                                        <TableCell>{attr.required ? 'Yes' : 'No'}</TableCell>
+                                                                    </TableRow>
+                                                                ))}
+                                                            </TableBody>
+                                                        </Table>
+                                                    </TableContainer>
                                                 ) : (
                                                     <Typography variant="caption" color="textSecondary">
                                                         No specifications defined.
@@ -269,6 +289,35 @@ const CategoryDetail = () => {
                 <DialogTitle>Edit Category</DialogTitle>
                 <DialogContent>
                     <Grid container spacing={2} sx={{ mt: 1 }}>
+                        <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+                            <Box
+                                component="img"
+                                src={
+                                    formData.image instanceof File
+                                        ? URL.createObjectURL(formData.image)
+                                        : formData.image
+                                            ? `${BASE_URL}${formData.image}`
+                                            : 'https://via.placeholder.com/150'
+                                }
+                                sx={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 1 }}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <Button
+                                variant="outlined"
+                                component="label"
+                                fullWidth
+                                startIcon={<IconPlus />}
+                            >
+                                Upload Image
+                                <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={handleImageChange}
+                                />
+                            </Button>
+                        </Grid>
                         <Grid item xs={12}>
                             <TextField
                                 fullWidth
