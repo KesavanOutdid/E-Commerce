@@ -79,9 +79,12 @@ export const useProducts = () => {
     };
 
     const handleFilterChange = (key, value) => {
-        setFilters(prev => ({ ...prev, [key]: value }));
-        // Reset to page 1 when filter changes
-        setPagination(prev => ({ ...prev, currentPage: 1 }));
+        if (key === 'limit') {
+            setPagination(prev => ({ ...prev, pageSize: value, currentPage: 1 }));
+        } else {
+            setFilters(prev => ({ ...prev, [key]: value }));
+            setPagination(prev => ({ ...prev, currentPage: 1 }));
+        }
     };
 
     const deleteProduct = async (id) => {

@@ -3,7 +3,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Button,
-    Grid,
     Typography,
     Stack,
     CircularProgress,
@@ -18,7 +17,7 @@ import {
     Accordion,
     AccordionSummary,
     AccordionDetails,
-    Grid2
+    Grid2 as Grid
 } from '@mui/material';
 import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconRuler, IconTag, IconCurrencyRupee, IconCube } from '@tabler/icons-react';
 
@@ -131,16 +130,26 @@ const ProductDetail = () => {
                         <IconArrowLeft />
                     </Button>
                     <Typography variant="h3">{product.productName}</Typography>
-                    <Chip
-                        label={product.status ? 'Active' : 'Inactive'}
-                        color={product.status ? 'success' : 'default'}
-                        size="small"
-                        sx={{ ml: 2 }}
-                    />
                 </Stack>
             }
             secondary={
-                <Stack direction="row" spacing={1}>
+                <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Chip
+                        label={product.status ? 'Active' : 'Inactive'}
+                        size="small"
+                        sx={{
+                            bgcolor: product.status ? '#e8f5e9' : '#fafafa',
+                            color: product.status ? '#2e7d32' : '#757575',
+                            fontWeight: 600,
+                            borderRadius: '16px',
+                            px: 1,
+                            border: '1px solid',
+                            borderColor: product.status ? '#c8e6c9' : '#eeeeee',
+                            textTransform: 'uppercase',
+                            fontSize: '0.65rem',
+                            letterSpacing: '0.05rem'
+                        }}
+                    />
                     <Button
                         variant="contained"
                         startIcon={<IconEdit />}
@@ -161,7 +170,7 @@ const ProductDetail = () => {
         >
             <Grid container spacing={3}>
                 {/* Left Column: Images */}
-                <Grid item xs={12} md={4}>
+                <Grid xs={12} md={4}>
                     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                         <Stack spacing={2}>
                             <Box
@@ -206,44 +215,44 @@ const ProductDetail = () => {
                 </Grid>
 
                 {/* Right Column: Details */}
-                <Grid item xs={12} md={8}>
+                <Grid xs={12} md={8}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12}>
+                        <Grid xs={12}>
                             <Typography variant="h4" color="primary" sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
                                 Product Details
                             </Typography>
                         </Grid>
 
-                        <Grid item xs={12} sm={6}>
+                        <Grid xs={12} sm={6}>
                             <DetailRow
                                 icon={<IconCurrencyRupee />}
                                 label="Price"
                                 value={`₹${product.price}`}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid xs={12} sm={6}>
                             <DetailRow
                                 icon={<IconCube />}
                                 label="Stock"
                                 value={product.stock}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid xs={12} sm={6}>
                             <DetailRow
                                 icon={<IconTag />}
-                                label="Main Category ID"
-                                value={product.mainCategoryId}
+                                label="Main Category"
+                                value={product.mainCategoryName}
                             />
                         </Grid>
-                        <Grid item xs={12} sm={6}>
+                        <Grid xs={12} sm={6}>
                             <DetailRow
                                 icon={<IconTag />}
-                                label="Sub Category ID"
-                                value={product.subCategoryId}
+                                label="Sub Category"
+                                value={product.subCategoryName}
                             />
                         </Grid>
 
-                        <Grid item xs={12}>
+                        <Grid xs={12}>
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="subtitle2" color="secondary" gutterBottom>
                                     Description
@@ -254,7 +263,7 @@ const ProductDetail = () => {
                             </Box>
                         </Grid>
 
-                        <Grid item xs={12}>
+                        <Grid xs={12}>
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="subtitle2" color="secondary" gutterBottom>
                                     Short Description
@@ -268,7 +277,7 @@ const ProductDetail = () => {
                 </Grid>
 
                 {/* Full Width: Specifications / Attributes */}
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee' }}>
                         <AccordionSummary expandIcon={<IconChevronDown />}>
                             <Stack direction="row" alignItems="center" spacing={1}>
@@ -302,28 +311,57 @@ const ProductDetail = () => {
                 </Grid>
 
                 {/* Admin Info */}
-                <Grid item xs={12}>
+                <Grid xs={12}>
                     <Paper sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={6} md={3}>
+                        <Grid container spacing={3}>
+                            <Grid xs={12} sm={6} md={3}>
                                 <Typography variant="caption" display="block">Created By</Typography>
-                                <Typography variant="body2">{product.createdby || '-'}</Typography>
+                                <Typography variant="body2" fontWeight={500}>{product.createdby || '-'}</Typography>
                             </Grid>
-                            <Grid item xs={6} md={3}>
+                            <Grid xs={12} sm={6} md={3}>
+                                <Typography variant="caption" display="block">Created At</Typography>
+                                <Typography variant="body2" fontWeight={500}>
+                                    {product.createdAt ? new Date(product.createdAt).toLocaleString('en-IN', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) : '-'}
+                                </Typography>
+                            </Grid>
+                            <Grid xs={12} sm={6} md={3}>
                                 <Typography variant="caption" display="block">Updated By</Typography>
-                                <Typography variant="body2">{product.updatedby || '-'}</Typography>
+                                <Typography variant="body2" fontWeight={500}>{product.updatedby || '-'}</Typography>
                             </Grid>
-                            <Grid item xs={6} md={3}>
-                                <Typography variant="caption" display="block">Slug</Typography>
-                                <Typography variant="body2">{product.slug}</Typography>
+                            <Grid xs={12} sm={6} md={3}>
+                                <Typography variant="caption" display="block">Updated At</Typography>
+                                <Typography variant="body2" fontWeight={500}>
+                                    {product.updatedAt ? new Date(product.updatedAt).toLocaleString('en-IN', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric',
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    }) : '-'}
+                                </Typography>
                             </Grid>
-                            <Grid item xs={6} md={3}>
-                                <Typography variant="caption" display="block">Approval</Typography>
+                            <Grid xs={12} sm={6} md={3}>
+                                <Typography variant="caption" display="block">Approval Status</Typography>
                                 <Chip
                                     label={product.approvalStatus || 'N/A'}
                                     size="small"
-                                    variant="outlined"
-                                    color={product.approvalStatus === 'approved' ? 'success' : product.approvalStatus === 'rejected' ? 'error' : 'warning'}
+                                    sx={{
+                                        mt: 0.5,
+                                        bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : product.approvalStatus === 'rejected' ? '#ffebee' : '#fff8e1',
+                                        color: product.approvalStatus === 'approved' ? '#2e7d32' : product.approvalStatus === 'rejected' ? '#d32f2f' : '#f57f17',
+                                        fontWeight: 600,
+                                        borderRadius: '16px',
+                                        border: '1px solid',
+                                        borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffecb3',
+                                        textTransform: 'uppercase',
+                                        fontSize: '0.65rem'
+                                    }}
                                 />
                             </Grid>
                         </Grid>

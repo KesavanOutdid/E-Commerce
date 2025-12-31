@@ -36,7 +36,7 @@ export const API_ENDPOINTS = {
   },
   PRODUCTS: {
     GET_ALL: '/products/admin/getproducts', // Admin specific list
-    GET_BY_ID: (id) => `/products/${id}`, // Use public route for details
+    GET_BY_ID: (id) => `/products/admin/${id}`, // Use public route for details
     CREATE: '/products/admin',
     UPDATE: (id) => `/products/admin/${id}`,
     UPDATE_APPROVAL: (id) => `/products/admin/${id}/approval`,

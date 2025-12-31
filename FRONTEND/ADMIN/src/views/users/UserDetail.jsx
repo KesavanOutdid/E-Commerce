@@ -4,10 +4,10 @@ import {
   Box,
   Button,
   CircularProgress,
-  Grid,
   Typography,
   Stack
 } from '@mui/material';
+import Grid from '@mui/material/Grid2';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -92,7 +92,7 @@ const UserDetail = () => {
       <Box sx={{ p: 1 }}>
         <Grid container spacing={1}>
           {/* Header section with Avatar */}
-          <Grid item xs={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
             <Avatar 
               src={user.profileImage} 
               sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main' }}
@@ -110,18 +110,18 @@ const UserDetail = () => {
           </Grid>
 
           {/* Row 1: Basic Info */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="First Name" value={user.firstName} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Last Name" value={user.lastName} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Email ID" value={user.email} />
           </Grid>
 
           {/* Row 2: Status & Contact */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem 
               label="Status" 
               value={
@@ -131,10 +131,10 @@ const UserDetail = () => {
               } 
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Phone Number" value={user.phone || '-'} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem 
               label="Roles" 
               value={
@@ -154,34 +154,34 @@ const UserDetail = () => {
           </Grid>
 
           {/* Row 3: Account Meta */}
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Created Date" value={user.createdAt ? new Date(user.createdAt).toLocaleString() : '-'} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Modified Date" value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '-'} />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Created By" value={user.createdBy || '-'} />
           </Grid>
 
           {/* Seller Information Section */}
           {user.sellerInfo && (
             <>
-              <Grid item xs={12} sx={{ mt: 2, mb: 2 }}>
+              <Grid size={12} sx={{ mt: 2, mb: 2 }}>
                 <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Seller Information</Typography>
               </Grid>
               
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="Shop Name" value={user.sellerInfo.shopName} />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="GSTIN" value={user.sellerInfo.gstin || '-'} />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="PAN Number" value={user.sellerInfo.panNumber || '-'} />
               </Grid>
 
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem 
                   label="KYC Status" 
                   value={
@@ -191,7 +191,7 @@ const UserDetail = () => {
                   } 
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem 
                   label="Live Status" 
                   value={
@@ -201,26 +201,26 @@ const UserDetail = () => {
                   } 
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="Commission %" value={user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'} />
               </Grid>
 
               {/* Bank Details Section */}
               {user.sellerInfo.bankDetails && (
                 <>
-                  <Grid item xs={12} sx={{ mt: 2, mb: 2 }}>
+                  <Grid size={12} sx={{ mt: 2, mb: 2 }}>
                     <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Bank Details</Typography>
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="Account Holder" value={user.sellerInfo.bankDetails.accountHolderName} />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="Account Number" value={user.sellerInfo.bankDetails.accountNumber} />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="Bank Name" value={user.sellerInfo.bankDetails.bankName} />
                   </Grid>
-                  <Grid item xs={12} md={4}>
+                  <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="IFSC Code" value={user.sellerInfo.bankDetails.ifscCode} />
                   </Grid>
                 </>

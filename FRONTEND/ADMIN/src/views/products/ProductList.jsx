@@ -55,24 +55,50 @@ const ProductList = () => {
         return (
             <Chip
                 label={status ? 'Active' : 'Inactive'}
-                color={status ? 'success' : 'default'}
                 size="small"
+                sx={{
+                    bgcolor: status ? '#e8f5e9' : '#fafafa',
+                    color: status ? '#2e7d32' : '#757575',
+                    fontWeight: 600,
+                    borderRadius: '16px',
+                    border: '1px solid',
+                    borderColor: status ? '#c8e6c9' : '#eeeeee',
+                    textTransform: 'uppercase',
+                    fontSize: '0.65rem'
+                }}
             />
         );
     };
 
     const getApprovalChip = (status) => {
-        let color = 'default';
-        if (status === 'approved') color = 'success';
-        if (status === 'pending') color = 'warning';
-        if (status === 'rejected') color = 'error';
+        let colors = {
+            bg: '#fafafa',
+            text: '#757575',
+            border: '#eeeeee'
+        };
+
+        if (status === 'approved') {
+            colors = { bg: '#e8f5e9', text: '#2e7d32', border: '#c8e6c9' };
+        } else if (status === 'pending') {
+            colors = { bg: '#fff8e1', text: '#f57f17', border: '#ffecb3' };
+        } else if (status === 'rejected') {
+            colors = { bg: '#ffeede', text: '#d32f2f', border: '#ffcdd2' };
+        }
 
         return (
             <Chip
                 label={status || '-'}
-                color={color}
                 size="small"
-                variant="outlined"
+                sx={{
+                    bgcolor: colors.bg,
+                    color: colors.text,
+                    fontWeight: 600,
+                    borderRadius: '16px',
+                    border: '1px solid',
+                    borderColor: colors.border,
+                    textTransform: 'uppercase',
+                    fontSize: '0.65rem'
+                }}
             />
         );
     };
@@ -116,6 +142,8 @@ const ProductList = () => {
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                                 <TableCell>Image</TableCell>
                                 <TableCell>Name</TableCell>
+                                <TableCell>Category</TableCell>
+                                <TableCell>Seller</TableCell>
                                 <TableCell align="right">Price</TableCell>
                                 <TableCell align="right">Stock</TableCell>
                                 <TableCell align="center">Status</TableCell>
@@ -126,7 +154,7 @@ const ProductList = () => {
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                    <TableCell colSpan={9} align="center" sx={{ py: 3 }}>
                                         <CircularProgress />
                                     </TableCell>
                                 </TableRow>
@@ -144,8 +172,18 @@ const ProductList = () => {
                                             <Typography variant="subtitle2" fontWeight={500}>
                                                 {product.productName}
                                             </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">
+                                                {product.mainCategoryName}
+                                            </Typography>
                                             <Typography variant="caption" color="textSecondary">
-                                                Slug: {product.slug}
+                                                {product.subCategoryName}
+                                            </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Typography variant="body2">
+                                                {product.shopName}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="right">₹{product.price}</TableCell>
@@ -168,7 +206,7 @@ const ProductList = () => {
                                 ))
                             ) : (
                                 <TableRow>
-                                    <TableCell colSpan={7} align="center">
+                                    <TableCell colSpan={9} align="center">
                                         No products found
                                     </TableCell>
                                 </TableRow>
@@ -182,17 +220,10 @@ const ProductList = () => {
                     component="div"
                     count={pagination.totalItems}
                     rowsPerPage={pagination.pageSize}
-                    page={pagination.currentPage - 1} // MUI is 0-indexed
-                    onPageChange={(e, p) => handlePageChange(e, p)} // Hook expects 0-indexed passed to it? 
-                    // Wait, hook logic: fetchProducts(newPage + 1). MUI passes 0 for page 1. So passing p is fine if hook adds 1.
-                    // My hook: handlePageChange = (event, newPage) => fetchProducts(newPage + 1);
-                    // Yes, this aligns.
+                    page={pagination.currentPage - 1}
+                    onPageChange={handlePageChange}
                     onRowsPerPageChange={(e) => {
-                        // Need to handle page size change in hook, but my simple hook didn't expose it explicitly, 
-                        // but it uses state. I'll rely on default for now or add it later if needed.
-                        // Actually, my hook 'pagination' state has pageSize. I didn't verify if I can set it.
-                        // For now I'll just skip pageSize change implementation or assume 10.
-                        // To be proper, I should update the hook to support pageSize change.
+                        handleFilterChange('limit', e.target.value);
                     }}
                 />
             </Box>

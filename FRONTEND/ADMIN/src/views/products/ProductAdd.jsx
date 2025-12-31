@@ -109,9 +109,12 @@ const ProductAdd = () => {
     useEffect(() => {
         if (isEdit && mainCategories.length > 0 && formData.mainCategoryId) {
             // Check if current mainCategoryId is an ObjectId (length 24) but we have a matching UUID
-            const selectedCat = mainCategories.find(c => c._id === formData.mainCategoryId || c.categoryId === formData.mainCategoryId);
+            const selectedCat = mainCategories.find(c => 
+                (c.categoryId && String(c.categoryId) === String(formData.mainCategoryId)) || 
+                (c._id && String(c._id) === String(formData.mainCategoryId))
+            );
 
-            if (selectedCat && selectedCat.categoryId && selectedCat.categoryId !== formData.mainCategoryId) {
+            if (selectedCat && selectedCat.categoryId && String(selectedCat.categoryId) !== String(formData.mainCategoryId)) {
                 // The user has an ObjectId (or different ID) selected, but we found the canonical UUID. Switch to UUID.
                 setFormData(prev => ({ ...prev, mainCategoryId: selectedCat.categoryId }));
                 // We also need to re-fetch subcategories with the UUID if we haven't already
@@ -119,6 +122,56 @@ const ProductAdd = () => {
             }
         }
     }, [mainCategories, formData.mainCategoryId, isEdit]);
+
+    // Normalize SubCategory ID
+    useEffect(() => {
+        if (isEdit && subCategories.length > 0 && formData.subCategoryId) {
+            const selectedSub = subCategories.find(s => 
+                (s.subCategoryId && String(s.subCategoryId) === String(formData.subCategoryId)) || 
+                (s._id && String(s._id) === String(formData.subCategoryId)) ||
+                (s.id && String(s.id) === String(formData.subCategoryId))
+            );
+
+            if (selectedSub && selectedSub.subCategoryId && String(selectedSub.subCategoryId) !== String(formData.subCategoryId)) {
+                setFormData(prev => ({ ...prev, subCategoryId: selectedSub.subCategoryId }));
+            }
+        }
+    }, [subCategories, formData.subCategoryId, isEdit]);
+
+    // Merge subcategory attributes with product attributes in edit mode
+    useEffect(() => {
+        if (isEdit && subCategories.length > 0 && formData.subCategoryId && formData.attributes) {
+            const selectedSub = subCategories.find(s => 
+                String(s.subCategoryId) === String(formData.subCategoryId) || 
+                String(s._id) === String(formData.subCategoryId) ||
+                String(s.id) === String(formData.subCategoryId)
+            );
+
+            if (selectedSub && selectedSub.attributes) {
+                const subAttrs = selectedSub.attributes;
+                const currentAttrs = formData.attributes;
+                
+                // Check if there are any attributes in the subcategory that are not in the form
+                const hasMissing = subAttrs.some(sa => !currentAttrs.find(ca => ca.name === sa.name));
+                
+                if (hasMissing) {
+                    const mergedAttributes = subAttrs.map(sa => {
+                        const existing = currentAttrs.find(ca => ca.name === sa.name);
+                        return {
+                            attributeId: sa._id || sa.id || sa.attributeId,
+                            name: sa.name,
+                            type: sa.type,
+                            required: sa.required,
+                            value: existing ? existing.value : ''
+                        };
+                    });
+                    
+                    // Only update if actually different to prevent loops
+                    setFormData(prev => ({ ...prev, attributes: mergedAttributes }));
+                }
+            }
+        }
+    }, [subCategories, formData.subCategoryId, isEdit]);
 
     const fetchSubCategories = async (parentId) => {
         try {
@@ -153,12 +206,11 @@ const ProductAdd = () => {
             // Let's guess the route is `/categories/sub/parent/${parentId}`.
             const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(parentId));
             if (response.data.success) {
-                setSubCategories(response.data.data);
+                setSubCategories(response.data.data || []);
             }
         } catch (error) {
             console.error("Error fetching subcategories", error);
-            // Fallback: try fetching all subs and filter?
-            // console.log("Fallback fetching all subs");
+            setSubCategories([]);
         }
     };
 
