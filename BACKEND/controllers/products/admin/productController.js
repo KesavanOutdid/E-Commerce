@@ -165,7 +165,15 @@ exports.getProducts = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { productName, price, stock, description, shortDescription, updatedby } = req.body;
+    let { productName, price, stock, description, shortDescription, updatedby, attributes } = req.body;
+
+    if (typeof attributes === 'string') {
+      try {
+        attributes = JSON.parse(attributes);
+      } catch (e) {
+        attributes = [];
+      }
+    }
 
     if (Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
       return res.status(400).json({ 
@@ -180,6 +188,9 @@ exports.updateProduct = async (req, res) => {
     }
 
     const updateData = { ...req.body, updatedby };
+    if (attributes !== undefined) {
+      updateData.attributes = attributes;
+    }
     if (productName) {
       updateData.slug = slugify(productName);
     }
