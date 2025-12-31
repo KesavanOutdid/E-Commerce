@@ -163,6 +163,34 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    const [mainCategory, subCategory] = await Promise.all([
+      product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
+      product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+    ]);
+
+    const productWithCategoryNames = {
+      ...product,
+      mainCategoryName: mainCategory ? mainCategory.name : null,
+      subCategoryName: subCategory ? subCategory.name : null
+    };
+
+    res.status(200).json({
+      success: true,
+      message: 'Product details fetched successfully',
+      data: productWithCategoryNames
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 exports.updateProduct = async (req, res) => {
   try {
     let { productName, price, stock, description, shortDescription, updatedby, attributes } = req.body;

@@ -9,6 +9,7 @@ const websiteProductController = require('../../controllers/products/website/pro
 // Admin Routes
 router.post('/admin', authMiddleware, productUpload.array('images', 10), adminProductController.createProduct);
 router.get('/admin/getproducts', authMiddleware, adminProductController.getProducts);
+router.get('/admin/:id', authMiddleware, adminProductController.getProductById);
 router.put('/admin/:id', authMiddleware, productUpload.array('images', 10), adminProductController.updateProduct);
 router.patch('/admin/:id/approval', authMiddleware, adminProductController.updateApprovalStatus);
 router.delete('/admin/:id', authMiddleware, adminProductController.deleteProduct);
