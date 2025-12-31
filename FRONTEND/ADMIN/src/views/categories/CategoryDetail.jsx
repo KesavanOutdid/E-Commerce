@@ -405,7 +405,7 @@ const CategoryDetail = () => {
                                         >
                                             <option value="text">Text</option>
                                             <option value="number">Number</option>
-                                            <option value="boolean">Yes/No</option>
+                                            <option value="boolean">Boolean</option>
                                             <option value="date">Date</option>
                                         </TextField>
                                     </Grid>

@@ -75,7 +75,6 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                             <TableCell>Image</TableCell> {/* Added Image column */}
                             <TableCell>Name</TableCell>
                             <TableCell>Created By</TableCell>
-                            <TableCell>Updated By</TableCell>
                             <TableCell>Status</TableCell>
                             <TableCell align="center">Actions</TableCell>
                         </TableRow>
@@ -114,7 +113,6 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                                         </Typography>
                                     </TableCell>
                                     <TableCell>{category.createdBy || '-'}</TableCell>
-                                    <TableCell>{category.updatedby || '-'}</TableCell>
                                     <TableCell>
                                         <Chip // Replaced Typography with Chip for status
                                             label={category.status ? 'Active' : 'Inactive'}
@@ -127,12 +125,7 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                                             <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View"> {/* Changed color to info, added size */}
                                                 <IconEye size={18} />
                                             </IconButton>
-                                            <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit"> {/* Added size */}
-                                                <IconEdit size={18} />
-                                            </IconButton>
-                                            <IconButton color="error" size="small" onClick={() => handleDeleteCategory(category._id || category.id)} title="Delete"> {/* Added size */}
-                                                <IconTrash size={18} />
-                                            </IconButton>
+                                          
                                         </Stack>
                                     </TableCell>
                                 </TableRow>
