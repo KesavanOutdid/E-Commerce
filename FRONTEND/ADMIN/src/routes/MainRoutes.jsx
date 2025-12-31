@@ -23,6 +23,10 @@ const UserEditPage = Loadable(lazy(() => import('views/users/UserEdit')));
 const RolesPage = Loadable(lazy(() => import('views/roles')));
 const RoleDetailPage = Loadable(lazy(() => import('views/roles/RoleDetail')));
 
+// categories routing
+const CategoriesPage = Loadable(lazy(() => import('views/categories')));
+const CategoryDetailPage = Loadable(lazy(() => import('views/categories/CategoryDetail')));
+
 // profile routing
 const ViewProfilePage = Loadable(lazy(() => import('views/user/ViewProfile')));
 const UpdateProfilePage = Loadable(lazy(() => import('views/user/UpdateProfile')));
@@ -85,6 +89,14 @@ const MainRoutes = {
     {
       path: 'roles/:roleId',
       element: <RoleDetailPage />
+    },
+    {
+      path: 'categories',
+      element: <CategoriesPage />
+    },
+    {
+      path: 'categories/:categoryId',
+      element: <CategoryDetailPage />
     },
     {
       path: 'user/view-profile',

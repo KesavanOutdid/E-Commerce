@@ -23,11 +23,15 @@ export const API_ENDPOINTS = {
     DELETE: (roleId) => `/admin/roles/${roleId}`
   },
   CATEGORIES: {
-    GET_ALL: '/categories',
-    GET_BY_ID: (id) => `/categories/${id}`,
-    CREATE: '/categories',
-    UPDATE: (id) => `/categories/${id}`,
-    DELETE: (id) => `/categories/${id}`
+    GET_ALL: '/categories/main', // Fetches main categories
+    GET_BY_ID: (id) => `/categories/main/${id}`, // Now exists!
+    CREATE: '/categories/main',
+    UPDATE: (id) => `/categories/main/${id}`,
+    DELETE: (id) => `/categories/main/${id}`,
+    // Subcategories - adding specific keys if useful, though hooks might manually build URLs
+    CREATE_SUB: '/categories/sub',
+    UPDATE_SUB: (id) => `/categories/sub/${id}`,
+    DELETE_SUB: (id) => `/categories/sub/${id}`
   },
   PRODUCTS: {
     GET_ALL: '/products',

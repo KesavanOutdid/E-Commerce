@@ -1,5 +1,5 @@
 // assets
-import { IconUsers, IconShield } from '@tabler/icons-react';
+import { IconUsers, IconShield, IconCategory } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
 
@@ -24,7 +24,15 @@ const management = {
       icon: IconUsers,
       breadcrumbs: false
     },
-    
+    {
+      id: 'categories',
+      title: 'Categories',
+      type: 'item',
+      url: '/categories',
+      icon: IconCategory,
+      breadcrumbs: false
+    },
+
   ]
 };
 
