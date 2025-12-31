@@ -47,7 +47,7 @@ const GrowthTools = () => {
     ]
 
     return (
-        <section className='bg-white py-12 lg:py-20'>
+        <section className='bg-white'>
             <div className='container'>
                 <div className='text-center mb-12 lg:mb-16 px-4'>
                     <h2 className='text-3xl sm:text-4xl lg:text-5xl font-bold mb-4'>

@@ -21,22 +21,23 @@ interface SellerInfo {
 }
 
 interface User {
-    _id: string
+    _id?: string
     userId: string
     firstName: string
     lastName: string
     email: string
     phone: string
     roles: number[]
-    profileImage: string | null
-    addresses: any[]
-    status: boolean
-    authenticator: boolean
-    lastLoginAt: string | null
-    createdAt: string
-    updatedAt: string
-    createdBy: string
-    updatedBy: string | null
+    kycApproved?: boolean
+    profileImage?: string | null
+    addresses?: any[]
+    status?: boolean
+    authenticator?: boolean
+    lastLoginAt?: string | null
+    createdAt?: string
+    updatedAt?: string
+    createdBy?: string
+    updatedBy?: string | null
     roleNames: string[]
     sellerInfo?: SellerInfo
 }
@@ -44,10 +45,11 @@ interface User {
 interface AuthContextType {
     user: User | null
     token: string | null
-    login: (token: string, userData: User) => void
+    login: (token: string, userData: Partial<User>) => void
     logout: () => void
-    updateUser: (userData: User) => void
+    updateUser: (userData: Partial<User>) => void
     isAuthenticated: boolean
+    isLoading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -55,20 +57,28 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
     const [token, setToken] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         const storedToken = localStorage.getItem('seller_token')
         const storedUser = localStorage.getItem('seller_user')
         
-        if (storedToken && storedUser) {
-            setToken(storedToken)
-            setUser(JSON.parse(storedUser))
+        if (storedToken && storedUser && storedUser !== 'undefined') {
+            try {
+                setToken(storedToken)
+                setUser(JSON.parse(storedUser))
+            } catch (error) {
+                console.error('Failed to parse stored user data:', error)
+                localStorage.removeItem('seller_token')
+                localStorage.removeItem('seller_user')
+            }
         }
+        setIsLoading(false)
     }, [])
 
-    const login = (newToken: string, userData: User) => {
+    const login = (newToken: string, userData: Partial<User>) => {
         setToken(newToken)
-        setUser(userData)
+        setUser(userData as User)
         localStorage.setItem('seller_token', newToken)
         localStorage.setItem('seller_user', JSON.stringify(userData))
     }
@@ -80,9 +90,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('seller_user')
     }
 
-    const updateUser = (userData: User) => {
-        setUser(userData)
-        localStorage.setItem('seller_user', JSON.stringify(userData))
+    const updateUser = (userData: Partial<User>) => {
+        const updatedUser = { ...user, ...userData } as User
+        setUser(updatedUser)
+        localStorage.setItem('seller_user', JSON.stringify(updatedUser))
     }
 
     return (
@@ -94,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 logout,
                 updateUser,
                 isAuthenticated: !!token,
+                isLoading,
             }}
         >
             {children}

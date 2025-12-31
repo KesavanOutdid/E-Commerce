@@ -9,19 +9,25 @@ import SignUp from '@/app/components/Auth/SignUp'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import { HeaderItem } from '@/app/types/menu'
 import withBasePath from '@/utils/basePath'
+import { useAuth } from '@/context/AuthContext'
+import { useRouter } from 'next/navigation'
 
 const Header: React.FC = () => {
+    const { user, logout, isAuthenticated } = useAuth()
+    const router = useRouter()
     const [headerData, setHeaderData] = useState<HeaderItem[]>([])
 
     const [navbarOpen, setNavbarOpen] = useState(false)
     const [sticky, setSticky] = useState(false)
     const [isSignInOpen, setIsSignInOpen] = useState(false)
     const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+    const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false)
 
     const navbarRef = useRef<HTMLDivElement>(null)
     const signInRef = useRef<HTMLDivElement>(null)
     const signUpRef = useRef<HTMLDivElement>(null)
     const mobileMenuRef = useRef<HTMLDivElement>(null)
+    const accountDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         const fetchData = async () => {
@@ -61,6 +67,18 @@ const Header: React.FC = () => {
         ) {
             setNavbarOpen(false)
         }
+        if (
+            accountDropdownRef.current &&
+            !accountDropdownRef.current.contains(event.target as Node)
+        ) {
+            setIsAccountDropdownOpen(false)
+        }
+    }
+
+    const handleLogout = () => {
+        logout()
+        setIsAccountDropdownOpen(false)
+        router.push('/')
     }
 
     useEffect(() => {
@@ -93,13 +111,63 @@ const Header: React.FC = () => {
                         ))}
                     </nav>
                     <div className='flex items-center gap-4'>
-                        <button
-                            className='hidden lg:block bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer'
-                            onClick={() => {
-                                setIsSignInOpen(true)
-                            }}>
-                            Sign In
-                        </button>
+                        {!isAuthenticated ? (
+                            <>
+                                <button
+                                    className='hidden lg:block bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer'
+                                    onClick={() => {
+                                        setIsSignInOpen(true)
+                                    }}>
+                                    Sign In
+                                </button>
+                                <button
+                                    className='hidden lg:block bg-primary text-white text-base font-medium hover:bg-transparent duration-300 hover:text-primary border border-primary px-6 py-2 rounded-lg hover:cursor-pointer'
+                                    onClick={() => {
+                                        setIsSignUpOpen(true)
+                                    }}>
+                                    Start Selling
+                                </button>
+                            </>
+                        ) : (
+                            <div className='hidden lg:block relative' ref={accountDropdownRef}>
+                                <button
+                                    onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
+                                    className='flex items-center gap-2 bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer'>
+                                    <Icon icon='mdi:account-circle' width={24} height={24} />
+                                    <span>{user?.firstName} {user?.lastName}</span>
+                                    <Icon icon='mdi:chevron-down' width={20} height={20} />
+                                </button>
+                                {isAccountDropdownOpen && (
+                                    <div className='absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50'>
+                                        <button
+                                            onClick={() => {
+                                                setIsAccountDropdownOpen(false)
+                                                router.push('/profile')
+                                            }}
+                                            className='w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black'>
+                                            <Icon icon='mdi:account' width={20} height={20} />
+                                            Profile
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsAccountDropdownOpen(false)
+                                                router.push('/kyc')
+                                            }}
+                                            className='w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black'>
+                                            <Icon icon='mdi:file-document-check' width={20} height={20} />
+                                            KYC
+                                        </button>
+                                        <hr className='my-2' />
+                                        <button
+                                            onClick={handleLogout}
+                                            className='w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600'>
+                                            <Icon icon='mdi:logout' width={20} height={20} />
+                                            Logout
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                         {isSignInOpen && (
                             <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
                                 <div
@@ -116,17 +184,16 @@ const Header: React.FC = () => {
                                             className='text-black hover:text-primary inline-block hover:cursor-pointer'
                                         />
                                     </button>
-                                    <Signin />
+                                    <Signin 
+                                        onSwitchToSignUp={() => {
+                                            setIsSignInOpen(false)
+                                            setIsSignUpOpen(true)
+                                        }}
+                                        onCloseModal={() => setIsSignInOpen(false)}
+                                    />
                                 </div>
                             </div>
                         )}
-                        <button
-                            className='hidden lg:block bg-primary text-white text-base font-medium hover:bg-transparent duration-300 hover:text-primary border border-primary px-6 py-2 rounded-lg hover:cursor-pointer'
-                            onClick={() => {
-                                setIsSignUpOpen(true)
-                            }}>
-                            Start Selling
-                        </button>
                         {isSignUpOpen && (
                             <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
                                 <div
@@ -143,7 +210,16 @@ const Header: React.FC = () => {
                                             className='text-black hover:text-primary inline-block hover:cursor-pointer'
                                         />
                                     </button>
-                                    <SignUp />
+                                    <SignUp 
+                                        onSuccess={() => {
+                                            setIsSignUpOpen(false)
+                                            setIsSignInOpen(true)
+                                        }}
+                                        onSwitchToSignIn={() => {
+                                            setIsSignUpOpen(false)
+                                            setIsSignInOpen(true)
+                                        }}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -185,22 +261,60 @@ const Header: React.FC = () => {
                             <MobileHeaderLink key={index} item={item} />
                         ))}
                         <div className='mt-4 flex flex-col gap-4 w-full'>
-                            <button
-                                className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
-                                onClick={() => {
-                                    setIsSignInOpen(true)
-                                    setNavbarOpen(false)
-                                }}>
-                                Sign In
-                            </button>
-                            <button
-                                className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
-                                onClick={() => {
-                                    setIsSignUpOpen(true)
-                                    setNavbarOpen(false)
-                                }}>
-                                Start Selling
-                            </button>
+                            {!isAuthenticated ? (
+                                <>
+                                    <button
+                                        className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
+                                        onClick={() => {
+                                            setIsSignInOpen(true)
+                                            setNavbarOpen(false)
+                                        }}>
+                                        Sign In
+                                    </button>
+                                    <button
+                                        className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
+                                        onClick={() => {
+                                            setIsSignUpOpen(true)
+                                            setNavbarOpen(false)
+                                        }}>
+                                        Start Selling
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <div className='px-4 py-2 border-b border-gray-200'>
+                                        <p className='text-sm text-gray-600'>Welcome,</p>
+                                        <p className='font-semibold text-black'>{user?.firstName} {user?.lastName}</p>
+                                    </div>
+                                    <button
+                                        className='bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'
+                                        onClick={() => {
+                                            router.push('/profile')
+                                            setNavbarOpen(false)
+                                        }}>
+                                        <Icon icon='mdi:account' width={20} height={20} />
+                                        Profile
+                                    </button>
+                                    <button
+                                        className='bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'
+                                        onClick={() => {
+                                            router.push('/kyc')
+                                            setNavbarOpen(false)
+                                        }}>
+                                        <Icon icon='mdi:file-document-check' width={20} height={20} />
+                                        KYC
+                                    </button>
+                                    <button
+                                        className='bg-red-600 text-white px-4 py-2 rounded-lg border border-red-600 hover:bg-red-700 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'
+                                        onClick={() => {
+                                            handleLogout()
+                                            setNavbarOpen(false)
+                                        }}>
+                                        <Icon icon='mdi:logout' width={20} height={20} />
+                                        Logout
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </nav>
                 </div>

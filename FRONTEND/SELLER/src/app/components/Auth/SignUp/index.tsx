@@ -8,7 +8,12 @@ import { useState } from 'react'
 import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
 
-const SignUp = () => {
+interface SignUpProps {
+    onSuccess?: () => void
+    onSwitchToSignIn?: () => void
+}
+
+const SignUp = ({ onSuccess, onSwitchToSignIn }: SignUpProps) => {
     const router = useRouter()
     const [loading, setLoading] = useState(false)
     const [step, setStep] = useState<'email' | 'register'>('email')
@@ -76,7 +81,11 @@ const SignUp = () => {
             
             if (response.success) {
                 toast.success('Successfully registered! Please sign in.')
-                router.push('/signin')
+                if (onSuccess) {
+                    onSuccess()
+                } else {
+                    router.push('/signin')
+                }
             } else {
                 toast.error(response.message || 'Registration failed')
             }
@@ -105,6 +114,9 @@ const SignUp = () => {
             {step === 'email' ? (
                 <form onSubmit={handleSendOTP}>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='email'
                             placeholder='Email'
@@ -117,7 +129,7 @@ const SignUp = () => {
                     <div className='mb-9'>
                         <button
                             type='submit'
-                            disabled={loading}
+                            disabled={loading || !formData.email}
                             className='flex w-full items-center text-18 font-medium justify-center rounded-md text-white bg-primary px-5 py-3 text-darkmode transition duration-300 ease-in-out hover:bg-transparent hover:text-primary border-primary border hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
                             Send OTP {loading && <Loader />}
                         </button>
@@ -126,6 +138,9 @@ const SignUp = () => {
             ) : (
                 <form onSubmit={handleSubmit}>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            First Name <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='text'
                             placeholder='First Name'
@@ -136,6 +151,9 @@ const SignUp = () => {
                         />
                     </div>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Last Name <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='text'
                             placeholder='Last Name'
@@ -146,6 +164,9 @@ const SignUp = () => {
                         />
                     </div>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Phone Number <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='tel'
                             placeholder='Phone Number'
@@ -156,6 +177,9 @@ const SignUp = () => {
                         />
                     </div>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            OTP Code <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='text'
                             placeholder='OTP Code'
@@ -166,6 +190,9 @@ const SignUp = () => {
                         />
                     </div>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='password'
                             placeholder='Password'
@@ -176,6 +203,9 @@ const SignUp = () => {
                         />
                     </div>
                     <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Confirm Password <span className="text-red-500">*</span>
+                        </label>
                         <input
                             type='password'
                             placeholder='Confirm Password'
@@ -188,7 +218,7 @@ const SignUp = () => {
                     <div className='mb-9'>
                         <button
                             type='submit'
-                            disabled={loading}
+                            disabled={loading || !formData.firstName || !formData.lastName || !formData.phone || !formData.otpCode || !formData.password || !formData.confirmPassword}
                             className='flex w-full items-center text-18 font-medium justify-center rounded-md text-white bg-primary px-5 py-3 text-darkmode transition duration-300 ease-in-out hover:bg-transparent hover:text-primary border-primary border hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'>
                             Register & Continue {loading && <Loader />}
                         </button>
@@ -209,9 +239,11 @@ const SignUp = () => {
 
             <p className='text-body-secondary text-black text-base'>
                 Already have an account?
-                <Link href='/signin' className='pl-2 text-primary hover:underline'>
+                <button 
+                    onClick={onSwitchToSignIn}
+                    className='pl-2 text-primary hover:underline'>
                     Sign In
-                </Link>
+                </button>
             </p>
         </>
     )

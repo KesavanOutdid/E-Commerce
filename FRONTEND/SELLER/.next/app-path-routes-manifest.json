@@ -1,0 +1,11 @@
+{
+  "/api/data/route": "/api/data",
+  "/favicon.ico/route": "/favicon.ico",
+  "/(site)/kyc/page": "/kyc",
+  "/(site)/profile/page": "/profile",
+  "/(site)/(auth)/signin/page": "/signin",
+  "/(site)/(auth)/signup/page": "/signup",
+  "/_not-found/page": "/_not-found",
+  "/(site)/documentation/page": "/documentation",
+  "/page": "/"
+}

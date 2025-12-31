@@ -425,7 +425,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.40:9000"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.37:9000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -487,6 +487,14 @@ const authService = {
     updateProfile: async (data)=>{
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].put('/api/seller/profile', data);
         return response.data;
+    },
+    getKYCStatus: async ()=>{
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get('/api/seller/kyc/status');
+        return response.data;
+    },
+    submitKYCRequest: async (data)=>{
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post('/api/seller/kyc/request', data);
+        return response.data;
     }
 };
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
@@ -513,14 +521,22 @@ const AuthProvider = ({ children })=>{
     _s();
     const [user, setUser] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
     const [token, setToken] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [isLoading, setIsLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(true);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "AuthProvider.useEffect": ()=>{
             const storedToken = localStorage.getItem('seller_token');
             const storedUser = localStorage.getItem('seller_user');
-            if (storedToken && storedUser) {
-                setToken(storedToken);
-                setUser(JSON.parse(storedUser));
+            if (storedToken && storedUser && storedUser !== 'undefined') {
+                try {
+                    setToken(storedToken);
+                    setUser(JSON.parse(storedUser));
+                } catch (error) {
+                    console.error('Failed to parse stored user data:', error);
+                    localStorage.removeItem('seller_token');
+                    localStorage.removeItem('seller_user');
+                }
             }
+            setIsLoading(false);
         }
     }["AuthProvider.useEffect"], []);
     const login = (newToken, userData)=>{
@@ -536,8 +552,12 @@ const AuthProvider = ({ children })=>{
         localStorage.removeItem('seller_user');
     };
     const updateUser = (userData)=>{
-        setUser(userData);
-        localStorage.setItem('seller_user', JSON.stringify(userData));
+        const updatedUser = {
+            ...user,
+            ...userData
+        };
+        setUser(updatedUser);
+        localStorage.setItem('seller_user', JSON.stringify(updatedUser));
     };
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(AuthContext.Provider, {
         value: {
@@ -546,16 +566,17 @@ const AuthProvider = ({ children })=>{
             login,
             logout,
             updateUser,
-            isAuthenticated: !!token
+            isAuthenticated: !!token,
+            isLoading
         },
         children: children
     }, void 0, false, {
         fileName: "[project]/src/context/AuthContext.tsx",
-        lineNumber: 89,
+        lineNumber: 100,
         columnNumber: 9
     }, this);
 };
-_s(AuthProvider, "cANLe8RtnwDE5y1hInrXoZDdgy8=");
+_s(AuthProvider, "mX4/AXRUN66G8j/NKXHYWKblzjI=");
 _c = AuthProvider;
 const useAuth = ()=>{
     _s1();
@@ -602,7 +623,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const Signin = ()=>{
+const Signin = ({ onSwitchToSignUp, onCloseModal })=>{
     _s();
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const { login } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
@@ -622,8 +643,21 @@ const Signin = ()=>{
         try {
             const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$authService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["authService"].login(loginData.email, loginData.password);
             if (response.success) {
-                login(response.data.token, response.data.user);
+                const userData = {
+                    userId: response.data.userId,
+                    firstName: response.data.firstName,
+                    lastName: response.data.lastName,
+                    email: response.data.email,
+                    phone: response.data.phone,
+                    roles: response.data.roles,
+                    roleNames: response.data.roleNames,
+                    kycApproved: response.data.kycApproved
+                };
+                login(response.data.accessToken, userData);
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Login successful');
+                if (onCloseModal) {
+                    onCloseModal();
+                }
                 router.push('/');
             } else {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Login failed');
@@ -641,17 +675,17 @@ const Signin = ()=>{
                 className: "mb-10 text-center mx-auto inline-block max-w-[160px]",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Layout$2f$Header$2f$Logo$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                     fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                    lineNumber: 54,
+                    lineNumber: 73,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 53,
+                lineNumber: 72,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SocialSignIn$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 57,
+                lineNumber: 76,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -661,12 +695,12 @@ const Signin = ()=>{
                     children: "OR"
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                    lineNumber: 60,
+                    lineNumber: 79,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 59,
+                lineNumber: 78,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -674,76 +708,116 @@ const Signin = ()=>{
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "email",
-                            placeholder: "Email",
-                            value: loginData.email,
-                            onChange: (e)=>setLoginData({
-                                    ...loginData,
-                                    email: e.target.value
-                                }),
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black",
-                            required: true
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                            lineNumber: 67,
-                            columnNumber: 21
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Email ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                        lineNumber: 87,
+                                        columnNumber: 31
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                lineNumber: 86,
+                                columnNumber: 21
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "email",
+                                placeholder: "Email",
+                                value: loginData.email,
+                                onChange: (e)=>setLoginData({
+                                        ...loginData,
+                                        email: e.target.value
+                                    }),
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black",
+                                required: true
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                lineNumber: 89,
+                                columnNumber: 21
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                        lineNumber: 66,
+                        lineNumber: 85,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "password",
-                            placeholder: "Password",
-                            value: loginData.password,
-                            onChange: (e)=>setLoginData({
-                                    ...loginData,
-                                    password: e.target.value
-                                }),
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black",
-                            required: true
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                            lineNumber: 79,
-                            columnNumber: 21
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Password ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                        lineNumber: 102,
+                                        columnNumber: 34
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                lineNumber: 101,
+                                columnNumber: 21
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "password",
+                                placeholder: "Password",
+                                value: loginData.password,
+                                onChange: (e)=>setLoginData({
+                                        ...loginData,
+                                        password: e.target.value
+                                    }),
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black",
+                                required: true
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
+                                lineNumber: 104,
+                                columnNumber: 21
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                        lineNumber: 78,
+                        lineNumber: 100,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-9",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                             type: "submit",
-                            disabled: loading,
+                            disabled: loading || !loginData.email || !loginData.password,
                             className: "bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed",
                             children: [
                                 "Sign In ",
                                 loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                                    lineNumber: 95,
+                                    lineNumber: 120,
                                     columnNumber: 45
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                            lineNumber: 91,
+                            lineNumber: 116,
                             columnNumber: 21
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                        lineNumber: 90,
+                        lineNumber: 115,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 65,
+                lineNumber: 84,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -752,7 +826,7 @@ const Signin = ()=>{
                 children: "Forgot Password?"
             }, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 100,
+                lineNumber: 125,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -760,19 +834,19 @@ const Signin = ()=>{
                 children: [
                     "Not a member yet?",
                     ' ',
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                        href: "/signup",
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        onClick: onSwitchToSignUp,
                         className: "text-primary hover:underline",
                         children: "Sign Up"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                        lineNumber: 107,
+                        lineNumber: 132,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignIn/index.tsx",
-                lineNumber: 105,
+                lineNumber: 130,
                 columnNumber: 13
             }, this)
         ]
@@ -937,7 +1011,7 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
-const SignUp = ()=>{
+const SignUp = ({ onSuccess, onSwitchToSignIn })=>{
     _s();
     const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const [loading, setLoading] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
@@ -995,7 +1069,11 @@ const SignUp = ()=>{
             });
             if (response.success) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].success('Successfully registered! Please sign in.');
-                router.push('/signin');
+                if (onSuccess) {
+                    onSuccess();
+                } else {
+                    router.push('/signin');
+                }
             } else {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Registration failed');
             }
@@ -1012,17 +1090,17 @@ const SignUp = ()=>{
                 className: "mb-10 text-center mx-auto inline-block max-w-[160px]",
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Layout$2f$Header$2f$Logo$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                     fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                    lineNumber: 94,
+                    lineNumber: 103,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 93,
+                lineNumber: 102,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SocialSignUp$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 97,
+                lineNumber: 106,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -1032,12 +1110,12 @@ const SignUp = ()=>{
                     children: "OR"
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                    lineNumber: 100,
+                    lineNumber: 109,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 99,
+                lineNumber: 108,
                 columnNumber: 13
             }, this),
             step === 'email' ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1045,218 +1123,358 @@ const SignUp = ()=>{
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "email",
-                            placeholder: "Email",
-                            value: formData.email,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    email: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 108,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Email ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 118,
+                                        columnNumber: 35
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 117,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "email",
+                                placeholder: "Email",
+                                value: formData.email,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        email: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 120,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 107,
+                        lineNumber: 116,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-9",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                             type: "submit",
-                            disabled: loading,
+                            disabled: loading || !formData.email,
                             className: "flex w-full items-center text-18 font-medium justify-center rounded-md text-white bg-primary px-5 py-3 text-darkmode transition duration-300 ease-in-out hover:bg-transparent hover:text-primary border-primary border hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
                             children: [
                                 "Send OTP ",
                                 loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                                    lineNumber: 122,
+                                    lineNumber: 134,
                                     columnNumber: 50
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 118,
+                            lineNumber: 130,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 117,
+                        lineNumber: 129,
                         columnNumber: 21
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 106,
+                lineNumber: 115,
                 columnNumber: 17
             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
                 onSubmit: handleSubmit,
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "text",
-                            placeholder: "First Name",
-                            value: formData.firstName,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    firstName: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 129,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "First Name ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 142,
+                                        columnNumber: 40
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 141,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "text",
+                                placeholder: "First Name",
+                                value: formData.firstName,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        firstName: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 144,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 128,
+                        lineNumber: 140,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "text",
-                            placeholder: "Last Name",
-                            value: formData.lastName,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    lastName: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 139,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Last Name ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 155,
+                                        columnNumber: 39
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 154,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "text",
+                                placeholder: "Last Name",
+                                value: formData.lastName,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        lastName: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 157,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 138,
+                        lineNumber: 153,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "tel",
-                            placeholder: "Phone Number",
-                            value: formData.phone,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    phone: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 149,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Phone Number ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 168,
+                                        columnNumber: 42
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 167,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "tel",
+                                placeholder: "Phone Number",
+                                value: formData.phone,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        phone: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 170,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 148,
+                        lineNumber: 166,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "text",
-                            placeholder: "OTP Code",
-                            value: formData.otpCode,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    otpCode: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 159,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "OTP Code ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 181,
+                                        columnNumber: 38
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 180,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "text",
+                                placeholder: "OTP Code",
+                                value: formData.otpCode,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        otpCode: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 183,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 158,
+                        lineNumber: 179,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "password",
-                            placeholder: "Password",
-                            value: formData.password,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    password: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 169,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Password ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 194,
+                                        columnNumber: 38
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 193,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "password",
+                                placeholder: "Password",
+                                value: formData.password,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        password: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 196,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 168,
+                        lineNumber: 192,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-[22px]",
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                            type: "password",
-                            placeholder: "Confirm Password",
-                            value: formData.confirmPassword,
-                            onChange: (e)=>setFormData({
-                                    ...formData,
-                                    confirmPassword: e.target.value
-                                }),
-                            required: true,
-                            className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 179,
-                            columnNumber: 25
-                        }, this)
-                    }, void 0, false, {
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                className: "block text-sm font-medium text-gray-700 mb-2",
+                                children: [
+                                    "Confirm Password ",
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                        className: "text-red-500",
+                                        children: "*"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                        lineNumber: 207,
+                                        columnNumber: 46
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 206,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                type: "password",
+                                placeholder: "Confirm Password",
+                                value: formData.confirmPassword,
+                                onChange: (e)=>setFormData({
+                                        ...formData,
+                                        confirmPassword: e.target.value
+                                    }),
+                                required: true,
+                                className: "w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
+                                lineNumber: 209,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 178,
+                        lineNumber: 205,
                         columnNumber: 21
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                         className: "mb-9",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                             type: "submit",
-                            disabled: loading,
+                            disabled: loading || !formData.firstName || !formData.lastName || !formData.phone || !formData.otpCode || !formData.password || !formData.confirmPassword,
                             className: "flex w-full items-center text-18 font-medium justify-center rounded-md text-white bg-primary px-5 py-3 text-darkmode transition duration-300 ease-in-out hover:bg-transparent hover:text-primary border-primary border hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed",
                             children: [
                                 "Register & Continue ",
                                 loading && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                                    lineNumber: 193,
+                                    lineNumber: 223,
                                     columnNumber: 61
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                            lineNumber: 189,
+                            lineNumber: 219,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 188,
+                        lineNumber: 218,
                         columnNumber: 21
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 127,
+                lineNumber: 139,
                 columnNumber: 17
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1270,7 +1488,7 @@ const SignUp = ()=>{
                         children: "Privacy"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 201,
+                        lineNumber: 231,
                         columnNumber: 17
                     }, this),
                     ' ',
@@ -1282,32 +1500,32 @@ const SignUp = ()=>{
                         children: "Policy"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 205,
+                        lineNumber: 235,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 199,
+                lineNumber: 229,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
                 className: "text-body-secondary text-black text-base",
                 children: [
                     "Already have an account?",
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                        href: "/signin",
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                        onClick: onSwitchToSignIn,
                         className: "pl-2 text-primary hover:underline",
                         children: "Sign In"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                        lineNumber: 212,
+                        lineNumber: 242,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/Auth/SignUp/index.tsx",
-                lineNumber: 210,
+                lineNumber: 240,
                 columnNumber: 13
             }, this)
         ]
@@ -1343,6 +1561,8 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SignUp$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/components/Auth/SignUp/index.tsx [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@iconify/react/dist/iconify.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$basePath$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/utils/basePath.ts [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/context/AuthContext.tsx [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/navigation.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
@@ -1354,17 +1574,23 @@ var _s = __turbopack_context__.k.signature();
 ;
 ;
 ;
+;
+;
 const Header = ()=>{
     _s();
+    const { user, logout, isAuthenticated } = (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"])();
+    const router = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"])();
     const [headerData, setHeaderData] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])([]);
     const [navbarOpen, setNavbarOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [sticky, setSticky] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [isSignInOpen, setIsSignInOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const [isSignUpOpen, setIsSignUpOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [isAccountDropdownOpen, setIsAccountDropdownOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const navbarRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const signInRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const signUpRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     const mobileMenuRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const accountDropdownRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Header.useEffect": ()=>{
             const fetchData = {
@@ -1395,6 +1621,14 @@ const Header = ()=>{
         if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target) && navbarOpen) {
             setNavbarOpen(false);
         }
+        if (accountDropdownRef.current && !accountDropdownRef.current.contains(event.target)) {
+            setIsAccountDropdownOpen(false);
+        }
+    };
+    const handleLogout = ()=>{
+        logout();
+        setIsAccountDropdownOpen(false);
+        router.push('/');
     };
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "Header.useEffect": ()=>{
@@ -1434,7 +1668,7 @@ const Header = ()=>{
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Layout$2f$Header$2f$Logo$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                            lineNumber: 89,
+                            lineNumber: 107,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
@@ -1443,27 +1677,172 @@ const Header = ()=>{
                                     item: item
                                 }, index, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 92,
+                                    lineNumber: 110,
                                     columnNumber: 29
                                 }, this))
                         }, void 0, false, {
                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                            lineNumber: 90,
+                            lineNumber: 108,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "flex items-center gap-4",
                             children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                    className: "hidden lg:block bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer",
-                                    onClick: ()=>{
-                                        setIsSignInOpen(true);
-                                    },
-                                    children: "Sign In"
-                                }, void 0, false, {
+                                !isAuthenticated ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                            className: "hidden lg:block bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer",
+                                            onClick: ()=>{
+                                                setIsSignInOpen(true);
+                                            },
+                                            children: "Sign In"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                            lineNumber: 116,
+                                            columnNumber: 33
+                                        }, this),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                            className: "hidden lg:block bg-primary text-white text-base font-medium hover:bg-transparent duration-300 hover:text-primary border border-primary px-6 py-2 rounded-lg hover:cursor-pointer",
+                                            onClick: ()=>{
+                                                setIsSignUpOpen(true);
+                                            },
+                                            children: "Start Selling"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                            lineNumber: 123,
+                                            columnNumber: 33
+                                        }, this)
+                                    ]
+                                }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "hidden lg:block relative",
+                                    ref: accountDropdownRef,
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                            onClick: ()=>setIsAccountDropdownOpen(!isAccountDropdownOpen),
+                                            className: "flex items-center gap-2 bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                    icon: "mdi:account-circle",
+                                                    width: 24,
+                                                    height: 24
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 136,
+                                                    columnNumber: 37
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                    children: [
+                                                        user?.firstName,
+                                                        " ",
+                                                        user?.lastName
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 137,
+                                                    columnNumber: 37
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                    icon: "mdi:chevron-down",
+                                                    width: 20,
+                                                    height: 20
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 138,
+                                                    columnNumber: 37
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                            lineNumber: 133,
+                                            columnNumber: 33
+                                        }, this),
+                                        isAccountDropdownOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50",
+                                            children: [
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                    onClick: ()=>{
+                                                        setIsAccountDropdownOpen(false);
+                                                        router.push('/profile');
+                                                    },
+                                                    className: "w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                            icon: "mdi:account",
+                                                            width: 20,
+                                                            height: 20
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                            lineNumber: 148,
+                                                            columnNumber: 45
+                                                        }, this),
+                                                        "Profile"
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 142,
+                                                    columnNumber: 41
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                    onClick: ()=>{
+                                                        setIsAccountDropdownOpen(false);
+                                                        router.push('/kyc');
+                                                    },
+                                                    className: "w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                            icon: "mdi:file-document-check",
+                                                            width: 20,
+                                                            height: 20
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                            lineNumber: 157,
+                                                            columnNumber: 45
+                                                        }, this),
+                                                        "KYC"
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 151,
+                                                    columnNumber: 41
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {
+                                                    className: "my-2"
+                                                }, void 0, false, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 160,
+                                                    columnNumber: 41
+                                                }, this),
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                    onClick: handleLogout,
+                                                    className: "w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-red-600",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                            icon: "mdi:logout",
+                                                            width: 20,
+                                                            height: 20
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                            lineNumber: 164,
+                                                            columnNumber: 45
+                                                        }, this),
+                                                        "Logout"
+                                                    ]
+                                                }, void 0, true, {
+                                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                    lineNumber: 161,
+                                                    columnNumber: 41
+                                                }, this)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                            lineNumber: 141,
+                                            columnNumber: 37
+                                        }, this)
+                                    ]
+                                }, void 0, true, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 96,
-                                    columnNumber: 25
+                                    lineNumber: 132,
+                                    columnNumber: 29
                                 }, this),
                                 isSignInOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50",
@@ -1482,40 +1861,35 @@ const Header = ()=>{
                                                     className: "text-black hover:text-primary inline-block hover:cursor-pointer"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                    lineNumber: 112,
+                                                    lineNumber: 180,
                                                     columnNumber: 41
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                lineNumber: 108,
+                                                lineNumber: 176,
                                                 columnNumber: 37
                                             }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SignIn$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SignIn$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                                onSwitchToSignUp: ()=>{
+                                                    setIsSignInOpen(false);
+                                                    setIsSignUpOpen(true);
+                                                },
+                                                onCloseModal: ()=>setIsSignInOpen(false)
+                                            }, void 0, false, {
                                                 fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                lineNumber: 119,
+                                                lineNumber: 187,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                        lineNumber: 105,
+                                        lineNumber: 173,
                                         columnNumber: 33
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 104,
+                                    lineNumber: 172,
                                     columnNumber: 29
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                    className: "hidden lg:block bg-primary text-white text-base font-medium hover:bg-transparent duration-300 hover:text-primary border border-primary px-6 py-2 rounded-lg hover:cursor-pointer",
-                                    onClick: ()=>{
-                                        setIsSignUpOpen(true);
-                                    },
-                                    children: "Start Selling"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 123,
-                                    columnNumber: 25
                                 }, this),
                                 isSignUpOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50",
@@ -1534,28 +1908,37 @@ const Header = ()=>{
                                                     className: "text-black hover:text-primary inline-block hover:cursor-pointer"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                    lineNumber: 139,
+                                                    lineNumber: 206,
                                                     columnNumber: 41
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                lineNumber: 135,
+                                                lineNumber: 202,
                                                 columnNumber: 37
                                             }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SignUp$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Auth$2f$SignUp$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                                onSuccess: ()=>{
+                                                    setIsSignUpOpen(false);
+                                                    setIsSignInOpen(true);
+                                                },
+                                                onSwitchToSignIn: ()=>{
+                                                    setIsSignUpOpen(false);
+                                                    setIsSignInOpen(true);
+                                                }
+                                            }, void 0, false, {
                                                 fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                                lineNumber: 146,
+                                                lineNumber: 213,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                        lineNumber: 132,
+                                        lineNumber: 199,
                                         columnNumber: 33
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 131,
+                                    lineNumber: 198,
                                     columnNumber: 29
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1567,46 +1950,46 @@ const Header = ()=>{
                                             className: "block w-6 h-0.5 bg-black"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                            lineNumber: 154,
+                                            lineNumber: 230,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "block w-6 h-0.5 bg-black mt-1.5"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                            lineNumber: 155,
+                                            lineNumber: 231,
                                             columnNumber: 29
                                         }, this),
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                             className: "block w-6 h-0.5 bg-black mt-1.5"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                            lineNumber: 156,
+                                            lineNumber: 232,
                                             columnNumber: 29
                                         }, this)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 150,
+                                    lineNumber: 226,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                            lineNumber: 95,
+                            lineNumber: 113,
                             columnNumber: 21
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                    lineNumber: 88,
+                    lineNumber: 106,
                     columnNumber: 17
                 }, this),
                 navbarOpen && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                     className: "fixed top-0 left-0 w-full h-full bg-black/50 z-40"
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                    lineNumber: 161,
+                    lineNumber: 237,
                     columnNumber: 21
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1620,12 +2003,12 @@ const Header = ()=>{
                                     className: "text-lg font-bold text-midnight_text",
                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Layout$2f$Header$2f$Logo$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                        lineNumber: 169,
+                                        lineNumber: 245,
                                         columnNumber: 29
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 168,
+                                    lineNumber: 244,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -1638,18 +2021,18 @@ const Header = ()=>{
                                         height: 24
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                        lineNumber: 176,
+                                        lineNumber: 252,
                                         columnNumber: 29
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 172,
+                                    lineNumber: 248,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                            lineNumber: 167,
+                            lineNumber: 243,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("nav", {
@@ -1659,67 +2042,175 @@ const Header = ()=>{
                                         item: item
                                     }, index, false, {
                                         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                        lineNumber: 185,
+                                        lineNumber: 261,
                                         columnNumber: 29
                                     }, this)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     className: "mt-4 flex flex-col gap-4 w-full",
-                                    children: [
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                            className: "bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out",
-                                            onClick: ()=>{
-                                                setIsSignInOpen(true);
-                                                setNavbarOpen(false);
-                                            },
-                                            children: "Sign In"
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                            lineNumber: 188,
-                                            columnNumber: 29
-                                        }, this),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                            className: "bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out",
-                                            onClick: ()=>{
-                                                setIsSignUpOpen(true);
-                                                setNavbarOpen(false);
-                                            },
-                                            children: "Start Selling"
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                            lineNumber: 196,
-                                            columnNumber: 29
-                                        }, this)
-                                    ]
-                                }, void 0, true, {
+                                    children: !isAuthenticated ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out",
+                                                onClick: ()=>{
+                                                    setIsSignInOpen(true);
+                                                    setNavbarOpen(false);
+                                                },
+                                                children: "Sign In"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 266,
+                                                columnNumber: 37
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out",
+                                                onClick: ()=>{
+                                                    setIsSignUpOpen(true);
+                                                    setNavbarOpen(false);
+                                                },
+                                                children: "Start Selling"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 274,
+                                                columnNumber: 37
+                                            }, this)
+                                        ]
+                                    }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Fragment"], {
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "px-4 py-2 border-b border-gray-200",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                        className: "text-sm text-gray-600",
+                                                        children: "Welcome,"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                        lineNumber: 286,
+                                                        columnNumber: 41
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                        className: "font-semibold text-black",
+                                                        children: [
+                                                            user?.firstName,
+                                                            " ",
+                                                            user?.lastName
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                        lineNumber: 287,
+                                                        columnNumber: 41
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 285,
+                                                columnNumber: 37
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2",
+                                                onClick: ()=>{
+                                                    router.push('/profile');
+                                                    setNavbarOpen(false);
+                                                },
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                        icon: "mdi:account",
+                                                        width: 20,
+                                                        height: 20
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                        lineNumber: 295,
+                                                        columnNumber: 41
+                                                    }, this),
+                                                    "Profile"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 289,
+                                                columnNumber: 37
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2",
+                                                onClick: ()=>{
+                                                    router.push('/kyc');
+                                                    setNavbarOpen(false);
+                                                },
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                        icon: "mdi:file-document-check",
+                                                        width: 20,
+                                                        height: 20
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                        lineNumber: 304,
+                                                        columnNumber: 41
+                                                    }, this),
+                                                    "KYC"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 298,
+                                                columnNumber: 37
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                className: "bg-red-600 text-white px-4 py-2 rounded-lg border border-red-600 hover:bg-red-700 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2",
+                                                onClick: ()=>{
+                                                    handleLogout();
+                                                    setNavbarOpen(false);
+                                                },
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                        icon: "mdi:logout",
+                                                        width: 20,
+                                                        height: 20
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                        lineNumber: 313,
+                                                        columnNumber: 41
+                                                    }, this),
+                                                    "Logout"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/components/Layout/Header/index.tsx",
+                                                lineNumber: 307,
+                                                columnNumber: 37
+                                            }, this)
+                                        ]
+                                    }, void 0, true)
+                                }, void 0, false, {
                                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                                    lineNumber: 187,
+                                    lineNumber: 263,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                            lineNumber: 183,
+                            lineNumber: 259,
                             columnNumber: 21
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-                    lineNumber: 163,
+                    lineNumber: 239,
                     columnNumber: 17
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-            lineNumber: 87,
+            lineNumber: 105,
             columnNumber: 13
         }, this)
     }, void 0, false, {
         fileName: "[project]/src/app/components/Layout/Header/index.tsx",
-        lineNumber: 84,
+        lineNumber: 102,
         columnNumber: 9
     }, this);
 };
-_s(Header, "EgzqtrQfYIypaOPDPljm6qzsk2Y=");
+_s(Header, "7YxQr2Y5HGF0pJD74O6C0wg7zoA=", false, function() {
+    return [
+        __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"],
+        __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
+    ];
+});
 _c = Header;
 const __TURBOPACK__default__export__ = Header;
 var _c;
@@ -2099,12 +2590,10 @@ __turbopack_context__.s({
     "default": (()=>ScrollToTop)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/client/app-dir/link.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
-;
 ;
 function ScrollToTop() {
     _s();
@@ -2139,35 +2628,23 @@ function ScrollToTop() {
         className: "fixed bottom-8 right-8 z-999",
         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
             className: "flex items-center gap-2.5",
-            children: [
-                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                    href: 'https://themewagon.com/themes/si-education/',
-                    target: "_blank",
-                    className: "hidden lg:block bg-primary text-white hover:bg-darkmode text-sm px-4 py-3.5 leading-none rounded-lg font-medium text-nowrap",
-                    children: "Download Now"
+            children: isVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                onClick: scrollToTop,
+                "aria-label": "scroll to top",
+                className: "back-to-top flex h-10 w-10 cursor-pointer items-center justify-center rounded-md bg-[#102C46] text-white shadow-md transition duration-300 ease-in-out hover:bg-dark",
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                    className: "mt-[6px] h-3 w-3 rotate-45 border-l border-t border-white"
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/ScrollToTop/index.tsx",
-                    lineNumber: 35,
-                    columnNumber: 17
-                }, this),
-                isVisible && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                    onClick: scrollToTop,
-                    "aria-label": "scroll to top",
-                    className: "back-to-top flex h-10 w-10 cursor-pointer items-center justify-center rounded-md bg-[#102C46] text-white shadow-md transition duration-300 ease-in-out hover:bg-dark",
-                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                        className: "mt-[6px] h-3 w-3 rotate-45 border-l border-t border-white"
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/components/ScrollToTop/index.tsx",
-                        lineNumber: 48,
-                        columnNumber: 25
-                    }, this)
-                }, void 0, false, {
-                    fileName: "[project]/src/app/components/ScrollToTop/index.tsx",
-                    lineNumber: 44,
-                    columnNumber: 21
+                    lineNumber: 48,
+                    columnNumber: 25
                 }, this)
-            ]
-        }, void 0, true, {
+            }, void 0, false, {
+                fileName: "[project]/src/app/components/ScrollToTop/index.tsx",
+                lineNumber: 44,
+                columnNumber: 21
+            }, this)
+        }, void 0, false, {
             fileName: "[project]/src/app/components/ScrollToTop/index.tsx",
             lineNumber: 34,
             columnNumber: 13

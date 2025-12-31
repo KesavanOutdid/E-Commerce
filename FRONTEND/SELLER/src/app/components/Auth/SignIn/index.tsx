@@ -9,7 +9,12 @@ import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
 import { useAuth } from '@/context/AuthContext'
 
-const Signin = () => {
+interface SigninProps {
+    onSwitchToSignUp?: () => void
+    onCloseModal?: () => void
+}
+
+const Signin = ({ onSwitchToSignUp, onCloseModal }: SigninProps) => {
     const router = useRouter()
     const { login } = useAuth()
 
@@ -34,8 +39,22 @@ const Signin = () => {
             const response = await authService.login(loginData.email, loginData.password)
             
             if (response.success) {
-                login(response.data.token, response.data.user)
+                const userData = {
+                    userId: response.data.userId,
+                    firstName: response.data.firstName,
+                    lastName: response.data.lastName,
+                    email: response.data.email,
+                    phone: response.data.phone,
+                    roles: response.data.roles,
+                    roleNames: response.data.roleNames,
+                    kycApproved: response.data.kycApproved,
+                }
+                
+                login(response.data.accessToken, userData)
                 toast.success('Login successful')
+                if (onCloseModal) {
+                    onCloseModal()
+                }
                 router.push('/')
             } else {
                 toast.error(response.message || 'Login failed')
@@ -64,6 +83,9 @@ const Signin = () => {
 
             <form onSubmit={loginUser}>
                 <div className='mb-[22px]'>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email <span className="text-red-500">*</span>
+                    </label>
                     <input
                         type='email'
                         placeholder='Email'
@@ -76,6 +98,9 @@ const Signin = () => {
                     />
                 </div>
                 <div className='mb-[22px]'>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Password <span className="text-red-500">*</span>
+                    </label>
                     <input
                         type='password'
                         placeholder='Password'
@@ -90,7 +115,7 @@ const Signin = () => {
                 <div className='mb-9'>
                     <button
                         type='submit'
-                        disabled={loading}
+                        disabled={loading || !loginData.email || !loginData.password}
                         className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
                         Sign In {loading && <Loader />}
                     </button>
@@ -104,9 +129,11 @@ const Signin = () => {
             </Link>
             <p className='text-body-secondary text-black text-base'>
                 Not a member yet?{' '}
-                <Link href='/signup' className='text-primary hover:underline'>
+                <button 
+                    onClick={onSwitchToSignUp}
+                    className='text-primary hover:underline'>
                     Sign Up
-                </Link>
+                </button>
             </p>
         </>
     )

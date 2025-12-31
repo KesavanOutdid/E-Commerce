@@ -1,0 +1,219 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { useProducts } from '@/hooks/useProducts'
+import Breadcrumb from '@/app/components/Common/Breadcrumb'
+import Loader from '@/app/components/Common/Loader'
+import { Icon } from '@iconify/react/dist/iconify.js'
+import Link from 'next/link'
+
+const formatIndiaTime = (dateString: string | null) => {
+    if (!dateString) return 'N/A'
+    const date = new Date(dateString)
+    return date.toLocaleString('en-IN', {
+        timeZone: 'Asia/Kolkata',
+        hour12: true,
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
+}
+
+export default function ProductViewPage() {
+    const router = useRouter()
+    const params = useParams()
+    const productId = params.id as string
+    const { user, isAuthenticated, isLoading } = useAuth()
+    const { loading, fetchProductById } = useProducts()
+    const [product, setProduct] = useState<any>(null)
+    const [selectedImage, setSelectedImage] = useState(0)
+
+    useEffect(() => {
+        if (isLoading) return
+        
+        if (!isAuthenticated) {
+            router.push('/')
+            return
+        }
+
+        const loadProduct = async () => {
+            const data = await fetchProductById(productId)
+            if (data) {
+                setProduct(data)
+            } else {
+                router.push('/products')
+            }
+        }
+        loadProduct()
+    }, [isAuthenticated, isLoading, router, productId])
+
+    if (isLoading || loading || !product) {
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <Loader />
+            </div>
+        )
+    }
+
+    if (!isAuthenticated) {
+        return null
+    }
+
+    return (
+        <>
+            <Breadcrumb pageName="Product Details" />
+            <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                <div className="container mx-auto max-w-7xl px-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                        <div className="flex justify-between items-center mb-8">
+                            <h1 className="text-3xl font-bold text-black">Product Details</h1>
+                            <div className="flex gap-4">
+                                <Link
+                                    href={`/products/edit/${product.productId}`}
+                                    className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition">
+                                    <Icon icon="mdi:pencil" width={20} height={20} />
+                                    Edit Product
+                                </Link>
+                                <Link
+                                    href="/products"
+                                    className="flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition">
+                                    <Icon icon="mdi:arrow-left" width={20} height={20} />
+                                    Back to Products
+                                </Link>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                            <div>
+                                <div className="mb-4">
+                                    <img
+                                        src={product.images[selectedImage] ? `${process.env.NEXT_PUBLIC_API_URL}${product.images[selectedImage]}` : '/images/placeholder.png'}
+                                        alt={product.productName}
+                                        className="w-full h-96 object-contain bg-gray-50 rounded-xl border-2 border-gray-200"
+                                    />
+                                </div>
+                                {product.images.length > 1 && (
+                                    <div className="grid grid-cols-5 gap-2">
+                                        {product.images.map((image: string, index: number) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setSelectedImage(index)}
+                                                className={`h-20 rounded-lg border-2 overflow-hidden ${
+                                                    selectedImage === index
+                                                        ? 'border-primary'
+                                                        : 'border-gray-200 hover:border-gray-300'
+                                                }`}>
+                                                <img
+                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
+                                                    alt={`${product.productName} ${index + 1}`}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <h2 className="text-2xl font-bold text-black mb-4">{product.productName}</h2>
+                                
+                                <div className="mb-4">
+                                    <span className="text-3xl font-bold text-primary">₹{product.price}</span>
+                                    {product.salePrice && (
+                                        <span className="ml-4 text-xl text-gray-500 line-through">₹{product.salePrice}</span>
+                                    )}
+                                </div>
+
+                                <div className="mb-6">
+                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                        product.status
+                                            ? 'bg-green-100 text-green-700'
+                                            : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        <Icon 
+                                            icon={product.status ? 'mdi:check-circle' : 'mdi:close-circle'} 
+                                            width={16} 
+                                            height={16} 
+                                        />
+                                        {product.status ? 'Active' : 'Inactive'}
+                                    </span>
+                                    <span className={`ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                        product.stock > 0
+                                            ? 'bg-blue-100 text-blue-700'
+                                            : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        <Icon icon="mdi:package-variant" width={16} height={16} />
+                                        Stock: {product.stock} units
+                                    </span>
+                                </div>
+
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-semibold text-black mb-3">Short Description</h3>
+                                    <p className="text-gray-600">{product.shortDescription}</p>
+                                </div>
+
+                                {product.attributes && product.attributes.length > 0 && (
+                                    <div className="mb-6">
+                                        <h3 className="text-lg font-semibold text-black mb-3">Attributes</h3>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            {product.attributes.map((attr: any, index: number) => (
+                                                <div key={index} className="bg-gray-50 rounded-lg p-3">
+                                                    <p className="text-sm text-gray-600">{attr.name}</p>
+                                                    <p className="font-semibold text-black">{attr.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="border-t pt-6">
+                            <h3 className="text-xl font-semibold text-black mb-4">Full Description</h3>
+                            <p className="text-gray-600 whitespace-pre-wrap">{product.description}</p>
+                        </div>
+
+                        <div className="border-t pt-6 mt-6">
+                            <h3 className="text-xl font-semibold text-black mb-4">Product Information</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-600 mb-1">Product ID</p>
+                                    <p className="font-medium text-black">{product.productId}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-600 mb-1">SKU/Slug</p>
+                                    <p className="font-medium text-black">{product.slug}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-600 mb-1">Average Rating</p>
+                                    <p className="font-medium text-black flex items-center gap-1">
+                                        <Icon icon="mdi:star" className="text-yellow-500" width={20} height={20} />
+                                        {product.avgRating || 0} ({product.totalReviews || 0} reviews)
+                                    </p>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-600 mb-1">Created By</p>
+                                    <p className="font-medium text-black">{product.createdby}</p>
+                                </div>
+                                <div className="bg-gray-50 rounded-lg p-4">
+                                    <p className="text-sm text-gray-600 mb-1">Created At</p>
+                                    <p className="font-medium text-black">{formatIndiaTime(product.createdAt)}</p>
+                                </div>
+                                {product.updatedAt && (
+                                    <div className="bg-gray-50 rounded-lg p-4">
+                                        <p className="text-sm text-gray-600 mb-1">Last Updated</p>
+                                        <p className="font-medium text-black">{formatIndiaTime(product.updatedAt)}</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </>
+    )
+}

@@ -35,7 +35,7 @@ const SellerJourney = () => {
     ]
 
     return (
-        <section className='bg-white py-20'>
+        <section className='bg-white'>
             <div className='container'>
                 <div className='text-center mb-16'>
                     <h2 className='text-5xl font-bold mb-4'>
@@ -49,8 +49,8 @@ const SellerJourney = () => {
                 <div className='grid grid-cols-1 md:grid-cols-5 gap-8'>
                     {steps.map((step, index) => (
                         <div key={index} className='text-center'>
-                            <div className='bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-8 h-64 flex flex-col items-center justify-center mb-6 hover:shadow-xl transition-shadow duration-300'>
-                                <div className='text-6xl mb-4'>{step.illustration}</div>
+                            <div className='bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl h-30 flex flex-col items-center justify-center mb-6 hover:shadow-xl transition-shadow duration-300'>
+                                {/* <div className='text-6xl mb-4'>{step.illustration}</div> */}
                                 <div className='text-5xl'>{step.icon}</div>
                             </div>
                             <h3 className='text-2xl font-bold text-gray-900 mb-3'>
