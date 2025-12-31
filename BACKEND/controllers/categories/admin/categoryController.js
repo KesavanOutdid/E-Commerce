@@ -7,6 +7,8 @@ const { slugify } = require('../../../utils/help');
 
 exports.createMainCategory = async (req, res) => {
   try {
+    console.log('CreateMainCategory - Request Body:', req.body);
+    console.log('CreateMainCategory - Request File:', req.file);
     const { name, createdBy } = req.body;
     if (!name || !createdBy) {
       return res.status(400).json({ success: false, message: 'Name and createdBy are required' });

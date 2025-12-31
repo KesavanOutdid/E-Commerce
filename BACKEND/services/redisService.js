@@ -54,7 +54,7 @@ const getRedisClient = () => {
     return redisClient;
 };
 
-const setCache = async (key, value, expiryInSeconds = 3600) => {
+const setCache = async (key, value, expiryInSeconds = 300) => {
     try {
         if (!isClientReady()) return false;
         const client = getRedisClient();
@@ -116,7 +116,7 @@ const generateUniqueId = async (prefix = 'id') => {
     }
 };
 
-const setKeyWithId = async (prefix, id, value, expiryInSeconds = 3600) => {
+const setKeyWithId = async (prefix, id, value, expiryInSeconds = 300) => {
     const key = `${prefix}:${id}`;
     return await setCache(key, value, expiryInSeconds);
 };

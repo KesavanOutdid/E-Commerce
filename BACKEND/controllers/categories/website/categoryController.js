@@ -44,7 +44,7 @@ exports.getCategories = async (req, res) => {
       }
     };
 
-    await setCache(cacheKey, responseData, 3600); // Cache for 1 hour
+    await setCache(cacheKey, responseData, 300); // Cache for 5 minutes
 
     res.status(200).json({ 
       success: true, 
