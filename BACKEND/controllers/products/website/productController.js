@@ -60,10 +60,10 @@ exports.getProducts = async (req, res) => {
         { roleId: 1 },
         { roleId: 2, approvalStatus: 'approved' }
       ],
-      status: true 
+      status: { $in: [true, "true"] }
     };
     
-    if (categoryId) matchQuery.categoryId = categoryId;
+    if (categoryId) matchQuery.mainCategoryId = categoryId;
 
     const aggregationResult = await Product.collection().aggregate(
       getProductAggregationPipeline(matchQuery, skip, limitNum)
@@ -120,7 +120,7 @@ exports.getProductsBySubCategory = async (req, res) => {
         { roleId: 1 },
         { roleId: 2, approvalStatus: 'approved' }
       ],
-      status: true 
+      status: { $in: [true, "true"] }
     };
 
     const aggregationResult = await Product.collection().aggregate(
@@ -168,8 +168,9 @@ exports.getProductById = async (req, res) => {
     const product = await Product.findById(req.params.id);
     // Check if it's admin or approved seller product
     const isApproved = product && (product.roleId === 1 || (product.roleId === 2 && product.approvalStatus === 'approved'));
+    const isActive = product && (product.status === true || product.status === "true");
     
-    if (!product || !isApproved || product.status !== true) {
+    if (!product || !isApproved || !isActive) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
@@ -181,7 +182,7 @@ exports.getProductById = async (req, res) => {
         { roleId: 1 },
         { roleId: 2, approvalStatus: 'approved' }
       ],
-      status: true
+      status: { $in: [true, "true"] }
     }).toArray();
 
     const responseData = {
