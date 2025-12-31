@@ -1,5 +1,6 @@
 const Product = require('../../../models/Product');
 const User = require('../../../models/User');
+const Seller = require('../../../models/Seller');
 const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
@@ -134,18 +135,27 @@ exports.getProducts = async (req, res) => {
 
     // Fetch seller names for roleId 2 products
     const sellerIds = [...new Set(products.filter(p => p.roleId === 2 && p.userId).map(p => p.userId))];
-    const users = await User.collection().find({
-      $or: [
-        { userId: { $in: sellerIds } },
-        { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-      ]
-    }).toArray();
+    const [users, sellers] = await Promise.all([
+      User.collection().find({
+        $or: [
+          { userId: { $in: sellerIds } },
+          { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
+        ]
+      }).toArray(),
+      Seller.collection().find({
+        userId: { $in: sellerIds }
+      }).toArray()
+    ]);
 
     const userMap = new Map();
     users.forEach(u => {
-      const name = `${u.firstName} ${u.lastName}`.trim();
-      if (u.userId) userMap.set(u.userId.toString(), name);
-      if (u._id) userMap.set(u._id.toString(), name);
+      if (u.userId) userMap.set(u.userId.toString(), u);
+      if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    const shopMap = new Map();
+    sellers.forEach(s => {
+      if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
     });
 
     // Map category names and seller names
@@ -155,13 +165,23 @@ exports.getProducts = async (req, res) => {
         product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
       ]);
 
-      const sellerName = product.roleId === 2 && product.userId ? userMap.get(product.userId.toString()) : null;
+      let sellerName = null;
+      let shopName = null;
+
+      if (product.roleId === 2 && product.userId) {
+        const user = userMap.get(product.userId.toString());
+        if (user) {
+          sellerName = `${user.firstName} ${user.lastName}`.trim();
+          shopName = user.userId ? shopMap.get(user.userId.toString()) : null;
+        }
+      }
 
       return {
         ...product,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
-        ...(sellerName && { sellerName })
+        ...(sellerName && { sellerName }),
+        ...(shopName && { shopName })
       };
     }));
 
@@ -196,6 +216,7 @@ exports.getProductById = async (req, res) => {
     ]);
 
     let sellerName = null;
+    let shopName = null;
     if (product.roleId === 2 && product.userId) {
       const user = await User.collection().findOne({
         $or: [
@@ -203,8 +224,15 @@ exports.getProductById = async (req, res) => {
           { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
         ].filter(q => q._id !== null || q.userId !== undefined)
       });
+      
       if (user) {
         sellerName = `${user.firstName} ${user.lastName}`.trim();
+        if (user.userId) {
+          const seller = await Seller.findByUserId(user.userId);
+          if (seller) {
+            shopName = seller.shopName;
+          }
+        }
       }
     }
 
@@ -212,7 +240,8 @@ exports.getProductById = async (req, res) => {
       ...product,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
-      ...(sellerName && { sellerName })
+      ...(sellerName && { sellerName }),
+      ...(shopName && { shopName })
     };
 
     res.status(200).json({

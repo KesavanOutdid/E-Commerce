@@ -1,5 +1,6 @@
 const Product = require('../../../models/Product');
 const User = require('../../../models/User');
+const Seller = require('../../../models/Seller');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
 
@@ -200,22 +201,38 @@ exports.getProductById = async (req, res) => {
       ]
     }).toArray();
 
+    const sellers = await Seller.collection().find({
+      userId: { $in: uniqueSellerIds }
+    }).toArray();
+
     const userMap = new Map();
     users.forEach(u => {
-      const name = `${u.firstName} ${u.lastName}`.trim();
-      if (u.userId) userMap.set(u.userId.toString(), name);
-      if (u._id) userMap.set(u._id.toString(), name);
+      if (u.userId) userMap.set(u.userId.toString(), u);
+      if (u._id) userMap.set(u._id.toString(), u);
     });
 
-    const getSellerName = (userId) => {
-      if (!userId) return null;
-      return userMap.get(userId.toString()) || null;
+    const shopMap = new Map();
+    sellers.forEach(s => {
+      if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
+    });
+
+    const getSellerDetails = (productUserId) => {
+      if (!productUserId) return { sellerName: null, shopName: null };
+      const user = userMap.get(productUserId.toString());
+      if (!user) return { sellerName: null, shopName: null };
+
+      return {
+        sellerName: `${user.firstName} ${user.lastName}`.trim(),
+        shopName: user.userId ? shopMap.get(user.userId.toString()) : null
+      };
     };
 
     const otherSellersWithNames = otherSellers.map(seller => {
       const sellerData = { ...seller };
       if (seller.roleId === 2) {
-        sellerData.sellerName = getSellerName(seller.userId);
+        const { sellerName, shopName } = getSellerDetails(seller.userId);
+        sellerData.sellerName = sellerName;
+        sellerData.shopName = shopName;
       }
       return sellerData;
     });
@@ -226,7 +243,9 @@ exports.getProductById = async (req, res) => {
     };
 
     if (product.roleId === 2) {
-      responseData.sellerName = getSellerName(product.userId);
+      const { sellerName, shopName } = getSellerDetails(product.userId);
+      responseData.sellerName = sellerName;
+      responseData.shopName = shopName;
     }
 
     await setCache(cacheKey, responseData, 3600);
