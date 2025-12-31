@@ -1,0 +1,598 @@
+(globalThis.TURBOPACK = globalThis.TURBOPACK || []).push(["static/chunks/src_app_components_a795a17d._.js", {
+
+"[project]/src/app/components/Home/SellerStories/index.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "default": (()=>__TURBOPACK__default__export__)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/image.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$basePath$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/utils/basePath.ts [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+;
+;
+const SellerStories = ()=>{
+    _s();
+    const [currentSlide, setCurrentSlide] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(0);
+    const stories = [
+        {
+            name: 'Raju Lunawath',
+            business: 'Amazestore',
+            avatarImage: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$basePath$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])('/images/mentor/boy1.svg'),
+            quote: "Our platform's support & innovation fueled my exponential growth. I started with 1 category and moved to 6 categories with an astounding 5x Year on Year expansion!",
+            bgColor: 'bg-yellow-400'
+        },
+        {
+            name: 'Priya Sharma',
+            business: 'Fashion Hub',
+            avatarImage: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$basePath$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])('/images/mentor/girl1.svg'),
+            quote: "The ease of managing my online store and reaching millions of customers has transformed my small business into a thriving enterprise.",
+            bgColor: 'bg-blue-400'
+        },
+        {
+            name: 'Amit Patel',
+            business: 'Tech Solutions',
+            avatarImage: (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$utils$2f$basePath$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"])('/images/mentor/boy2.svg'),
+            quote: "With exceptional logistics support and payment cycles, I've been able to scale my business faster than I ever imagined possible.",
+            bgColor: 'bg-green-400'
+        }
+    ];
+    const nextSlide = ()=>{
+        setCurrentSlide((prev)=>(prev + 1) % stories.length);
+    };
+    const prevSlide = ()=>{
+        setCurrentSlide((prev)=>(prev - 1 + stories.length) % stories.length);
+    };
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
+        className: "bg-gradient-to-br from-blue-50 to-purple-50 py-12 lg:py-20",
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "container",
+            children: [
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "text-center mb-12 lg:mb-16 px-4",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                            className: "text-3xl sm:text-4xl lg:text-5xl font-bold mb-4",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                    className: "text-primary",
+                                    children: "Seller Success"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 46,
+                                    columnNumber: 25
+                                }, this),
+                                " Stories"
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 45,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                            className: "text-gray-600 max-w-2xl mx-auto text-sm sm:text-base",
+                            children: "14 Lakh+ sellers trust our platform for their online business."
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 48,
+                            columnNumber: 21
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                    lineNumber: 44,
+                    columnNumber: 17
+                }, this),
+                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                    className: "relative max-w-4xl mx-auto px-4",
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "bg-white rounded-2xl shadow-2xl p-6 lg:p-12 min-h-80 lg:min-h-96 flex flex-col items-center justify-center text-center",
+                            children: [
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: `${stories[currentSlide].bgColor} rounded-full w-28 h-28 sm:w-32 sm:h-32 lg:w-40 lg:h-40 flex items-center justify-center mb-6 lg:mb-8 overflow-hidden`,
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$image$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                                        src: stories[currentSlide].avatarImage,
+                                        alt: stories[currentSlide].name,
+                                        width: 160,
+                                        height: 160,
+                                        className: "w-full h-full object-cover"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                        lineNumber: 56,
+                                        columnNumber: 29
+                                    }, this)
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 55,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                    className: "text-xl lg:text-2xl font-bold text-gray-900 mb-2",
+                                    children: [
+                                        stories[currentSlide].name,
+                                        ","
+                                    ]
+                                }, void 0, true, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 65,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-lg lg:text-xl text-gray-600 mb-6 lg:mb-8",
+                                    children: stories[currentSlide].business
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 68,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    className: "text-4xl lg:text-6xl text-gray-300 mb-3 lg:mb-4",
+                                    children: '"'
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 72,
+                                    columnNumber: 25
+                                }, this),
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                    className: "text-base lg:text-lg text-gray-700 max-w-2xl leading-relaxed italic px-4",
+                                    children: stories[currentSlide].quote
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 73,
+                                    columnNumber: 25
+                                }, this)
+                            ]
+                        }, void 0, true, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 54,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: prevSlide,
+                            className: "hidden lg:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-16 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow duration-300",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                                className: "w-6 h-6 text-gray-600",
+                                fill: "none",
+                                stroke: "currentColor",
+                                viewBox: "0 0 24 24",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                                    strokeLinecap: "round",
+                                    strokeLinejoin: "round",
+                                    strokeWidth: 2,
+                                    d: "M15 19l-7-7 7-7"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 83,
+                                    columnNumber: 29
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                lineNumber: 82,
+                                columnNumber: 25
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 78,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                            onClick: nextSlide,
+                            className: "hidden lg:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-16 bg-white rounded-full p-4 shadow-lg hover:shadow-xl transition-shadow duration-300",
+                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {
+                                className: "w-6 h-6 text-gray-600",
+                                fill: "none",
+                                stroke: "currentColor",
+                                viewBox: "0 0 24 24",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("path", {
+                                    strokeLinecap: "round",
+                                    strokeLinejoin: "round",
+                                    strokeWidth: 2,
+                                    d: "M9 5l7 7-7 7"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 92,
+                                    columnNumber: 29
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                lineNumber: 91,
+                                columnNumber: 25
+                            }, this)
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 87,
+                            columnNumber: 21
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                            className: "flex justify-center gap-2 mt-8",
+                            children: stories.map((_, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    onClick: ()=>setCurrentSlide(index),
+                                    className: `w-3 h-3 rounded-full transition-colors duration-300 ${index === currentSlide ? 'bg-primary' : 'bg-gray-300'}`
+                                }, index, false, {
+                                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                                    lineNumber: 98,
+                                    columnNumber: 29
+                                }, this))
+                        }, void 0, false, {
+                            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                            lineNumber: 96,
+                            columnNumber: 21
+                        }, this)
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+                    lineNumber: 53,
+                    columnNumber: 17
+                }, this)
+            ]
+        }, void 0, true, {
+            fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+            lineNumber: 43,
+            columnNumber: 13
+        }, this)
+    }, void 0, false, {
+        fileName: "[project]/src/app/components/Home/SellerStories/index.tsx",
+        lineNumber: 42,
+        columnNumber: 9
+    }, this);
+};
+_s(SellerStories, "VQw0KpRgltXDNPWBgmV3GhZXdQE=");
+_c = SellerStories;
+const __TURBOPACK__default__export__ = SellerStories;
+var _c;
+__turbopack_context__.k.register(_c, "SellerStories");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
+}
+}}),
+"[project]/src/app/components/Contact/Form/index.tsx [app-client] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname, k: __turbopack_refresh__, m: module } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "default": (()=>__TURBOPACK__default__export__)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
+;
+var _s = __turbopack_context__.k.signature();
+'use client';
+;
+const ContactForm = ()=>{
+    _s();
+    const [formData, setFormData] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])({
+        firstname: '',
+        lastname: '',
+        email: '',
+        phnumber: '',
+        Message: ''
+    });
+    const [submitted, setSubmitted] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [showThanks, setShowThanks] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [loader, setLoader] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    const [isFormValid, setIsFormValid] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
+        "ContactForm.useEffect": ()=>{
+            const isValid = Object.values(formData).every({
+                "ContactForm.useEffect.isValid": (value)=>value.trim() !== ''
+            }["ContactForm.useEffect.isValid"]);
+            setIsFormValid(isValid);
+        }
+    }["ContactForm.useEffect"], [
+        formData
+    ]);
+    const handleChange = (e)=>{
+        const { name, value } = e.target;
+        setFormData((prevData)=>({
+                ...prevData,
+                [name]: value
+            }));
+    };
+    const reset = ()=>{
+        formData.firstname = '';
+        formData.lastname = '';
+        formData.email = '';
+        formData.phnumber = '';
+        formData.Message = '';
+    };
+    const handleSubmit = async (e)=>{
+        e.preventDefault();
+        setLoader(true);
+        fetch('https://formsubmit.co/ajax/bhainirav772@gmail.com', {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json'
+            },
+            body: JSON.stringify({
+                Name: formData.firstname,
+                LastName: formData.lastname,
+                Email: formData.email,
+                PhoneNo: formData.phnumber,
+                Message: formData.Message
+            })
+        }).then((response)=>response.json()).then((data)=>{
+            if (data.success) {
+                setSubmitted(true);
+                setShowThanks(true);
+                reset();
+                setTimeout(()=>{
+                    setShowThanks(false);
+                }, 5000);
+            }
+            reset();
+        }).catch((error)=>{
+            setLoader(false);
+            console.log(error.message);
+        });
+    };
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
+        id: "contact",
+        className: "bg-gradient-to-br from-blue-50 to-purple-50 py-12 lg:py-20",
+        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+            className: "container",
+            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                className: "relative bg-white rounded-[20px] p-6 lg:p-12 shadow-lg",
+                children: [
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h2", {
+                        className: "mb-6 lg:mb-9 font-bold tracking-tight text-3xl sm:text-4xl lg:text-5xl text-center lg:text-left",
+                        children: "Get in Touch"
+                    }, void 0, false, {
+                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                        lineNumber: 76,
+                        columnNumber: 21
+                    }, this),
+                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
+                        onSubmit: handleSubmit,
+                        className: "flex flex-wrap w-full m-auto justify-between",
+                        children: [
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "sm:flex gap-3 w-full",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mx-0 my-2.5 flex-1",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                htmlFor: "fname",
+                                                className: "pb-3 inline-block text-base",
+                                                children: "First Name"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 82,
+                                                columnNumber: 33
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                id: "fname",
+                                                type: "text",
+                                                name: "firstname",
+                                                value: formData.firstname,
+                                                onChange: handleChange,
+                                                placeholder: "Entry Firstname",
+                                                className: "w-full text-base px-4 rounded-2xl py-2.5 border-solid border transition-all duration-500 focus:border-primary focus:outline-0"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 85,
+                                                columnNumber: 33
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 81,
+                                        columnNumber: 29
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mx-0 my-2.5 flex-1",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                htmlFor: "lname",
+                                                className: "pb-3 inline-block text-base",
+                                                children: "Last Name"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 96,
+                                                columnNumber: 33
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                id: "lname",
+                                                type: "text",
+                                                name: "lastname",
+                                                value: formData.lastname,
+                                                onChange: handleChange,
+                                                placeholder: "Entry Lastname",
+                                                className: "w-full text-base px-4 rounded-2xl py-2.5 border-solid border transition-all duration-500 focus:border-primary focus:outline-0"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 99,
+                                                columnNumber: 33
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 95,
+                                        columnNumber: 29
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                lineNumber: 80,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "sm:flex gap-3 w-full",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mx-0 my-2.5 flex-1",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                htmlFor: "email",
+                                                className: "pb-3 inline-block text-base",
+                                                children: "Email address"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 112,
+                                                columnNumber: 33
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                id: "email",
+                                                type: "email",
+                                                name: "email",
+                                                value: formData.email,
+                                                onChange: handleChange,
+                                                placeholder: "Entry email",
+                                                className: "w-full text-base px-4 rounded-2xl py-2.5 border-solid border transition-all duration-500 focus:border-primary focus:outline-0"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 115,
+                                                columnNumber: 33
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 111,
+                                        columnNumber: 29
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mx-0 my-2.5 flex-1",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                htmlFor: "Phnumber",
+                                                className: "pb-3 inline-block text-base",
+                                                children: "Phone Number"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 126,
+                                                columnNumber: 33
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                id: "Phnumber",
+                                                type: "tel",
+                                                name: "phnumber",
+                                                placeholder: "Entry phone number",
+                                                value: formData.phnumber,
+                                                onChange: handleChange,
+                                                className: "w-full text-base px-4 rounded-2xl py-2.5 border-solid border transition-all duration-500 focus:border-primary focus:outline-0"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                                lineNumber: 131,
+                                                columnNumber: 33
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 125,
+                                        columnNumber: 29
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                lineNumber: 110,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "w-full mx-0 my-2.5 flex-1",
+                                children: [
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                        htmlFor: "message",
+                                        className: "text-base inline-block",
+                                        children: "Message"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 143,
+                                        columnNumber: 29
+                                    }, this),
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
+                                        id: "message",
+                                        name: "Message",
+                                        value: formData.Message,
+                                        onChange: handleChange,
+                                        className: "w-full mt-2 rounded-2xl px-5 py-3 border-solid border transition-all duration-500 focus:border-primary focus:outline-0",
+                                        placeholder: "Anything else you wanna communicate"
+                                    }, void 0, false, {
+                                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                        lineNumber: 146,
+                                        columnNumber: 29
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                lineNumber: 142,
+                                columnNumber: 25
+                            }, this),
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mx-0 my-2.5 w-full",
+                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                    type: "submit",
+                                    disabled: !isFormValid || loader,
+                                    className: `border leading-none px-6 text-lg font-medium py-4 rounded-full 
+                    ${!isFormValid || loader ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-primary border-primary text-white hover:bg-transparent hover:text-primary cursor-pointer'}`,
+                                    children: "Submit"
+                                }, void 0, false, {
+                                    fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                    lineNumber: 155,
+                                    columnNumber: 29
+                                }, this)
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                lineNumber: 154,
+                                columnNumber: 25
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                        lineNumber: 77,
+                        columnNumber: 21
+                    }, this),
+                    showThanks && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                        className: "text-white bg-primary rounded-full px-4 text-lg mb-4.5 mt-1 absolute flex items-center gap-2",
+                        children: [
+                            "Thank you for contacting us! We will get back to you soon.",
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "w-3 h-3 rounded-full animate-spin border-2 border-solid border-white border-t-transparent"
+                            }, void 0, false, {
+                                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                                lineNumber: 170,
+                                columnNumber: 29
+                            }, this)
+                        ]
+                    }, void 0, true, {
+                        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                        lineNumber: 168,
+                        columnNumber: 25
+                    }, this)
+                ]
+            }, void 0, true, {
+                fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+                lineNumber: 75,
+                columnNumber: 17
+            }, this)
+        }, void 0, false, {
+            fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+            lineNumber: 74,
+            columnNumber: 13
+        }, this)
+    }, void 0, false, {
+        fileName: "[project]/src/app/components/Contact/Form/index.tsx",
+        lineNumber: 73,
+        columnNumber: 9
+    }, this);
+};
+_s(ContactForm, "660cddj2f5iMxdqjRTrND9zTXII=");
+_c = ContactForm;
+const __TURBOPACK__default__export__ = ContactForm;
+var _c;
+__turbopack_context__.k.register(_c, "ContactForm");
+if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
+    __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
+}
+}}),
+}]);
+
+//# sourceMappingURL=src_app_components_a795a17d._.js.map
