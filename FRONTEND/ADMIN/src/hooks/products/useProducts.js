@@ -1,0 +1,153 @@
+import { useState, useCallback, useEffect } from 'react';
+import axios from '../../utils/axiosInstance';
+import { API_ENDPOINTS } from '../../config/apiConfig';
+import Swal from 'sweetalert2';
+
+export const useProducts = () => {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [pagination, setPagination] = useState({
+        currentPage: 1,
+        pageSize: 10,
+        totalItems: 0,
+        totalPages: 0
+    });
+
+    // For filtering
+    const [filters, setFilters] = useState({
+        search: '',
+        mainCategoryId: '',
+        subCategoryId: '',
+        status: '',
+        approvalStatus: ''
+    });
+
+    const [openDialog, setOpenDialog] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [currentProduct, setCurrentProduct] = useState(null);
+
+    const buildQueryString = (page, currentFilters) => {
+        const params = new URLSearchParams();
+        params.append('page', page);
+        params.append('limit', pagination.pageSize);
+
+        if (currentFilters.search) params.append('search', currentFilters.search);
+        if (currentFilters.mainCategoryId) params.append('mainCategoryId', currentFilters.mainCategoryId);
+        if (currentFilters.subCategoryId) params.append('subCategoryId', currentFilters.subCategoryId);
+        if (currentFilters.status) params.append('status', currentFilters.status);
+        if (currentFilters.approvalStatus) params.append('approvalStatus', currentFilters.approvalStatus);
+
+        return params.toString();
+    };
+
+    const fetchProducts = useCallback(async (page = 1) => {
+        try {
+            setLoading(true);
+            const queryString = buildQueryString(page, filters);
+            const response = await axios.get(`${API_ENDPOINTS.PRODUCTS.GET_ALL}?${queryString}`);
+
+            if (response.data.success) {
+                const { products: productsData, pagination: paginationData } = response.data.data;
+                setProducts(productsData);
+                if (paginationData) {
+                    setPagination({
+                        currentPage: paginationData.page,
+                        pageSize: paginationData.limit,
+                        totalItems: paginationData.total,
+                        totalPages: paginationData.pages
+                    });
+                }
+            } else {
+                setProducts([]);
+            }
+        } catch (error) {
+            console.error('Fetch products error:', error);
+            Swal.fire('Error', 'Failed to fetch products', 'error');
+            setProducts([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [pagination.pageSize, filters]);
+
+    // Initial fetch
+    useEffect(() => {
+        fetchProducts(pagination.currentPage);
+    }, [fetchProducts, pagination.currentPage]);
+
+    const handlePageChange = (event, newPage) => {
+        fetchProducts(newPage + 1);
+    };
+
+    const handleFilterChange = (key, value) => {
+        setFilters(prev => ({ ...prev, [key]: value }));
+        // Reset to page 1 when filter changes
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
+    };
+
+    const deleteProduct = async (id) => {
+        const result = await Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        });
+
+        if (result.isConfirmed) {
+            try {
+                const response = await axios.delete(API_ENDPOINTS.PRODUCTS.DELETE(id));
+                if (response.data.success) {
+                    Swal.fire('Deleted!', 'Product has been deleted.', 'success');
+                    fetchProducts(pagination.currentPage);
+                }
+            } catch (error) {
+                Swal.fire('Error', error.response?.data?.message || 'Failed to delete product', 'error');
+            }
+        }
+    };
+
+    const createProduct = async (productFormData) => {
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            const response = await axios.post(API_ENDPOINTS.PRODUCTS.CREATE, productFormData, config);
+            if (response.data.success) {
+                Swal.fire('Success', 'Product created successfully', 'success');
+                fetchProducts(1); // Go to first page
+                return true;
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to create product', 'error');
+            return false;
+        }
+    };
+
+    const updateProduct = async (id, productFormData) => {
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            const response = await axios.put(API_ENDPOINTS.PRODUCTS.UPDATE(id), productFormData, config);
+            if (response.data.success) {
+                Swal.fire('Success', 'Product updated successfully', 'success');
+                fetchProducts(pagination.currentPage);
+                return true;
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to update product', 'error');
+            return false;
+        }
+    };
+
+    return {
+        products,
+        loading,
+        pagination,
+        filters,
+        handlePageChange,
+        handleFilterChange,
+        fetchProducts,
+        deleteProduct,
+        createProduct,
+        updateProduct
+    };
+};

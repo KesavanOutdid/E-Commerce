@@ -31,6 +31,11 @@ const CategoryDetailPage = Loadable(lazy(() => import('views/categories/Category
 const ViewProfilePage = Loadable(lazy(() => import('views/user/ViewProfile')));
 const UpdateProfilePage = Loadable(lazy(() => import('views/user/UpdateProfile')));
 
+// products routing
+const ProductListPage = Loadable(lazy(() => import('views/products/ProductList')));
+const ProductAddPage = Loadable(lazy(() => import('views/products/ProductAdd')));
+const ProductDetailPage = Loadable(lazy(() => import('views/products/ProductDetail')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -97,6 +102,22 @@ const MainRoutes = {
     {
       path: 'categories/:categoryId',
       element: <CategoryDetailPage />
+    },
+    {
+      path: 'products/list',
+      element: <ProductListPage />
+    },
+    {
+      path: 'products/add',
+      element: <ProductAddPage />
+    },
+    {
+      path: 'products/view/:id',
+      element: <ProductDetailPage />
+    },
+    {
+      path: 'products/edit/:id',
+      element: <ProductAddPage />
     },
     {
       path: 'user/view-profile',

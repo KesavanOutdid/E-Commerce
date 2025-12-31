@@ -1,5 +1,5 @@
 // assets
-import { IconUsers, IconShield, IconCategory } from '@tabler/icons-react';
+import { IconUsers, IconShield, IconCategory, IconBox } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
 
@@ -32,7 +32,14 @@ const management = {
       icon: IconCategory,
       breadcrumbs: false
     },
-
+    {
+      id: 'products',
+      title: 'Products',
+      type: 'item',
+      url: '/products/list',
+      icon: IconBox,
+      breadcrumbs: false
+    }
   ]
 };
 

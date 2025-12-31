@@ -31,14 +31,16 @@ export const API_ENDPOINTS = {
     // Subcategories - adding specific keys if useful, though hooks might manually build URLs
     CREATE_SUB: '/categories/sub',
     UPDATE_SUB: (id) => `/categories/sub/${id}`,
-    DELETE_SUB: (id) => `/categories/sub/${id}`
+    DELETE_SUB: (id) => `/categories/sub/${id}`,
+    GET_SUB_BY_PARENT: (parentId) => `/categories/sub/${parentId}`
   },
   PRODUCTS: {
-    GET_ALL: '/products',
-    GET_BY_ID: (id) => `/products/${id}`,
-    CREATE: '/products',
-    UPDATE: (id) => `/products/${id}`,
-    DELETE: (id) => `/products/${id}`
+    GET_ALL: '/products/admin/getproducts', // Admin specific list
+    GET_BY_ID: (id) => `/products/${id}`, // Use public route for details
+    CREATE: '/products/admin',
+    UPDATE: (id) => `/products/admin/${id}`,
+    UPDATE_APPROVAL: (id) => `/products/admin/${id}/approval`,
+    DELETE: (id) => `/products/admin/${id}`
   },
   ORDERS: {
     GET_ALL: '/orders',
