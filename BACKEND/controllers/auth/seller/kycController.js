@@ -4,7 +4,30 @@ const Seller = require('../../../models/Seller');
 async function requestKyc(req, res) {
   try {
     const userId = req.userId;
-    const { shopName, gstin, panNumber, bankDetails, shopAddress, shopLogo } = req.body;
+    let { shopName, gstin, panNumber, bankDetails, shopAddress, shopLogo } = req.body;
+
+    // Parse nested objects from FormData
+    if (req.body['shopAddress[doorNo]']) {
+      shopAddress = {
+        doorNo: req.body['shopAddress[doorNo]'],
+        street: req.body['shopAddress[street]'],
+        landmark: req.body['shopAddress[landmark]'],
+        city: req.body['shopAddress[city]'],
+        district: req.body['shopAddress[district]'] || null,
+        state: req.body['shopAddress[state]'],
+        country: req.body['shopAddress[country]'],
+        pincode: req.body['shopAddress[pincode]'],
+      };
+    }
+
+    if (req.body['bankDetails[accountNumber]']) {
+      bankDetails = {
+        accountNumber: req.body['bankDetails[accountNumber]'],
+        ifscCode: req.body['bankDetails[ifscCode]'],
+        accountHolderName: req.body['bankDetails[accountHolderName]'],
+        bankName: req.body['bankDetails[bankName]'],
+      };
+    }
 
     let finalShopLogo = shopLogo;
     if (req.file) {

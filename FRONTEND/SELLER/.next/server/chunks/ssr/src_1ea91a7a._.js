@@ -1,5 +1,31 @@
 module.exports = {
 
+"[project]/src/services/kycService.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
+"use strict";
+
+var { g: global, __dirname } = __turbopack_context__;
+{
+__turbopack_context__.s({
+    "kycService": (()=>kycService)
+});
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/lib/axios.ts [app-ssr] (ecmascript)");
+;
+const kycService = {
+    submitKYC: async (data)=>{
+        const isFormData = data instanceof FormData;
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post('/api/seller/kyc/request', data, {
+            headers: isFormData ? {
+                'Content-Type': 'multipart/form-data'
+            } : undefined
+        });
+        return response.data;
+    },
+    getKYCStatus: async ()=>{
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get('/api/seller/kyc/status');
+        return response.data;
+    }
+};
+}}),
 "[project]/src/hooks/useKYC.ts [app-ssr] (ecmascript)": ((__turbopack_context__) => {
 "use strict";
 
@@ -9,7 +35,7 @@ __turbopack_context__.s({
     "useKYC": (()=>useKYC)
 });
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/server/route-modules/app-page/vendored/ssr/react.js [app-ssr] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$authService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/services/authService.ts [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$kycService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/services/kycService.ts [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/react-hot-toast/dist/index.mjs [app-ssr] (ecmascript)");
 ;
 ;
@@ -20,7 +46,7 @@ const useKYC = ()=>{
     const fetchKYCStatus = async ()=>{
         setLoading(true);
         try {
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$authService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["authService"].getKYCStatus();
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$kycService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["kycService"].getKYCStatus();
             if (response.success) {
                 setKycStatus(response.data);
                 return response.data;
@@ -39,7 +65,7 @@ const useKYC = ()=>{
     const submitKYCRequest = async (data)=>{
         setLoading(true);
         try {
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$authService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["authService"].submitKYCRequest(data);
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$kycService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["kycService"].submitKYC(data);
             if (response.success) {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].success('KYC request submitted successfully');
                 setKycStatus(response.data);
@@ -239,6 +265,7 @@ function KYCPage() {
             street: '',
             landmark: '',
             city: '',
+            district: '',
             state: '',
             country: '',
             pincode: ''
@@ -257,6 +284,7 @@ function KYCPage() {
             street: '',
             landmark: '',
             city: '',
+            district: '',
             state: '',
             country: '',
             pincode: ''
@@ -264,6 +292,7 @@ function KYCPage() {
     });
     const [shopLogo, setShopLogo] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
     const [logoPreview, setLogoPreview] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])('');
+    const [isEditing, setIsEditing] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(false);
     const fileInputRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const isFormValid = ()=>{
         return formData.shopName.trim() !== '' && formData.gstin.trim() !== '' && formData.panNumber.trim() !== '' && formData.accountNumber.trim() !== '' && formData.ifscCode.trim() !== '' && formData.accountHolderName.trim() !== '' && formData.bankName.trim() !== '' && formData.shopAddress.doorNo.trim() !== '' && formData.shopAddress.street.trim() !== '' && formData.shopAddress.city.trim() !== '' && formData.shopAddress.state.trim() !== '' && formData.shopAddress.country.trim() !== '' && formData.shopAddress.pincode.trim() !== '';
@@ -274,6 +303,23 @@ function KYCPage() {
     const handleLogoSelect = (e)=>{
         const file = e.target.files?.[0];
         if (file) {
+            const allowedTypes = [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/webp'
+            ];
+            const maxSize = 2 * 1024 * 1024;
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Allowed types: JPG, JPEG, PNG, WEBP');
+                e.target.value = '';
+                return;
+            }
+            if (file.size > maxSize) {
+                alert('File size too large. Maximum allowed size is 2MB');
+                e.target.value = '';
+                return;
+            }
             setShopLogo(file);
             const reader = new FileReader();
             reader.onloadend = ()=>{
@@ -321,6 +367,7 @@ function KYCPage() {
                     street: user.sellerInfo.shopAddress?.street || '',
                     landmark: user.sellerInfo.shopAddress?.landmark || '',
                     city: user.sellerInfo.shopAddress?.city || '',
+                    district: user.sellerInfo.shopAddress?.district || '',
                     state: user.sellerInfo.shopAddress?.state || '',
                     country: user.sellerInfo.shopAddress?.country || '',
                     pincode: user.sellerInfo.shopAddress?.pincode || ''
@@ -345,6 +392,7 @@ function KYCPage() {
         submitData.append('shopAddress[street]', formData.shopAddress.street);
         submitData.append('shopAddress[landmark]', formData.shopAddress.landmark);
         submitData.append('shopAddress[city]', formData.shopAddress.city);
+        submitData.append('shopAddress[district]', formData.shopAddress.district);
         submitData.append('shopAddress[state]', formData.shopAddress.state);
         submitData.append('shopAddress[country]', formData.shopAddress.country);
         submitData.append('shopAddress[pincode]', formData.shopAddress.pincode);
@@ -355,7 +403,40 @@ function KYCPage() {
         if (shopLogo) {
             submitData.append('shopLogo', shopLogo);
         }
-        await submitKYCRequest(submitData);
+        const result = await submitKYCRequest(submitData);
+        if (result) {
+            setIsEditing(false);
+            setShopLogo(null);
+        }
+    };
+    const handleCancel = ()=>{
+        setIsEditing(false);
+        setShopLogo(null);
+        if (user?.sellerInfo) {
+            const resetData = {
+                shopName: user.sellerInfo.shopName || '',
+                gstin: user.sellerInfo.gstin || '',
+                panNumber: user.sellerInfo.panNumber || '',
+                accountNumber: user.sellerInfo.bankDetails?.accountNumber || '',
+                ifscCode: user.sellerInfo.bankDetails?.ifscCode || '',
+                accountHolderName: user.sellerInfo.bankDetails?.accountHolderName || '',
+                bankName: user.sellerInfo.bankDetails?.bankName || '',
+                shopAddress: {
+                    doorNo: user.sellerInfo.shopAddress?.doorNo || '',
+                    street: user.sellerInfo.shopAddress?.street || '',
+                    landmark: user.sellerInfo.shopAddress?.landmark || '',
+                    city: user.sellerInfo.shopAddress?.city || '',
+                    district: user.sellerInfo.shopAddress?.district || '',
+                    state: user.sellerInfo.shopAddress?.state || '',
+                    country: user.sellerInfo.shopAddress?.country || '',
+                    pincode: user.sellerInfo.shopAddress?.pincode || ''
+                }
+            };
+            setFormData(resetData);
+            if (user.sellerInfo.shopLogo) {
+                setLogoPreview(`${("TURBOPACK compile-time value", "http://192.168.0.45:6060")}${user.sellerInfo.shopLogo}`);
+            }
+        }
     };
     const isKYCApproved = user?.sellerInfo?.kycApproved;
     if (isLoading) {
@@ -363,12 +444,12 @@ function KYCPage() {
             className: "flex justify-center items-center min-h-screen",
             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                lineNumber: 185,
+                lineNumber: 239,
                 columnNumber: 17
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-            lineNumber: 184,
+            lineNumber: 238,
             columnNumber: 13
         }, this);
     }
@@ -381,7 +462,7 @@ function KYCPage() {
                 pageName: "KYC Verification"
             }, void 0, false, {
                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                lineNumber: 196,
+                lineNumber: 250,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -392,28 +473,57 @@ function KYCPage() {
                         className: "bg-white rounded-2xl shadow-xl p-8 border border-gray-100",
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                className: "mb-8",
+                                className: "mb-8 flex justify-between items-start",
                                 children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                        className: "text-3xl font-bold text-black mb-2",
-                                        children: "KYC Verification"
-                                    }, void 0, false, {
+                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
+                                                className: "text-3xl font-bold text-black mb-2",
+                                                children: "KYC Verification"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 256,
+                                                columnNumber: 33
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                className: "text-gray-600",
+                                                children: "Complete your KYC verification to start selling on our platform"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 257,
+                                                columnNumber: 33
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 201,
+                                        lineNumber: 255,
                                         columnNumber: 29
                                     }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                        className: "text-gray-600",
-                                        children: "Complete your KYC verification to start selling on our platform"
-                                    }, void 0, false, {
+                                    isKYCApproved && !isEditing && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                        type: "button",
+                                        onClick: ()=>setIsEditing(true),
+                                        className: "px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center gap-2",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Icon"], {
+                                                icon: "mdi:pencil",
+                                                width: 20,
+                                                height: 20
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 266,
+                                                columnNumber: 37
+                                            }, this),
+                                            "Edit KYC Details"
+                                        ]
+                                    }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 202,
-                                        columnNumber: 29
+                                        lineNumber: 262,
+                                        columnNumber: 33
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                lineNumber: 200,
+                                lineNumber: 254,
                                 columnNumber: 25
                             }, this),
                             isKYCApproved && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -426,7 +536,7 @@ function KYCPage() {
                                         height: 24
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 209,
+                                        lineNumber: 274,
                                         columnNumber: 33
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -436,7 +546,7 @@ function KYCPage() {
                                                 children: "KYC Approved"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 211,
+                                                lineNumber: 276,
                                                 columnNumber: 37
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -444,31 +554,348 @@ function KYCPage() {
                                                 children: "Your KYC has been verified successfully"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 212,
+                                                lineNumber: 277,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 210,
+                                        lineNumber: 275,
                                         columnNumber: 33
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                lineNumber: 208,
+                                lineNumber: 273,
+                                columnNumber: 29
+                            }, this),
+                            user?.sellerInfo && !isEditing && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                className: "mb-6",
+                                children: [
+                                    user.sellerInfo.shopLogo && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "mb-6 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                className: "text-lg font-semibold text-black mb-4 flex items-center gap-2",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Icon"], {
+                                                        icon: "mdi:store",
+                                                        width: 20,
+                                                        height: 20,
+                                                        className: "text-primary"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 287,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    "Shop Logo"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 286,
+                                                columnNumber: 41
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "flex items-center gap-4",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        className: "w-24 h-24 rounded-lg overflow-hidden border-2 border-primary shadow-md",
+                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
+                                                            src: `${("TURBOPACK compile-time value", "http://192.168.0.45:6060")}${user.sellerInfo.shopLogo}`,
+                                                            alt: "Shop Logo",
+                                                            className: "w-full h-full object-cover"
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                            lineNumber: 292,
+                                                            columnNumber: 49
+                                                        }, this)
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 291,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm font-medium text-gray-700",
+                                                                children: "Current Shop Logo"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 299,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-xs text-gray-500",
+                                                                children: "This logo represents your shop"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 300,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 298,
+                                                        columnNumber: 45
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 290,
+                                                columnNumber: 41
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                        lineNumber: 285,
+                                        columnNumber: 37
+                                    }, this),
+                                    user.sellerInfo.shopAddress && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                        className: "p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl",
+                                        children: [
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
+                                                className: "text-lg font-semibold text-black mb-4 flex items-center gap-2",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Icon"], {
+                                                        icon: "mdi:map-marker",
+                                                        width: 20,
+                                                        height: 20,
+                                                        className: "text-primary"
+                                                    }, void 0, false, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 309,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    "Shop Address"
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 308,
+                                                columnNumber: 41
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                className: "grid grid-cols-1 md:grid-cols-2 gap-4",
+                                                children: [
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "Door No"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 314,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.doorNo || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 315,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 313,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "Street"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 318,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.street || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 319,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 317,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "Landmark"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 322,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.landmark || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 323,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 321,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "City"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 326,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.city || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 327,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 325,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "District"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 330,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.district || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 331,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 329,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "State"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 334,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.state || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 335,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 333,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "Country"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 338,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.country || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 339,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 337,
+                                                        columnNumber: 45
+                                                    }, this),
+                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                        children: [
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                className: "block text-xs font-medium text-gray-500 mb-1",
+                                                                children: "Pincode"
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 342,
+                                                                columnNumber: 49
+                                                            }, this),
+                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
+                                                                className: "text-sm text-gray-900 font-medium",
+                                                                children: user.sellerInfo.shopAddress.pincode || 'N/A'
+                                                            }, void 0, false, {
+                                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                lineNumber: 343,
+                                                                columnNumber: 49
+                                                            }, this)
+                                                        ]
+                                                    }, void 0, true, {
+                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                        lineNumber: 341,
+                                                        columnNumber: 45
+                                                    }, this)
+                                                ]
+                                            }, void 0, true, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 312,
+                                                columnNumber: 41
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
+                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                        lineNumber: 307,
+                                        columnNumber: 37
+                                    }, this)
+                                ]
+                            }, void 0, true, {
+                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                lineNumber: 283,
                                 columnNumber: 29
                             }, this),
                             loading && !kycStatus ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "flex justify-center py-12",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                    lineNumber: 219,
+                                    lineNumber: 353,
                                     columnNumber: 33
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                lineNumber: 218,
+                                lineNumber: 352,
                                 columnNumber: 29
                             }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
                                 onSubmit: handleSubmit,
@@ -486,14 +913,14 @@ function KYCPage() {
                                                         className: "text-primary"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 225,
+                                                        lineNumber: 359,
                                                         columnNumber: 41
                                                     }, this),
                                                     "Business Information"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 224,
+                                                lineNumber: 358,
                                                 columnNumber: 37
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -514,14 +941,14 @@ function KYCPage() {
                                                                                 children: "*"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 232,
-                                                                                columnNumber: 59
+                                                                                lineNumber: 366,
+                                                                                columnNumber: 63
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 231,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 365,
+                                                                        columnNumber: 49
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                         type: "text",
@@ -530,19 +957,19 @@ function KYCPage() {
                                                                                 ...formData,
                                                                                 shopName: e.target.value
                                                                             }),
-                                                                        disabled: isKYCApproved,
+                                                                        disabled: isKYCApproved && !isEditing,
                                                                         className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                         required: true
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 234,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 368,
+                                                                        columnNumber: 49
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                lineNumber: 230,
-                                                                columnNumber: 41
+                                                                lineNumber: 364,
+                                                                columnNumber: 45
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                 children: [
@@ -555,14 +982,14 @@ function KYCPage() {
                                                                                 children: "*"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 245,
-                                                                                columnNumber: 55
+                                                                                lineNumber: 379,
+                                                                                columnNumber: 59
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 244,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 378,
+                                                                        columnNumber: 49
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                         type: "text",
@@ -571,20 +998,20 @@ function KYCPage() {
                                                                                 ...formData,
                                                                                 gstin: e.target.value
                                                                             }),
-                                                                        disabled: isKYCApproved,
-                                                                        placeholder: "29ABCDE1234F1Z5",
+                                                                        disabled: isKYCApproved && !isEditing,
+                                                                        placeholder: "Entry GSTIN",
                                                                         className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                         required: true
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 247,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 381,
+                                                                        columnNumber: 49
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                lineNumber: 243,
-                                                                columnNumber: 41
+                                                                lineNumber: 377,
+                                                                columnNumber: 45
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                 children: [
@@ -597,14 +1024,14 @@ function KYCPage() {
                                                                                 children: "*"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 259,
-                                                                                columnNumber: 60
+                                                                                lineNumber: 393,
+                                                                                columnNumber: 64
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 258,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 392,
+                                                                        columnNumber: 49
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                         type: "text",
@@ -613,25 +1040,25 @@ function KYCPage() {
                                                                                 ...formData,
                                                                                 panNumber: e.target.value
                                                                             }),
-                                                                        disabled: isKYCApproved,
-                                                                        placeholder: "ABCDE1234F",
+                                                                        disabled: isKYCApproved && !isEditing,
+                                                                        placeholder: "Entry PAN Number",
                                                                         className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                         required: true
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 261,
-                                                                        columnNumber: 45
+                                                                        lineNumber: 395,
+                                                                        columnNumber: 49
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                lineNumber: 257,
-                                                                columnNumber: 41
+                                                                lineNumber: 391,
+                                                                columnNumber: 45
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 229,
+                                                        lineNumber: 363,
                                                         columnNumber: 41
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -642,7 +1069,7 @@ function KYCPage() {
                                                                 children: "Shop Logo"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                lineNumber: 274,
+                                                                lineNumber: 408,
                                                                 columnNumber: 45
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -656,12 +1083,12 @@ function KYCPage() {
                                                                             className: "w-full h-full object-cover"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 280,
+                                                                            lineNumber: 414,
                                                                             columnNumber: 57
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 279,
+                                                                        lineNumber: 413,
                                                                         columnNumber: 53
                                                                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50",
@@ -672,15 +1099,15 @@ function KYCPage() {
                                                                             className: "text-gray-400"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 288,
+                                                                            lineNumber: 422,
                                                                             columnNumber: 57
                                                                         }, this)
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 287,
+                                                                        lineNumber: 421,
                                                                         columnNumber: 53
                                                                     }, this),
-                                                                    !isKYCApproved && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                    (!isKYCApproved || isEditing) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                         className: "flex-1",
                                                                         children: [
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -691,7 +1118,7 @@ function KYCPage() {
                                                                                 className: "hidden"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 293,
+                                                                                lineNumber: 427,
                                                                                 columnNumber: 57
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -701,7 +1128,7 @@ function KYCPage() {
                                                                                 children: logoPreview ? 'Change Logo' : 'Upload Logo'
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 300,
+                                                                                lineNumber: 434,
                                                                                 columnNumber: 57
                                                                             }, this),
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -709,37 +1136,37 @@ function KYCPage() {
                                                                                 children: "Recommended: 500x500px, max 2MB"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                                lineNumber: 306,
+                                                                                lineNumber: 440,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                        lineNumber: 292,
+                                                                        lineNumber: 426,
                                                                         columnNumber: 53
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                lineNumber: 277,
+                                                                lineNumber: 411,
                                                                 columnNumber: 45
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 273,
+                                                        lineNumber: 407,
                                                         columnNumber: 41
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 228,
+                                                lineNumber: 362,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 223,
+                                        lineNumber: 357,
                                         columnNumber: 33
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -755,14 +1182,14 @@ function KYCPage() {
                                                         className: "text-primary"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 318,
+                                                        lineNumber: 452,
                                                         columnNumber: 41
                                                     }, this),
                                                     "Shop Address"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 317,
+                                                lineNumber: 451,
                                                 columnNumber: 37
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -781,32 +1208,32 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 325,
+                                                                            lineNumber: 459,
                                                                             columnNumber: 61
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 324,
+                                                                    lineNumber: 458,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.doorNo,
                                                                     onChange: (e)=>handleAddressChange('doorNo', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "123/A",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Door No",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 327,
+                                                                    lineNumber: 461,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 323,
+                                                            lineNumber: 457,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -820,32 +1247,32 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 339,
+                                                                            lineNumber: 473,
                                                                             columnNumber: 60
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 338,
+                                                                    lineNumber: 472,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.street,
                                                                     onChange: (e)=>handleAddressChange('street', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "Fashion Street",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Street",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 341,
+                                                                    lineNumber: 475,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 337,
+                                                            lineNumber: 471,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -855,25 +1282,25 @@ function KYCPage() {
                                                                     children: "Landmark"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 352,
+                                                                    lineNumber: 486,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.landmark,
                                                                     onChange: (e)=>handleAddressChange('landmark', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "Near Railway Station",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Near Landmark",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 355,
+                                                                    lineNumber: 489,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 351,
+                                                            lineNumber: 485,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -887,32 +1314,60 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 366,
+                                                                            lineNumber: 500,
                                                                             columnNumber: 58
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 365,
+                                                                    lineNumber: 499,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.city,
                                                                     onChange: (e)=>handleAddressChange('city', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "Bangalore",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry City",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 368,
+                                                                    lineNumber: 502,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 364,
+                                                            lineNumber: 498,
+                                                            columnNumber: 45
+                                                        }, this),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            children: [
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
+                                                                    className: "block text-sm font-medium text-gray-700 mb-2",
+                                                                    children: "District"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                    lineNumber: 513,
+                                                                    columnNumber: 49
+                                                                }, this),
+                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                                    type: "text",
+                                                                    value: formData.shopAddress.district,
+                                                                    onChange: (e)=>handleAddressChange('district', e.target.value),
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry District",
+                                                                    className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                }, void 0, false, {
+                                                                    fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                                    lineNumber: 516,
+                                                                    columnNumber: 49
+                                                                }, this)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                            lineNumber: 512,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -926,32 +1381,32 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 380,
+                                                                            lineNumber: 527,
                                                                             columnNumber: 59
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 379,
+                                                                    lineNumber: 526,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.state,
                                                                     onChange: (e)=>handleAddressChange('state', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "Karnataka",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry State",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 382,
+                                                                    lineNumber: 529,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 378,
+                                                            lineNumber: 525,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -965,32 +1420,32 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 394,
+                                                                            lineNumber: 541,
                                                                             columnNumber: 61
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 393,
+                                                                    lineNumber: 540,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.country,
                                                                     onChange: (e)=>handleAddressChange('country', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "India",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Country",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 396,
+                                                                    lineNumber: 543,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 392,
+                                                            lineNumber: 539,
                                                             columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1004,49 +1459,49 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 408,
+                                                                            lineNumber: 555,
                                                                             columnNumber: 61
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 407,
+                                                                    lineNumber: 554,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
                                                                     value: formData.shopAddress.pincode,
                                                                     onChange: (e)=>handleAddressChange('pincode', e.target.value),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "560001",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Pincode",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 410,
+                                                                    lineNumber: 557,
                                                                     columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 406,
+                                                            lineNumber: 553,
                                                             columnNumber: 45
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                    lineNumber: 322,
+                                                    lineNumber: 456,
                                                     columnNumber: 41
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 321,
+                                                lineNumber: 455,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 316,
+                                        lineNumber: 450,
                                         columnNumber: 33
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1062,14 +1517,14 @@ function KYCPage() {
                                                         className: "text-primary"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 426,
+                                                        lineNumber: 573,
                                                         columnNumber: 41
                                                     }, this),
                                                     "Bank Details"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 425,
+                                                lineNumber: 572,
                                                 columnNumber: 37
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1088,14 +1543,14 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 433,
-                                                                            columnNumber: 64
+                                                                            lineNumber: 580,
+                                                                            columnNumber: 68
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 432,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 579,
+                                                                    columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
@@ -1104,20 +1559,20 @@ function KYCPage() {
                                                                             ...formData,
                                                                             accountNumber: e.target.value
                                                                         }),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "1234567890",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Account Number",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 435,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 582,
+                                                                    columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 431,
-                                                            columnNumber: 41
+                                                            lineNumber: 578,
+                                                            columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             children: [
@@ -1130,14 +1585,14 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 447,
-                                                                            columnNumber: 59
+                                                                            lineNumber: 594,
+                                                                            columnNumber: 63
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 446,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 593,
+                                                                    columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
@@ -1146,20 +1601,20 @@ function KYCPage() {
                                                                             ...formData,
                                                                             ifscCode: e.target.value
                                                                         }),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "HDFC0001234",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry IFSC Code",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 449,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 596,
+                                                                    columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 445,
-                                                            columnNumber: 41
+                                                            lineNumber: 592,
+                                                            columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             children: [
@@ -1172,14 +1627,14 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 461,
-                                                                            columnNumber: 69
+                                                                            lineNumber: 608,
+                                                                            columnNumber: 73
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 460,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 607,
+                                                                    columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
@@ -1188,20 +1643,20 @@ function KYCPage() {
                                                                             ...formData,
                                                                             accountHolderName: e.target.value
                                                                         }),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "John Doe",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry AC Holder Name",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 463,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 610,
+                                                                    columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 459,
-                                                            columnNumber: 41
+                                                            lineNumber: 606,
+                                                            columnNumber: 45
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                             children: [
@@ -1214,14 +1669,14 @@ function KYCPage() {
                                                                             children: "*"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                            lineNumber: 475,
-                                                                            columnNumber: 59
+                                                                            lineNumber: 622,
+                                                                            columnNumber: 63
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 474,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 621,
+                                                                    columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
                                                                     type: "text",
@@ -1230,97 +1685,109 @@ function KYCPage() {
                                                                             ...formData,
                                                                             bankName: e.target.value
                                                                         }),
-                                                                    disabled: isKYCApproved,
-                                                                    placeholder: "HDFC Bank",
+                                                                    disabled: isKYCApproved && !isEditing,
+                                                                    placeholder: "Entry Bank Name",
                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed",
                                                                     required: true
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                                    lineNumber: 477,
-                                                                    columnNumber: 45
+                                                                    lineNumber: 624,
+                                                                    columnNumber: 49
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                            lineNumber: 473,
-                                                            columnNumber: 41
+                                                            lineNumber: 620,
+                                                            columnNumber: 45
                                                         }, this)
                                                     ]
                                                 }, void 0, true, {
                                                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                    lineNumber: 430,
+                                                    lineNumber: 577,
                                                     columnNumber: 41
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                lineNumber: 429,
+                                                lineNumber: 576,
                                                 columnNumber: 37
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 424,
+                                        lineNumber: 571,
                                         columnNumber: 33
                                     }, this),
-                                    !isKYCApproved && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    (!isKYCApproved || isEditing) && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                         className: "flex justify-end gap-4 mt-8",
-                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
-                                            type: "submit",
-                                            disabled: loading || !isFormValid() || !hasFormChanged(),
-                                            className: "px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
-                                            children: loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
-                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 505,
-                                                        columnNumber: 53
-                                                    }, this),
-                                                    "Submitting..."
-                                                ]
-                                            }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
-                                                children: [
-                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Icon"], {
-                                                        icon: "mdi:check",
-                                                        width: 20,
-                                                        height: 20
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                                        lineNumber: 510,
-                                                        columnNumber: 53
-                                                    }, this),
-                                                    "Submit KYC Request"
-                                                ]
-                                            }, void 0, true)
-                                        }, void 0, false, {
-                                            fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                            lineNumber: 499,
-                                            columnNumber: 41
-                                        }, this)
-                                    }, void 0, false, {
+                                        children: [
+                                            isKYCApproved && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                type: "button",
+                                                onClick: handleCancel,
+                                                className: "px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition",
+                                                children: "Cancel"
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 641,
+                                                columnNumber: 45
+                                            }, this),
+                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
+                                                type: "submit",
+                                                disabled: loading || !isFormValid() || !hasFormChanged(),
+                                                className: "px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2",
+                                                children: loading ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Common$2f$Loader$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+                                                            fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                            lineNumber: 654,
+                                                            columnNumber: 53
+                                                        }, this),
+                                                        isKYCApproved ? 'Updating...' : 'Submitting...'
+                                                    ]
+                                                }, void 0, true) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Icon"], {
+                                                            icon: "mdi:check",
+                                                            width: 20,
+                                                            height: 20
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                            lineNumber: 659,
+                                                            columnNumber: 53
+                                                        }, this),
+                                                        isKYCApproved ? 'Save Changes' : 'Submit KYC Request'
+                                                    ]
+                                                }, void 0, true)
+                                            }, void 0, false, {
+                                                fileName: "[project]/src/app/(site)/kyc/page.tsx",
+                                                lineNumber: 648,
+                                                columnNumber: 41
+                                            }, this)
+                                        ]
+                                    }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                        lineNumber: 492,
+                                        lineNumber: 639,
                                         columnNumber: 37
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                                lineNumber: 222,
+                                lineNumber: 356,
                                 columnNumber: 29
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                        lineNumber: 199,
+                        lineNumber: 253,
                         columnNumber: 21
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                    lineNumber: 198,
+                    lineNumber: 252,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/(site)/kyc/page.tsx",
-                lineNumber: 197,
+                lineNumber: 251,
                 columnNumber: 13
             }, this)
         ]
@@ -1330,4 +1797,4 @@ function KYCPage() {
 
 };
 
-//# sourceMappingURL=src_96a39513._.js.map
+//# sourceMappingURL=src_1ea91a7a._.js.map

@@ -1527,6 +1527,11 @@
     border-left-width: 1px;
   }
 
+  .border-dashed {
+    --tw-border-style: dashed;
+    border-style: dashed;
+  }
+
   .border-solid {
     --tw-border-style: solid;
     border-style: solid;

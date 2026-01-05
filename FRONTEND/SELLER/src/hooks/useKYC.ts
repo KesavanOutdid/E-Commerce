@@ -1,20 +1,6 @@
 import { useState } from 'react'
-import { authService } from '@/services/authService'
+import { kycService } from '@/services/kycService'
 import toast from 'react-hot-toast'
-
-interface BankDetails {
-    accountNumber: string
-    ifscCode: string
-    accountHolderName: string
-    bankName: string
-}
-
-interface KYCData {
-    shopName: string
-    gstin: string
-    panNumber: string
-    bankDetails: BankDetails
-}
 
 export const useKYC = () => {
     const [loading, setLoading] = useState(false)
@@ -23,7 +9,7 @@ export const useKYC = () => {
     const fetchKYCStatus = async () => {
         setLoading(true)
         try {
-            const response = await authService.getKYCStatus()
+            const response = await kycService.getKYCStatus()
             if (response.success) {
                 setKycStatus(response.data)
                 return response.data
@@ -40,10 +26,10 @@ export const useKYC = () => {
         }
     }
 
-    const submitKYCRequest = async (data: KYCData) => {
+    const submitKYCRequest = async (data: any) => {
         setLoading(true)
         try {
-            const response = await authService.submitKYCRequest(data)
+            const response = await kycService.submitKYC(data)
             if (response.success) {
                 toast.success('KYC request submitted successfully')
                 setKycStatus(response.data)

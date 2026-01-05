@@ -580,14 +580,6 @@ const authService = {
             } : undefined
         });
         return response.data;
-    },
-    getKYCStatus: async ()=>{
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get('/api/seller/kyc/status');
-        return response.data;
-    },
-    submitKYCRequest: async (data)=>{
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].post('/api/seller/kyc/request', data);
-        return response.data;
     }
 };
 }}),

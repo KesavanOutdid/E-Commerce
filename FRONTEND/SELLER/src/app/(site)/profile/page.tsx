@@ -90,6 +90,21 @@ export default function ProfilePage() {
     const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+            const maxSize = 2 * 1024 * 1024
+
+            if (!allowedTypes.includes(file.type)) {
+                alert('Invalid file type. Allowed types: JPG, JPEG, PNG, WEBP')
+                e.target.value = ''
+                return
+            }
+
+            if (file.size > maxSize) {
+                alert('File size too large. Maximum allowed size is 2MB')
+                e.target.value = ''
+                return
+            }
+
             setSelectedImage(file)
             const reader = new FileReader()
             reader.onloadend = () => {
@@ -101,16 +116,16 @@ export default function ProfilePage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        
+
         const submitData = new FormData()
         submitData.append('firstName', formData.firstName)
         submitData.append('lastName', formData.lastName)
         submitData.append('addresses', JSON.stringify(formData.addresses))
-        
+
         if (selectedImage) {
             submitData.append('profileImage', selectedImage)
         }
-        
+
         const result = await updateProfile(submitData)
         if (result) {
             setIsEditing(false)
@@ -207,9 +222,9 @@ export default function ProfilePage() {
                                     <div className="relative group">
                                         <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg">
                                             {imagePreview ? (
-                                                <img 
-                                                    src={imagePreview} 
-                                                    alt="Profile" 
+                                                <img
+                                                    src={imagePreview}
+                                                    alt="Profile"
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
@@ -477,6 +492,21 @@ export default function ProfilePage() {
                                             Seller Information
                                         </h2>
                                         <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
+                                            {user.sellerInfo.shopLogo && (
+                                                <div className="mb-6 flex items-center gap-4">
+                                                    <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-primary shadow-md">
+                                                        <img
+                                                            src={`${process.env.NEXT_PUBLIC_API_URL}${user.sellerInfo.shopLogo}`}
+                                                            alt="Shop Logo"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-700">Shop Logo</p>
+                                                        <p className="text-xs text-gray-500">Uploaded logo for your shop</p>
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -627,6 +657,107 @@ export default function ProfilePage() {
                                                             <input
                                                                 type="text"
                                                                 value={user.sellerInfo.bankDetails.bankName || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {user.sellerInfo.shopAddress && (
+                                            <div className="mt-6">
+                                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
+                                                    <Icon icon="mdi:map-marker" width={20} height={20} className="text-primary" />
+                                                    Shop Address
+                                                </h3>
+                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Door No
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.doorNo || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Street
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.street || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Landmark
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.landmark || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                City
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.city || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                District
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.district || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                State
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.state || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Country
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.country || 'N/A'}
+                                                                disabled
+                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                Pincode
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={user.sellerInfo.shopAddress.pincode || 'N/A'}
                                                                 disabled
                                                                 className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
                                                             />
