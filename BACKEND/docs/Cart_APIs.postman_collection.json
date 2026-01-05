@@ -1,0 +1,361 @@
+{
+	"info": {
+		"_postman_id": "cart-management-collection",
+		"name": "E-Commerce Cart APIs",
+		"description": "API collection for Cart Management - Add, Update, Remove, Get, and Clear cart items.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "customer_token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhMTRmNmFlYy1hNmM1LTRmZTAtYjJmZC0zNDA5MmFjMTEzMWQiLCJlbWFpbCI6Imtlc2F2MjQyNEBnbWFpbC5jb20iLCJyb2xlcyI6WzNdLCJyb2xlTmFtZXMiOlsiQ3VzdG9tZXIiXSwiaWF0IjoxNzY3MzQ2MzEzLCJleHAiOjE3Njc0MzI3MTN9.LyiFf19-YBz-1GZ2OQ-oGq-Gpm_vQlJ-dssAebbyHmM",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "a14f6aec-a6c5-4fe0-b2fd-34092ac1131d",
+			"type": "string"
+		},
+		{
+			"key": "product_id",
+			"value": "97120ed1-4621-44c4-a594-355b21bcaf0e",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Get Cart",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/cart/?page=1&limit=10",
+					"host": ["{{base_url}}"],
+					"path": ["api", "cart", ""],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Page number (default: 1)"
+						},
+						{
+							"key": "limit",
+							"value": "10",
+							"description": "Items per page (default: 10)"
+						}
+					]
+				},
+				"description": "Get the current user's active cart with pagination. Product details are fetched in real-time from Product table. Includes userId, productId, productName, qty, price, salePrice, images, stock, createdAt, createdBy, updatedAt, updatedBy, pagination metadata. Token required."
+			},
+			"response": [
+				{
+					"name": "Get Cart - Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", ""]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Your cart items loaded successfully\",\n    \"data\": {\n        \"_id\": \"cart_mongodb_id\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Sample Product\",\n                \"qty\": 2,\n                \"price\": 1999,\n                \"salePrice\": 1499,\n                \"totalPrice\": 3998,\n                \"gst\": 719.64,\n                \"subTotal\": 3278.36,\n                \"images\": [\"image1.jpg\", \"image2.jpg\"],\n                \"stock\": 50,\n                \"mainCategoryId\": \"category-uuid\",\n                \"subCategoryId\": \"subcategory-uuid\",\n                \"description\": \"Product description\",\n                \"shortDescription\": \"Short desc\",\n                \"slug\": \"sample-product\",\n                \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n                \"createdBy\": \"kesav2424@gmail.com\",\n                \"updatedAt\": \"2024-01-02T10:30:00.000Z\",\n                \"updatedBy\": \"kesav2424@gmail.com\",\n                \"available\": true,\n                \"productStatus\": \"active\"\n            }\n        ],\n        \"status\": \"active\",\n        \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n        \"createdBy\": \"kesav2424@gmail.com\",\n        \"updatedAt\": \"2024-01-02T10:30:00.000Z\",\n        \"updatedBy\": \"kesav2424@gmail.com\"\n    },\n    \"pagination\": {\n        \"total\": 3,\n        \"page\": 1,\n        \"limit\": 10,\n        \"pages\": 1\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Add Item to Cart",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"qty\": 1,\n  \"totalPrice\": 10230,\n  \"gst\": 230,\n  \"subTotal\": 10000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/cart/add",
+					"host": ["{{base_url}}"],
+					"path": ["api", "cart", "add"]
+				},
+				"description": "Add a product to the cart. If product already exists, returns 409 error with alert message to update instead. Validates product existence and stock availability. Stores productName, price, salePrice, totalPrice, gst, subTotal, images, stock, userId (from token), createdBy (user email), updatedBy (user email). Token required."
+			},
+			"response": [
+				{
+					"name": "Add Item - Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n  \"qty\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cart/add",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", "add"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Item added to cart successfully\",\n    \"data\": {\n        \"_id\": \"cart_mongodb_id\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Sample Product\",\n                \"qty\": 2,\n                \"price\": 1999,\n                \"salePrice\": 1499,\n                \"images\": [\"image1.jpg\"],\n                \"stock\": 50,\n                \"mainCategoryId\": \"category-uuid\",\n                \"subCategoryId\": \"subcategory-uuid\",\n                \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n                \"createdBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n                \"updatedAt\": \"2024-01-02T10:00:00.000Z\",\n                \"updatedBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n            }\n        ],\n        \"status\": \"active\",\n        \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n        \"createdBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"updatedAt\": \"2024-01-02T10:00:00.000Z\",\n        \"updatedBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Update Cart Item Quantity",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"qty\": 3,\n  \"totalPrice\": 30230,\n  \"gst\": 230,\n  \"subTotal\": 30000\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/cart/update/:productId",
+					"host": ["{{base_url}}"],
+					"path": ["api", "cart", "update", ":productId"],
+					"variable": [
+						{
+							"key": "productId",
+							"value": "{{product_id}}",
+							"description": "Product UUID"
+						}
+					]
+				},
+				"description": "Update cart item with new quantity, totalPrice, gst, and subTotal. Validates userId (from token), productId, and stock availability. Automatically fetches user email and updates updatedBy field. Refreshes product details (price, salePrice, images, stock). Token required."
+			},
+			"response": [
+				{
+					"name": "Update Item - Success",
+					"originalRequest": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"qty\": 5\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/cart/update/:productId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", "update", ":productId"],
+							"variable": [
+								{
+									"key": "productId",
+									"value": "97120ed1-4621-44c4-a594-355b21bcaf0e"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Cart updated successfully\",\n    \"data\": {\n        \"_id\": \"cart_mongodb_id\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Sample Product\",\n                \"qty\": 5,\n                \"price\": 1999,\n                \"salePrice\": 1499,\n                \"images\": [\"image1.jpg\"],\n                \"stock\": 50,\n                \"mainCategoryId\": \"category-uuid\",\n                \"subCategoryId\": \"subcategory-uuid\",\n                \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n                \"createdBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n                \"updatedAt\": \"2024-01-02T10:30:00.000Z\",\n                \"updatedBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n            }\n        ],\n        \"status\": \"active\",\n        \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n        \"createdBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"updatedAt\": \"2024-01-02T10:30:00.000Z\",\n        \"updatedBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Remove Item from Cart",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/cart/remove/:productId",
+					"host": ["{{base_url}}"],
+					"path": ["api", "cart", "remove", ":productId"],
+					"variable": [
+						{
+							"key": "productId",
+							"value": "{{product_id}}",
+							"description": "Product UUID"
+						}
+					]
+				},
+				"description": "Remove a specific product from the cart. Validates userId and productId before removal. Updates updatedBy and updatedAt. Token required."
+			},
+			"response": [
+				{
+					"name": "Remove Item - Success",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart/remove/:productId",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", "remove", ":productId"],
+							"variable": [
+								{
+									"key": "productId",
+									"value": "97120ed1-4621-44c4-a594-355b21bcaf0e"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Item removed from cart successfully\",\n    \"data\": {\n        \"_id\": \"cart_mongodb_id\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"items\": [],\n        \"status\": \"active\",\n        \"createdAt\": \"2024-01-02T10:00:00.000Z\",\n        \"createdBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"updatedAt\": \"2024-01-02T10:35:00.000Z\",\n        \"updatedBy\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Clear Cart",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/cart/clear",
+					"host": ["{{base_url}}"],
+					"path": ["api", "cart", "clear"]
+				},
+				"description": "Delete the entire cart document for the user. Validates userId from token and user email. Removes all cart data including _id, items, status, createdAt, createdBy, updatedAt, updatedBy. Token required."
+			},
+			"response": [
+				{
+					"name": "Clear Cart - Success",
+					"originalRequest": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/cart/clear",
+							"host": ["{{base_url}}"],
+							"path": ["api", "cart", "clear"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Cart cleared and deleted successfully\",\n    \"data\": {\n        \"deletedCount\": 1,\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\"\n    }\n}"
+				}
+			]
+		}
+	]
+}

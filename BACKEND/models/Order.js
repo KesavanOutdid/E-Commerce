@@ -6,27 +6,34 @@ class Order {
     return getDB().collection('orders');
   }
 
+  static generateOrderId() {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    return `ORD-${timestamp}-${random}`;
+  }
+
   static async create(orderData) {
     const order = {
-      userId: new ObjectId(orderData.userId),
-      items: orderData.items.map(item => ({
-        productId: new ObjectId(item.productId),
-        qty: item.qty,
-        price: item.price
-      })),
-      totalAmount: orderData.totalAmount,
-      status: orderData.status || 'pending',
-      shippingAddress: orderData.shippingAddress,
-      billingAddress: orderData.billingAddress,
-      paymentMethod: orderData.paymentMethod,
-      paymentStatus: orderData.paymentStatus || 'unpaid',
-      orderDate: new Date(),
-      deliveryDate: orderData.deliveryDate || null,
-      trackingNumber: orderData.trackingNumber || null,
+      orderId: this.generateOrderId(),
+      userId: orderData.userId,
+      userEmail: orderData.userEmail,
+      items: orderData.items,
+      totalPrice: orderData.totalPrice,
+      gst: orderData.gst,
+      subTotal: orderData.subTotal,
+      grandTotal: orderData.grandTotal,
+      codFee: orderData.codFee || 0,
+      deliveryAddress: orderData.deliveryAddress,
+      paymentType: orderData.paymentType,
+      paymentStatus: orderData.paymentStatus || 'Pending',
+      orderStatus: orderData.orderStatus || 'Pending',
+      razorpayOrderId: orderData.razorpayOrderId || null,
+      razorpayPaymentId: orderData.razorpayPaymentId || null,
+      razorpaySignature: orderData.razorpaySignature || null,
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: new ObjectId(orderData.createdBy),
-      updatedBy: new ObjectId(orderData.updatedBy)
+      createdBy: orderData.createdBy,
+      updatedBy: orderData.updatedBy
     };
     const result = await this.collection().insertOne(order);
     return { ...order, _id: result.insertedId };
@@ -37,8 +44,8 @@ class Order {
   }
 
   static async findByUserId(userId, options = {}) {
-    const query = { userId: new ObjectId(userId) };
-    const { limit = 10, skip = 0, sort = { orderDate: -1 } } = options;
+    const query = { userId: userId };
+    const { limit = 10, skip = 0, sort = { createdAt: -1 } } = options;
     return await this.collection()
       .find(query)
       .sort(sort)
@@ -47,8 +54,20 @@ class Order {
       .toArray();
   }
 
+  static async findByOrderId(orderId) {
+    return await this.collection().findOne({ orderId: orderId });
+  }
+
+  static async findByUserIdAndOrderId(userId, orderId) {
+    return await this.collection().findOne({ userId: userId, orderId: orderId });
+  }
+
+  static async findByRazorpayOrderId(razorpayOrderId) {
+    return await this.collection().findOne({ razorpayOrderId: razorpayOrderId });
+  }
+
   static async findAll(options = {}) {
-    const { limit = 10, skip = 0, sort = { orderDate: -1 }, filter = {} } = options;
+    const { limit = 10, skip = 0, sort = { createdAt: -1 }, filter = {} } = options;
     return await this.collection()
       .find(filter)
       .sort(sort)
@@ -57,53 +76,58 @@ class Order {
       .toArray();
   }
 
-  static async update(id, updateData) {
+  static async update(orderId, updateData) {
     const update = {
       ...updateData,
       updatedAt: new Date()
     };
 
-    if (updateData.items) {
-      update.items = updateData.items.map(item => ({
-        productId: new ObjectId(item.productId),
-        qty: item.qty,
-        price: item.price
-      }));
-    }
-
-    if (updateData.updatedBy) {
-      update.updatedBy = new ObjectId(updateData.updatedBy);
-    }
-
     return await this.collection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { orderId: orderId },
       { $set: update },
       { returnDocument: 'after' }
     );
   }
 
-  static async updateStatus(id, status, updatedBy) {
+  static async updatePaymentDetails(razorpayOrderId, paymentData) {
     return await this.collection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { razorpayOrderId: razorpayOrderId },
       { 
         $set: { 
-          status,
+          paymentStatus: paymentData.paymentStatus || 'Completed',
+          orderStatus: paymentData.orderStatus || 'Confirmed',
+          razorpayPaymentId: paymentData.razorpayPaymentId,
+          razorpaySignature: paymentData.razorpaySignature,
           updatedAt: new Date(),
-          updatedBy: new ObjectId(updatedBy)
+          updatedBy: paymentData.updatedBy
         }
       },
       { returnDocument: 'after' }
     );
   }
 
-  static async updatePaymentStatus(id, paymentStatus, updatedBy) {
+  static async updateOrderStatus(orderId, status, updatedBy) {
     return await this.collection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { orderId: orderId },
       { 
         $set: { 
-          paymentStatus,
+          orderStatus: status,
           updatedAt: new Date(),
-          updatedBy: new ObjectId(updatedBy)
+          updatedBy: updatedBy
+        }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async updatePaymentStatus(orderId, paymentStatus, updatedBy) {
+    return await this.collection().findOneAndUpdate(
+      { orderId: orderId },
+      { 
+        $set: { 
+          paymentStatus: paymentStatus,
+          updatedAt: new Date(),
+          updatedBy: updatedBy
         }
       },
       { returnDocument: 'after' }
@@ -115,13 +139,13 @@ class Order {
   }
 
   static async countByUserId(userId) {
-    return await this.collection().countDocuments({ userId: new ObjectId(userId) });
+    return await this.collection().countDocuments({ userId: userId });
   }
 
   static async getTotalRevenue() {
     const result = await this.collection().aggregate([
-      { $match: { paymentStatus: 'paid' } },
-      { $group: { _id: null, total: { $sum: '$totalAmount' } } }
+      { $match: { paymentStatus: 'Completed' } },
+      { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;
   }

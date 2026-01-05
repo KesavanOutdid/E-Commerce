@@ -1,0 +1,444 @@
+{
+	"info": {
+		"_postman_id": "order-management-collection",
+		"name": "E-Commerce Order APIs",
+		"description": "API collection for Order Management - Create, Verify, History, and Detail endpoints.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "customer_token",
+			"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhMTRmNmFlYy1hNmM1LTRmZTAtYjJmZC0zNDA5MmFjMTEzMWQiLCJlbWFpbCI6Imtlc2F2MjQyNEBnbWFpbC5jb20iLCJyb2xlcyI6WzNdLCJyb2xlTmFtZXMiOlsiQ3VzdG9tZXIiXSwiaWF0IjoxNzY3MzQ2MzEzLCJleHAiOjE3Njc0MzI3MTN9.LyiFf19-YBz-1GZ2OQ-oGq-Gpm_vQlJ-dssAebbyHmM",
+			"type": "string"
+		},
+		{
+			"key": "order_id",
+			"value": "ORD-123456-ABC",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Create Order (COD)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"COD\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/orders/create",
+					"host": ["{{base_url}}"],
+					"path": ["api", "orders", "create"]
+				},
+				"description": "Create a Cash on Delivery (COD) order. COD fee of ₹100 will be added automatically. Cart items are fetched from user's active cart. Order status is immediately set to 'Confirmed' for COD orders."
+			},
+			"response": [
+				{
+					"name": "Create Order (COD) - Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"COD\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/create",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "create"]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Order placed successfully!\",\n    \"data\": {\n        \"orderId\": \"ORD-LK9X2TS-ABC45\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"razorpayOrder\": null,\n        \"razorpaySignature\": null,\n        \"paymentType\": \"COD\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Iphone 17 pro\",\n                \"qty\": 2,\n                \"price\": \"10000\",\n                \"salePrice\": null,\n                \"totalPrice\": 30230,\n                \"gst\": 230,\n                \"subTotal\": 30000,\n                \"images\": [\"/uploads/products/iphone14.jpg\"],\n                \"stock\": \"8\",\n                \"mainCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"subCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"createdAt\": \"2026-01-02T11:37:06.027Z\",\n                \"createdBy\": \"kesav2424@gmail.com\",\n                \"updatedAt\": \"2026-01-02T11:39:24.232Z\",\n                \"updatedBy\": \"kesav2424@gmail.com\"\n            }\n        ],\n        \"deliveryAddress\": {\n            \"name\": \"John Doe\",\n            \"phone\": \"9876543210\",\n            \"email\": \"kesav2424@gmail.com\",\n            \"street\": \"123 Main Street\",\n            \"landmark\": \"Near City Mall\",\n            \"city\": \"Chennai\",\n            \"district\": \"Chennai\",\n            \"state\": \"Tamil Nadu\",\n            \"pincode\": \"600001\",\n            \"country\": \"IN\"\n        },\n        \"priceBreakdown\": {\n            \"totalPrice\": 30000,\n            \"gst\": 230,\n            \"subTotal\": 30000,\n            \"codFee\": 100,\n            \"grandTotal\": 30330\n        },\n        \"orderStatus\": \"Confirmed\",\n        \"paymentStatus\": \"Pending\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Create Order (ONLINE)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"ONLINE\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/orders/create",
+					"host": ["{{base_url}}"],
+					"path": ["api", "orders", "create"]
+				},
+				"description": "Create an Online Payment order. Returns Razorpay order details for frontend integration. Order status is 'Pending' until payment is verified."
+			},
+			"response": [
+				{
+					"name": "Create Order (ONLINE) - Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"ONLINE\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/create",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "create"]
+						}
+					},
+					"status": "Created",
+					"code": 201,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Order created. Please complete the payment\",\n    \"data\": {\n        \"orderId\": \"ORD-LK9X2TS-XYZ89\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"razorpayOrder\": {\n            \"id\": \"order_NXj2k3l4m5n6o7\",\n            \"entity\": \"order\",\n            \"amount\": 3023000,\n            \"amount_paid\": 0,\n            \"amount_due\": 3023000,\n            \"currency\": \"INR\",\n            \"receipt\": \"receipt_1735964892345\",\n            \"status\": \"created\",\n            \"attempts\": 0,\n            \"created_at\": 1735964892\n        },\n        \"razorpaySignature\": \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6\",\n        \"paymentType\": \"ONLINE\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Iphone 17 pro\",\n                \"qty\": 2,\n                \"price\": \"10000\",\n                \"salePrice\": null,\n                \"totalPrice\": 30230,\n                \"gst\": 230,\n                \"subTotal\": 30000,\n                \"images\": [\"/uploads/products/iphone14.jpg\"],\n                \"stock\": \"8\",\n                \"mainCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"subCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"createdAt\": \"2026-01-02T11:37:06.027Z\",\n                \"createdBy\": \"kesav2424@gmail.com\",\n                \"updatedAt\": \"2026-01-02T11:39:24.232Z\",\n                \"updatedBy\": \"kesav2424@gmail.com\"\n            }\n        ],\n        \"deliveryAddress\": {\n            \"name\": \"John Doe\",\n            \"phone\": \"9876543210\",\n            \"email\": \"kesav2424@gmail.com\",\n            \"street\": \"123 Main Street\",\n            \"landmark\": \"Near City Mall\",\n            \"city\": \"Chennai\",\n            \"district\": \"Chennai\",\n            \"state\": \"Tamil Nadu\",\n            \"pincode\": \"600001\",\n            \"country\": \"IN\"\n        },\n        \"priceBreakdown\": {\n            \"totalPrice\": 30000,\n            \"gst\": 230,\n            \"subTotal\": 30000,\n            \"codFee\": 0,\n            \"grandTotal\": 30230\n        },\n        \"orderStatus\": \"Pending\",\n        \"paymentStatus\": \"Pending\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Verify Order Payment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"razorpay_order_id\": \"order_NXj2k3l4m5n6o7\",\n  \"razorpay_payment_id\": \"pay_NXj2k3l4m5n6o8\",\n  \"razorpay_signature\": \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/orders/verify",
+					"host": ["{{base_url}}"],
+					"path": ["api", "orders", "verify"]
+				},
+				"description": "Verify Razorpay payment after successful transaction. This endpoint validates the signature, updates order status to 'Confirmed', payment status to 'Completed', and clears the user's cart."
+			},
+			"response": [
+				{
+					"name": "Verify Order Payment - Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"razorpay_order_id\": \"order_NXj2k3l4m5n6o7\",\n  \"razorpay_payment_id\": \"pay_NXj2k3l4m5n6o8\",\n  \"razorpay_signature\": \"a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/orders/verify",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "verify"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Payment verified successfully. Your order is confirmed!\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Order History",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/orders/history?page=1&limit=10",
+					"host": ["{{base_url}}"],
+					"path": ["api", "orders", "history"],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Page number (default: 1)"
+						},
+						{
+							"key": "limit",
+							"value": "10",
+							"description": "Items per page (default: 10)"
+						}
+					]
+				},
+				"description": "Get paginated order history for the logged-in user. Returns all orders sorted by newest first with pagination metadata."
+			},
+			"response": [
+				{
+					"name": "Get Order History - Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/history?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "history"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Your order history loaded successfully\",\n    \"data\": [\n        {\n            \"_id\": \"67798abc123def456789\",\n            \"orderId\": \"ORD-LK9X2TS-ABC45\",\n            \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n            \"userEmail\": \"kesav2424@gmail.com\",\n            \"items\": [\n                {\n                    \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                    \"productName\": \"Iphone 17 pro\",\n                    \"qty\": 2,\n                    \"price\": \"10000\",\n                    \"salePrice\": null,\n                    \"totalPrice\": 30230,\n                    \"gst\": 230,\n                    \"subTotal\": 30000,\n                    \"images\": [\"/uploads/products/iphone14.jpg\"],\n                    \"stock\": \"8\",\n                    \"mainCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                    \"subCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                    \"createdAt\": \"2026-01-02T11:37:06.027Z\",\n                    \"createdBy\": \"kesav2424@gmail.com\",\n                    \"updatedAt\": \"2026-01-02T11:39:24.232Z\",\n                    \"updatedBy\": \"kesav2424@gmail.com\"\n                }\n            ],\n            \"totalPrice\": 30000,\n            \"gst\": 230,\n            \"subTotal\": 30000,\n            \"grandTotal\": 30330,\n            \"codFee\": 100,\n            \"deliveryAddress\": {\n                \"name\": \"John Doe\",\n                \"phone\": \"9876543210\",\n                \"email\": \"kesav2424@gmail.com\",\n                \"street\": \"123 Main Street\",\n                \"landmark\": \"Near City Mall\",\n                \"city\": \"Chennai\",\n                \"district\": \"Chennai\",\n                \"state\": \"Tamil Nadu\",\n                \"pincode\": \"600001\",\n                \"country\": \"IN\"\n            },\n            \"paymentType\": \"COD\",\n            \"paymentStatus\": \"Pending\",\n            \"orderStatus\": \"Confirmed\",\n            \"razorpayOrderId\": null,\n            \"razorpayPaymentId\": null,\n            \"razorpaySignature\": null,\n            \"createdAt\": \"2026-01-05T05:10:00.000Z\",\n            \"updatedAt\": \"2026-01-05T05:10:00.000Z\",\n            \"createdBy\": \"kesav2424@gmail.com\",\n            \"updatedBy\": \"kesav2424@gmail.com\"\n        }\n    ],\n    \"pagination\": {\n        \"total\": 5,\n        \"page\": 1,\n        \"limit\": 10,\n        \"pages\": 1\n    }\n}"
+				},
+				{
+					"name": "Get Order History - Empty",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/history?page=1&limit=10",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "history"],
+							"query": [
+								{
+									"key": "page",
+									"value": "1"
+								},
+								{
+									"key": "limit",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"You have no orders yet. Start shopping!\",\n    \"data\": [],\n    \"pagination\": {\n        \"total\": 0,\n        \"page\": 1,\n        \"limit\": 10,\n        \"pages\": 0\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Order Detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{customer_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{base_url}}/api/orders/detail/{{order_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "orders", "detail", "{{order_id}}"]
+				},
+				"description": "Get detailed information for a specific order by orderId. Only returns orders belonging to the logged-in user."
+			},
+			"response": [
+				{
+					"name": "Get Order Detail - Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/detail/ORD-LK9X2TS-ABC45",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "detail", "ORD-LK9X2TS-ABC45"]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Order details retrieved successfully\",\n    \"data\": {\n        \"_id\": \"67798abc123def456789\",\n        \"orderId\": \"ORD-LK9X2TS-ABC45\",\n        \"userId\": \"a14f6aec-a6c5-4fe0-b2fd-34092ac1131d\",\n        \"userEmail\": \"kesav2424@gmail.com\",\n        \"items\": [\n            {\n                \"productId\": \"97120ed1-4621-44c4-a594-355b21bcaf0e\",\n                \"productName\": \"Iphone 17 pro\",\n                \"qty\": 2,\n                \"price\": \"10000\",\n                \"salePrice\": null,\n                \"totalPrice\": 30230,\n                \"gst\": 230,\n                \"subTotal\": 30000,\n                \"images\": [\"/uploads/products/iphone14.jpg\"],\n                \"stock\": \"8\",\n                \"mainCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"subCategoryId\": \"3290bd0f-9147-4930-8624-fbe7a8c4b98f\",\n                \"createdAt\": \"2026-01-02T11:37:06.027Z\",\n                \"createdBy\": \"kesav2424@gmail.com\",\n                \"updatedAt\": \"2026-01-02T11:39:24.232Z\",\n                \"updatedBy\": \"kesav2424@gmail.com\"\n            }\n        ],\n        \"totalPrice\": 30000,\n        \"gst\": 230,\n        \"subTotal\": 30000,\n        \"grandTotal\": 30330,\n        \"codFee\": 100,\n        \"deliveryAddress\": {\n            \"name\": \"John Doe\",\n            \"phone\": \"9876543210\",\n            \"email\": \"kesav2424@gmail.com\",\n            \"street\": \"123 Main Street\",\n            \"landmark\": \"Near City Mall\",\n            \"city\": \"Chennai\",\n            \"district\": \"Chennai\",\n            \"state\": \"Tamil Nadu\",\n            \"pincode\": \"600001\",\n            \"country\": \"IN\"\n        },\n        \"paymentType\": \"COD\",\n        \"paymentStatus\": \"Pending\",\n        \"orderStatus\": \"Confirmed\",\n        \"razorpayOrderId\": null,\n        \"razorpayPaymentId\": null,\n        \"razorpaySignature\": null,\n        \"createdAt\": \"2026-01-05T05:10:00.000Z\",\n        \"updatedAt\": \"2026-01-05T05:10:00.000Z\",\n        \"createdBy\": \"kesav2424@gmail.com\",\n        \"updatedBy\": \"kesav2424@gmail.com\"\n    }\n}"
+				},
+				{
+					"name": "Get Order Detail - Not Found",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{customer_token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/orders/detail/ORD-INVALID-123",
+							"host": ["{{base_url}}"],
+							"path": ["api", "orders", "detail", "ORD-INVALID-123"]
+						}
+					},
+					"status": "Not Found",
+					"code": 404,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"body": "{\n    \"success\": false,\n    \"message\": \"Order not found\"\n}"
+				}
+			]
+		}
+	]
+}

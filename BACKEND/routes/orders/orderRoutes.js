@@ -3,12 +3,13 @@ const router = express.Router();
 const authMiddleware = require('../../middleware/authMiddleware');
 const orderController = require('../../controllers/orders/orderController');
 
-router.post('/', authMiddleware, orderController.createOrder);
+router.post('/create', authMiddleware, orderController.createOrder);
+router.post('/verify', authMiddleware, orderController.verifyOrder);
+router.get('/history', authMiddleware, orderController.getUserOrders);
+router.get('/detail/:orderId', authMiddleware, orderController.getOrderDetail);
+
 router.get('/', authMiddleware, orderController.getAllOrders);
-router.get('/user', authMiddleware, orderController.getUserOrders);
 router.get('/revenue', authMiddleware, orderController.getTotalRevenue);
-router.get('/:id', authMiddleware, orderController.getOrderById);
-router.put('/:id', authMiddleware, orderController.updateOrder);
 router.put('/:id/status', authMiddleware, orderController.updateOrderStatus);
 router.put('/:id/payment-status', authMiddleware, orderController.updatePaymentStatus);
 router.delete('/:id', authMiddleware, orderController.deleteOrder);

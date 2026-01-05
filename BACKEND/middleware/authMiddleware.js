@@ -3,7 +3,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 
 module.exports = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
-    if (!token) return res.status(401).json({ success: false, message: 'Not authorized' });
+    if (!token) return res.status(401).json({ success: false, message: 'Please log in to continue' });
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
@@ -14,6 +14,6 @@ module.exports = (req, res, next) => {
         req.userEmail = decoded.email;
         next();
     } catch (err) {
-        return res.status(401).json({ success: false, message: 'Invalid token' });
+        return res.status(401).json({ success: false, message: 'Your session has expired. Please log in again' });
     }
 };

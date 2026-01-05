@@ -8,17 +8,11 @@ class Cart {
 
   static async create(cartData) {
     const cart = {
-      userId: new ObjectId(cartData.userId),
-      items: cartData.items.map(item => ({
-        productId: new ObjectId(item.productId),
-        qty: item.qty,
-        price: item.price
-      })),
+      userId: cartData.userId,
+      items: [],
       status: cartData.status || 'active',
       createdAt: new Date(),
-      updatedAt: new Date(),
-      createdBy: new ObjectId(cartData.createdBy),
-      updatedBy: new ObjectId(cartData.updatedBy)
+      updatedAt: new Date()
     };
     const result = await this.collection().insertOne(cart);
     return { ...cart, _id: result.insertedId };
@@ -30,96 +24,168 @@ class Cart {
 
   static async findByUserId(userId) {
     return await this.collection().findOne({ 
-      userId: new ObjectId(userId), 
+      userId: userId, 
       status: 'active' 
     });
   }
 
-  static async update(id, updateData) {
-    const update = {
-      ...updateData,
-      updatedAt: new Date()
-    };
+  static async findItemInCart(userId, productId) {
+    const cart = await this.collection().findOne({
+      userId: userId,
+      status: 'active',
+      'items.productId': productId
+    });
     
-    if (updateData.items) {
-      update.items = updateData.items.map(item => ({
-        productId: new ObjectId(item.productId),
-        qty: item.qty,
-        price: item.price
-      }));
-    }
-
-    if (updateData.updatedBy) {
-      update.updatedBy = new ObjectId(updateData.updatedBy);
-    }
-
-    return await this.collection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: update },
-      { returnDocument: 'after' }
-    );
+    if (!cart) return null;
+    
+    const item = cart.items.find(item => item.productId === productId);
+    return item || null;
   }
 
-  static async delete(id) {
-    return await this.collection().deleteOne({ _id: new ObjectId(id) });
-  }
-
-  static async addItem(userId, item) {
-    return await this.collection().findOneAndUpdate(
-      { userId: new ObjectId(userId), status: 'active' },
-      { 
-        $push: { 
-          items: {
-            productId: new ObjectId(item.productId),
-            qty: item.qty,
-            price: item.price
+  static async addItem(userId, itemData, createdBy, userEmail) {
+    const existingItem = await this.findItemInCart(userId, itemData.productId);
+    
+    if (existingItem) {
+      return { alreadyExists: true, existingItem };
+    }
+    
+    const existingCart = await this.findByUserId(userId);
+    
+    if (existingCart) {
+      return await this.collection().findOneAndUpdate(
+        { userId: userId, status: 'active' },
+        { 
+          $push: { 
+            items: {
+              productId: itemData.productId,
+              productName: itemData.productName,
+              qty: itemData.qty,
+              price: itemData.price,
+              salePrice: itemData.salePrice,
+              totalPrice: itemData.totalPrice,
+              gst: itemData.gst,
+              subTotal: itemData.subTotal,
+              images: itemData.images,
+              stock: itemData.stock,
+              mainCategoryId: itemData.mainCategoryId,
+              subCategoryId: itemData.subCategoryId,
+              createdAt: new Date(),
+              createdBy: userEmail,
+              updatedAt: new Date(),
+              updatedBy: userEmail
+            }
+          },
+          $set: { 
+            updatedAt: new Date(),
+            updatedBy: userEmail
           }
         },
-        $set: { updatedAt: new Date() }
-      },
-      { returnDocument: 'after', upsert: true }
-    );
+        { returnDocument: 'after' }
+      );
+    } else {
+      const newCart = {
+        userId: userId,
+        items: [{
+          productId: itemData.productId,
+          productName: itemData.productName,
+          qty: itemData.qty,
+          price: itemData.price,
+          salePrice: itemData.salePrice,
+          totalPrice: itemData.totalPrice,
+          gst: itemData.gst,
+          subTotal: itemData.subTotal,
+          images: itemData.images,
+          stock: itemData.stock,
+          mainCategoryId: itemData.mainCategoryId,
+          subCategoryId: itemData.subCategoryId,
+          createdAt: new Date(),
+          createdBy: userEmail,
+          updatedAt: new Date(),
+          updatedBy: userEmail
+        }],
+        status: 'active',
+        createdAt: new Date(),
+        createdBy: userEmail,
+        updatedAt: new Date(),
+        updatedBy: userEmail
+      };
+      const result = await this.collection().insertOne(newCart);
+      return { ...newCart, _id: result.insertedId };
+    }
   }
 
-  static async removeItem(userId, productId) {
+  static async removeItem(userId, productId, updatedBy, userEmail) {
     return await this.collection().findOneAndUpdate(
-      { userId: new ObjectId(userId), status: 'active' },
+      { userId: userId, status: 'active' },
       { 
-        $pull: { items: { productId: new ObjectId(productId) } },
-        $set: { updatedAt: new Date() }
+        $pull: { items: { productId: productId } },
+        $set: { 
+          updatedAt: new Date(),
+          updatedBy: userEmail
+        }
       },
       { returnDocument: 'after' }
     );
   }
 
-  static async updateItemQty(userId, productId, qty) {
+  static async updateItemQty(userId, productId, updateData, updatedBy, userEmail) {
+    const update = { 
+      'items.$.qty': updateData.qty,
+      'items.$.updatedAt': new Date(),
+      'items.$.updatedBy': userEmail,
+      updatedAt: new Date(),
+      updatedBy: userEmail
+    };
+
+    if (updateData.totalPrice !== undefined) {
+      update['items.$.totalPrice'] = updateData.totalPrice;
+    }
+    
+    if (updateData.gst !== undefined) {
+      update['items.$.gst'] = updateData.gst;
+    }
+    
+    if (updateData.subTotal !== undefined) {
+      update['items.$.subTotal'] = updateData.subTotal;
+    }
+
+    if (updateData.productData) {
+      update['items.$.price'] = updateData.productData.price;
+      update['items.$.salePrice'] = updateData.productData.salePrice;
+      update['items.$.productName'] = updateData.productData.productName;
+      update['items.$.images'] = updateData.productData.images;
+      update['items.$.stock'] = updateData.productData.stock;
+    }
+
     return await this.collection().findOneAndUpdate(
       { 
-        userId: new ObjectId(userId), 
+        userId: userId, 
         status: 'active',
-        'items.productId': new ObjectId(productId)
+        'items.productId': productId
       },
       { 
-        $set: { 
-          'items.$.qty': qty,
-          updatedAt: new Date()
-        }
+        $set: update
       },
       { returnDocument: 'after' }
     );
   }
 
   static async clearCart(userId) {
-    return await this.collection().findOneAndUpdate(
-      { userId: new ObjectId(userId), status: 'active' },
-      { 
-        $set: { 
-          items: [],
-          updatedAt: new Date()
-        }
-      },
-      { returnDocument: 'after' }
-    );
+    return await this.collection().deleteOne({ 
+      userId: userId, 
+      status: 'active' 
+    });
+  }
+
+  static async delete(id) {
+    return await this.collection().deleteOne({ _id: new ObjectId(id) });
+  }
+  
+  static async deleteByUserId(userId) {
+    return await this.collection().deleteOne({ 
+      userId: userId, 
+      status: 'active' 
+    });
   }
 }
 

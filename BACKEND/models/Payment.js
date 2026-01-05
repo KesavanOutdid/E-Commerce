@@ -8,19 +8,24 @@ class Payment {
 
   static async create(paymentData) {
     const payment = {
-      orderId: new ObjectId(paymentData.orderId),
-      userId: new ObjectId(paymentData.userId),
-      amount: paymentData.amount,
-      paymentMethod: paymentData.paymentMethod,
-      status: paymentData.status || 'pending',
-      transactionId: paymentData.transactionId || null,
-      paymentGateway: paymentData.paymentGateway || null,
-      paymentDetails: paymentData.paymentDetails || {},
-      paymentDate: new Date(),
+      orderId: paymentData.orderId,
+      userId: paymentData.userId,
+      userEmail: paymentData.userEmail,
+      razorpayOrderId: paymentData.razorpayOrderId || null,
+      razorpayPaymentId: paymentData.razorpayPaymentId || null,
+      razorpaySignature: paymentData.razorpaySignature || null,
+      totalPrice: paymentData.totalPrice,
+      gst: paymentData.gst,
+      subTotal: paymentData.subTotal,
+      grandTotal: paymentData.grandTotal,
+      codFee: paymentData.codFee || 0,
+      paymentType: paymentData.paymentType,
+      paymentStatus: paymentData.paymentStatus || 'Pending',
+      paymentDate: paymentData.paymentDate || new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
-      createdBy: new ObjectId(paymentData.createdBy),
-      updatedBy: new ObjectId(paymentData.updatedBy)
+      createdBy: paymentData.createdBy,
+      updatedBy: paymentData.updatedBy
     };
     const result = await this.collection().insertOne(payment);
     return { ...payment, _id: result.insertedId };
@@ -31,11 +36,15 @@ class Payment {
   }
 
   static async findByOrderId(orderId) {
-    return await this.collection().findOne({ orderId: new ObjectId(orderId) });
+    return await this.collection().findOne({ orderId: orderId });
+  }
+
+  static async findByRazorpayOrderId(razorpayOrderId) {
+    return await this.collection().findOne({ razorpayOrderId: razorpayOrderId });
   }
 
   static async findByUserId(userId, options = {}) {
-    const query = { userId: new ObjectId(userId) };
+    const query = { userId: userId };
     const { limit = 10, skip = 0, sort = { paymentDate: -1 } } = options;
     return await this.collection()
       .find(query)
@@ -61,10 +70,6 @@ class Payment {
       updatedAt: new Date()
     };
 
-    if (updateData.updatedBy) {
-      update.updatedBy = new ObjectId(updateData.updatedBy);
-    }
-
     return await this.collection().findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: update },
@@ -72,19 +77,28 @@ class Payment {
     );
   }
 
-  static async updateStatus(id, status, transactionId = null, updatedBy) {
+  static async updateByRazorpayOrderId(razorpayOrderId, updateData) {
     const update = {
-      status,
-      updatedAt: new Date(),
-      updatedBy: new ObjectId(updatedBy)
+      ...updateData,
+      updatedAt: new Date()
     };
 
-    if (transactionId) {
-      update.transactionId = transactionId;
-    }
+    return await this.collection().findOneAndUpdate(
+      { razorpayOrderId: razorpayOrderId },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async updateStatus(orderId, status, updatedBy) {
+    const update = {
+      paymentStatus: status,
+      updatedAt: new Date(),
+      updatedBy: updatedBy
+    };
 
     return await this.collection().findOneAndUpdate(
-      { _id: new ObjectId(id) },
+      { orderId: orderId },
       { $set: update },
       { returnDocument: 'after' }
     );
@@ -97,7 +111,7 @@ class Payment {
   static async getPaymentsByStatus(status, options = {}) {
     const { limit = 10, skip = 0, sort = { paymentDate: -1 } } = options;
     return await this.collection()
-      .find({ status })
+      .find({ paymentStatus: status })
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -106,18 +120,22 @@ class Payment {
 
   static async getTotalPaymentsByUser(userId) {
     const result = await this.collection().aggregate([
-      { $match: { userId: new ObjectId(userId), status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $match: { userId: userId, paymentStatus: 'Completed' } },
+      { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;
   }
 
   static async getTotalRevenue() {
     const result = await this.collection().aggregate([
-      { $match: { status: 'completed' } },
-      { $group: { _id: null, total: { $sum: '$amount' } } }
+      { $match: { paymentStatus: 'Completed' } },
+      { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;
+  }
+
+  static async countByUserId(userId) {
+    return await this.collection().countDocuments({ userId: userId });
   }
 }
 
