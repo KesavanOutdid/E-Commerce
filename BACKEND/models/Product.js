@@ -158,6 +158,40 @@ class Product {
       : { productId: id };
     return await this.collection().deleteOne(query);
   }
+
+  static async reduceStock(productId, quantity) {
+    const query = ObjectId.isValid(productId) 
+      ? { $or: [{ _id: new ObjectId(productId) }, { productId: productId }] }
+      : { productId: productId };
+
+    const product = await this.collection().findOne(query);
+    
+    if (!product) {
+      throw new Error(`Product not found: ${productId}`);
+    }
+
+    const currentStock = parseInt(product.stock) || 0;
+    const qtyToReduce = parseInt(quantity) || 0;
+
+    if (currentStock < qtyToReduce) {
+      throw new Error(`Insufficient stock for product ${product.productName}. Available: ${currentStock}, Requested: ${qtyToReduce}`);
+    }
+
+    const newStock = currentStock - qtyToReduce;
+
+    const result = await this.collection().findOneAndUpdate(
+      query,
+      { 
+        $set: { 
+          stock: newStock,
+          updatedAt: new Date()
+        }
+      },
+      { returnDocument: 'after' }
+    );
+
+    return result.value;
+  }
 }
 
 module.exports = Product;

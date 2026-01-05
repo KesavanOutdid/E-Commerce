@@ -25,8 +25,8 @@ class Order {
       codFee: orderData.codFee || 0,
       deliveryAddress: orderData.deliveryAddress,
       paymentType: orderData.paymentType,
-      paymentStatus: orderData.paymentStatus || 'Pending',
-      orderStatus: orderData.orderStatus || 'Pending',
+      paymentStatus: orderData.paymentStatus || 'pending',
+      orderStatus: orderData.orderStatus || 'pending',
       razorpayOrderId: orderData.razorpayOrderId || null,
       razorpayPaymentId: orderData.razorpayPaymentId || null,
       razorpaySignature: orderData.razorpaySignature || null,
@@ -94,8 +94,8 @@ class Order {
       { razorpayOrderId: razorpayOrderId },
       { 
         $set: { 
-          paymentStatus: paymentData.paymentStatus || 'Completed',
-          orderStatus: paymentData.orderStatus || 'Confirmed',
+          paymentStatus: paymentData.paymentStatus || 'completed',
+          orderStatus: paymentData.orderStatus || 'confirmed',
           razorpayPaymentId: paymentData.razorpayPaymentId,
           razorpaySignature: paymentData.razorpaySignature,
           updatedAt: new Date(),
@@ -142,9 +142,34 @@ class Order {
     return await this.collection().countDocuments({ userId: userId });
   }
 
+  static async countAll(filter = {}) {
+    return await this.collection().countDocuments(filter);
+  }
+
+  static async findByProductIds(productIds, options = {}) {
+    const { limit = 10, skip = 0, sort = { createdAt: -1 } } = options;
+    return await this.collection()
+      .find({ 'items.productId': { $in: productIds } })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+  }
+
+  static async countByProductIds(productIds) {
+    return await this.collection().countDocuments({ 'items.productId': { $in: productIds } });
+  }
+
+  static async findOrderByIdAndProductIds(orderId, productIds) {
+    return await this.collection().findOne({ 
+      orderId: orderId,
+      'items.productId': { $in: productIds }
+    });
+  }
+
   static async getTotalRevenue() {
     const result = await this.collection().aggregate([
-      { $match: { paymentStatus: 'Completed' } },
+      { $match: { paymentStatus: 'completed' } },
       { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;

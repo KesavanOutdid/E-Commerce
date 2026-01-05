@@ -20,7 +20,7 @@ class Payment {
       grandTotal: paymentData.grandTotal,
       codFee: paymentData.codFee || 0,
       paymentType: paymentData.paymentType,
-      paymentStatus: paymentData.paymentStatus || 'Pending',
+      paymentStatus: paymentData.paymentStatus || 'pending',
       paymentDate: paymentData.paymentDate || new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -120,7 +120,7 @@ class Payment {
 
   static async getTotalPaymentsByUser(userId) {
     const result = await this.collection().aggregate([
-      { $match: { userId: userId, paymentStatus: 'Completed' } },
+      { $match: { userId: userId, paymentStatus: 'completed' } },
       { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;
@@ -128,7 +128,7 @@ class Payment {
 
   static async getTotalRevenue() {
     const result = await this.collection().aggregate([
-      { $match: { paymentStatus: 'Completed' } },
+      { $match: { paymentStatus: 'completed' } },
       { $group: { _id: null, total: { $sum: '$grandTotal' } } }
     ]).toArray();
     return result[0]?.total || 0;
