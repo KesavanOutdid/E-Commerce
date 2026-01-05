@@ -28,7 +28,7 @@ const razorpay = isValidRazorpayConfig()
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.userId;
-    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds } = req.body;
+    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -44,7 +44,7 @@ exports.createOrder = async (req, res) => {
       });
     }
 
-    const requiredAddressFields = ['name', 'phone', 'street', 'city', 'state', 'pincode'];
+    const requiredAddressFields = ['name', 'phone', 'doorNo', 'street', 'city', 'state', 'pincode'];
     const missingFields = requiredAddressFields.filter(field => !deliveryAddress[field]);
     
     if (missingFields.length > 0) {
@@ -153,8 +153,9 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const codFee = paymentType === 'cod' ? 100 : 0;
-    const finalGrandTotal = grandTotal + codFee;
+    const finalCodFees = codFees || 0;
+    const finalShippingFees = shippingFees || 0;
+    const finalGrandTotal = grandTotal + finalCodFees + finalShippingFees;
 
     let razorpayOrder = null;
     if (paymentType === 'online') {
@@ -181,12 +182,14 @@ exports.createOrder = async (req, res) => {
       gst: gst,
       subTotal: subTotal,
       grandTotal: finalGrandTotal,
-      codFee: codFee,
+      codFees: finalCodFees,
+      shippingFees: finalShippingFees,
       deliveryAddress: deliveryAddress,
       paymentType: paymentType,
       paymentStatus: 'pending',
       orderStatus: paymentType === 'cod' ? 'confirmed' : 'pending',
       razorpayOrderId: razorpayOrder?.id || null,
+      time: time || new Date(),
       createdBy: user.email,
       updatedBy: user.email
     };
@@ -202,7 +205,8 @@ exports.createOrder = async (req, res) => {
       gst: gst,
       subTotal: subTotal,
       grandTotal: finalGrandTotal,
-      codFee: codFee,
+      codFees: finalCodFees,
+      shippingFees: finalShippingFees,
       paymentType: paymentType,
       paymentStatus: 'pending',
       createdBy: user.email,
@@ -241,11 +245,13 @@ exports.createOrder = async (req, res) => {
       paymentType: paymentType,
       items: selectedItems,
       deliveryAddress: deliveryAddress,
+      time: order.time,
       priceBreakdown: {
         totalPrice: totalPrice,
         gst: gst,
         subTotal: subTotal,
-        codFee: codFee,
+        codFees: finalCodFees,
+        shippingFees: finalShippingFees,
         grandTotal: finalGrandTotal
       },
       orderStatus: order.orderStatus,

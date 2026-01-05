@@ -54,7 +54,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"cod\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"doorNo\": \"123\",\n    \"street\": \"Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"cod\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230,\n  \"shippingFees\": 150,\n  \"codFees\": 50\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -88,7 +88,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"online\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"doorNo\": \"123\",\n    \"street\": \"Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"online\",\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230,\n  \"shippingFees\": 150,\n  \"codFees\": null\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -122,7 +122,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"cod\",\n  \"productIds\": [\"97120ed1-4621-44c4-a594-355b21bcaf0e\"],\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"doorNo\": \"123\",\n    \"street\": \"Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"cod\",\n  \"productIds\": [\"97120ed1-4621-44c4-a594-355b21bcaf0e\"],\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230,\n  \"shippingFees\": 150,\n  \"codFees\": 50\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -156,7 +156,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"street\": \"123 Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"online\",\n  \"productIds\": [\"97120ed1-4621-44c4-a594-355b21bcaf0e\"],\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230\n}",
+							"raw": "{\n  \"deliveryAddress\": {\n    \"name\": \"John Doe\",\n    \"phone\": \"9876543210\",\n    \"email\": \"kesav2424@gmail.com\",\n    \"doorNo\": \"123\",\n    \"street\": \"Main Street\",\n    \"landmark\": \"Near City Mall\",\n    \"city\": \"Chennai\",\n    \"district\": \"Chennai\",\n    \"state\": \"Tamil Nadu\",\n    \"pincode\": \"600001\",\n    \"country\": \"IN\"\n  },\n  \"paymentType\": \"online\",\n  \"productIds\": [\"97120ed1-4621-44c4-a594-355b21bcaf0e\"],\n  \"totalPrice\": 30000,\n  \"gst\": 230,\n  \"subTotal\": 30000,\n  \"grandTotal\": 30230,\n  \"shippingFees\": 150,\n  \"codFees\": null\n}",
 							"options": {
 								"raw": {
 									"language": "json"

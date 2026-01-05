@@ -13,8 +13,9 @@ export const useCategories = () => {
         try {
             const response = await categoryService.getMainCategories()
             if (response.success) {
-                setMainCategories(response.data)
-                return response.data
+                const categories = response.data.categories || []
+                setMainCategories(categories)
+                return categories
             } else {
                 toast.error(response.message || 'Failed to fetch main categories')
                 return []

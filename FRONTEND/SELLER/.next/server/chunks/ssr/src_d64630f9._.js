@@ -222,8 +222,9 @@ const useCategories = ()=>{
         try {
             const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$categoryService$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["categoryService"].getMainCategories();
             if (response.success) {
-                setMainCategories(response.data);
-                return response.data;
+                const categories = response.data.categories || [];
+                setMainCategories(categories);
+                return categories;
             } else {
                 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Failed to fetch main categories');
                 return [];
