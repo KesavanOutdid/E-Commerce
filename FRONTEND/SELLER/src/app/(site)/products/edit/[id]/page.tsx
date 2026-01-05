@@ -27,6 +27,8 @@ export default function EditProductPage() {
         shortDescription: '',
         price: '',
         stock: '',
+        unitSize: '',
+        unitWeight: '',
         attributes: [{ name: '', value: '' }],
     })
     const [existingImages, setExistingImages] = useState<string[]>([])
@@ -55,6 +57,8 @@ export default function EditProductPage() {
                         shortDescription: product.shortDescription || '',
                         price: product.price?.toString() || '',
                         stock: product.stock?.toString() || '',
+                        unitSize: product.unitSize || '',
+                        unitWeight: product.unitWeight || '',
                         attributes: product.attributes && product.attributes.length > 0 
                             ? product.attributes 
                             : [{ name: '', value: '' }],
@@ -133,6 +137,8 @@ export default function EditProductPage() {
             formData.shortDescription !== originalData.shortDescription ||
             formData.price !== originalData.price ||
             formData.stock !== originalData.stock ||
+            formData.unitSize !== originalData.unitSize ||
+            formData.unitWeight !== originalData.unitWeight ||
             JSON.stringify(formData.attributes) !== JSON.stringify(originalData.attributes) ||
             newImages.length > 0
         )
@@ -164,6 +170,13 @@ export default function EditProductPage() {
         }
         if (formData.shortDescription !== originalData?.shortDescription) {
             productFormData.append('shortDescription', formData.shortDescription)
+        }
+        
+        if (formData.unitSize !== originalData?.unitSize) {
+            productFormData.append('unitSize', formData.unitSize)
+        }
+        if (formData.unitWeight !== originalData?.unitWeight) {
+            productFormData.append('unitWeight', formData.unitWeight)
         }
         
         const validAttributes = formData.attributes.filter(attr => attr.name && attr.value)
@@ -335,6 +348,56 @@ export default function EditProductPage() {
                                             />
                                         </div>
                                     </div>
+
+                                    {/* Unit Selection */}
+                                    {formData.subCategoryId && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-green-100">
+                                            {(() => {
+                                                const subCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId);
+                                                const sizeOptions = subCategory?.unitSize?.split(',').map((s: string) => s.trim()).filter(Boolean) || [];
+                                                const weightOptions = subCategory?.unitWeight?.split(',').map((s: string) => s.trim()).filter(Boolean) || [];
+
+                                                return (
+                                                    <>
+                                                        {sizeOptions.length > 0 && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Size Unit <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={formData.unitSize}
+                                                                    onChange={(e) => setFormData({ ...formData, unitSize: e.target.value })}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                                    required>
+                                                                    <option value="">Select Size Unit</option>
+                                                                    {sizeOptions.map((opt: string) => (
+                                                                        <option key={opt} value={opt}>{opt}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+                                                        {weightOptions.length > 0 && (
+                                                            <div>
+                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                                    Weight Unit <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <select
+                                                                    value={formData.unitWeight}
+                                                                    onChange={(e) => setFormData({ ...formData, unitWeight: e.target.value })}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                                    required>
+                                                                    <option value="">Select Weight Unit</option>
+                                                                    {weightOptions.map((opt: string) => (
+                                                                        <option key={opt} value={opt}>{opt}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

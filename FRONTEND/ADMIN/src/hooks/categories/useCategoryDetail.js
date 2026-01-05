@@ -30,7 +30,9 @@ export const useCategoryDetail = (categoryId) => {
         parentId: '',
         level: 2,
         createdBy: 'admin@gmail.com', // Should come from auth context
-        attributes: []
+        attributes: [],
+        unitSize: '',
+        unitWeight: ''
     });
 
     const fetchSubCategories = useCallback(async () => {
@@ -170,7 +172,9 @@ export const useCategoryDetail = (categoryId) => {
                 parentId: categoryId,
                 level: subCategory.level || 2,
                 createdBy: subCategory.createdBy || 'admin@gmail.com',
-                attributes: subCategory.attributes || []
+                attributes: subCategory.attributes || [],
+                unitSize: subCategory.unitSize || '',
+                unitWeight: subCategory.unitWeight || ''
             });
         } else {
             setEditMode(false);
@@ -182,7 +186,9 @@ export const useCategoryDetail = (categoryId) => {
                 parentId: categoryId, // Parent ID must be set for creation
                 level: 2,
                 createdBy: 'admin@gmail.com',
-                attributes: []
+                attributes: [],
+                unitSize: '',
+                unitWeight: ''
             });
         }
         setOpenSubDialog(true);
