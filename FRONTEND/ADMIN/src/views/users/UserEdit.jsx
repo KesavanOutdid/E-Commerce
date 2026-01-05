@@ -1,6 +1,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import {
+  Avatar,
   Box,
   Button,
   CircularProgress,
@@ -13,12 +14,16 @@ import {
   Switch,
   FormControlLabel,
   Stack,
-  Typography
+  Typography,
+  IconButton
 } from '@mui/material';
-import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconArrowLeft, IconDeviceFloppy, IconUpload, IconX } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useUserEdit } from '../../hooks/users/UserEditHooks';
+import { API_BASE_URL } from '../../config/apiConfig';
+
+const BASE_URL = API_BASE_URL.replace('/api', '');
 
 const UserEdit = () => {
   const { userId } = useParams();
@@ -32,6 +37,7 @@ const UserEdit = () => {
     updateSellerData, 
     updateShopAddressData,
     updateUserAddressData,
+    updateBankDetailsData,
     handleSubmit, 
     handleCancel 
   } = useUserEdit(userId);
@@ -85,6 +91,8 @@ const UserEdit = () => {
               value={formData.email}
               onChange={(e) => updateFormData('email', e.target.value)}
               required
+              disabled
+              helperText="Email cannot be changed"
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -92,7 +100,14 @@ const UserEdit = () => {
               fullWidth
               label="Phone"
               value={formData.phone}
-              onChange={(e) => updateFormData('phone', e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, '');
+                if (value.length <= 10) {
+                  updateFormData('phone', value);
+                }
+              }}
+              inputProps={{ maxLength: 10 }}
+              helperText="Must be 10 digits"
             />
           </Grid>
           <Grid item xs={12} md={6}>
@@ -148,6 +163,34 @@ const UserEdit = () => {
                   <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                     <Typography variant="subtitle1" sx={{ mb: 2 }}>Address {index + 1}</Typography>
                     <Grid container spacing={2}>
+                      {!isSeller && (
+                        <>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Recipient Name"
+                              value={address.name || ''}
+                              onChange={(e) => updateUserAddressData(index, 'name', e.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Recipient Email"
+                              value={address.email || ''}
+                              onChange={(e) => updateUserAddressData(index, 'email', e.target.value)}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              label="Recipient Phone"
+                              value={address.phone || ''}
+                              onChange={(e) => updateUserAddressData(index, 'phone', e.target.value)}
+                            />
+                          </Grid>
+                        </>
+                      )}
                       <Grid item xs={12} md={3}>
                         <TextField
                           fullWidth
@@ -162,6 +205,14 @@ const UserEdit = () => {
                           label="Street"
                           value={address.street || ''}
                           onChange={(e) => updateUserAddressData(index, 'street', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Landmark"
+                          value={address.landmark || ''}
+                          onChange={(e) => updateUserAddressData(index, 'landmark', e.target.value)}
                         />
                       </Grid>
                       <Grid item xs={12} md={3}>
@@ -201,7 +252,13 @@ const UserEdit = () => {
                           fullWidth
                           label="Pincode"
                           value={address.pincode || ''}
-                          onChange={(e) => updateUserAddressData(index, 'pincode', e.target.value)}
+                          onChange={(e) => {
+                            const value = e.target.value.replace(/\D/g, '');
+                            if (value.length <= 6) {
+                              updateUserAddressData(index, 'pincode', value);
+                            }
+                          }}
+                          inputProps={{ maxLength: 6 }}
                         />
                       </Grid>
                     </Grid>
@@ -216,6 +273,79 @@ const UserEdit = () => {
               <Grid item xs={12}>
                 <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Seller Information</Typography>
               </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Shop Name"
+                  value={formData.sellerInfo.shopName}
+                  onChange={(e) => updateSellerData('shopName', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="GSTIN"
+                  value={formData.sellerInfo.gstin}
+                  onChange={(e) => updateSellerData('gstin', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="PAN Number"
+                  value={formData.sellerInfo.panNumber}
+                  onChange={(e) => updateSellerData('panNumber', e.target.value)}
+                />
+              </Grid>
+
+              {/* Shop Logo Section */}
+              <Grid item xs={12}>
+                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Shop Logo</Typography>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Avatar
+                    src={formData.sellerInfo.shopLogoPreview || (formData.sellerInfo.shopLogo ? (formData.sellerInfo.shopLogo.startsWith('http') ? formData.sellerInfo.shopLogo : `${BASE_URL}${formData.sellerInfo.shopLogo}`) : '')}
+                    sx={{ width: 100, height: 100, borderRadius: 2 }}
+                    variant="rounded"
+                  />
+                  <Box>
+                    <input
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      id="shop-logo-file"
+                      type="file"
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            updateSellerData('shopLogoPreview', reader.result);
+                            updateSellerData('shopLogoFile', file);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="shop-logo-file">
+                      <Button variant="outlined" component="span" startIcon={<IconUpload />}>
+                        Upload Logo
+                      </Button>
+                    </label>
+                    {formData.sellerInfo.shopLogoFile && (
+                      <IconButton 
+                        color="error" 
+                        onClick={() => {
+                          updateSellerData('shopLogoPreview', null);
+                          updateSellerData('shopLogoFile', null);
+                        }}
+                        sx={{ ml: 1 }}
+                      >
+                        <IconX />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Stack>
+              </Grid>
+
               <Grid item xs={12} md={4}>
                 <FormControlLabel
                   control={
@@ -273,6 +403,14 @@ const UserEdit = () => {
               <Grid item xs={12} md={3}>
                 <TextField
                   fullWidth
+                  label="Landmark"
+                  value={formData.sellerInfo.shopAddress?.landmark || ''}
+                  onChange={(e) => updateShopAddressData('landmark', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
                   label="City"
                   value={formData.sellerInfo.shopAddress?.city || ''}
                   onChange={(e) => updateShopAddressData('city', e.target.value)}
@@ -307,7 +445,50 @@ const UserEdit = () => {
                   fullWidth
                   label="Pincode"
                   value={formData.sellerInfo.shopAddress?.pincode || ''}
-                  onChange={(e) => updateShopAddressData('pincode', e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length <= 6) {
+                      updateShopAddressData('pincode', value);
+                    }
+                  }}
+                  inputProps={{ maxLength: 6 }}
+                />
+              </Grid>
+              
+              {/* Bank Details */}
+              <Grid item xs={12}>
+                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Bank Details</Typography>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Account Holder Name"
+                  value={formData.sellerInfo.bankDetails?.accountHolderName || ''}
+                  onChange={(e) => updateBankDetailsData('accountHolderName', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Bank Name"
+                  value={formData.sellerInfo.bankDetails?.bankName || ''}
+                  onChange={(e) => updateBankDetailsData('bankName', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Account Number"
+                  value={formData.sellerInfo.bankDetails?.accountNumber || ''}
+                  onChange={(e) => updateBankDetailsData('accountNumber', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="IFSC Code"
+                  value={formData.sellerInfo.bankDetails?.ifscCode || ''}
+                  onChange={(e) => updateBankDetailsData('ifscCode', e.target.value)}
                 />
               </Grid>
             </>

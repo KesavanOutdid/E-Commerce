@@ -33,10 +33,11 @@ async function adminLogin(req, res) {
       });
     }
 
-    if (!user.roles || !user.roles.includes(1)) {
+    const hasAllowedRole = user.roles && user.roles.some(roleId => roleId !== 2 && roleId !== 3);
+    if (!hasAllowedRole) {
       return res.status(403).json({
         success: false,
-        message: 'Unauthorized: Admin access only'
+        message: 'Unauthorized: Access denied for these roles'
       });
     }
 

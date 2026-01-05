@@ -228,7 +228,16 @@ async function updateUser(req, res) {
     
     let roleNames = [];
     if (roles !== undefined) {
-      const userRoles = Array.isArray(roles) ? roles : [roles];
+      let userRoles = roles;
+      if (typeof roles === 'string') {
+        try {
+          userRoles = JSON.parse(roles);
+        } catch (e) {
+          userRoles = [parseInt(roles)];
+        }
+      }
+      userRoles = Array.isArray(userRoles) ? userRoles : [userRoles];
+      
       for (const roleId of userRoles) {
         const roleExists = await Role.findById(roleId);
         if (!roleExists) {
@@ -242,23 +251,34 @@ async function updateUser(req, res) {
       updateData.roles = userRoles;
     }
     
-    if (status !== undefined) updateData.status = status;
+    if (status !== undefined) {
+      updateData.status = typeof status === 'string' ? status === 'true' : status;
+    }
 
-    const updatedUser = await User.update(userId, updateData);
-
-    // Handle Seller Info Update
+    // Handle Seller Info
     let updatedSellerInfo = null;
-    if (sellerInfo) {
-      const sellerUpdateData = { ...sellerInfo };
+    let finalSellerInfo = sellerInfo;
+    if (typeof sellerInfo === 'string') {
+      try {
+        finalSellerInfo = JSON.parse(sellerInfo);
+      } catch (e) {
+        finalSellerInfo = null;
+      }
+    }
+
+    if (finalSellerInfo) {
+      const sellerUpdateData = { ...finalSellerInfo };
       
       // If kycApproved is being changed to true, set approvedBy and approvedAt
-      if (sellerInfo.kycApproved === true) {
+      if (finalSellerInfo.kycApproved === true || finalSellerInfo.kycApproved === 'true') {
+        sellerUpdateData.kycApproved = true;
         sellerUpdateData.kycApprovedBy = req.userEmail || 'admin';
         sellerUpdateData.kycApprovedAt = new Date();
       }
       
       // If isLive is being changed to true, set goLiveApprovedBy and goLiveApprovedAt
-      if (sellerInfo.isLive === true) {
+      if (finalSellerInfo.isLive === true || finalSellerInfo.isLive === 'true') {
+        sellerUpdateData.isLive = true;
         sellerUpdateData.goLiveApprovedBy = req.userEmail || 'admin';
         sellerUpdateData.goLiveApprovedAt = new Date();
         if (sellerUpdateData.commissionPercentage === undefined) {
@@ -268,7 +288,20 @@ async function updateUser(req, res) {
 
       const result = await Seller.update(userId, sellerUpdateData);
       updatedSellerInfo = result.value;
-    } else if (user.roles && user.roles.includes(2)) {
+    }
+
+    // Handle Addresses
+    if (req.body.addresses) {
+      try {
+        updateData.addresses = typeof req.body.addresses === 'string' ? JSON.parse(req.body.addresses) : req.body.addresses;
+      } catch (e) {
+        console.error('Error parsing addresses:', e);
+      }
+    }
+
+    const updatedUser = await User.update(userId, updateData);
+
+    if (!updatedSellerInfo && user.roles && user.roles.includes(2)) {
         updatedSellerInfo = await Seller.findByUserId(userId);
     }
 

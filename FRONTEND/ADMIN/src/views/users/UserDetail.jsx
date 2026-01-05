@@ -94,12 +94,16 @@ const UserDetail = () => {
         <Grid container spacing={1}>
           {/* Header section with Avatar */}
           <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Avatar 
-              src={user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}${user.profileImage}`) : ''} 
-              sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main' }}
-            >
-              {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
-            </Avatar>
+            <Box sx={{ textAlign: 'center' }}>
+              <Avatar 
+                src={user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}${user.profileImage}`) : ''} 
+                sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main', mb: 1 }}
+              >
+                {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+              </Avatar>
+              <Typography variant="caption" display="block">Profile Image</Typography>
+            </Box>
+
             <Box>
               <Typography variant="h3" sx={{ fontWeight: 700, mb: 0.5 }}>
                 {user.firstName} {user.lastName}
@@ -181,11 +185,29 @@ const UserDetail = () => {
                 <Grid size={12} key={index} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                   <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Address {index + 1}</Typography>
                   <Grid container spacing={1}>
+                    {address.name && (
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Recipient Name" value={address.name} />
+                      </Grid>
+                    )}
+                    {address.email && (
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Recipient Email" value={address.email} />
+                      </Grid>
+                    )}
+                    {address.phone && (
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Recipient Phone" value={address.phone} />
+                      </Grid>
+                    )}
                     <Grid size={{ xs: 12, md: 3 }}>
                       <DetailItem label="Door No" value={address.doorNo} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <DetailItem label="Street" value={address.street} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="Landmark" value={address.landmark} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 3 }}>
                       <DetailItem label="City" value={address.city} />
@@ -212,8 +234,31 @@ const UserDetail = () => {
           {user.sellerInfo && (
             <>
               <Grid size={12} sx={{ mt: 2, mb: 2 }}>
-                <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Seller Information</Typography>
+                <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Shop Information</Typography>
               </Grid>
+
+              {user.sellerInfo.shopLogo && (
+                <Grid size={12} sx={{ mb: 3 }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontWeight: 500, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.05em',
+                      display: 'block',
+                      mb: 1
+                    }}
+                  >
+                    Shop Logo
+                  </Typography>
+                  <Avatar 
+                    src={user.sellerInfo.shopLogo.startsWith('http') ? user.sellerInfo.shopLogo : `${BASE_URL}${user.sellerInfo.shopLogo}`} 
+                    sx={{ width: 120, height: 120, borderRadius: 2, border: '1px solid', borderColor: 'divider' }}
+                    variant="rounded"
+                  />
+                </Grid>
+              )}
               
               <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="Shop Name" value={user.sellerInfo.shopName} />
@@ -260,6 +305,9 @@ const UserDetail = () => {
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="Street" value={user.sellerInfo.shopAddress.street} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="Landmark" value={user.sellerInfo.shopAddress.landmark} />
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="City" value={user.sellerInfo.shopAddress.city} />

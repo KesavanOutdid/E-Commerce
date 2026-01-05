@@ -73,6 +73,7 @@ const Users = () => {
                 <TableCell>Email</TableCell>
                 <TableCell>Phone</TableCell>
                 <TableCell>Roles</TableCell>
+                <TableCell>KYC Status</TableCell>
                 <TableCell>Status</TableCell>
                 <TableCell align="center">View</TableCell>
               </TableRow>
@@ -94,6 +95,21 @@ const Users = () => {
                         {roleName}
                       </Typography>
                     ))}
+                  </TableCell>
+                  <TableCell>
+                    {user.roles?.includes(2) ? (
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 600, 
+                          color: user.sellerInfo?.kycApproved ? 'success.main' : 'warning.main' 
+                        }}
+                      >
+                        {user.sellerInfo?.kycApproved ? 'Approved' : 'Pending'}
+                      </Typography>
+                    ) : (
+                      '-'
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography 
