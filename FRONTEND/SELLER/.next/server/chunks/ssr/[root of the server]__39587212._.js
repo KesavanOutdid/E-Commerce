@@ -573,7 +573,12 @@ const authService = {
         return response.data;
     },
     updateProfile: async (data)=>{
-        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].put('/api/seller/profile', data);
+        const isFormData = data instanceof FormData;
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].put('/api/seller/profile', data, {
+            headers: isFormData ? {
+                'Content-Type': 'multipart/form-data'
+            } : undefined
+        });
         return response.data;
     },
     getKYCStatus: async ()=>{

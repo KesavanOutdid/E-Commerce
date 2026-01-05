@@ -34,7 +34,12 @@ export const authService = {
     },
 
     updateProfile: async (data: any) => {
-        const response = await axios.put('/api/seller/profile', data)
+        const isFormData = data instanceof FormData
+        const response = await axios.put('/api/seller/profile', data, {
+            headers: isFormData ? {
+                'Content-Type': 'multipart/form-data',
+            } : undefined,
+        })
         return response.data
     },
 

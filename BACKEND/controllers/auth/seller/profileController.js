@@ -102,10 +102,22 @@ async function updateSellerProfile(req, res) {
 
     // Standardized personal addresses (User object)
     if (addresses !== undefined) {
-      if (Array.isArray(addresses)) {
-        userUpdateData.addresses = addresses.map(addr => ({
+      let parsedAddresses = addresses;
+      
+      if (typeof addresses === 'string') {
+        try {
+          parsedAddresses = JSON.parse(addresses);
+        } catch (error) {
+          console.error('Error parsing addresses:', error);
+          parsedAddresses = [];
+        }
+      }
+      
+      if (Array.isArray(parsedAddresses)) {
+        userUpdateData.addresses = parsedAddresses.map(addr => ({
           doorNo: addr.doorNo || addr.Doorno || null,
           street: addr.street || null,
+          landmark: addr.landmark || null,
           city: addr.city || null,
           district: addr.district || addr.distict || null,
           state: addr.state || null,

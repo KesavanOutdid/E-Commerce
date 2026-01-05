@@ -33,13 +33,20 @@ export default function ProfilePage() {
         lastName: '',
         email: '',
         phone: '',
+        profileImage: '',
+        addresses: [] as any[],
     })
     const [originalData, setOriginalData] = useState({
         firstName: '',
         lastName: '',
         email: '',
         phone: '',
+        profileImage: '',
+        addresses: [] as any[],
     })
+    const [selectedImage, setSelectedImage] = useState<File | null>(null)
+    const [imagePreview, setImagePreview] = useState<string>('')
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         if (isLoading) return
@@ -62,37 +69,102 @@ export default function ProfilePage() {
                 lastName: data.lastName || '',
                 email: data.email || '',
                 phone: data.phone || '',
+                profileImage: data.profileImage || '',
+                addresses: data.addresses || [],
             }
             setFormData(initialData)
             setOriginalData(initialData)
+            setImagePreview(data.profileImage ? `${process.env.NEXT_PUBLIC_API_URL}${data.profileImage}` : '')
         }
     }, [profile, user])
 
     const hasFormChanged = () => {
         return (
             formData.firstName !== originalData.firstName ||
-            formData.lastName !== originalData.lastName
+            formData.lastName !== originalData.lastName ||
+            JSON.stringify(formData.addresses) !== JSON.stringify(originalData.addresses) ||
+            selectedImage !== null
         )
+    }
+
+    const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (file) {
+            setSelectedImage(file)
+            const reader = new FileReader()
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string)
+            }
+            reader.readAsDataURL(file)
+        }
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        const result = await updateProfile(formData)
+        
+        const submitData = new FormData()
+        submitData.append('firstName', formData.firstName)
+        submitData.append('lastName', formData.lastName)
+        submitData.append('addresses', JSON.stringify(formData.addresses))
+        
+        if (selectedImage) {
+            submitData.append('profileImage', selectedImage)
+        }
+        
+        const result = await updateProfile(submitData)
         if (result) {
             setIsEditing(false)
+            setSelectedImage(null)
+            await fetchProfile()
         }
     }
 
     const handleCancel = () => {
         setIsEditing(false)
+        setSelectedImage(null)
         if (profile) {
             setFormData({
                 firstName: profile.firstName || '',
                 lastName: profile.lastName || '',
                 email: profile.email || '',
                 phone: profile.phone || '',
+                profileImage: profile.profileImage || '',
+                addresses: profile.addresses || [],
             })
+            setImagePreview(profile.profileImage ? `${process.env.NEXT_PUBLIC_API_URL}${profile.profileImage}` : '')
         }
+    }
+
+    const handleAddressChange = (index: number, field: string, value: string) => {
+        const newAddresses = [...formData.addresses]
+        if (!newAddresses[index]) {
+            newAddresses[index] = {}
+        }
+        newAddresses[index][field] = value
+        setFormData({ ...formData, addresses: newAddresses })
+    }
+
+    const addAddress = () => {
+        setFormData({
+            ...formData,
+            addresses: [...formData.addresses, {
+                doorNo: '',
+                street: '',
+                landmark: '',
+                city: '',
+                district: '',
+                state: '',
+                country: '',
+                pincode: '',
+            }]
+        })
+    }
+
+    const removeAddress = (index: number) => {
+        setFormData({
+            ...formData,
+            addresses: formData.addresses.filter((_, i) => i !== index)
+        })
     }
 
     if (isLoading) {
@@ -131,6 +203,47 @@ export default function ProfilePage() {
                             </div>
                         ) : (
                             <form onSubmit={handleSubmit}>
+                                <div className="flex flex-col items-center mb-8">
+                                    <div className="relative group">
+                                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                                            {imagePreview ? (
+                                                <img 
+                                                    src={imagePreview} 
+                                                    alt="Profile" 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                                                    <span className="text-white text-4xl font-bold">
+                                                        {formData.firstName?.[0]?.toUpperCase() || 'U'}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {isEditing && (
+                                            <>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="absolute bottom-0 right-0 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all transform hover:scale-110"
+                                                >
+                                                    <Icon icon="mdi:camera" width={20} height={20} />
+                                                </button>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleImageSelect}
+                                                    className="hidden"
+                                                />
+                                            </>
+                                        )}
+                                    </div>
+                                    <p className="mt-3 text-sm text-gray-500">
+                                        {isEditing ? 'Click camera icon to change profile picture' : 'Profile Picture'}
+                                    </p>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -189,6 +302,148 @@ export default function ProfilePage() {
                                             readOnly
                                         />
                                     </div>
+                                </div>
+
+                                <div className="border-t pt-6 mt-6 mb-6">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-xl font-semibold text-black flex items-center gap-2">
+                                            <Icon icon="mdi:map-marker" width={24} height={24} className="text-primary" />
+                                            Addresses
+                                        </h2>
+                                        {isEditing && (
+                                            <button
+                                                type="button"
+                                                onClick={addAddress}
+                                                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
+                                                <Icon icon="mdi:plus" width={20} height={20} />
+                                                Add Address
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {formData.addresses.length === 0 ? (
+                                        <div className="bg-gray-50 p-6 rounded-lg text-center text-gray-500">
+                                            <Icon icon="mdi:map-marker-off" width={48} height={48} className="mx-auto mb-2 opacity-50" />
+                                            <p>No addresses added yet</p>
+                                            {isEditing && <p className="text-sm mt-2">Click "Add Address" to add a new address</p>}
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {formData.addresses.map((address, index) => (
+                                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                    <div className="flex justify-between items-center mb-3">
+                                                        <h3 className="font-medium text-black">Address {index + 1}</h3>
+                                                        {isEditing && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeAddress(index)}
+                                                                className="text-red-500 hover:text-red-700">
+                                                                <Icon icon="mdi:delete" width={20} height={20} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Door No
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.doorNo || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'doorNo', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Street
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.street || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'street', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Landmark
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.landmark || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'landmark', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                City
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.city || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'city', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                District
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.district || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'district', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                State
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.state || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'state', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Country
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.country || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'country', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                                Pincode
+                                                            </label>
+                                                            <input
+                                                                type="text"
+                                                                value={address.pincode || ''}
+                                                                onChange={(e) => handleAddressChange(index, 'pincode', e.target.value)}
+                                                                disabled={!isEditing}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {isEditing && (
@@ -321,80 +576,6 @@ export default function ProfilePage() {
                                                         )}
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Created At
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={formatIndiaTime(user.sellerInfo.createdAt)}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Updated At
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={formatIndiaTime(user.sellerInfo.updatedAt)}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                    />
-                                                </div>
-                                                {user.sellerInfo.kycApprovedAt && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            KYC Approved At
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formatIndiaTime(user.sellerInfo.kycApprovedAt)}
-                                                            disabled
-                                                            className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                        />
-                                                    </div>
-                                                )}
-                                                {user.sellerInfo.kycApprovedBy && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            KYC Approved By
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={user.sellerInfo.kycApprovedBy}
-                                                            disabled
-                                                            className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                        />
-                                                    </div>
-                                                )}
-                                                {user.sellerInfo.goLiveApprovedAt && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Go Live Approved At
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={formatIndiaTime(user.sellerInfo.goLiveApprovedAt)}
-                                                            disabled
-                                                            className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                        />
-                                                    </div>
-                                                )}
-                                                {user.sellerInfo.goLiveApprovedBy && (
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                            Go Live Approved By
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            value={user.sellerInfo.goLiveApprovedBy}
-                                                            disabled
-                                                            className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                        />
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
 
