@@ -33,22 +33,52 @@ export const useCategoryDetail = (categoryId) => {
         attributes: []
     });
 
+    const fetchSubCategories = useCallback(async () => {
+        try {
+            const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(categoryId));
+            if (response.data.success) {
+                setSubCategories(response.data.data || []);
+            }
+        } catch (error) {
+            console.error("Failed to fetch subcategories", error);
+        }
+    }, [categoryId]);
+
     const fetchCategoryDetail = useCallback(async () => {
         if (!categoryId) return;
         try {
             setLoading(true);
 
-            // Fetch ALL main categories because there is no single Get-By-ID endpoint
+            // 1. Try to fetch specific category by ID (Preferred method)
+            try {
+                const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_BY_ID(categoryId));
+                if (response.data.success && response.data.data) {
+                    setCategory(response.data.data);
+                    fetchSubCategories();
+                    return;
+                }
+            } catch (err) {
+                console.warn('GET_BY_ID failed, trying GET_ALL fallback...', err);
+            }
+
+            // 2. Fallback: Fetch ALL main categories (Legacy support)
             const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_ALL);
 
             if (response.data.success) {
-                const allCategories = response.data.data || [];
+                const responseData = response.data.data;
+                let allCategories = [];
+                
+                if (Array.isArray(responseData)) {
+                    allCategories = responseData;
+                } else if (responseData && Array.isArray(responseData.categories)) {
+                    allCategories = responseData.categories;
+                }
+
                 // Find the specific category
                 const foundCategory = allCategories.find(c => (c._id === categoryId || c.categoryId === categoryId));
 
                 if (foundCategory) {
                     setCategory(foundCategory);
-                    // Fetch subcategories for this parent
                     fetchSubCategories();
                 } else {
                     console.error('Category not found in list');
@@ -61,19 +91,7 @@ export const useCategoryDetail = (categoryId) => {
         } finally {
             setLoading(false);
         }
-    }, [categoryId]);
-
-    const fetchSubCategories = useCallback(async () => {
-        try {
-            // BACKEND ROUTE: router.get('/sub/:parentId', ...)
-            const response = await axios.get(`/categories/sub/${categoryId}`);
-            if (response.data.success) {
-                setSubCategories(response.data.data || []);
-            }
-        } catch (error) {
-            console.error("Failed to fetch subcategories", error);
-        }
-    }, [categoryId]);
+    }, [categoryId, fetchSubCategories]);
 
     useEffect(() => {
         fetchCategoryDetail();

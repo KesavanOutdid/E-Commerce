@@ -50,11 +50,21 @@ export const useProducts = () => {
                 const { products: productsData, pagination: paginationData } = response.data.data;
                 setProducts(productsData);
                 if (paginationData) {
-                    setPagination({
-                        currentPage: paginationData.page,
-                        pageSize: paginationData.limit,
-                        totalItems: paginationData.total,
-                        totalPages: paginationData.pages
+                    setPagination(prev => {
+                        if (
+                            prev.currentPage === paginationData.page &&
+                            prev.pageSize === paginationData.limit &&
+                            prev.totalItems === paginationData.total &&
+                            prev.totalPages === paginationData.pages
+                        ) {
+                            return prev;
+                        }
+                        return {
+                            currentPage: paginationData.page,
+                            pageSize: paginationData.limit,
+                            totalItems: paginationData.total,
+                            totalPages: paginationData.pages
+                        };
                     });
                 }
             } else {
@@ -72,20 +82,29 @@ export const useProducts = () => {
     // Initial fetch
     useEffect(() => {
         fetchProducts(pagination.currentPage);
-    }, [fetchProducts, pagination.currentPage]);
+    }, [fetchProducts]); // Removed pagination.currentPage to prevent infinite loop
 
-    const handlePageChange = (event, newPage) => {
+    const handlePageChange = useCallback((event, newPage) => {
         fetchProducts(newPage + 1);
-    };
+    }, [fetchProducts]);
 
-    const handleFilterChange = (key, value) => {
+    const handleFilterChange = useCallback((key, value) => {
         if (key === 'limit') {
-            setPagination(prev => ({ ...prev, pageSize: value, currentPage: 1 }));
+            setPagination(prev => {
+                if (prev.pageSize === value) return prev;
+                return { ...prev, pageSize: value, currentPage: 1 };
+            });
         } else {
-            setFilters(prev => ({ ...prev, [key]: value }));
-            setPagination(prev => ({ ...prev, currentPage: 1 }));
+            setFilters(prev => {
+                if (prev[key] === value) return prev;
+                return { ...prev, [key]: value };
+            });
+            setPagination(prev => {
+                if (prev.currentPage === 1) return prev;
+                return { ...prev, currentPage: 1 };
+            });
         }
-    };
+    }, []);
 
     const deleteProduct = async (id) => {
         const result = await Swal.fire({
@@ -141,6 +160,23 @@ export const useProducts = () => {
         }
     };
 
+    const updateProductApproval = async (id, approvalStatus, rejectionReason = null) => {
+        try {
+            const response = await axios.patch(API_ENDPOINTS.PRODUCTS.UPDATE_APPROVAL(id), {
+                approvalStatus,
+                rejectionReason
+            });
+            if (response.data.success) {
+                Swal.fire('Success', `Product ${approvalStatus} successfully`, 'success');
+                fetchProducts(pagination.currentPage);
+                return true;
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to update approval status', 'error');
+            return false;
+        }
+    };
+
     return {
         products,
         loading,
@@ -151,6 +187,7 @@ export const useProducts = () => {
         fetchProducts,
         deleteProduct,
         createProduct,
-        updateProduct
+        updateProduct,
+        updateProductApproval
     };
 };

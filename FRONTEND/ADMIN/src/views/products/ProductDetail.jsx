@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
@@ -7,7 +7,7 @@ import {
     Stack,
     CircularProgress,
     Chip,
-    Divider,
+    IconButton,
     Paper,
     Table,
     TableBody,
@@ -19,7 +19,7 @@ import {
     AccordionDetails,
     Grid2 as Grid
 } from '@mui/material';
-import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconRuler, IconTag, IconCurrencyRupee, IconCube } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconRuler, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
@@ -32,39 +32,82 @@ const BASE_URL = API_BASE_URL.replace('/api', '');
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { deleteProduct } = useProducts();
+    const { updateProductApproval } = useProducts();
 
     const [product, setProduct] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [mainCategoryName, setMainCategoryName] = useState('');
-    const [subCategoryName, setSubCategoryName] = useState('');
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+    const fetchProduct = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
+            if (response.data.success) {
+                const productData = response.data.data;
+                setProduct(productData);
+                setSelectedImageIndex(0);
+            }
+        } catch (error) {
+            console.error("Error fetching product", error);
+            Swal.fire('Error', 'Product not found', 'error');
+        } finally {
+            setLoading(false);
+        }
+    }, [id]);
 
     useEffect(() => {
-        const fetchProduct = async () => {
-            try {
-                setLoading(true);
-                const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
-                if (response.data.success) {
-                    const productData = response.data.data;
-                    setProduct(productData);
-
-                    // Fetch Category Names if ids exist
-                    // Assuming we have to fetch them or if they are embedded. 
-                    // Usually product data might only have IDs. 
-                    // To show names we might need to fetch categories (or cached).
-                    // For now we will display IDs if names not available, or just fetch them if we want to be perfect.
-                    // Let's see if we can get them from the general category list which might be heavy, 
-                    // or just leave as is for now until requested.
-                }
-            } catch (error) {
-                console.error("Error fetching product", error);
-                Swal.fire('Error', 'Product not found', 'error');
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchProduct();
-    }, [id]);
+    }, [fetchProduct]);
+
+    const handleNextImage = () => {
+        if (product?.images?.length) {
+            setSelectedImageIndex((prev) => (prev + 1) % product.images.length);
+        }
+    };
+
+    const handlePrevImage = () => {
+        if (product?.images?.length) {
+            setSelectedImageIndex((prev) => (prev - 1 + product.images.length) % product.images.length);
+        }
+    };
+
+    const handleApproval = async (status) => {
+        let reason = null;
+        if (status === 'rejected') {
+            const { value: text } = await Swal.fire({
+                title: 'Rejection Reason',
+                input: 'textarea',
+                inputLabel: 'Please provide a reason for rejection',
+                inputPlaceholder: 'Type your reason here...',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!';
+                    }
+                }
+            });
+            if (text) {
+                reason = text;
+            } else {
+                return;
+            }
+        } else {
+            const result = await Swal.fire({
+                title: 'Approve Product?',
+                text: "Are you sure you want to approve this product?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#2e7d32',
+                confirmButtonText: 'Yes, Approve'
+            });
+            if (!result.isConfirmed) return;
+        }
+
+        const success = await updateProductApproval(product.productId || product._id, status, reason);
+        if (success) {
+            fetchProduct();
+        }
+    };
 
     const handleDelete = async () => {
         const result = await Swal.fire({
@@ -122,6 +165,52 @@ const ProductDetail = () => {
         </Stack>
     );
 
+    const ExpandableText = ({ text, lines = 2 }) => {
+        const [isExpanded, setIsExpanded] = useState(false);
+        const [hasOverflow, setHasOverflow] = useState(false);
+        const textRef = useRef(null);
+
+        useLayoutEffect(() => {
+            if (textRef.current) {
+                const element = textRef.current;
+                if (!isExpanded) {
+                    setHasOverflow(element.scrollHeight > element.offsetHeight);
+                }
+            }
+        }, [text, isExpanded]);
+
+        if (!text) return <Typography variant="body2" color="textSecondary">-</Typography>;
+
+        return (
+            <Box>
+                <Typography
+                    ref={textRef}
+                    variant="body2"
+                    color="textSecondary"
+                    sx={{
+                        whiteSpace: 'pre-line',
+                        display: '-webkit-box',
+                        WebkitLineClamp: isExpanded ? 'unset' : lines,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                    }}
+                >
+                    {text}
+                </Typography>
+                {(hasOverflow || isExpanded) && (
+                    <Button
+                        size="small"
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        endIcon={isExpanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
+                        sx={{ mt: 0.5, p: 0, minWidth: 0, textTransform: 'none', fontWeight: 600 }}
+                    >
+                        {isExpanded ? 'Show Less' : 'Read More'}
+                    </Button>
+                )}
+            </Box>
+        );
+    };
+
     return (
         <MainCard
             title={
@@ -170,7 +259,7 @@ const ProductDetail = () => {
         >
             <Grid container spacing={3}>
                 {/* Left Column: Images */}
-                <Grid xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 4 }}>
                     <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
                         <Stack spacing={2}>
                             <Box
@@ -180,11 +269,17 @@ const ProductDetail = () => {
                                     position: 'relative',
                                     borderRadius: 2,
                                     overflow: 'hidden',
-                                    border: '1px solid #eee'
+                                    border: '1px solid #eee',
+                                    backgroundColor: '#f5f5f5',
+                                    '&:hover .gallery-arrow': {
+                                        opacity: 1
+                                    }
                                 }}
                             >
                                 <img
-                                    src={product.images && product.images.length > 0 ? `${BASE_URL}${product.images[0]}` : 'https://via.placeholder.com/300'}
+                                    src={product.images && product.images.length > 0 && product.images[selectedImageIndex]
+                                        ? `${BASE_URL}${product.images[selectedImageIndex]}` 
+                                        : 'https://via.placeholder.com/600x600?text=No+Image+Available'}
                                     alt={product.productName}
                                     style={{
                                         position: 'absolute',
@@ -192,19 +287,81 @@ const ProductDetail = () => {
                                         left: 0,
                                         width: '100%',
                                         height: '100%',
-                                        objectFit: 'cover'
+                                        objectFit: 'contain'
+                                    }}
+                                    onError={(e) => {
+                                        e.target.src = 'https://via.placeholder.com/600x600?text=Image+Not+Found';
                                     }}
                                 />
+                                {product.images && product.images.length > 1 && (
+                                    <>
+                                        <IconButton
+                                            className="gallery-arrow"
+                                            onClick={handlePrevImage}
+                                            sx={{
+                                                position: 'absolute',
+                                                left: 8,
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                                '&:hover': { bgcolor: 'white' },
+                                                opacity: 0,
+                                                transition: 'opacity 0.3s',
+                                                boxShadow: 2,
+                                                zIndex: 10
+                                            }}
+                                        >
+                                            <IconChevronLeft size={20} />
+                                        </IconButton>
+                                        <IconButton
+                                            className="gallery-arrow"
+                                            onClick={handleNextImage}
+                                            sx={{
+                                                position: 'absolute',
+                                                right: 8,
+                                                top: '50%',
+                                                transform: 'translateY(-50%)',
+                                                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                                '&:hover': { bgcolor: 'white' },
+                                                opacity: 0,
+                                                transition: 'opacity 0.3s',
+                                                boxShadow: 2,
+                                                zIndex: 10
+                                            }}
+                                        >
+                                            <IconChevronRight size={20} />
+                                        </IconButton>
+                                    </>
+                                )}
                             </Box>
                             {/* Thumbnails */}
                             {product.images && product.images.length > 1 && (
-                                <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1 }}>
+                                <Stack direction="row" spacing={1} sx={{ overflowX: 'auto', pb: 1, px: 0.5 }}>
                                     {product.images.map((img, idx) => (
-                                        <Box key={idx} sx={{ minWidth: 60, width: 60, height: 60, borderRadius: 1, overflow: 'hidden', border: '1px solid #ddd' }}>
+                                        <Box
+                                            key={idx}
+                                            onClick={() => setSelectedImageIndex(idx)}
+                                            sx={{
+                                                minWidth: 60,
+                                                width: 60,
+                                                height: 60,
+                                                borderRadius: 1,
+                                                overflow: 'hidden',
+                                                border: '2px solid',
+                                                borderColor: selectedImageIndex === idx ? 'primary.main' : '#ddd',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s',
+                                                backgroundColor: 'white',
+                                                '&:hover': { borderColor: 'primary.light' }
+                                            }}
+                                        >
                                             <img
                                                 src={`${BASE_URL}${img}`}
                                                 alt={`thumbnail-${idx}`}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                onError={(e) => {
+                                                    e.target.src = 'https://via.placeholder.com/60x60?text=Error';
+                                                }}
                                             />
                                         </Box>
                                     ))}
@@ -215,36 +372,36 @@ const ProductDetail = () => {
                 </Grid>
 
                 {/* Right Column: Details */}
-                <Grid xs={12} md={8}>
+                <Grid size={{ xs: 12, md: 8 }}>
                     <Grid container spacing={3}>
-                        <Grid xs={12}>
+                        <Grid size={12}>
                             <Typography variant="h4" color="primary" sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
                                 Product Details
                             </Typography>
                         </Grid>
 
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconCurrencyRupee />}
                                 label="Price"
                                 value={`₹${product.price}`}
                             />
                         </Grid>
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconCube />}
                                 label="Stock"
                                 value={product.stock}
                             />
                         </Grid>
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconTag />}
                                 label="Main Category"
                                 value={product.mainCategoryName}
                             />
                         </Grid>
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconTag />}
                                 label="Sub Category"
@@ -252,32 +409,28 @@ const ProductDetail = () => {
                             />
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid size={12}>
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="subtitle2" color="secondary" gutterBottom>
                                     Description
                                 </Typography>
-                                <Typography variant="body2" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
-                                    {product.description || 'No description available.'}
-                                </Typography>
+                                <ExpandableText text={product.description} />
                             </Box>
                         </Grid>
 
-                        <Grid xs={12}>
+                        <Grid size={12}>
                             <Box sx={{ mt: 2 }}>
                                 <Typography variant="subtitle2" color="secondary" gutterBottom>
                                     Short Description
                                 </Typography>
-                                <Typography variant="body2" color="textSecondary">
-                                    {product.shortDescription || '-'}
-                                </Typography>
+                                <ExpandableText text={product.shortDescription} />
                             </Box>
                         </Grid>
                     </Grid>
                 </Grid>
 
                 {/* Full Width: Specifications / Attributes */}
-                <Grid xs={12}>
+                <Grid size={12}>
                     <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee' }}>
                         <AccordionSummary expandIcon={<IconChevronDown />}>
                             <Stack direction="row" alignItems="center" spacing={1}>
@@ -311,14 +464,14 @@ const ProductDetail = () => {
                 </Grid>
 
                 {/* Admin Info */}
-                <Grid xs={12}>
+                <Grid size={12}>
                     <Paper sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
                         <Grid container spacing={3}>
-                            <Grid xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Created By</Typography>
                                 <Typography variant="body2" fontWeight={500}>{product.createdby || '-'}</Typography>
                             </Grid>
-                            <Grid xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Created At</Typography>
                                 <Typography variant="body2" fontWeight={500}>
                                     {product.createdAt ? new Date(product.createdAt).toLocaleString('en-IN', {
@@ -330,11 +483,11 @@ const ProductDetail = () => {
                                     }) : '-'}
                                 </Typography>
                             </Grid>
-                            <Grid xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Updated By</Typography>
                                 <Typography variant="body2" fontWeight={500}>{product.updatedby || '-'}</Typography>
                             </Grid>
-                            <Grid xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Updated At</Typography>
                                 <Typography variant="body2" fontWeight={500}>
                                     {product.updatedAt ? new Date(product.updatedAt).toLocaleString('en-IN', {
@@ -346,24 +499,52 @@ const ProductDetail = () => {
                                     }) : '-'}
                                 </Typography>
                             </Grid>
-                            <Grid xs={12} sm={6} md={3}>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Approval Status</Typography>
-                                <Chip
-                                    label={product.approvalStatus || 'N/A'}
-                                    size="small"
-                                    sx={{
-                                        mt: 0.5,
-                                        bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : product.approvalStatus === 'rejected' ? '#ffebee' : '#fff8e1',
-                                        color: product.approvalStatus === 'approved' ? '#2e7d32' : product.approvalStatus === 'rejected' ? '#d32f2f' : '#f57f17',
-                                        fontWeight: 600,
-                                        borderRadius: '16px',
-                                        border: '1px solid',
-                                        borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffecb3',
-                                        textTransform: 'uppercase',
-                                        fontSize: '0.65rem'
-                                    }}
-                                />
+                                <Stack direction="row" spacing={1} alignItems="center">
+                                    {product.roleId === 2 ? (
+                                        <>
+                                            <Chip
+                                                label={product.approvalStatus || 'PENDING'}
+                                                size="small"
+                                                sx={{
+                                                    mt: 0.5,
+                                                    bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : product.approvalStatus === 'rejected' ? '#ffebee' : '#fff8e1',
+                                                    color: product.approvalStatus === 'approved' ? '#2e7d32' : product.approvalStatus === 'rejected' ? '#d32f2f' : '#f57f17',
+                                                    fontWeight: 600,
+                                                    borderRadius: '16px',
+                                                    border: '1px solid',
+                                                    borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffecb3',
+                                                    textTransform: 'uppercase',
+                                                    fontSize: '0.65rem'
+                                                }}
+                                            />
+                                            {product.approvalStatus === 'pending' && (
+                                                <>
+                                                    <IconButton size="small" color="success" onClick={() => handleApproval('approved')} title="Approve">
+                                                        <IconCheck size={16} />
+                                                    </IconButton>
+                                                    <IconButton size="small" color="error" onClick={() => handleApproval('rejected')} title="Reject">
+                                                        <IconX size={16} />
+                                                    </IconButton>
+                                                </>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <Typography variant="body2" color="textSecondary" sx={{ mt: 0.5 }}>
+                                            N/A (Admin Product)
+                                        </Typography>
+                                    )}
+                                </Stack>
                             </Grid>
+                            {product.approvalStatus === 'rejected' && product.rejectionReason && (
+                                <Grid size={12}>
+                                    <Typography variant="caption" color="error" display="block">Rejection Reason</Typography>
+                                    <Typography variant="body2" color="error" fontWeight={500}>
+                                        {product.rejectionReason}
+                                    </Typography>
+                                </Grid>
+                            )}
                         </Grid>
                     </Paper>
                 </Grid>

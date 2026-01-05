@@ -73,8 +73,27 @@ exports.deleteMainCategory = async (req, res) => {
 
 exports.getMainCategories = async (req, res) => {
   try {
-    const categories = await MainCategory.find();
-    res.status(200).json({ success: true, data: categories });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const [categories, total] = await Promise.all([
+      MainCategory.find({}, { skip, limit, sort: { createdAt: -1 } }),
+      MainCategory.count({})
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        categories,
+        pagination: {
+          currentPage: page,
+          pageSize: limit,
+          totalItems: total,
+          totalPages: Math.ceil(total / limit)
+        }
+      }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

@@ -155,13 +155,19 @@ const UserDetail = () => {
 
           {/* Row 3: Account Meta */}
           <Grid size={{ xs: 12, md: 4 }}>
+            <DetailItem label="Created By" value={user.createdBy || '-'} />
+          </Grid>
+          <Grid size={{ xs: 12, md: 4 }}>
             <DetailItem label="Created Date" value={user.createdAt ? new Date(user.createdAt).toLocaleString() : '-'} />
           </Grid>
           <Grid size={{ xs: 12, md: 4 }}>
-            <DetailItem label="Modified Date" value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '-'} />
+            <DetailItem label="Modified By" value={user.updatedBy || '-'} />
           </Grid>
+         
+           {/* Row 4: Account Meta */}
+         
           <Grid size={{ xs: 12, md: 4 }}>
-            <DetailItem label="Created By" value={user.createdBy || '-'} />
+            <DetailItem label="Modified Date" value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '-'} />
           </Grid>
 
           {/* Seller Information Section */}

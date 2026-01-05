@@ -35,7 +35,18 @@ export const useUsers = () => {
         const userData = Array.isArray(response.data.data) ? response.data.data : [];
         setUsers(userData);
         if (response.data.pagination) {
-          setPagination(response.data.pagination);
+          const paginationData = response.data.pagination;
+          setPagination(prev => {
+            if (
+              prev.currentPage === paginationData.currentPage &&
+              prev.pageSize === paginationData.pageSize &&
+              prev.totalItems === paginationData.totalItems &&
+              prev.totalPages === paginationData.totalPages
+            ) {
+              return prev;
+            }
+            return paginationData;
+          });
         }
       }
     } catch (error) {
@@ -46,9 +57,9 @@ export const useUsers = () => {
     }
   }, [pagination.pageSize]);
 
-  const handlePageChange = (event, newPage) => {
+  const handlePageChange = useCallback((event, newPage) => {
     fetchUsers(newPage + 1);
-  };
+  }, [fetchUsers]);
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -64,9 +75,9 @@ export const useUsers = () => {
   useEffect(() => {
     fetchUsers(pagination.currentPage);
     fetchRoles();
-  }, [fetchUsers, fetchRoles, pagination.currentPage]);
+  }, [fetchUsers, fetchRoles]); // Removed pagination.currentPage to prevent infinite loop
 
-  const handleOpenDialog = (user = null) => {
+  const handleOpenDialog = useCallback((user = null) => {
     if (user) {
       setEditMode(true);
       setCurrentUser(user);
@@ -91,13 +102,13 @@ export const useUsers = () => {
       });
     }
     setOpenDialog(true);
-  };
+  }, []);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setOpenDialog(false);
     setEditMode(false);
     setCurrentUser(null);
-  };
+  }, []);
 
   const handleSubmit = async () => {
     try {
@@ -105,14 +116,14 @@ export const useUsers = () => {
         const response = await axios.put(API_ENDPOINTS.USERS.UPDATE(currentUser.userId), formData);
         if (response.data.success) {
           Swal.fire('Success', 'User updated successfully', 'success');
-          fetchUsers();
+          fetchUsers(pagination.currentPage);
           handleCloseDialog();
         }
       } else {
         const response = await axios.post(API_ENDPOINTS.USERS.ADD, formData);
         if (response.data.success) {
           Swal.fire('Success', 'User added successfully', 'success');
-          fetchUsers();
+          fetchUsers(1);
           handleCloseDialog();
         }
       }
@@ -137,7 +148,7 @@ export const useUsers = () => {
         const response = await axios.delete(API_ENDPOINTS.USERS.DELETE(userId));
         if (response.data.success) {
           Swal.fire('Deleted!', 'User has been deleted.', 'success');
-          fetchUsers();
+          fetchUsers(pagination.currentPage);
         }
       } catch (error) {
         Swal.fire('Error', error.response?.data?.message || 'Failed to delete user', 'error');
@@ -145,13 +156,13 @@ export const useUsers = () => {
     }
   };
 
-  const handleViewUser = (userId) => {
+  const handleViewUser = useCallback((userId) => {
     navigate(`/users/${userId}`);
-  };
+  }, [navigate]);
 
-  const updateFormData = (field, value) => {
-    setFormData({ ...formData, [field]: value });
-  };
+  const updateFormData = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  }, []);
 
   return {
     users,

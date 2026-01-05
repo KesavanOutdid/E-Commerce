@@ -124,7 +124,10 @@ const RoleDetail = () => {
             <DetailItem label="Modified Date" value={role.modifiedAt ? new Date(role.modifiedAt).toLocaleString() : '-'} />
           </Grid>
           <Grid item xs={12} md={4}>
-            <DetailItem label="Created By" value={role.createdBy || '-'} />
+            <DetailItem label="Created By" value={role.createdby || role.createdBy || '-'} />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <DetailItem label="Updated By" value={role.updatedby || role.updatedBy || '-'} />
           </Grid>
         </Grid>
       </Box>

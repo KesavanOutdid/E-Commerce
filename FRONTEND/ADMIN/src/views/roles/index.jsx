@@ -74,6 +74,8 @@ const Roles = () => {
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '60px' }}>S.No</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '100px' }}>Role ID</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '200px' }}>Role Name</TableCell>
+                <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '180px' }}>Created By</TableCell>
+                <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '180px' }}>Updated By</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '150px' }}>Status</TableCell>
                 <TableCell align="center" sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '100px' }}>View</TableCell>
               </TableRow>
@@ -87,6 +89,12 @@ const Roles = () => {
                     <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: '1rem' }}>
                       {role.roleName}
                     </Typography>
+                  </TableCell>
+                  <TableCell sx={{ py: 1.5, px: 1, fontSize: '1rem' }}>
+                    {role.createdby || role.createdBy || '-'}
+                  </TableCell>
+                  <TableCell sx={{ py: 1.5, px: 1, fontSize: '1rem' }}>
+                    {role.updatedby || role.updatedBy || '-'}
                   </TableCell>
                   <TableCell sx={{ py: 1.5, px: 1 }}>
                     <Typography 

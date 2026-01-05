@@ -51,7 +51,17 @@ export const useCategories = () => {
                 setCategories(categoriesData);
 
                 if (paginationData) {
-                    setPagination(paginationData);
+                    setPagination(prev => {
+                        if (
+                            prev.currentPage === paginationData.currentPage &&
+                            prev.pageSize === paginationData.pageSize &&
+                            prev.totalItems === paginationData.totalItems &&
+                            prev.totalPages === paginationData.totalPages
+                        ) {
+                            return prev;
+                        }
+                        return { ...prev, ...paginationData };
+                    });
                 }
             } else {
                 setCategories([]);
@@ -65,15 +75,15 @@ export const useCategories = () => {
         }
     }, [pagination.pageSize]);
 
-    const handlePageChange = (event, newPage) => {
+    const handlePageChange = useCallback((event, newPage) => {
         fetchCategories(newPage + 1);
-    };
+    }, [fetchCategories]);
 
     useEffect(() => {
         fetchCategories(pagination.currentPage);
-    }, [fetchCategories, pagination.currentPage]);
+    }, [fetchCategories]); // Removed pagination.currentPage to prevent infinite loop
 
-    const handleOpenDialog = (category = null) => {
+    const handleOpenDialog = useCallback((category = null) => {
         if (category) {
             setEditMode(true);
             setCurrentCategory(category);
@@ -94,13 +104,13 @@ export const useCategories = () => {
             });
         }
         setOpenDialog(true);
-    };
+    }, []);
 
-    const handleCloseDialog = () => {
+    const handleCloseDialog = useCallback(() => {
         setOpenDialog(false);
         setEditMode(false);
         setCurrentCategory(null);
-    };
+    }, []);
 
     const handleSubmit = async () => {
         try {
@@ -109,14 +119,10 @@ export const useCategories = () => {
             data.append('status', formData.status);
             data.append('createdBy', formData.createdBy);
 
-            // Append image only if it is a File object (new upload)
-            // If it's a string, it means it's an existing URL, so we don't send it as 'image' file
-            // The backend update logic usually keeps old image if new one isn't provided.
             if (formData.image instanceof File) {
                 data.append('image', formData.image);
             }
 
-            // Headers for multipart/form-data are automatically set by axios when simple FormData is passed
             const config = { headers: { 'Content-Type': 'multipart/form-data' } };
 
             if (editMode && currentCategory) {
@@ -164,9 +170,9 @@ export const useCategories = () => {
         }
     };
 
-    const updateFormData = (field, value) => {
-        setFormData({ ...formData, [field]: value });
-    };
+    const updateFormData = useCallback((field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    }, []);
 
     return {
         categories,

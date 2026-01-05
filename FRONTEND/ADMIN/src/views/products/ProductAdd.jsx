@@ -59,7 +59,9 @@ const ProductAdd = () => {
                 setLoadingCategories(true);
                 const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_ALL);
                 if (response.data.success) {
-                    setMainCategories(response.data.data || []);
+                    // Check if data is paginated or direct array
+                    const categoriesData = response.data.data.categories || response.data.data || [];
+                    setMainCategories(Array.isArray(categoriesData) ? categoriesData : []);
                 }
             } catch (error) {
                 console.error("Error fetching categories", error);
@@ -424,7 +426,7 @@ const ProductAdd = () => {
                                     onChange={handleMainCategoryChange}
                                     required
                                 >
-                                    {mainCategories.map((cat) => (
+                                    {Array.isArray(mainCategories) && mainCategories.map((cat) => (
                                         <MenuItem key={cat.categoryId || cat._id} value={cat.categoryId || cat._id}>
                                             {cat.name}
                                         </MenuItem>
@@ -441,7 +443,7 @@ const ProductAdd = () => {
                                     required
                                     disabled={!formData.mainCategoryId}
                                 >
-                                    {subCategories.map((sub) => (
+                                    {Array.isArray(subCategories) && subCategories.map((sub) => (
                                         <MenuItem key={sub.subCategoryId || sub._id || sub.id} value={sub.subCategoryId || sub._id || sub.id}>
                                             {sub.name}
                                         </MenuItem>

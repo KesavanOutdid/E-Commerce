@@ -363,6 +363,18 @@ exports.updateApprovalStatus = async (req, res) => {
       });
     }
 
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    if (existingProduct.roleId !== 2) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Only seller products require approval' 
+      });
+    }
+
     const updateData = { 
       approvalStatus, 
       rejectionReason: approvalStatus === 'rejected' ? rejectionReason : null 

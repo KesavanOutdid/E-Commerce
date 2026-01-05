@@ -20,7 +20,8 @@ import {
     CircularProgress,
     Avatar
 } from '@mui/material';
-import { IconSearch, IconPlus, IconEdit, IconTrash, IconEye } from '@tabler/icons-react';
+import { IconSearch, IconPlus, IconEye } from '@tabler/icons-react';
+import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useProducts } from '../../hooks/products/useProducts';
@@ -34,11 +35,9 @@ const ProductList = () => {
         products,
         loading,
         pagination,
-        filters,
         handlePageChange,
         handleFilterChange,
-        fetchProducts,
-        deleteProduct
+        updateProductApproval
     } = useProducts();
 
     const [search, setSearch] = useState('');
@@ -49,7 +48,45 @@ const ProductList = () => {
             handleFilterChange('search', search);
         }, 500);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, handleFilterChange]);
+
+    const handleApprovalClick = async (product) => {
+        if (product.approvalStatus !== 'pending') return;
+
+        const result = await Swal.fire({
+            title: 'Product Approval',
+            text: `What would you like to do with ${product.productName}?`,
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Approve',
+            denyButtonText: 'Reject',
+            cancelButtonText: 'Cancel',
+            confirmButtonColor: '#2e7d32',
+            denyButtonColor: '#d32f2f',
+        });
+
+        if (result.isConfirmed) {
+            await updateProductApproval(product.productId || product._id, 'approved');
+        } else if (result.isDenied) {
+            const { value: reason } = await Swal.fire({
+                title: 'Rejection Reason',
+                input: 'textarea',
+                inputLabel: 'Please provide a reason for rejection',
+                inputPlaceholder: 'Type your reason here...',
+                showCancelButton: true,
+                inputValidator: (value) => {
+                    if (!value) {
+                        return 'You need to write something!';
+                    }
+                }
+            });
+
+            if (reason) {
+                await updateProductApproval(product.productId || product._id, 'rejected', reason);
+            }
+        }
+    };
 
     const getStatusChip = (status) => {
         return (
@@ -70,7 +107,18 @@ const ProductList = () => {
         );
     };
 
-    const getApprovalChip = (status) => {
+    const getApprovalChip = (product) => {
+        const status = product.approvalStatus;
+        const isSellerProduct = product.roleId === 2;
+        
+        if (!isSellerProduct) {
+            return (
+                <Typography variant="body2" color="textSecondary">
+                    -
+                </Typography>
+            );
+        }
+
         let colors = {
             bg: '#fafafa',
             text: '#757575',
@@ -87,8 +135,9 @@ const ProductList = () => {
 
         return (
             <Chip
-                label={status || '-'}
+                label={status || 'PENDING'}
                 size="small"
+                onClick={() => isSellerProduct && handleApprovalClick(product)}
                 sx={{
                     bgcolor: colors.bg,
                     color: colors.text,
@@ -97,7 +146,11 @@ const ProductList = () => {
                     border: '1px solid',
                     borderColor: colors.border,
                     textTransform: 'uppercase',
-                    fontSize: '0.65rem'
+                    fontSize: '0.65rem',
+                    cursor: (isSellerProduct && status === 'pending') ? 'pointer' : 'default',
+                    '&:hover': {
+                        bgcolor: (isSellerProduct && status === 'pending') ? colors.border : colors.bg
+                    }
                 }}
             />
         );
@@ -189,7 +242,7 @@ const ProductList = () => {
                                         <TableCell align="right">₹{product.price}</TableCell>
                                         <TableCell align="right">{product.stock}</TableCell>
                                         <TableCell align="center">{getStatusChip(product.status)}</TableCell>
-                                        <TableCell align="center">{getApprovalChip(product.approvalStatus)}</TableCell>
+                                        <TableCell align="center">{getApprovalChip(product)}</TableCell>
                                         <TableCell align="center">
                                             <Stack direction="row" justifyContent="center" spacing={1}>
                                                 <IconButton
