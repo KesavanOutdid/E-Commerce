@@ -49,6 +49,7 @@ async function requestKyc(req, res) {
       formattedShopAddress = {
         doorNo: shopAddress.doorNo || shopAddress.Doorno || null,
         street: shopAddress.street || null,
+        landmark: shopAddress.landmark || null,
         city: shopAddress.city || null,
         district: shopAddress.district || shopAddress.distict || null,
         state: shopAddress.state || null,
