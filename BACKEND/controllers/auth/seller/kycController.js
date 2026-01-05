@@ -4,7 +4,12 @@ const Seller = require('../../../models/Seller');
 async function requestKyc(req, res) {
   try {
     const userId = req.userId;
-    const { shopName, gstin, panNumber, bankDetails, shopAddress } = req.body;
+    const { shopName, gstin, panNumber, bankDetails, shopAddress, shopLogo } = req.body;
+
+    let finalShopLogo = shopLogo;
+    if (req.file) {
+      finalShopLogo = `/uploads/shops/${req.file.filename}`;
+    }
 
     if (!shopName || !gstin || !panNumber) {
       return res.status(400).json({
@@ -58,6 +63,7 @@ async function requestKyc(req, res) {
       panNumber,
       bankDetails,
       shopAddress: formattedShopAddress,
+      shopLogo: finalShopLogo || null,
       kycApproved: false,
       onboardingCompleted: true
     };
@@ -141,6 +147,7 @@ async function getKycStatus(req, res) {
         panNumber: sellerInfo.panNumber,
         bankDetails: sellerInfo.bankDetails,
         shopAddress: sellerInfo.shopAddress,
+        shopLogo: sellerInfo.shopLogo,
         kycApproved: sellerInfo.kycApproved,
         kycApprovedBy: sellerInfo.kycApprovedBy,
         kycApprovedAt: sellerInfo.kycApprovedAt,

@@ -310,5 +310,8 @@ async function updateCommission(req, res) {
 }
 
 module.exports = {
+  getKycRequests,
+  getKycRequestDetails,
+  updateKycStatus,
   updateCommission
 };

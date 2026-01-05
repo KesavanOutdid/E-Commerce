@@ -8,6 +8,7 @@ const { getGoogleConfig, googleAuthentication } = require('../../../controllers/
 const { getSellerProfile, updateSellerProfile } = require('../../../controllers/auth/seller/profileController');
 const { requestKyc, getKycStatus } = require('../../../controllers/auth/seller/kycController');
 const upload = require('../../../middleware/profileUploadMiddleware');
+const shopUpload = require('../../../middleware/shopUploadMiddleware');
 
 router.post('/login', sellerLogin);
 router.post('/register/send-otp', sendRegistrationOtp);
@@ -21,9 +22,9 @@ router.post('/validate-otp', validateOtp);
 router.post('/set-new-password', setNewPassword);
 
 router.get('/profile', authMiddleware, getSellerProfile);
-router.put('/profile', authMiddleware, upload.single('profileImage'), updateSellerProfile);
+router.put('/profile', authMiddleware, shopUpload.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'shopLogo', maxCount: 1 }]), updateSellerProfile);
 
-router.post('/kyc/request', authMiddleware, requestKyc);
+router.post('/kyc/request', authMiddleware, shopUpload.single('shopLogo'), requestKyc);
 router.get('/kyc/status', authMiddleware, getKycStatus);
 
 module.exports = router;

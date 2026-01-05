@@ -28,7 +28,7 @@ async function getAddresses(req, res) {
 async function addAddress(req, res) {
   try {
     const userId = req.userId;
-    const { doorNo, street, city, district, state, country, pincode } = req.body;
+    const { name, email, phone, doorNo, street, landmark, city, district, state, country, pincode } = req.body;
 
     if (!city || !state || !pincode) {
       return res.status(400).json({
@@ -38,8 +38,12 @@ async function addAddress(req, res) {
     }
 
     const newAddress = {
+      name: name || null,
+      email: email || null,
+      phone: phone || null,
       doorNo: doorNo || null,
       street: street || null,
+      landmark: landmark || null,
       city,
       district: district || null,
       state,

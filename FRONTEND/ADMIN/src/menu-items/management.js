@@ -14,7 +14,8 @@ const management = {
       type: 'item',
       url: '/roles',
       icon: IconShield,
-      breadcrumbs: false
+      breadcrumbs: false,
+      module: 'Roles'
     },
     {
       id: 'users',
@@ -22,7 +23,8 @@ const management = {
       type: 'item',
       url: '/users',
       icon: IconUsers,
-      breadcrumbs: false
+      breadcrumbs: false,
+      module: 'Users'
     },
     {
       id: 'categories',
@@ -30,7 +32,8 @@ const management = {
       type: 'item',
       url: '/categories',
       icon: IconCategory,
-      breadcrumbs: false
+      breadcrumbs: false,
+      module: 'Categories'
     },
     {
       id: 'products',
@@ -38,7 +41,8 @@ const management = {
       type: 'item',
       url: '/products/list',
       icon: IconBox,
-      breadcrumbs: false
+      breadcrumbs: false,
+      module: 'Products'
     }
   ]
 };

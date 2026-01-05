@@ -15,6 +15,7 @@ class Permission {
       canView: permissionData.canView || false,
       canUpdate: permissionData.canUpdate || false,
       canDelete: permissionData.canDelete || false,
+      canApprove: permissionData.canApprove || false,
       status: permissionData.status !== undefined ? permissionData.status : true,
       createdAt: new Date(),
       updatedAt: new Date()

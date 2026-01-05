@@ -934,7 +934,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"firstName\": \"Jane Updated\",\n  \"lastName\": \"Smith Updated\",\n  \"phone\": \"9111222333\",\n  \"profileImage\": \"https://example.com/seller-profile.jpg\"\n}"
+									"raw": "{\n  \"firstName\": \"Jane Updated\",\n  \"lastName\": \"Smith Updated\",\n  \"phone\": \"9111222333\",\n  \"profileImage\": \"https://example.com/seller-profile.jpg\",\n  \"shopName\": \"Jane's Updated Store\",\n  \"shopLogo\": \"https://example.com/new-shop-logo.jpg\",\n  \"shopAddress\": {\n    \"doorNo\": \"456\",\n    \"street\": \"Market Street\",\n    \"city\": \"Mumbai\",\n    \"pincode\": \"400001\"\n  }\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/seller/profile",
@@ -972,7 +972,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"shopName\": \"Jane's Fashion Store\",\n  \"gstin\": \"29ABCDE1234F1Z5\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"bankDetails\": {\n    \"accountNumber\": \"1234567890\",\n    \"ifscCode\": \"HDFC0001234\",\n    \"accountHolderName\": \"Jane Smith\",\n    \"bankName\": \"HDFC Bank\"\n  }\n}"
+									"raw": "{\n  \"shopName\": \"Jane's Fashion Store\",\n  \"gstin\": \"29ABCDE1234F1Z5\",\n  \"panNumber\": \"ABCDE1234F\",\n  \"shopLogo\": \"https://example.com/logo.png\",\n  \"shopAddress\": {\n    \"doorNo\": \"123/A\",\n    \"street\": \"Fashion Street\",\n    \"city\": \"Bangalore\",\n    \"pincode\": \"560001\"\n  },\n  \"bankDetails\": {\n    \"accountNumber\": \"1234567890\",\n    \"ifscCode\": \"HDFC0001234\",\n    \"accountHolderName\": \"Jane Smith\",\n    \"bankName\": \"HDFC Bank\"\n  }\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/seller/kyc/request",
@@ -1545,7 +1545,73 @@
 					"name": "5. Seller KYC Management",
 					"item": [
 						{
-							"name": "Approve KYC & Set Commission",
+							"name": "Get All KYC Requests",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/sellers/kyc?status=pending",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"sellers",
+										"kyc"
+									],
+									"query": [
+										{
+											"key": "status",
+											"value": "pending",
+											"description": "pending, pending-golive, or all"
+										}
+									]
+								},
+								"description": "Get all seller KYC requests with status filtering."
+							},
+							"response": []
+						},
+						{
+							"name": "Get KYC Request Details",
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"url": {
+									"raw": "{{base_url}}/api/admin/sellers/kyc/:userId",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"sellers",
+										"kyc",
+										":userId"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{seller_id}}"
+										}
+									]
+								},
+								"description": "Get full details of a specific seller's KYC request."
+							},
+							"response": []
+						},
+						{
+							"name": "Update KYC Status",
 							"request": {
 								"method": "PUT",
 								"header": [
@@ -1560,7 +1626,49 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"commissionPercentage\": 15,\n  \"kycApproved\": true\n}"
+									"raw": "{\n  \"action\": \"approve\",\n  \"commissionPercentage\": 10,\n  \"reason\": \"All documents verified\"\n}"
+								},
+								"url": {
+									"raw": "{{base_url}}/api/admin/sellers/kyc/:userId/status",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"sellers",
+										"kyc",
+										":userId",
+										"status"
+									],
+									"variable": [
+										{
+											"key": "userId",
+											"value": "{{seller_id}}"
+										}
+									]
+								},
+								"description": "Approve or reject a seller's KYC request. Actions: approve, approve-golive, reject."
+							},
+							"response": []
+						},
+						{
+							"name": "Update Commission",
+							"request": {
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									},
+									{
+										"key": "Authorization",
+										"value": "Bearer {{admin_token}}"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"action\": \"update-commission\",\n  \"commissionPercentage\": 15\n}"
 								},
 								"url": {
 									"raw": "{{base_url}}/api/admin/seller/:userId/commission",
@@ -1571,7 +1679,7 @@
 										"api",
 										"admin",
 										"seller",
-										":userId",
+										"userId",
 										"commission"
 									],
 									"variable": [
@@ -1581,7 +1689,7 @@
 										}
 									]
 								},
-								"description": "Approve seller KYC and set commission percentage. Auto sets isLive to true when kycApproved is true."
+								"description": "Update seller commission percentage."
 							},
 							"response": []
 						}

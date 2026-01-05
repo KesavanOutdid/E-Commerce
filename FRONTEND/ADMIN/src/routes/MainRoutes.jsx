@@ -77,47 +77,91 @@ const MainRoutes = {
     },
     {
       path: 'users',
-      element: <UsersPage />
+      element: (
+        <ProtectedRoute module="Users" action="view">
+          <UsersPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'users/:userId',
-      element: <UserDetailPage />
+      element: (
+        <ProtectedRoute module="Users" action="view">
+          <UserDetailPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'users/edit/:userId',
-      element: <UserEditPage />
+      element: (
+        <ProtectedRoute module="Users" action="update">
+          <UserEditPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'roles',
-      element: <RolesPage />
+      element: (
+        <ProtectedRoute module="Roles" action="view">
+          <RolesPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'roles/:roleId',
-      element: <RoleDetailPage />
+      element: (
+        <ProtectedRoute module="Roles" action="view">
+          <RoleDetailPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'categories',
-      element: <CategoriesPage />
+      element: (
+        <ProtectedRoute module="Categories" action="view">
+          <CategoriesPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'categories/:categoryId',
-      element: <CategoryDetailPage />
+      element: (
+        <ProtectedRoute module="Categories" action="view">
+          <CategoryDetailPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'products/list',
-      element: <ProductListPage />
+      element: (
+        <ProtectedRoute module="Products" action="view">
+          <ProductListPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'products/add',
-      element: <ProductAddPage />
+      element: (
+        <ProtectedRoute module="Products" action="create">
+          <ProductAddPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'products/view/:id',
-      element: <ProductDetailPage />
+      element: (
+        <ProtectedRoute module="Products" action="view">
+          <ProductDetailPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'products/edit/:id',
-      element: <ProductAddPage />
+      element: (
+        <ProtectedRoute module="Products" action="update">
+          <ProductAddPage />
+        </ProtectedRoute>
+      )
     },
     {
       path: 'user/view-profile',

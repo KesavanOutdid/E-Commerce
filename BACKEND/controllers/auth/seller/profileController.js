@@ -68,7 +68,7 @@ async function updateSellerProfile(req, res) {
     const userId = req.userId;
     const { 
       firstName, lastName, phone, profileImage, addresses,
-      shopName, gstin, panNumber, bankDetails, shopAddress 
+      shopName, gstin, panNumber, bankDetails, shopAddress, shopLogo 
     } = req.body;
 
     const user = await User.findByUserId(userId);
@@ -93,8 +93,9 @@ async function updateSellerProfile(req, res) {
     if (lastName) userUpdateData.lastName = lastName;
     if (phone) userUpdateData.phone = phone.replace(/^\+91/, '');
     
-    if (req.file) {
-      userUpdateData.profileImage = `/uploads/profiles/${req.file.filename}`;
+    // Handle profile image upload
+    if (req.files && req.files.profileImage) {
+      userUpdateData.profileImage = `/uploads/shops/${req.files.profileImage[0].filename}`;
     } else if (profileImage !== undefined) {
       userUpdateData.profileImage = profileImage;
     }
@@ -126,6 +127,13 @@ async function updateSellerProfile(req, res) {
     if (gstin) sellerUpdateData.gstin = gstin;
     if (panNumber) sellerUpdateData.panNumber = panNumber;
     if (bankDetails) sellerUpdateData.bankDetails = bankDetails;
+    
+    // Handle shop logo upload
+    if (req.files && req.files.shopLogo) {
+      sellerUpdateData.shopLogo = `/uploads/shops/${req.files.shopLogo[0].filename}`;
+    } else if (shopLogo !== undefined) {
+      sellerUpdateData.shopLogo = shopLogo;
+    }
 
     // Standardized shop address (Seller object)
     if (shopAddress !== undefined) {

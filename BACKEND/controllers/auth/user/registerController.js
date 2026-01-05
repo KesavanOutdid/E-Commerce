@@ -114,8 +114,12 @@ async function register(req, res) {
     let formattedAddresses = [];
     if (addresses && Array.isArray(addresses)) {
       formattedAddresses = addresses.map(addr => ({
+        name: addr.name || null,
+        email: addr.email || null,
+        phone: addr.phone || null,
         doorNo: addr.doorNo || addr.Doorno || null,
         street: addr.street || null,
+        landmark: addr.landmark || null,
         city: addr.city || null,
         district: addr.district || addr.distict || null,
         state: addr.state || null,

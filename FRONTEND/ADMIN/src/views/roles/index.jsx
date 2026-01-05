@@ -23,7 +23,7 @@ import {
   Select,
   MenuItem
 } from '@mui/material';
-import { IconPlus, IconEye, IconEdit } from '@tabler/icons-react';
+import { IconPlus, IconEye, IconEdit, IconBook } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useRoles } from '../../hooks/roles/RolesHooks';
@@ -75,8 +75,8 @@ const Roles = () => {
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '100px' }}>Role ID</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '200px' }}>Role Name</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '180px' }}>Created By</TableCell>
-                <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '180px' }}>Updated By</TableCell>
                 <TableCell sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '150px' }}>Status</TableCell>
+                <TableCell align="center" sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '120px' }}>Permissions</TableCell>
                 <TableCell align="center" sx={{ py: 2, px: 1, fontSize: '1.1rem', fontWeight: 600, width: '100px' }}>View</TableCell>
               </TableRow>
             </TableHead>
@@ -93,9 +93,6 @@ const Roles = () => {
                   <TableCell sx={{ py: 1.5, px: 1, fontSize: '1rem' }}>
                     {role.createdby || role.createdBy || '-'}
                   </TableCell>
-                  <TableCell sx={{ py: 1.5, px: 1, fontSize: '1rem' }}>
-                    {role.updatedby || role.updatedBy || '-'}
-                  </TableCell>
                   <TableCell sx={{ py: 1.5, px: 1 }}>
                     <Typography 
                       variant="body1" 
@@ -107,6 +104,16 @@ const Roles = () => {
                     >
                       {role.status ? 'Active' : 'Inactive'}
                     </Typography>
+                  </TableCell>
+                  <TableCell align="center" sx={{ py: 1.5, px: 1 }}>
+                    <IconButton 
+                      color="secondary" 
+                      size="medium" 
+                      onClick={() => handleViewRole(role.roleId)} 
+                      title="Permissions"
+                    >
+                      <IconBook size={22} />
+                    </IconButton>
                   </TableCell>
                   <TableCell align="center" sx={{ py: 1.5, px: 1 }}>
                     <Stack direction="row" spacing={1} justifyContent="center">

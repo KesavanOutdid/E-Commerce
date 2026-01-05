@@ -47,5 +47,10 @@ export const API_ENDPOINTS = {
     GET_ALL: '/orders',
     GET_BY_ID: (id) => `/orders/${id}`,
     UPDATE_STATUS: (id) => `/orders/${id}/status`
+  },
+  PERMISSIONS: {
+    GET_MODULES: '/admin/permissions/modules',
+    GET_BY_ROLE: (roleId) => `/admin/roles/${roleId}/permissions`,
+    UPDATE_BY_ROLE: (roleId) => `/admin/roles/${roleId}/permissions`
   }
 };

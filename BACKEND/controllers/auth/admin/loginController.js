@@ -1,5 +1,6 @@
 const User = require('../../../models/User');
 const Role = require('../../../models/Role');
+const Permission = require('../../../models/Permission');
 const { generateAccessToken } = require('../../../utils/jwtUtils');
 const { sendLoginNotification } = require('../../../services/emailService');
 
@@ -60,6 +61,28 @@ async function adminLogin(req, res) {
       })
     );
 
+    // Fetch all permissions for the user's roles
+    const allPermissions = await Promise.all(
+      user.roles.map(async (roleId) => {
+        return await Permission.findByRole(roleId);
+      })
+    );
+
+    // Flatten and merge permissions (union)
+    const permissions = allPermissions.flat().reduce((acc, curr) => {
+      const key = `${curr.module}_${curr.submodule || ''}`;
+      if (!acc[key]) {
+        acc[key] = { ...curr };
+      } else {
+        acc[key].canCreate = acc[key].canCreate || curr.canCreate;
+        acc[key].canView = acc[key].canView || curr.canView;
+        acc[key].canUpdate = acc[key].canUpdate || curr.canUpdate;
+        acc[key].canDelete = acc[key].canDelete || curr.canDelete;
+        acc[key].canApprove = acc[key].canApprove || curr.canApprove;
+      }
+      return acc;
+    }, {});
+
     await User.updateLastLogin(user.userId);
 
     const accessToken = generateAccessToken(user, roleNames.filter(Boolean));
@@ -79,6 +102,7 @@ async function adminLogin(req, res) {
         userId: user.userId,
         roles: user.roles,
         roleNames: roleNames.filter(Boolean),
+        permissions: Object.values(permissions),
         email: user.email,
         phone: user.phone,
         firstName: user.firstName,

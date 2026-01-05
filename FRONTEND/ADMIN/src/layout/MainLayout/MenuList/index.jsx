@@ -10,25 +10,40 @@ import NavGroup from './NavGroup';
 import menuItems from 'menu-items';
 
 import { useGetMenuMaster } from 'api/menu';
+import { useAuth } from 'contexts/AuthContext';
+import { canView } from 'utils/permissionHelper';
 
 // ==============================|| SIDEBAR MENU LIST ||============================== //
 
 function MenuList() {
   const { menuMaster } = useGetMenuMaster();
+  const { user } = useAuth();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
 
   const [selectedID, setSelectedID] = useState('');
 
   const lastItem = null;
 
-  let lastItemIndex = menuItems.items.length - 1;
+  // Filter menu items based on permissions
+  const filteredMenuItems = {
+    items: menuItems.items.map((group) => {
+      const filteredChildren = group.children?.filter((item) => {
+        if (!item.module) return true; // Show items without module restriction
+        return canView(user?.permissions, item.module);
+      });
+
+      return { ...group, children: filteredChildren };
+    }).filter(group => group.children && group.children.length > 0)
+  };
+
+  let lastItemIndex = filteredMenuItems.items.length - 1;
   let remItems = [];
   let lastItemId;
 
-  if (lastItem && lastItem < menuItems.items.length) {
-    lastItemId = menuItems.items[lastItem - 1].id;
+  if (lastItem && lastItem < filteredMenuItems.items.length) {
+    lastItemId = filteredMenuItems.items[lastItem - 1].id;
     lastItemIndex = lastItem - 1;
-    remItems = menuItems.items.slice(lastItem - 1, menuItems.items.length).map((item) => ({
+    remItems = filteredMenuItems.items.slice(lastItem - 1, filteredMenuItems.items.length).map((item) => ({
       title: item.title,
       elements: item.children,
       icon: item.icon,
@@ -38,7 +53,7 @@ function MenuList() {
     }));
   }
 
-  const navItems = menuItems.items.slice(0, lastItemIndex + 1).map((item, index) => {
+  const navItems = filteredMenuItems.items.slice(0, lastItemIndex + 1).map((item, index) => {
     switch (item.type) {
       case 'group':
         if (item.url && item.id !== lastItemId) {

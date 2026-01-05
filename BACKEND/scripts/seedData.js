@@ -1,3 +1,5 @@
+const MODULE_CONFIG = require('../config/moduleConfig');
+
 const defaultRoles = [
   {
     roleId: 1,
@@ -62,6 +64,8 @@ async function seedDatabase(db) {
     }
     
     const usersCollection = db.collection('users');
+    const permissionsCollection = db.collection('permissions');
+    
     const existingAdmin = await usersCollection.findOne({ email: 'admin@gmail.com' });
     
     if (!existingAdmin) {
@@ -72,6 +76,31 @@ async function seedDatabase(db) {
     } else {
       console.log('⚠️  Admin user already exists, skipping...');
     }
+
+    // Seed/Update Admin Permissions
+    console.log('🔐 Updating Admin permissions from MODULE_CONFIG...');
+    const adminPermissions = MODULE_CONFIG.map(module => ({
+      roleId: 1,
+      module: module.module,
+      submodule: null,
+      canCreate: module.actions.includes('create'),
+      canView: module.actions.includes('view'),
+      canUpdate: module.actions.includes('update'),
+      canDelete: module.actions.includes('delete'),
+      canApprove: module.actions.includes('approve'),
+      status: true,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    }));
+
+    for (const perm of adminPermissions) {
+      await permissionsCollection.updateOne(
+        { roleId: 1, module: perm.module, submodule: null },
+        { $set: perm },
+        { upsert: true }
+      );
+    }
+    console.log('✅ Admin permissions synchronized');
     
     await rolesCollection.createIndex({ roleId: 1 }, { unique: true });
     await rolesCollection.createIndex({ status: 1 });

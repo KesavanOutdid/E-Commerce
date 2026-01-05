@@ -14,12 +14,22 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Checkbox,
+  Paper,
+  Divider
 } from '@mui/material';
-import { IconArrowLeft, IconEdit } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconDeviceFloppy } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useRoleDetail } from '../../hooks/roles/RolesHooks';
+import { usePermissions } from '../../hooks/roles/PermissionHooks';
 
 const DetailItem = ({ label, value, color }) => (
   <Box sx={{ mb: 3 }}>
@@ -64,7 +74,17 @@ const RoleDetail = () => {
     handleBackToRoles 
   } = useRoleDetail(roleId);
 
-  if (loading) {
+  const {
+    permissions,
+    modules,
+    loading: permissionsLoading,
+    saving,
+    isDirty: isPermissionsDirty,
+    updatePermission,
+    savePermissions
+  } = usePermissions(roleId);
+
+  if (loading || permissionsLoading) {
     return (
       <MainCard title="Role Details">
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
@@ -126,10 +146,91 @@ const RoleDetail = () => {
           <Grid item xs={12} md={4}>
             <DetailItem label="Created By" value={role.createdby || role.createdBy || '-'} />
           </Grid>
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Updated By" value={role.updatedby || role.updatedBy || '-'} />
-          </Grid>
         </Grid>
+
+        <Divider sx={{ my: 4 }} />
+
+        <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h4">Role Permissions</Typography>
+          <Button 
+            variant="contained" 
+            color="secondary" 
+            startIcon={<IconDeviceFloppy />} 
+            disabled={!isPermissionsDirty || saving}
+            onClick={savePermissions}
+          >
+            {saving ? 'Saving...' : 'Save Permissions'}
+          </Button>
+        </Box>
+
+        <TableContainer component={Paper} variant="outlined">
+          <Table sx={{ minWidth: 650 }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'grey.50' }}>
+                <TableCell sx={{ fontWeight: 700 }}>Module</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>View</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>Create</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>Update</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>Delete</TableCell>
+                <TableCell align="center" sx={{ fontWeight: 700 }}>Approve</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {modules.map((m) => {
+                const perm = permissions.find(p => p.module === m.module) || {};
+                return (
+                  <TableRow key={m.module} hover>
+                    <TableCell component="th" scope="row">
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                        {m.module}
+                      </Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      {m.actions.includes('view') && (
+                        <Checkbox 
+                          checked={!!perm.canView} 
+                          onChange={(e) => updatePermission(m.module, null, 'canView', e.target.checked)} 
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {m.actions.includes('create') && (
+                        <Checkbox 
+                          checked={!!perm.canCreate} 
+                          onChange={(e) => updatePermission(m.module, null, 'canCreate', e.target.checked)} 
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {m.actions.includes('update') && (
+                        <Checkbox 
+                          checked={!!perm.canUpdate} 
+                          onChange={(e) => updatePermission(m.module, null, 'canUpdate', e.target.checked)} 
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {m.actions.includes('delete') && (
+                        <Checkbox 
+                          checked={!!perm.canDelete} 
+                          onChange={(e) => updatePermission(m.module, null, 'canDelete', e.target.checked)} 
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell align="center">
+                      {m.actions.includes('approve') && (
+                        <Checkbox 
+                          checked={!!perm.canApprove} 
+                          onChange={(e) => updatePermission(m.module, null, 'canApprove', e.target.checked)} 
+                        />
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
       </Box>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

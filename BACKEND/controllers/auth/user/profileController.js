@@ -83,12 +83,16 @@ async function updateUserProfile(req, res) {
       updateData.profileImage = profileImage;
     }
 
-    // Standardized address format: doorNo, street, city, district, state, country, pincode
+    // Standardized address format: name, email, phone, doorNo, street, landmark, city, district, state, country, pincode
     if (addresses !== undefined) {
       if (Array.isArray(addresses)) {
         updateData.addresses = addresses.map(addr => ({
+          name: addr.name || null,
+          email: addr.email || null,
+          phone: addr.phone || null,
           doorNo: addr.doorNo || addr.Doorno || null,
           street: addr.street || null,
+          landmark: addr.landmark || null,
           city: addr.city || null,
           district: addr.district || addr.distict || null,
           state: addr.state || null,

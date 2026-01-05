@@ -21,6 +21,8 @@ class Seller {
       goLiveApprovedBy: sellerData.goLiveApprovedBy || null,
       goLiveApprovedAt: sellerData.goLiveApprovedAt || null,
       bankDetails: sellerData.bankDetails || null,
+      shopAddress: sellerData.shopAddress || null,
+      shopLogo: sellerData.shopLogo || null,
       createdAt: new Date(),
       updatedAt: new Date()
     };
