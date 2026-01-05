@@ -63,23 +63,18 @@ export default function AddProductPage() {
         const loadSubCategoryAttributes = async () => {
             if (formData.subCategoryId) {
                 const subCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId)
-                if (subCategory) {
-                    setSubCategoryAttributes(subCategory.attributes || [])
-                    const initialAttributes = (subCategory.attributes || []).map((attr: any) => ({
+                if (subCategory && subCategory.attributes && subCategory.attributes.length > 0) {
+                    setSubCategoryAttributes(subCategory.attributes)
+                    const initialAttributes = subCategory.attributes.map((attr: any) => ({
                         name: attr.name,
                         slug: attr.slug,
                         value: '',
                         required: attr.required
                     }))
-                    setFormData(prev => ({ 
-                        ...prev, 
-                        attributes: initialAttributes,
-                        unitSize: '', // Reset units when subcategory changes
-                        unitWeight: ''
-                    }))
+                    setFormData(prev => ({ ...prev, attributes: initialAttributes }))
                 } else {
                     setSubCategoryAttributes([])
-                    setFormData(prev => ({ ...prev, attributes: [], unitSize: '', unitWeight: '' }))
+                    setFormData(prev => ({ ...prev, attributes: [] }))
                 }
             }
         }
@@ -135,13 +130,6 @@ export default function AddProductPage() {
             .filter(attr => attr.required)
             .every(attr => attr.value.trim() !== '')
         
-        const subCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId);
-        const hasSizeOptions = (subCategory?.unitSize?.split(',').filter(Boolean).length || 0) > 0;
-        const hasWeightOptions = (subCategory?.unitWeight?.split(',').filter(Boolean).length || 0) > 0;
-
-        const sizeValid = !hasSizeOptions || formData.unitSize !== '';
-        const weightValid = !hasWeightOptions || formData.unitWeight !== '';
-
         return (
             formData.productName.trim() !== '' &&
             formData.mainCategoryId !== '' &&
@@ -152,9 +140,7 @@ export default function AddProductPage() {
             formData.stock.trim() !== '' &&
             images.length >= 1 &&
             images.length <= 10 &&
-            requiredAttributesFilled &&
-            sizeValid &&
-            weightValid
+            requiredAttributesFilled
         )
     }
 
@@ -187,9 +173,6 @@ export default function AddProductPage() {
         productFormData.append('stock', formData.stock)
         productFormData.append('userId', user.userId)
         productFormData.append('createdby', user.email)
-        
-        if (formData.unitSize) productFormData.append('unitSize', formData.unitSize)
-        if (formData.unitWeight) productFormData.append('unitWeight', formData.unitWeight)
         
         const validAttributes = formData.attributes
             .filter(attr => attr.value.trim() !== '')
@@ -384,56 +367,6 @@ export default function AddProductPage() {
                                             />
                                         </div>
                                     </div>
-
-                                    {/* Unit Selection */}
-                                    {formData.subCategoryId && (
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-green-100">
-                                            {(() => {
-                                                const subCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId);
-                                                const sizeOptions = subCategory?.unitSize?.split(',').map((s: string) => s.trim()).filter(Boolean) || [];
-                                                const weightOptions = subCategory?.unitWeight?.split(',').map((s: string) => s.trim()).filter(Boolean) || [];
-
-                                                return (
-                                                    <>
-                                                        {sizeOptions.length > 0 && (
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                    Size Unit <span className="text-red-500">*</span>
-                                                                </label>
-                                                                <select
-                                                                    value={formData.unitSize}
-                                                                    onChange={(e) => setFormData({ ...formData, unitSize: e.target.value })}
-                                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                                    required>
-                                                                    <option value="">Select Size Unit</option>
-                                                                    {sizeOptions.map((opt: string) => (
-                                                                        <option key={opt} value={opt}>{opt}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        )}
-                                                        {weightOptions.length > 0 && (
-                                                            <div>
-                                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                    Weight Unit <span className="text-red-500">*</span>
-                                                                </label>
-                                                                <select
-                                                                    value={formData.unitWeight}
-                                                                    onChange={(e) => setFormData({ ...formData, unitWeight: e.target.value })}
-                                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                                    required>
-                                                                    <option value="">Select Weight Unit</option>
-                                                                    {weightOptions.map((opt: string) => (
-                                                                        <option key={opt} value={opt}>{opt}</option>
-                                                                    ))}
-                                                                </select>
-                                                            </div>
-                                                        )}
-                                                    </>
-                                                );
-                                            })()}
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 

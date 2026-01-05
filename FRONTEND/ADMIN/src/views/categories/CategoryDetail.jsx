@@ -236,16 +236,6 @@ const CategoryDetail = () => {
                                             </AccordionSummary>
                                             <AccordionDetails sx={{ pt: 0 }}>
                                                 <Divider sx={{ mb: 2 }} />
-                                                <Grid container spacing={2} sx={{ mb: 2 }}>
-                                                    <Grid item xs={12} md={6}>
-                                                        <Typography variant="subtitle2" color="primary">Unit Size Options</Typography>
-                                                        <Typography variant="body2">{sub.unitSize || 'Not specified'}</Typography>
-                                                    </Grid>
-                                                    <Grid item xs={12} md={6}>
-                                                        <Typography variant="subtitle2" color="primary">Unit Weight Options</Typography>
-                                                        <Typography variant="body2">{sub.unitWeight || 'Not specified'}</Typography>
-                                                    </Grid>
-                                                </Grid>
                                                 <Typography variant="subtitle2" color="primary" sx={{ mb: 1 }}>
                                                     Specifications
                                                 </Typography>
@@ -371,24 +361,6 @@ const CategoryDetail = () => {
                                 value={subFormData.name}
                                 onChange={(e) => updateSubFormData('name', e.target.value)}
                                 required
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Unit Size Options (e.g. cm, inch, m)"
-                                value={subFormData.unitSize}
-                                onChange={(e) => updateSubFormData('unitSize', e.target.value)}
-                                helperText="Separate options with commas"
-                            />
-                        </Grid>
-                        <Grid item xs={12} md={6}>
-                            <TextField
-                                fullWidth
-                                label="Unit Weight Options (e.g. g, kg, lb)"
-                                value={subFormData.unitWeight}
-                                onChange={(e) => updateSubFormData('unitWeight', e.target.value)}
-                                helperText="Separate options with commas"
                             />
                         </Grid>
                         <Grid item xs={12}>
