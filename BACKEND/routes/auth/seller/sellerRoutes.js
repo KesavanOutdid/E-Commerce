@@ -7,6 +7,7 @@ const { forgotPassword, validateOtp, setNewPassword } = require('../../../contro
 const { getGoogleConfig, googleAuthentication } = require('../../../controllers/auth/seller/googleLoginController');
 const { getSellerProfile, updateSellerProfile } = require('../../../controllers/auth/seller/profileController');
 const { requestKyc, getKycStatus } = require('../../../controllers/auth/seller/kycController');
+const upload = require('../../../middleware/profileUploadMiddleware');
 
 router.post('/login', sellerLogin);
 router.post('/register/send-otp', sendRegistrationOtp);
@@ -20,7 +21,7 @@ router.post('/validate-otp', validateOtp);
 router.post('/set-new-password', setNewPassword);
 
 router.get('/profile', authMiddleware, getSellerProfile);
-router.put('/profile', authMiddleware, updateSellerProfile);
+router.put('/profile', authMiddleware, upload.single('profileImage'), updateSellerProfile);
 
 router.post('/kyc/request', authMiddleware, requestKyc);
 router.get('/kyc/status', authMiddleware, getKycStatus);

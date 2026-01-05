@@ -92,7 +92,12 @@ async function updateSellerProfile(req, res) {
     if (firstName) userUpdateData.firstName = firstName;
     if (lastName) userUpdateData.lastName = lastName;
     if (phone) userUpdateData.phone = phone.replace(/^\+91/, '');
-    if (profileImage !== undefined) userUpdateData.profileImage = profileImage;
+    
+    if (req.file) {
+      userUpdateData.profileImage = `/uploads/profiles/${req.file.filename}`;
+    } else if (profileImage !== undefined) {
+      userUpdateData.profileImage = profileImage;
+    }
 
     // Standardized personal addresses (User object)
     if (addresses !== undefined) {

@@ -76,8 +76,10 @@ async function updateUserProfile(req, res) {
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone.replace(/^\+91/, '');
     
-    // Handle profileImage being null explicitly
-    if (profileImage !== undefined) {
+    // Handle profileImage from file upload or body
+    if (req.file) {
+      updateData.profileImage = `/uploads/profiles/${req.file.filename}`;
+    } else if (profileImage !== undefined) {
       updateData.profileImage = profileImage;
     }
 
@@ -89,7 +91,7 @@ async function updateUserProfile(req, res) {
           street: addr.street || null,
           city: addr.city || null,
           district: addr.district || addr.distict || null,
-          state: addr.state || addr.state || null,
+          state: addr.state || null,
           country: addr.country || addr.contry || null,
           pincode: addr.pincode || null
         }));
