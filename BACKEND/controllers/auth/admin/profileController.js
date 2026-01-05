@@ -51,7 +51,7 @@ async function getAdminProfile(req, res) {
 async function updateAdminProfile(req, res) {
   try {
     const userId = req.userId;
-    const { firstName, lastName, phone, profileImage } = req.body;
+    const { firstName, lastName, phone, profileImage, addresses } = req.body;
 
     const user = await User.findByUserId(userId);
     if (!user) {
@@ -75,24 +75,47 @@ async function updateAdminProfile(req, res) {
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone.replace(/^\+91/, '');
-    if (profileImage) updateData.profileImage = profileImage;
+    
+    if (req.file) {
+      updateData.profileImage = `/uploads/profiles/${req.file.filename}`;
+    } else if (profileImage !== undefined) {
+      updateData.profileImage = profileImage;
+    }
 
-    const updatedUser = await User.update(userId, updateData);
+    // Standardized address format
+    if (addresses !== undefined) {
+      if (Array.isArray(addresses)) {
+        updateData.addresses = addresses.map(addr => ({
+          doorNo: addr.doorNo || addr.Doorno || null,
+          street: addr.street || null,
+          city: addr.city || null,
+          district: addr.district || addr.distict || null,
+          state: addr.state || null,
+          country: addr.country || addr.contry || null,
+          pincode: addr.pincode || null
+        }));
+      } else {
+        updateData.addresses = [];
+      }
+    }
+
+    const result = await User.update(userId, updateData);
+    const updatedUser = result.value;
 
     const roleNames = await Promise.all(
-      (updatedUser.value.roles || []).map(async (roleId) => {
+      (updatedUser.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
         return role ? role.roleName : null;
       })
     );
 
-    delete updatedUser.value.password;
+    delete updatedUser.password;
 
     return res.status(200).json({
       success: true,
       message: 'Admin profile updated successfully',
       data: {
-        ...updatedUser.value,
+        ...updatedUser,
         roleNames: roleNames.filter(Boolean)
       }
     });

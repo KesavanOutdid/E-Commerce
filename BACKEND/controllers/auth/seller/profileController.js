@@ -116,7 +116,8 @@ async function updateSellerProfile(req, res) {
       }
     }
 
-    await User.update(userId, userUpdateData);
+    const result = await User.update(userId, userUpdateData);
+    const updatedUser = result.value;
 
     let sellerInfo = await Seller.findByUserId(userId);
 
@@ -145,24 +146,24 @@ async function updateSellerProfile(req, res) {
 
     if (Object.keys(sellerUpdateData).length > 0) {
       if (sellerInfo) {
-        await Seller.update(userId, sellerUpdateData);
+        const sellerResult = await Seller.update(userId, sellerUpdateData);
+        sellerInfo = sellerResult.value;
       } else {
-        await Seller.create({
+        sellerInfo = await Seller.create({
           userId: userId,
           ...sellerUpdateData
         });
       }
-      sellerInfo = await Seller.findByUserId(userId);
     }
 
-    const updatedUser = await User.findByUserId(userId);
-    
     const roleNames = await Promise.all(
       (updatedUser.roles || []).map(async (roleId) => {
         const role = await Role.findById(roleId);
         return role ? role.roleName : null;
       })
     );
+
+    delete updatedUser.password;
 
     return res.status(200).json({
       success: true,

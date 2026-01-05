@@ -7,6 +7,7 @@ const { getUsers, getUser, addUser, updateUser, deleteUser } = require('../../..
 const { getRoles, getRole, createRole, updateRole, deleteRole } = require('../../../controllers/auth/admin/rolesController');
 const { getAdminProfile, updateAdminProfile } = require('../../../controllers/auth/admin/profileController');
 const { updateCommission } = require('../../../controllers/auth/admin/kycController');
+const upload = require('../../../middleware/profileUploadMiddleware');
 
 router.post('/login', adminLogin);
 
@@ -15,12 +16,12 @@ router.post('/validate-otp', validateOtp);
 router.post('/set-new-password', setNewPassword);
 
 router.get('/profile', authMiddleware, getAdminProfile);
-router.put('/profile', authMiddleware, updateAdminProfile);
+router.put('/profile', authMiddleware, upload.single('profileImage'), updateAdminProfile);
 
 router.get('/users', authMiddleware, getUsers);
 router.get('/users/:userId', authMiddleware, getUser);
-router.post('/users', authMiddleware, addUser);
-router.put('/users/:userId', authMiddleware, updateUser);
+router.post('/users', authMiddleware, upload.single('profileImage'), addUser);
+router.put('/users/:userId', authMiddleware, upload.single('profileImage'), updateUser);
 router.delete('/users/:userId', authMiddleware, deleteUser);
 
 router.get('/roles', authMiddleware, getRoles);

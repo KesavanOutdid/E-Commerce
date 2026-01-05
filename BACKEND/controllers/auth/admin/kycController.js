@@ -31,7 +31,8 @@ async function getKycRequests(req, res) {
             email: user?.email,
             firstName: user?.firstName,
             lastName: user?.lastName,
-            phone: user?.phone
+            phone: user?.phone,
+            profileImage: user?.profileImage
           }
         };
       })
@@ -90,6 +91,7 @@ async function getKycRequestDetails(req, res) {
           firstName: user.firstName,
           lastName: user.lastName,
           phone: user.phone,
+          profileImage: user.profileImage,
           status: user.status
         }
       }

@@ -112,7 +112,7 @@ async function getUser(req, res) {
 
 async function addUser(req, res) {
   try {
-    const { firstName, lastName, email, phone, password, roles } = req.body;
+    const { firstName, lastName, email, phone, password, roles, profileImage } = req.body;
 
     if (!firstName || !lastName || !email || !password || !roles) {
       return res.status(400).json({
@@ -162,6 +162,7 @@ async function addUser(req, res) {
       phone: phone ? phone.replace(/^\+91/, '') : null,
       password,
       roles: userRoles,
+      profileImage: req.file ? `/uploads/profiles/${req.file.filename}` : (profileImage || null),
       createdBy: req.userEmail || 'admin'
     });
 
@@ -201,7 +202,7 @@ async function addUser(req, res) {
 async function updateUser(req, res) {
   try {
     const { userId } = req.params;
-    const { firstName, lastName, phone, roles, status, sellerInfo } = req.body;
+    const { firstName, lastName, phone, roles, status, sellerInfo, profileImage } = req.body;
 
     const user = await User.findByUserId(userId);
     if (!user) {
@@ -218,6 +219,12 @@ async function updateUser(req, res) {
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone.replace(/^\+91/, '');
+    
+    if (req.file) {
+      updateData.profileImage = `/uploads/profiles/${req.file.filename}`;
+    } else if (profileImage !== undefined) {
+      updateData.profileImage = profileImage;
+    }
     
     let roleNames = [];
     if (roles !== undefined) {

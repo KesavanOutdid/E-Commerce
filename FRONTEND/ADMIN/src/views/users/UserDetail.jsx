@@ -12,6 +12,7 @@ import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useUserDetail } from '../../hooks/users/UserDetailHooks';
+import { BASE_URL } from '../../config/apiConfig';
 
 const DetailItem = ({ label, value, color }) => (
   <Box sx={{ mb: 3 }}>
@@ -94,7 +95,7 @@ const UserDetail = () => {
           {/* Header section with Avatar */}
           <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
             <Avatar 
-              src={user.profileImage} 
+              src={user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}${user.profileImage}`) : ''} 
               sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main' }}
             >
               {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
