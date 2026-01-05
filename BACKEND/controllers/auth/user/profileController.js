@@ -28,7 +28,6 @@ async function getUserProfile(req, res) {
       })
     );
 
-    delete user.password;
 
     return res.status(200).json({
       success: true,
@@ -52,7 +51,7 @@ async function getUserProfile(req, res) {
 async function updateUserProfile(req, res) {
   try {
     const userId = req.userId;
-    const { firstName, lastName, phone, profileImage } = req.body;
+    const { firstName, lastName, phone, profileImage, addresses } = req.body;
 
     const user = await User.findByUserId(userId);
     if (!user) {
@@ -76,7 +75,28 @@ async function updateUserProfile(req, res) {
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone.replace(/^\+91/, '');
-    if (profileImage) updateData.profileImage = profileImage;
+    
+    // Handle profileImage being null explicitly
+    if (profileImage !== undefined) {
+      updateData.profileImage = profileImage;
+    }
+
+    // Standardized address format: doorNo, street, city, district, state, country, pincode
+    if (addresses !== undefined) {
+      if (Array.isArray(addresses)) {
+        updateData.addresses = addresses.map(addr => ({
+          doorNo: addr.doorNo || addr.Doorno || null,
+          street: addr.street || null,
+          city: addr.city || null,
+          district: addr.district || addr.distict || null,
+          state: addr.state || addr.state || null,
+          country: addr.country || addr.contry || null,
+          pincode: addr.pincode || null
+        }));
+      } else {
+        updateData.addresses = [];
+      }
+    }
 
     const updatedUser = await User.update(userId, updateData);
 
@@ -86,8 +106,6 @@ async function updateUserProfile(req, res) {
         return role ? role.roleName : null;
       })
     );
-
-    delete updatedUser.value.password;
 
     return res.status(200).json({
       success: true,

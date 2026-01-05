@@ -75,7 +75,7 @@ async function sendRegistrationOtp(req, res) {
 
 async function register(req, res) {
   try {
-    const { firstName, lastName, email, phone, password, otpCode } = req.body;
+    const { firstName, lastName, email, phone, password, otpCode, addresses } = req.body;
 
     if (!firstName || !lastName || !email || !password || !otpCode) {
       return res.status(400).json({
@@ -110,6 +110,20 @@ async function register(req, res) {
       }
     }
 
+    // Standardized address format
+    let formattedAddresses = [];
+    if (addresses && Array.isArray(addresses)) {
+      formattedAddresses = addresses.map(addr => ({
+        doorNo: addr.doorNo || addr.Doorno || null,
+        street: addr.street || null,
+        city: addr.city || null,
+        district: addr.district || addr.distict || null,
+        state: addr.state || null,
+        country: addr.country || addr.contry || null,
+        pincode: addr.pincode || null
+      }));
+    }
+
     const userId = uuidv4();
     const newUser = await User.create({
       userId,
@@ -119,6 +133,7 @@ async function register(req, res) {
       phone: phone ? phone.replace(/^\+91/, '') : null,
       password,
       roles: [3],
+      addresses: formattedAddresses,
       createdBy: email
     });
 
@@ -143,7 +158,8 @@ async function register(req, res) {
         email: newUser.email,
         phone: newUser.phone,
         firstName: newUser.firstName,
-        lastName: newUser.lastName
+        lastName: newUser.lastName,
+        addresses: newUser.addresses || []
       }
     });
 

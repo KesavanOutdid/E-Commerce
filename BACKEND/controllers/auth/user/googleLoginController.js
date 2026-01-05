@@ -112,7 +112,8 @@ async function googleAuthentication(req, res) {
           email: user.email,
           phone: user.phone,
           firstName: user.firstName,
-          lastName: user.lastName
+          lastName: user.lastName,
+          addresses: user.addresses || []
         }
       });
     }
@@ -128,6 +129,7 @@ async function googleAuthentication(req, res) {
       phone: phone ? phone.replace(/^\+91/, '') : null,
       password: generatedPassword,
       roles: [3],
+      addresses: [],
       createdBy: email
     });
 
@@ -155,7 +157,8 @@ async function googleAuthentication(req, res) {
         email: newUser.email,
         phone: newUser.phone,
         firstName: newUser.firstName,
-        lastName: newUser.lastName
+        lastName: newUser.lastName,
+        addresses: newUser.addresses || []
       }
     });
 

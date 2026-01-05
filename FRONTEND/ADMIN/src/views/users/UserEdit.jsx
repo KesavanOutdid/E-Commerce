@@ -22,7 +22,19 @@ import { useUserEdit } from '../../hooks/users/UserEditHooks';
 
 const UserEdit = () => {
   const { userId } = useParams();
-  const { formData, loading, saving, roles, isDirty, updateFormData, updateSellerData, handleSubmit, handleCancel } = useUserEdit(userId);
+  const { 
+    formData, 
+    loading, 
+    saving, 
+    roles, 
+    isDirty, 
+    updateFormData, 
+    updateSellerData, 
+    updateShopAddressData,
+    updateUserAddressData,
+    handleSubmit, 
+    handleCancel 
+  } = useUserEdit(userId);
 
   if (loading) {
     return (
@@ -125,10 +137,84 @@ const UserEdit = () => {
             />
           </Grid>
 
+          {/* User Addresses */}
+          {formData.addresses && formData.addresses.length > 0 && (
+            <>
+              <Grid item xs={12}>
+                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>User Addresses</Typography>
+              </Grid>
+              {formData.addresses.map((address, index) => (
+                <Grid item xs={12} key={index}>
+                  <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                    <Typography variant="subtitle1" sx={{ mb: 2 }}>Address {index + 1}</Typography>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Door No"
+                          value={address.doorNo || ''}
+                          onChange={(e) => updateUserAddressData(index, 'doorNo', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="Street"
+                          value={address.street || ''}
+                          onChange={(e) => updateUserAddressData(index, 'street', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="City"
+                          value={address.city || ''}
+                          onChange={(e) => updateUserAddressData(index, 'city', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={3}>
+                        <TextField
+                          fullWidth
+                          label="District"
+                          value={address.district || ''}
+                          onChange={(e) => updateUserAddressData(index, 'district', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="State"
+                          value={address.state || ''}
+                          onChange={(e) => updateUserAddressData(index, 'state', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="Country"
+                          value={address.country || ''}
+                          onChange={(e) => updateUserAddressData(index, 'country', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid item xs={12} md={4}>
+                        <TextField
+                          fullWidth
+                          label="Pincode"
+                          value={address.pincode || ''}
+                          onChange={(e) => updateUserAddressData(index, 'pincode', e.target.value)}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Box>
+                </Grid>
+              ))}
+            </>
+          )}
+
           {isSeller && (
             <>
               <Grid item xs={12}>
-                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Seller Approvals</Typography>
+                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Seller Information</Typography>
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControlLabel
@@ -161,6 +247,67 @@ const UserEdit = () => {
                   type="number"
                   value={formData.sellerInfo.commissionPercentage}
                   onChange={(e) => updateSellerData('commissionPercentage', parseFloat(e.target.value))}
+                />
+              </Grid>
+
+              {/* Shop Address */}
+              <Grid item xs={12}>
+                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Shop Address</Typography>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Door No"
+                  value={formData.sellerInfo.shopAddress?.doorNo || ''}
+                  onChange={(e) => updateShopAddressData('doorNo', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="Street"
+                  value={formData.sellerInfo.shopAddress?.street || ''}
+                  onChange={(e) => updateShopAddressData('street', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="City"
+                  value={formData.sellerInfo.shopAddress?.city || ''}
+                  onChange={(e) => updateShopAddressData('city', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <TextField
+                  fullWidth
+                  label="District"
+                  value={formData.sellerInfo.shopAddress?.district || ''}
+                  onChange={(e) => updateShopAddressData('district', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="State"
+                  value={formData.sellerInfo.shopAddress?.state || ''}
+                  onChange={(e) => updateShopAddressData('state', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Country"
+                  value={formData.sellerInfo.shopAddress?.country || ''}
+                  onChange={(e) => updateShopAddressData('country', e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  label="Pincode"
+                  value={formData.sellerInfo.shopAddress?.pincode || ''}
+                  onChange={(e) => updateShopAddressData('pincode', e.target.value)}
                 />
               </Grid>
             </>

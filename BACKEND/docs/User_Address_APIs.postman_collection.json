@@ -1,0 +1,164 @@
+{
+	"info": {
+		"_postman_id": "a9f8e7d6-c5b4-4a3b-2a1c-0d9e8f7a6b5c",
+		"name": "User Address APIs",
+		"description": "Collection for managing user personal addresses (Add, Get, Update, Delete)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get User Addresses",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/addresses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"addresses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add User Address",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"doorNo\": \"101\",\n    \"street\": \"Lake View Road\",\n    \"city\": \"Hyderabad\",\n    \"district\": \"Hyderabad\",\n    \"state\": \"Telangana\",\n    \"country\": \"India\",\n    \"pincode\": \"500033\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/user/addresses",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"addresses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update User Address",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"doorNo\": \"101-B\",\n    \"street\": \"Hill Top Colony\",\n    \"city\": \"Hyderabad\",\n    \"pincode\": \"500034\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/user/addresses/0",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"addresses",
+						"0"
+					],
+					"description": "The :index is the array index (0, 1, 2...)"
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete User Address",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/user/addresses/0",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"user",
+						"addresses",
+						"0"
+					],
+					"description": "The :index is the array index (0, 1, 2...)"
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "YOUR_TOKEN_HERE",
+			"type": "string"
+		}
+	]
+}

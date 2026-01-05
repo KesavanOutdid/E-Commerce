@@ -18,10 +18,20 @@ export const useUserEdit = (userId) => {
     phone: '',
     roles: [],
     status: true,
+    addresses: [],
     sellerInfo: {
       kycApproved: false,
       isLive: false,
-      commissionPercentage: 10
+      commissionPercentage: 10,
+      shopAddress: {
+        doorNo: '',
+        street: '',
+        city: '',
+        district: '',
+        state: '',
+        country: '',
+        pincode: ''
+      }
     }
   });
 
@@ -38,14 +48,33 @@ export const useUserEdit = (userId) => {
           phone: user.phone || '',
           roles: user.roles || [],
           status: user.status ?? true,
+          addresses: user.addresses || [],
           sellerInfo: user.sellerInfo ? {
             kycApproved: user.sellerInfo.kycApproved ?? false,
             isLive: user.sellerInfo.isLive ?? false,
-            commissionPercentage: user.sellerInfo.commissionPercentage ?? 10
+            commissionPercentage: user.sellerInfo.commissionPercentage ?? 10,
+            shopAddress: user.sellerInfo.shopAddress || {
+              doorNo: '',
+              street: '',
+              city: '',
+              district: '',
+              state: '',
+              country: '',
+              pincode: ''
+            }
           } : {
             kycApproved: false,
             isLive: false,
-            commissionPercentage: 10
+            commissionPercentage: 10,
+            shopAddress: {
+              doorNo: '',
+              street: '',
+              city: '',
+              district: '',
+              state: '',
+              country: '',
+              pincode: ''
+            }
           }
         };
         setFormData(data);
@@ -115,6 +144,46 @@ export const useUserEdit = (userId) => {
     });
   };
 
+  const updateShopAddressData = (field, value) => {
+    setFormData((prev) => {
+      const newShopAddress = { ...prev.sellerInfo.shopAddress, [field]: value };
+      const newSellerInfo = { ...prev.sellerInfo, shopAddress: newShopAddress };
+      const newData = { ...prev, sellerInfo: newSellerInfo };
+      
+      if (initialData) {
+        const hasChanges = Object.keys(initialData).some((key) => {
+          if (typeof initialData[key] === 'object' && initialData[key] !== null) {
+            return JSON.stringify(initialData[key]) !== JSON.stringify(newData[key]);
+          }
+          return initialData[key] !== newData[key];
+        });
+        setIsDirty(hasChanges);
+      }
+      
+      return newData;
+    });
+  };
+
+  const updateUserAddressData = (index, field, value) => {
+    setFormData((prev) => {
+      const newAddresses = [...prev.addresses];
+      newAddresses[index] = { ...newAddresses[index], [field]: value };
+      const newData = { ...prev, addresses: newAddresses };
+      
+      if (initialData) {
+        const hasChanges = Object.keys(initialData).some((key) => {
+          if (typeof initialData[key] === 'object' && initialData[key] !== null) {
+            return JSON.stringify(initialData[key]) !== JSON.stringify(newData[key]);
+          }
+          return initialData[key] !== newData[key];
+        });
+        setIsDirty(hasChanges);
+      }
+      
+      return newData;
+    });
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     try {
@@ -144,6 +213,8 @@ export const useUserEdit = (userId) => {
     isDirty,
     updateFormData,
     updateSellerData,
+    updateShopAddressData,
+    updateUserAddressData,
     handleSubmit,
     handleCancel
   };

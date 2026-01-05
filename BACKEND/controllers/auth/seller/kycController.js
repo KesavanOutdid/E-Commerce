@@ -4,7 +4,7 @@ const Seller = require('../../../models/Seller');
 async function requestKyc(req, res) {
   try {
     const userId = req.userId;
-    const { shopName, gstin, panNumber, bankDetails } = req.body;
+    const { shopName, gstin, panNumber, bankDetails, shopAddress } = req.body;
 
     if (!shopName || !gstin || !panNumber) {
       return res.status(400).json({
@@ -38,24 +38,36 @@ async function requestKyc(req, res) {
 
     let sellerInfo = await Seller.findByUserId(userId);
 
+    // Standardized shop address format
+    let formattedShopAddress = null;
+    if (shopAddress && typeof shopAddress === 'object') {
+      formattedShopAddress = {
+        doorNo: shopAddress.doorNo || shopAddress.Doorno || null,
+        street: shopAddress.street || null,
+        city: shopAddress.city || null,
+        district: shopAddress.district || shopAddress.distict || null,
+        state: shopAddress.state || null,
+        country: shopAddress.country || shopAddress.contry || null,
+        pincode: shopAddress.pincode || null
+      };
+    }
+
+    const sellerData = {
+      shopName,
+      gstin,
+      panNumber,
+      bankDetails,
+      shopAddress: formattedShopAddress,
+      kycApproved: false,
+      onboardingCompleted: true
+    };
+
     if (sellerInfo) {
-      await Seller.update(userId, {
-        shopName,
-        gstin,
-        panNumber,
-        bankDetails,
-        kycApproved: false,
-        onboardingCompleted: true
-      });
+      await Seller.update(userId, sellerData);
     } else {
       await Seller.create({
         userId: userId,
-        shopName,
-        gstin,
-        panNumber,
-        bankDetails,
-        kycApproved: false,
-        onboardingCompleted: true
+        ...sellerData
       });
     }
 
@@ -128,6 +140,7 @@ async function getKycStatus(req, res) {
         gstin: sellerInfo.gstin,
         panNumber: sellerInfo.panNumber,
         bankDetails: sellerInfo.bankDetails,
+        shopAddress: sellerInfo.shopAddress,
         kycApproved: sellerInfo.kycApproved,
         kycApprovedBy: sellerInfo.kycApprovedBy,
         kycApprovedAt: sellerInfo.kycApprovedAt,

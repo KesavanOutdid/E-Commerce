@@ -170,6 +170,43 @@ const UserDetail = () => {
             <DetailItem label="Modified Date" value={user.updatedAt ? new Date(user.updatedAt).toLocaleString() : '-'} />
           </Grid>
 
+          {/* User Addresses Section */}
+          {user.addresses && user.addresses.length > 0 && (
+            <>
+              <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>User Addresses</Typography>
+              </Grid>
+              {user.addresses.map((address, index) => (
+                <Grid size={12} key={index} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>Address {index + 1}</Typography>
+                  <Grid container spacing={1}>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="Door No" value={address.doorNo} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="Street" value={address.street} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="City" value={address.city} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="District" value={address.district} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="State" value={address.state} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="Country" value={address.country} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <DetailItem label="Pincode" value={address.pincode} />
+                    </Grid>
+                  </Grid>
+                </Grid>
+              ))}
+            </>
+          )}
+
           {/* Seller Information Section */}
           {user.sellerInfo && (
             <>
@@ -210,6 +247,36 @@ const UserDetail = () => {
               <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="Commission %" value={user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'} />
               </Grid>
+
+              {/* Shop Address Section */}
+              {user.sellerInfo.shopAddress && (
+                <>
+                  <Grid size={12} sx={{ mt: 2, mb: 2 }}>
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Shop Address</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="Door No" value={user.sellerInfo.shopAddress.doorNo} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="Street" value={user.sellerInfo.shopAddress.street} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="City" value={user.sellerInfo.shopAddress.city} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="District" value={user.sellerInfo.shopAddress.district} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="State" value={user.sellerInfo.shopAddress.state} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="Country" value={user.sellerInfo.shopAddress.country} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <DetailItem label="Pincode" value={user.sellerInfo.shopAddress.pincode} />
+                  </Grid>
+                </>
+              )}
 
               {/* Bank Details Section */}
               {user.sellerInfo.bankDetails && (

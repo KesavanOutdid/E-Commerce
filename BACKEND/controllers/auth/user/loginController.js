@@ -82,7 +82,8 @@ async function userLogin(req, res) {
         email: user.email,
         phone: user.phone,
         firstName: user.firstName,
-        lastName: user.lastName
+        lastName: user.lastName,
+        addresses: user.addresses || []
       }
     });
 
