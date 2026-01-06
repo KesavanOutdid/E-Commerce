@@ -1,4 +1,5 @@
 const Product = require('../../../models/Product');
+const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 const { slugify } = require('../../../utils/help');
@@ -138,11 +139,25 @@ exports.getProducts = async (req, res) => {
       Product.count(query)
     ]);
 
+    // Map category names
+    const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
+      const [mainCategory, subCategory] = await Promise.all([
+        product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+      ]);
+
+      return {
+        ...product,
+        mainCategoryName: mainCategory ? mainCategory.name : null,
+        subCategoryName: subCategory ? subCategory.name : null
+      };
+    }));
+
     res.status(200).json({ 
       success: true, 
       message: 'Seller products fetched successfully',
       data: {
-        products,
+        products: productsWithCategoryNames,
         pagination: {
           total,
           page,

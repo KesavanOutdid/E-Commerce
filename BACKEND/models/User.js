@@ -17,6 +17,7 @@ class User {
       roles: Array.isArray(userData.roles) ? userData.roles : [userData.roles || 3],
       profileImage: userData.profileImage || null,
       addresses: userData.addresses || [],
+      wishlist: userData.wishlist || [],
       status: userData.status !== undefined ? userData.status : true,
       authenticator: userData.authenticator || false,
       lastLoginAt: userData.lastLoginAt || null,
@@ -132,6 +133,36 @@ class User {
       },
       { returnDocument: 'after' }
     );
+  }
+
+  static async addToWishlist(userId, productId) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $addToSet: { wishlist: productId },
+        $set: { updatedAt: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async removeFromWishlist(userId, productId) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $pull: { wishlist: productId },
+        $set: { updatedAt: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async getWishlist(userId) {
+    const user = await this.collection().findOne(
+      { userId },
+      { projection: { wishlist: 1 } }
+    );
+    return user ? user.wishlist || [] : [];
   }
 
   static async findAll(filter = {}, options = {}) {

@@ -3,13 +3,27 @@ const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+
+// Helper to get logged in user ID from token without full middleware
+const getUserIdFromRequest = (req) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    return decoded.userId;
+  } catch (err) {
+    return null;
+  }
+};
 
 
 // Helper for aggregation pipeline to avoid duplication
-const getProductAggregationPipeline = (matchQuery, skip, limitNum) => {
+const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { price: 1 }) => {
   return [
     { $match: matchQuery },
-    { $sort: { price: 1 } },
+    { $sort: sortOptions },
     { 
       $group: {
         _id: "$slug",
@@ -76,6 +90,16 @@ exports.getProducts = async (req, res) => {
 
     const products = aggregationResult[0].data;
     const total = aggregationResult[0].totalCount[0]?.count || 0;
+
+    // Add isWishlisted flag if user is logged in
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+      const wishlist = await User.getWishlist(userId);
+      products.forEach(p => {
+        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
+                               wishlist.includes(p.product._id?.toString());
+      });
+    }
     
     const responseData = {
       products,
@@ -87,7 +111,10 @@ exports.getProducts = async (req, res) => {
       }
     };
     
-    await setCache(cacheKey, responseData, 3600);
+    // Cache the response if user is NOT logged in
+    if (!userId) {
+      await setCache(cacheKey, responseData, 3600);
+    }
 
     res.status(200).json({ 
       success: true, 
@@ -134,6 +161,16 @@ exports.getProductsBySubCategory = async (req, res) => {
 
     const products = aggregationResult[0].data;
     const total = aggregationResult[0].totalCount[0]?.count || 0;
+
+    // Add isWishlisted flag if user is logged in
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+      const wishlist = await User.getWishlist(userId);
+      products.forEach(p => {
+        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
+                               wishlist.includes(p.product._id?.toString());
+      });
+    }
     
     const responseData = {
       products,
@@ -145,7 +182,10 @@ exports.getProductsBySubCategory = async (req, res) => {
       }
     };
     
-    await setCache(cacheKey, responseData, 3600);
+    // Cache the response if user is NOT logged in
+    if (!userId) {
+      await setCache(cacheKey, responseData, 3600);
+    }
 
     res.status(200).json({ 
       success: true, 
@@ -248,11 +288,93 @@ exports.getProductById = async (req, res) => {
       responseData.shopName = shopName;
     }
 
-    await setCache(cacheKey, responseData, 3600);
+    // Add isWishlisted flag if user is logged in
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+      const wishlist = await User.getWishlist(userId);
+      responseData.isWishlisted = wishlist.includes(product.productId) || 
+                                 wishlist.includes(product._id?.toString());
+    }
+
+    // Cache if NOT logged in
+    if (!userId) {
+      await setCache(cacheKey, responseData, 3600);
+    }
 
     res.status(200).json({ 
       success: true, 
       message: 'Product details fetched successfully',
+      data: responseData 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getBestSellers = async (req, res) => {
+  try {
+    const { categoryId, limit = 10, page = 1 } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const cacheKey = `products:best-sellers:${categoryId || 'all'}:${pageNum}:${limitNum}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Best sellers fetched successfully (from cache)',
+        data: cachedData 
+      });
+    }
+
+    let matchQuery = { 
+      $or: [
+        { roleId: 1 },
+        { roleId: 2, approvalStatus: 'approved' }
+      ],
+      status: { $in: [true, "true"] }
+    };
+    
+    if (categoryId) matchQuery.mainCategoryId = categoryId;
+
+    // Best sellers sorted by totalReviews and avgRating
+    const sortOptions = { totalReviews: -1, avgRating: -1 };
+
+    const aggregationResult = await Product.collection().aggregate(
+      getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions)
+    ).toArray();
+
+    const products = aggregationResult[0].data;
+    const total = aggregationResult[0].totalCount[0]?.count || 0;
+
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+      const wishlist = await User.getWishlist(userId);
+      products.forEach(p => {
+        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
+                               wishlist.includes(p.product._id?.toString());
+      });
+    }
+    
+    const responseData = {
+      products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
+    };
+    
+    if (!userId) {
+      await setCache(cacheKey, responseData, 3600);
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Best sellers fetched successfully',
       data: responseData 
     });
   } catch (error) {

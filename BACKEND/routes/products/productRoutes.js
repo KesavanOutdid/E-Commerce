@@ -22,6 +22,7 @@ router.delete('/seller/:id', authMiddleware, sellerProductController.deleteProdu
 
 // Website/Public Routes
 router.get('/', websiteProductController.getProducts);
+router.get('/best-sellers', websiteProductController.getBestSellers);
 router.get('/subcategory/:subCategoryId', websiteProductController.getProductsBySubCategory);
 router.get('/:id', websiteProductController.getProductById);
 

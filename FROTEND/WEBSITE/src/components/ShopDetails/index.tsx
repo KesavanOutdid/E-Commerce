@@ -1,0 +1,1492 @@
+"use client";
+import React, { useEffect, useState } from "react";
+import Breadcrumb from "../Common/Breadcrumb";
+import Image from "next/image";
+import Newsletter from "../Common/Newsletter";
+import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
+import { useAppSelector, AppDispatch } from "@/redux/store";
+import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
+import { useDispatch } from "react-redux";
+import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
+import { addToCart, clearCartServer } from "@/redux/features/cart-slice";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import Script from "next/script";
+
+const ShopDetails = ({ productId }: { productId?: string }) => {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+  const [activeColor, setActiveColor] = useState("blue");
+  const { openPreviewModal } = usePreviewSlider();
+  const [previewImg, setPreviewImg] = useState(0);
+
+  const [product, setProduct] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.authReducer);
+  const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
+  
+  const isWishlisted = product ? wishlistItems.some((item) => item.id === product.id) : false;
+
+  const [storage, setStorage] = useState("gb128");
+  const [type, setType] = useState("active");
+  const [sim, setSim] = useState("dual");
+  const [quantity, setQuantity] = useState(1);
+
+  const [activeTab, setActiveTab] = useState("tabOne");
+  const [showFullDescription, setShowFullDescription] = useState(false);
+  const [showFullSpecs, setShowFullSpecs] = useState(false);
+
+  // Buy Now States
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false);
+  const [payment, setPayment] = useState("cod");
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: "",
+    doorNo: "",
+    street: "",
+    landmark: "",
+    town: "",
+    district: "",
+    pincode: "",
+    state: "",
+    country: "IN",
+  });
+
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      if (isAuthenticated && accessToken) {
+        try {
+          const response = await fetch(API_ENDPOINTS.ADDRESSES, {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const data = await response.json();
+          if (data.success) {
+            setSavedAddresses(data.data || []);
+            if (data.data && data.data.length > 0) {
+              const addr = data.data[0];
+              setSelectedAddressIndex(0);
+              setFormData((prev) => ({
+                ...prev,
+                name: addr.name || prev.name,
+                email: addr.email || prev.email,
+                phone: addr.phone || prev.phone,
+                doorNo: addr.doorNo,
+                street: addr.street,
+                landmark: addr.landmark || "",
+                town: addr.city,
+                district: addr.district || addr.city,
+                pincode: addr.pincode,
+                state: addr.state,
+                country: addr.country,
+              }));
+            }
+          }
+        } catch (error) {
+          console.error("Failed to fetch addresses:", error);
+        }
+      }
+    };
+    fetchAddresses();
+  }, [isAuthenticated, accessToken]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddressSelect = (index: number | null) => {
+    setSelectedAddressIndex(index);
+    if (index !== null) {
+      const addr = savedAddresses[index];
+      setFormData((prev) => ({
+        ...prev,
+        name: addr.name || prev.name,
+        email: addr.email || prev.email,
+        phone: addr.phone || prev.phone,
+        doorNo: addr.doorNo,
+        street: addr.street,
+        landmark: addr.landmark || "",
+        town: addr.city,
+        district: addr.district || addr.city,
+        pincode: addr.pincode,
+        state: addr.state,
+        country: addr.country,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        doorNo: "",
+        street: "",
+        landmark: "",
+        town: "",
+        district: "",
+        pincode: "",
+        state: "",
+        country: "IN",
+      }));
+    }
+  };
+
+  const handleOrderPlacement = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      toast.error("Please login to place an order");
+      return;
+    }
+
+    if (!formData.name || !formData.email || !formData.phone || !formData.doorNo || !formData.street || !formData.town || !formData.pincode || !formData.state) {
+      toast.error("Please fill in all required billing details");
+      return;
+    }
+
+    const shippingFees = 150;
+    const codFees = payment === "cod" ? 50 : 0;
+    const totalPrice = product.discountedPrice * quantity;
+
+    const orderData = {
+      deliveryAddress: {
+        name: formData.name,
+        phone: formData.phone,
+        email: formData.email,
+        doorNo: formData.doorNo,
+        street: formData.street,
+        landmark: formData.landmark,
+        city: formData.town,
+        district: formData.district || formData.town,
+        state: formData.state,
+        pincode: formData.pincode,
+        country: formData.country,
+      },
+      paymentType: payment,
+      items: [{
+        productId: product.id,
+        qty: quantity,
+        price: product.discountedPrice,
+      }],
+      totalPrice: totalPrice,
+      gst: 0,
+      subTotal: totalPrice,
+      shippingFees: shippingFees,
+      codFees: codFees,
+      grandTotal: totalPrice + shippingFees + codFees,
+    };
+
+    try {
+      const response = await fetch("http://192.168.0.45:6060/api/orders/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        if (payment === "online" && data.data.razorpayOrder) {
+          handleRazorpayPayment(data.data);
+        } else {
+          toast.success("Order placed successfully!");
+          setShowBuyNowModal(false);
+          router.push("/order-success?orderId=" + data.data.orderId);
+        }
+      } else {
+        toast.error(data.message || "Failed to place order");
+      }
+    } catch (error) {
+      console.error("Order placement error:", error);
+      toast.error("Something went wrong");
+    }
+  };
+
+  const handleRazorpayPayment = (order: any) => {
+    const options = {
+      key: "rzp_test_oHoZ3Q1fF6pYEI", 
+      amount: order.razorpayOrder.amount,
+      currency: "INR",
+      name: "E-Commerce Store",
+      description: "Order Payment",
+      order_id: order.razorpayOrder.id,
+      handler: async (response: any) => {
+        try {
+          const verifyRes = await fetch("http://192.168.0.45:6060/api/orders/verify", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: order.orderId
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+          if (verifyData.success) {
+            toast.success("Payment successful!");
+            setShowBuyNowModal(false);
+            router.push("/order-success?orderId=" + order.orderId);
+          } else {
+            toast.error("Payment verification failed");
+          }
+        } catch (error) {
+          console.error("Verification error:", error);
+          toast.error("Payment verification failed");
+        }
+      },
+      prefill: {
+        name: formData.name,
+        email: formData.email,
+        contact: formData.phone,
+      },
+      theme: {
+        color: "#3C50E0",
+      },
+    };
+
+    const rzp = new (window as any).Razorpay(options);
+    rzp.open();
+  };
+
+
+  const tabs = [
+    {
+      id: "tabOne",
+      title: "Description",
+    },
+    {
+      id: "tabTwo",
+      title: "Additional Information",
+    }
+  ];
+
+  const colors = ["red", "blue", "orange", "pink", "purple"];
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!productId) return;
+      try {
+        setLoading(true);
+        const response = await fetch(API_ENDPOINTS.PRODUCT_DETAILS(productId));
+        const data = await response.json();
+        if (data.success) {
+          const p = data.data;
+          const transformedProduct = {
+            id: p.productId,
+            title: p.productName,
+            reviews: p.totalReviews || 0,
+            price: parseFloat(p.price) || 0,
+            discountedPrice: parseFloat(p.salePrice || p.price) || 0,
+            imgs: {
+              thumbnails: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
+              previews: p.images?.length > 0 
+                ? p.images.map((img: string) => `${API_BASE_URL}${img}`) 
+                : ["/images/products/product-1-bg-1.png"],
+            },
+            slug: p.slug,
+            description: p.description,
+            shortDescription: p.shortDescription,
+            attributes: p.attributes,
+            stock: p.stock,
+            avgRating: p.avgRating || 0,
+            sellerName: p.sellerName
+          };
+          setProduct(transformedProduct);
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [productId]);
+
+  // pass the product here when you get the real data.
+  const handlePreviewSlider = () => {
+    openPreviewModal();
+  };
+
+  const handleAddToWishlist = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to manage wishlist");
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        const response = await fetch(API_ENDPOINTS.REMOVE_FROM_WISHLIST(product.id), {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+        const data = await response.json();
+        if (data.success) {
+          dispatch(removeItemFromWishlist(product.id));
+          toast.success("Removed from wishlist");
+        }
+      } else {
+        const response = await fetch(API_ENDPOINTS.ADD_TO_WISHLIST, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ productId: product.id }),
+        });
+        const data = await response.json();
+        if (data.success) {
+          dispatch(addItemToWishlist({
+            ...product,
+            quantity: 1,
+            status: parseInt(product.stock) > 0 ? "In Stock" : "Out of Stock"
+          }));
+          toast.success("Added to wishlist");
+        }
+      }
+    } catch (error) {
+      console.error("Wishlist error:", error);
+      toast.error("Failed to update wishlist");
+    }
+  };
+
+  const handleAddToCart = () => {
+    if (!product) return;
+    dispatch(
+      addToCart({
+        item: {
+          ...product,
+          quantity,
+        },
+        accessToken,
+        isAuthenticated
+      })
+    );
+    toast.success("Added to cart");
+  };
+
+  const handleBuyNow = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to proceed with Buy Now");
+      router.push("/signin");
+      return;
+    }
+    setShowBuyNowModal(true);
+  };
+
+  return (
+    <>
+      <Script src="https://checkout.razorpay.com/v1/checkout.js" />
+      <Breadcrumb title={"Shop Details"} pages={["shop details"]} />
+
+      {/* Buy Now Modal */}
+      {showBuyNowModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] overflow-hidden flex flex-col animate-fadeIn">
+            <div className="p-6 flex items-center justify-between bg-white z-10">
+              <div>
+                <h3 className="text-xl font-bold text-dark uppercase tracking-wider">Checkout</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Complete your purchase by providing your shipping and payment details.</p>
+              </div>
+              <button 
+                onClick={() => setShowBuyNowModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-dark transition-all"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleOrderPlacement} className="flex-1 overflow-y-auto px-6 pb-6 lg:px-10 lg:pb-10 pt-0">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                {/* Billing Details */}
+                <div className="lg:col-span-7 space-y-8">
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-base text-dark flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-blue/10 text-blue flex items-center justify-center text-[10px] font-bold">1</span>
+                        Shipping Address
+                      </h4>
+                      {selectedAddressIndex !== null && (
+                        <button 
+                          type="button"
+                          onClick={() => handleAddressSelect(null)}
+                          className="text-blue text-xs font-semibold hover:underline"
+                        >
+                          + Add New Address
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[350px] overflow-y-auto pr-2 custom-scrollbar pb-2">
+                      {savedAddresses.map((addr, idx) => (
+                        <div 
+                          key={idx}
+                          onClick={() => handleAddressSelect(idx)}
+                          className={`p-4 rounded-xl border cursor-pointer transition-all relative group ${selectedAddressIndex === idx ? "border-blue bg-blue/5" : "border-gray-100 hover:border-gray-200 bg-white"}`}
+                        >
+                          <div className={`absolute top-4 right-4 w-4 h-4 rounded-full border flex items-center justify-center transition-all ${selectedAddressIndex === idx ? "border-blue bg-blue text-white" : "border-gray-200"}`}>
+                            {selectedAddressIndex === idx && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                          </div>
+                          <p className="font-bold text-dark text-base mb-1">{addr.name}</p>
+                          <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-2">
+                            {addr.doorNo}, {addr.street}, {addr.city}, {addr.state} - {addr.pincode}
+                          </p>
+                          <div className="flex items-center gap-2 text-[11px] text-gray-400 font-medium">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            {addr.phone}
+                          </div>
+                        </div>
+                      ))}
+
+                      <div 
+                        onClick={() => handleAddressSelect(null)}
+                        className="p-4 rounded-xl border-2 border-dashed border-gray-100 cursor-pointer transition-all flex flex-col items-center justify-center min-h-[110px] text-center bg-white hover:border-blue/20 text-gray-300 hover:text-blue/50"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mb-1.5 transition-colors">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </div>
+                        <span className="font-semibold text-xs">Add New Address</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedAddressIndex === null && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 pt-0 animate-fadeIn">
+                      <div className="col-span-full">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Full Name *</label>
+                        <input type="text" name="name" value={formData.name} onChange={handleInputChange} placeholder="John Doe" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Email *</label>
+                        <input type="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="john@example.com" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Phone *</label>
+                        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 9876543210" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Flat/House No *</label>
+                        <input type="text" name="doorNo" value={formData.doorNo} onChange={handleInputChange} placeholder="Door No" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Street/Area *</label>
+                        <input type="text" name="street" value={formData.street} onChange={handleInputChange} placeholder="Street Name" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">City *</label>
+                        <input type="text" name="town" value={formData.town} onChange={handleInputChange} placeholder="City" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pincode *</label>
+                        <input type="text" name="pincode" value={formData.pincode} onChange={handleInputChange} placeholder="600001" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                      <div className="col-span-full">
+                        <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1">State *</label>
+                        <input type="text" name="state" value={formData.state} onChange={handleInputChange} placeholder="State" required className="w-full rounded-lg border-gray-100/50 border bg-white py-2 px-3 text-dark text-sm hover:border-gray-200/50 focus:border-blue/20 outline-none transition-all" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Summary & Payment */}
+                <div className="lg:col-span-5">
+                  <div className="sticky top-0 space-y-6">
+                    <div className="bg-gray-50/50 p-6 rounded-3xl">
+                      <h4 className="font-semibold text-base text-dark mb-5 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-blue/10 text-blue flex items-center justify-center text-[10px] font-bold">2</span>
+                        Order Review
+                      </h4>
+                      
+                      <div className="space-y-4">
+                        <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                          {product.imgs?.thumbnails?.[0] && (
+                            <div className="w-16 h-16 rounded-xl overflow-hidden bg-white border border-gray-100 p-1.5 flex-shrink-0">
+                              <Image src={product.imgs.thumbnails[0]} alt={product.title} width={64} height={64} className="object-contain w-full h-full" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-dark font-bold text-sm mb-1 line-clamp-1">{product.title}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold text-blue bg-blue/10 px-1.5 py-0.5 rounded">Qty: {quantity}</span>
+                              <span className="text-xs text-gray-500">₹{product.discountedPrice}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2.5 pt-1">
+                          <div className="flex justify-between text-gray-600 text-sm">
+                            <span>Subtotal</span>
+                            <span className="text-dark">₹{product.discountedPrice * quantity}</span>
+                          </div>
+                          <div className="flex justify-between text-gray-600 text-sm">
+                            <span>Shipping</span>
+                            <span className="text-dark">₹150</span>
+                          </div>
+                          {payment === "cod" && (
+                            <div className="flex justify-between text-gray-600 text-sm">
+                              <span>COD Fee</span>
+                              <span className="text-dark">₹50</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between text-lg  text-dark pt-4 border-t border-dashed border-gray-300">
+                            <span>Total Amount</span>
+                            <span className="text-blue">₹{product.discountedPrice * quantity + 150 + (payment === "cod" ? 50 : 0)}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-6">
+                        <h4 className="font-bold text-xs text-dark mb-2">Payment Method</h4>
+                        <div className="grid grid-cols-2 gap-2">
+                          <label className={`relative flex flex-row items-center gap-3 p-2 border font-medium rounded-xl cursor-pointer transition-all ${payment === "cod" ? "border-blue bg-blue/5 ring-1 ring-blue/10" : "border-gray-200 hover:border-blue/10 bg-white"}`}>
+                            <input type="radio" name="payment" checked={payment === "cod"} onChange={() => setPayment("cod")} className="sr-only" />
+                            <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0 ${payment === "cod" ? "border-blue bg-blue text-white" : "border-gray-300"}`}>
+                              {payment === "cod" && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-bold ${payment === "cod" ? "text-blue" : "text-gray-700"}`}>COD</p>
+                              <p className="text-[9px] text-gray-400 truncate">Pay at doorstep</p>
+                            </div>
+                          </label>
+                          <label className={`relative flex flex-row items-center gap-3 p-2  font-medium border rounded-xl cursor-pointer transition-all ${payment === "online" ? "border-blue bg-blue/5 ring-1 ring-blue/10" : "border-gray-200 hover:border-blue/10 bg-white"}`}>
+                            <input type="radio" name="payment" checked={payment === "online"} onChange={() => setPayment("online")} className="sr-only" />
+                            <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center flex-shrink-0 ${payment === "online" ? "border-blue bg-blue text-white" : "border-gray-300"}`}>
+                              {payment === "online" && <div className="w-1.5 h-1.5 rounded-full bg-white"></div>}
+                            </div>
+                            <div className="min-w-0">
+                              <p className={`text-xs font-bold ${payment === "online" ? "text-blue" : "text-gray-700"}`}>ONLINE</p>
+                              <p className="text-[9px] text-gray-400 truncate">UPI, Cards, etc.</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+
+                      <button 
+                        type="submit"
+                        className="w-full bg-blue text-white py-3 px-6 rounded-xl font-bold text-base hover:bg-blue-dark transition-all mt-6 active:scale-[0.98] flex items-center justify-center gap-2 group"
+                      >
+                        Place Order
+                        <svg className="group-hover:translate-x-1 transition-transform" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                      </button>
+
+                      <p className="text-center text-[10px] text-gray-400 mt-4 flex items-center justify-center gap-1">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                        Secure 256-bit SSL Payment
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue"></div>
+        </div>
+      ) : !product ? (
+        <div className="text-center py-20">Product not found</div>
+      ) : (
+        <>
+          <section className="overflow-hidden relative pb-4 pt-20 lg:pt-18 xl:pt-20">
+            <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+              <div className="flex flex-col lg:flex-row gap-7.5 xl:gap-17.5 items-start">
+                <div className="lg:w-[45%] w-full lg:sticky lg:top-28">
+                  <div className="lg:min-h-[600px] rounded-lg shadow-1 bg-gray-2 p-4 sm:p-7.5 relative flex items-start justify-center text-center">
+                    <div className="w-full h-full flex items-start justify-center">
+                      <button
+                        onClick={handlePreviewSlider}
+                        aria-label="button for zoom"
+                        className="gallery__Image w-11 h-11 rounded-[5px] bg-gray-1 shadow-1 flex items-center justify-center ease-out duration-200 text-dark hover:text-blue absolute top-4 lg:top-6 right-4 lg:right-6 z-50"
+                      >
+                        <svg
+                          className="fill-current"
+                          width="22"
+                          height="22"
+                          viewBox="0 0 22 22"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            clipRule="evenodd"
+                            d="M9.11493 1.14581L9.16665 1.14581C9.54634 1.14581 9.85415 1.45362 9.85415 1.83331C9.85415 2.21301 9.54634 2.52081 9.16665 2.52081C7.41873 2.52081 6.17695 2.52227 5.23492 2.64893C4.31268 2.77292 3.78133 3.00545 3.39339 3.39339C3.00545 3.78133 2.77292 4.31268 2.64893 5.23492C2.52227 6.17695 2.52081 7.41873 2.52081 9.16665C2.52081 9.54634 2.21301 9.85415 1.83331 9.85415C1.45362 9.85415 1.14581 9.54634 1.14581 9.16665L1.14581 9.11493C1.1458 7.43032 1.14579 6.09599 1.28619 5.05171C1.43068 3.97699 1.73512 3.10712 2.42112 2.42112C3.10712 1.73512 3.97699 1.43068 5.05171 1.28619C6.09599 1.14579 7.43032 1.1458 9.11493 1.14581ZM16.765 2.64893C15.823 2.52227 14.5812 2.52081 12.8333 2.52081C12.4536 2.52081 12.1458 2.21301 12.1458 1.83331C12.1458 1.45362 12.4536 1.14581 12.8333 1.14581L12.885 1.14581C14.5696 1.1458 15.904 1.14579 16.9483 1.28619C18.023 1.43068 18.8928 1.73512 19.5788 2.42112C20.2648 3.10712 20.5693 3.97699 20.7138 5.05171C20.8542 6.09599 20.8542 7.43032 20.8541 9.11494V9.16665C20.8541 9.54634 20.5463 9.85415 20.1666 9.85415C19.787 9.85415 19.4791 9.54634 19.4791 9.16665C19.4791 7.41873 19.4777 6.17695 19.351 5.23492C19.227 4.31268 18.9945 3.78133 18.6066 3.39339C18.2186 3.00545 17.6873 2.77292 16.765 2.64893ZM1.83331 12.1458C2.21301 12.1458 2.52081 12.4536 2.52081 12.8333C2.52081 14.5812 2.52227 15.823 2.64893 16.765C2.77292 17.6873 3.00545 18.2186 3.39339 18.6066C3.78133 18.9945 4.31268 19.227 5.23492 19.351C6.17695 19.4777 7.41873 19.4791 9.16665 19.4791C9.54634 19.4791 9.85415 19.787 9.85415 20.1666C9.85415 20.5463 9.54634 20.8541 9.16665 20.8541H9.11494C7.43032 20.8542 6.09599 20.8542 5.05171 20.7138C3.97699 20.5693 3.10712 20.2648 2.42112 19.5788C1.73512 18.8928 1.43068 18.023 1.28619 16.9483C1.14579 15.904 1.1458 14.5696 1.14581 12.885L1.14581 12.8333C1.14581 12.4536 1.45362 12.1458 1.83331 12.1458ZM20.1666 12.1458C20.5463 12.1458 20.8541 12.4536 20.8541 12.8333V12.885C20.8542 14.5696 20.8542 15.904 20.7138 16.9483C20.5693 18.023 20.2648 18.8928 19.5788 19.5788C18.8928 20.2648 18.023 20.5693 16.9483 20.7138C15.904 20.8542 14.5696 20.8542 12.885 20.8541H12.8333C12.4536 20.8541 12.1458 20.5463 12.1458 20.1666C12.1458 19.787 12.4536 19.4791 12.8333 19.4791C14.5812 19.4791 15.823 19.4777 16.765 19.351C17.6873 19.227 18.2186 18.9945 18.6066 18.6066C18.9945 18.2186 19.227 17.6873 19.351 16.765C19.4777 15.823 19.4791 14.5812 19.4791 12.8333C19.4791 12.4536 19.787 12.1458 20.1666 12.1458Z"
+                            fill=""
+                          />
+                        </svg>
+                      </button>
+
+                      {product.imgs?.previews?.[previewImg] && (
+                        <Image
+                          src={product.imgs.previews[previewImg]}
+                          alt="products-details"
+                          width={600}
+                          height={600}
+                          className="object-contain max-h-[550px]"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ?  &apos;border-blue &apos; :  &apos;border-transparent&apos; */}
+                  <div className="flex flex-wrap sm:flex-nowrap gap-4.5 mt-6">
+                    {product.imgs?.thumbnails.map((item, key) => (
+                      <button
+                        onClick={() => setPreviewImg(key)}
+                        key={key}
+                        className={`flex items-center justify-center w-15 sm:w-25 h-15 sm:h-25 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue ${key === previewImg
+                          ? "border-blue"
+                          : "border-transparent"
+                          }`}
+                      >
+                        <Image
+                          width={50}
+                          height={50}
+                          src={item}
+                          alt="thumbnail"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* <!-- product content --> */}
+                <div className="lg:w-[55%] w-full">
+                  <div className="flex items-center justify-between mb-3 gap-4">
+                    <h2 className="text-sm sm:text-base xl:text-xl font-normal text-dark">
+                      {product.title}
+                    </h2>
+
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1.5">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <g clipPath="url(#clip0_375_9221)">
+                            <path
+                              d="M10 0.5625C4.78125 0.5625 0.5625 4.78125 0.5625 10C0.5625 15.2188 4.78125 19.4688 10 19.4688C15.2188 19.4688 19.4688 15.2188 19.4688 10C19.4688 4.78125 15.2188 0.5625 10 0.5625ZM10 18.0625C5.5625 18.0625 1.96875 14.4375 1.96875 10C1.96875 5.5625 5.5625 1.96875 10 1.96875C14.4375 1.96875 18.0625 5.59375 18.0625 10.0312C18.0625 14.4375 14.4375 18.0625 10 18.0625Z"
+                              fill="#22AD5C"
+                            />
+                            <path
+                              d="M12.6875 7.09374L8.9688 10.7187L7.2813 9.06249C7.00005 8.78124 6.56255 8.81249 6.2813 9.06249C6.00005 9.34374 6.0313 9.78124 6.2813 10.0625L8.2813 12C8.4688 12.1875 8.7188 12.2812 8.9688 12.2812C9.2188 12.2812 9.4688 12.1875 9.6563 12L13.6875 8.12499C13.9688 7.84374 13.9688 7.40624 13.6875 7.12499C13.4063 6.84374 12.9688 6.84374 12.6875 7.09374Z"
+                              fill="#22AD5C"
+                            />
+                          </g>
+                          <defs>
+                            <clipPath id="clip0_375_9221">
+                              <rect width="20" height="20" fill="white" />
+                            </clipPath>
+                          </defs>
+                        </svg>
+
+                        <span className="text-green font-medium"> In Stock </span>
+                      </div>
+
+                      <button
+                        onClick={handleAddToWishlist}
+                        className="flex items-center justify-center ease-out duration-200 hover:scale-110"
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill={isWishlisted ? "#FF0000" : "none"}
+                          xmlns="http://www.w3.org/2000/svg"
+                          stroke={isWishlisted ? "#FF0000" : "#64748B"}
+                          strokeWidth="2"
+                        >
+                          <path
+                            d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-5.5 mb-4.5">
+                    <div className="flex items-center gap-2.5">
+                      {/* <!-- stars --> */}
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={i < Math.round(product.avgRating || 0) ? "fill-[#FFA645]" : "fill-gray-4"}
+                            width="18"
+                            height="18"
+                            viewBox="0 0 18 18"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <g clipPath="url(#clip0_375_9172)">
+                              <path
+                                d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
+                                fill=""
+                              />
+                            </g>
+                            <defs>
+                              <clipPath id="clip0_375_9172">
+                                <rect width="18" height="18" fill="white" />
+                              </clipPath>
+                            </defs>
+                          </svg>
+                        ))}
+                      </div>
+
+                      <span> ({product.reviews} customer reviews) </span>
+                    </div>
+                  </div>
+
+                  <h3 className="font-medium text-custom-1 mb-4.5">
+                    <span className="text-sm sm:text-base text-dark">
+                      Price: ₹{product.discountedPrice}
+                    </span>
+                    {product.price > product.discountedPrice && (
+                      <span className="line-through text-dark-4 ml-2">
+                        {" "}
+                        ₹{product.price}{" "}
+                      </span>
+                    )}
+                  </h3>
+
+                  <ul className="flex flex-col gap-2">
+                    <li className="flex items-center gap-2.5">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
+                          fill="#3C50E0"
+                        />
+                        <path
+                          fillRule="evenodd"
+                          clipRule="evenodd"
+                          d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
+                          fill="#3C50E0"
+                        />
+                      </svg>
+                      Free delivery available
+                    </li>
+                  </ul>
+
+                  {product.shortDescription && (
+                    <div className="mt-4 border-b border-gray-3 pb-6">
+                      <div 
+                        className={`text-dark text-sm leading-relaxed ${!showFullDescription ? "line-clamp-2" : ""}`}
+                      >
+                        {product.shortDescription}
+                      </div>
+                      <button 
+                        onClick={() => setShowFullDescription(!showFullDescription)}
+                        className="text-blue text-sm font-medium mt-1 hover:underline focus:outline-none"
+                      >
+                        {showFullDescription ? "View Less" : "View More"}
+                      </button>
+
+                      {product.sellerName && (
+                        <div className="flex items-center gap-2 mt-4 text-dark font-medium text-sm">
+                          <svg 
+                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                            className="text-blue"
+                          >
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                          </svg>
+                          <span>Seller: <span className="text-black cursor-pointer hover:underline  ml-1">{product.sellerName}</span></span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-8 mb-9 border-t border-gray-3 pt-8">
+                    <h3 className="font-medium text-xl text-dark mb-7 tracking-tight">High Specifications</h3>
+                    <div className="space-y-5">
+                      {(showFullSpecs 
+                        ? product.attributes 
+                        : product.attributes?.slice(0, 3)
+                      )?.map((attr: any, index: number) => (
+                        <div key={index} className="flex items-center gap-8 group">
+                          <div className="w-1/4 sm:w-[150px] text-dark text-[12px] font-medium uppercase tracking-[0.1em]">
+                            {attr.name}
+                          </div>
+                          <div className="hidden sm:block w-px h-6 bg-gray-3 group-hover:bg-blue group-hover:h-8 transition-all duration-300"></div>
+                          <div className="flex-1 text-dark font-normal text-[15px] border-l sm:border-l-0 pl-4 sm:pl-0 border-gray-3">
+                            {attr.value}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {product.attributes?.length > 3 && (
+                      <button 
+                        onClick={() => setShowFullSpecs(!showFullSpecs)}
+                        className="text-blue text-sm font-medium mt-6 hover:underline focus:outline-none flex items-center gap-1"
+                      >
+                        {showFullSpecs ? "View Less Specifications" : "View All Specifications"}
+                        <svg 
+                          className={`fill-current transition-transform duration-300 ${showFullSpecs ? "rotate-180" : ""}`}
+                          width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path d="M6 8.5L2.5 5H9.5L6 8.5Z" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  <form onSubmit={(e) => e.preventDefault()}>
+                    <div className="flex flex-wrap items-center gap-4.5 mt-8">
+                      <button
+                        onClick={handleAddToCart}
+                        className="inline-flex items-center justify-center gap-2.5 font-medium text-white bg-blue py-3 px-6 rounded-md ease-out duration-200 hover:bg-blue-dark uppercase tracking-wide shadow-md text-xs sm:text-sm min-w-[160px]"
+                      >
+                        <svg
+                          className="fill-current"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M16.9231 4.30769H4.61538L3.69231 1.23077H0.615385V2.76923H2.61538L5.38462 12.3077H16.9231V10.7692H7.23077L6.61538 8.61538H16.9231L18.4615 4.30769ZM16.0385 7.07692H6.18462L5.69231 5.38462H17.4154L16.0385 7.07692ZM6.15385 13.8462C5.30769 13.8462 4.61538 14.5385 4.61538 15.3846C4.61538 16.2308 5.30769 16.9231 6.15385 16.9231C7 16.9231 7.69231 16.2308 7.69231 15.3846C7.69231 14.5385 7 13.8462 6.15385 13.8462ZM15.3846 13.8462C14.5385 13.8462 13.8462 14.5385 13.8462 15.3846C13.8462 16.2308 14.5385 16.9231 15.3846 16.9231C16.2308 16.9231 16.9231 16.2308 16.9231 15.3846C16.9231 14.5385 16.2308 13.8462 15.3846 13.8462Z"
+                            fill=""
+                          />
+                        </svg>
+                        ADD TO CART
+                      </button>
+
+                      <button
+                        onClick={handleBuyNow}
+                        className="inline-flex items-center justify-center gap-2.5 font-medium text-white bg-orange py-3 px-6 rounded-md ease-out duration-200 hover:bg-orange-dark uppercase tracking-wide shadow-md text-xs sm:text-sm min-w-[160px]"
+                      >
+                        <svg
+                          className="fill-current"
+                          width="16"
+                          height="16"
+                          viewBox="0 0 20 20"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            d="M12.3077 1.23077L3.07692 10.4615L8.46154 11.2308L7.69231 18.7692L16.9231 9.53846L11.5385 8.76923L12.3077 1.23077Z"
+                            fill=""
+                          />
+                        </svg>
+                        BUY NOW
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="overflow-hidden bg-gray-2 pt-4 pb-20">
+            <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
+              {/* <!--== tab header start ==--> */}
+              <div className="flex flex-wrap items-center bg-white rounded-[10px] shadow-1 gap-5 xl:gap-12.5 py-4.5 px-4 sm:px-6">
+                {tabs.map((item, key) => (
+                  <button
+                    key={key}
+                    onClick={() => setActiveTab(item.id)}
+                    className={`font-medium lg:text-lg ease-out duration-200 hover:text-blue relative before:h-0.5 before:bg-blue before:absolute before:left-0 before:bottom-0 before:ease-out before:duration-200 hover:before:w-full ${activeTab === item.id
+                      ? "text-blue before:w-full"
+                      : "text-dark before:w-0"
+                      }`}
+                  >
+                    {item.title}
+                  </button>
+                ))}
+              </div>
+              {/* <!--== tab header end ==--> */}
+
+              {/* <!--== tab content start ==--> */}
+              {/* <!-- tab content one start --> */}
+              <div>
+                <div
+                  className={`flex-col sm:flex-row gap-2 xl:gap-12.5 mt-6 ${activeTab === "tabOne" ? "flex" : "hidden"
+                    }`}
+                >
+                  <div className="w-full">
+                    <h2 className="font-medium text-2xl text-dark mb-7">
+                      Description:
+                    </h2>
+
+                    <div className="mb-6  text-dark">
+                      {product.description}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {/* <!-- tab content one end --> */}
+
+              {/* <!-- tab content two start --> */}
+              <div>
+                <div
+                  className={`rounded-xl bg-white shadow-1 p-4 sm:p-6 mt-6 ${activeTab === "tabTwo" ? "block" : "hidden"
+                    }`}
+                >
+                  {product.attributes?.map((attr: any, index: number) => (
+                    <div key={index} className="rounded-md even:bg-gray-1 flex py-4 px-4 sm:px-5">
+                      <div className="max-w-[450px] min-w-[140px] w-full">
+                        <p className="text-sm sm:text-base text-dark">{attr.name}</p>
+                      </div>
+                      <div className="w-full">
+                        <p className="text-sm sm:text-base text-dark font-normal">{attr.value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* <!-- tab content two end --> */}
+
+              {/* <!-- tab content three start --> */}
+              <div>
+                <div
+                  className={`flex-col sm:flex-row gap-7.5 xl:gap-12.5 mt-6 ${activeTab === "tabThree" ? "flex" : "hidden"
+                    }`}
+                >
+                  <div className="max-w-[570px] w-full">
+                    <h2 className="font-medium text-2xl text-dark mb-9">
+                      03 Review for this product
+                    </h2>
+
+                    <div className="flex flex-col gap-6">
+                      {/* <!-- review item --> */}
+                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                          <a href="#" className="flex items-center gap-4">
+                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
+                              <Image
+                                src="/images/users/user-01.jpg"
+                                alt="author"
+                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
+                                width={50}
+                                height={50}
+                              />
+                            </div>
+
+                            <div>
+                              <h3 className="font-medium text-dark">
+                                Davis Dorwart
+                              </h3>
+                              <p className="text-custom-sm">
+                                Serial Entrepreneur
+                              </p>
+                            </div>
+                          </a>
+
+                          <div className="flex items-center gap-1">
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-dark mt-6">
+                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
+                          malesuada justo vitaeaugue suscipit beautiful
+                          vehicula’’
+                        </p>
+                      </div>
+
+                      {/* <!-- review item --> */}
+                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                          <a href="#" className="flex items-center gap-4">
+                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
+                              <Image
+                                src="/images/users/user-01.jpg"
+                                alt="author"
+                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
+                                width={50}
+                                height={50}
+                              />
+                            </div>
+
+                            <div>
+                              <h3 className="font-medium text-dark">
+                                Davis Dorwart
+                              </h3>
+                              <p className="text-custom-sm">
+                                Serial Entrepreneur
+                              </p>
+                            </div>
+                          </a>
+
+                          <div className="flex items-center gap-1">
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-dark mt-6">
+                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
+                          malesuada justo vitaeaugue suscipit beautiful
+                          vehicula’’
+                        </p>
+                      </div>
+
+                      {/* <!-- review item --> */}
+                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
+                        <div className="flex items-center justify-between">
+                          <a href="#" className="flex items-center gap-4">
+                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
+                              <Image
+                                src="/images/users/user-01.jpg"
+                                alt="author"
+                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
+                                width={50}
+                                height={50}
+                              />
+                            </div>
+
+                            <div>
+                              <h3 className="font-medium text-dark">
+                                Davis Dorwart
+                              </h3>
+                              <p className="text-custom-sm">
+                                Serial Entrepreneur
+                              </p>
+                            </div>
+                          </a>
+
+                          <div className="flex items-center gap-1">
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+
+                            <span className="cursor-pointer text-[#FBB040]">
+                              <svg
+                                className="fill-current"
+                                width="15"
+                                height="16"
+                                viewBox="0 0 15 16"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                              >
+                                <path
+                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                  fill=""
+                                />
+                              </svg>
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="text-dark mt-6">
+                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
+                          malesuada justo vitaeaugue suscipit beautiful
+                          vehicula’’
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="max-w-[550px] w-full">
+                    <form>
+                      <h2 className="font-medium text-2xl text-dark mb-3.5">
+                        Add a Review
+                      </h2>
+
+                      <p className="mb-6">
+                        Your email address will not be published. Required
+                        fields are marked *
+                      </p>
+
+                      <div className="flex items-center gap-3 mb-7.5">
+                        <span>Your Rating*</span>
+
+                        <div className="flex items-center gap-1">
+                          <span className="cursor-pointer text-[#FBB040]">
+                            <svg
+                              className="fill-current"
+                              width="15"
+                              height="16"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          </span>
+
+                          <span className="cursor-pointer text-[#FBB040]">
+                            <svg
+                              className="fill-current"
+                              width="15"
+                              height="16"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          </span>
+
+                          <span className="cursor-pointer text-[#FBB040]">
+                            <svg
+                              className="fill-current"
+                              width="15"
+                              height="16"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          </span>
+
+                          <span className="cursor-pointer text-gray-5">
+                            <svg
+                              className="fill-current"
+                              width="15"
+                              height="16"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          </span>
+
+                          <span className="cursor-pointer text-gray-5">
+                            <svg
+                              className="fill-current"
+                              width="15"
+                              height="16"
+                              viewBox="0 0 15 16"
+                              fill="none"
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path
+                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
+                                fill=""
+                              />
+                            </svg>
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
+                        <div className="mb-5">
+                          <label htmlFor="comments" className="block mb-2.5">
+                            Comments
+                          </label>
+
+                          <textarea
+                            name="comments"
+                            id="comments"
+                            rows={5}
+                            placeholder="Your comments"
+                            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full p-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          ></textarea>
+
+                          <span className="flex items-center justify-between mt-2.5">
+                            <span className="text-custom-sm text-dark-4">
+                              Maximum
+                            </span>
+                            <span className="text-custom-sm text-dark-4">
+                              0/250
+                            </span>
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col lg:flex-row gap-5 sm:gap-7.5 mb-5.5">
+                          <div>
+                            <label htmlFor="name" className="block mb-2.5">
+                              Name
+                            </label>
+
+                            <input
+                              type="text"
+                              name="name"
+                              id="name"
+                              placeholder="Your name"
+                              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                            />
+                          </div>
+
+                          <div>
+                            <label htmlFor="email" className="block mb-2.5">
+                              Email
+                            </label>
+
+                            <input
+                              type="email"
+                              name="email"
+                              id="email"
+                              placeholder="Your email"
+                              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                            />
+                          </div>
+                        </div>
+
+                        <button
+                          type="submit"
+                          className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+                        >
+                          Submit Reviews
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              {/* <!-- tab content three end --> */}
+              {/* <!--== tab content end ==--> */}
+            </div>
+          </section>
+
+
+          <Newsletter />
+        </>
+      )}
+    </>
+  );
+};
+
+export default ShopDetails;
