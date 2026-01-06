@@ -221,7 +221,8 @@ exports.getProductById = async (req, res) => {
 
     let sellerName = null;
     let shopName = null;
-    if (product.roleId === 2 && product.userId) {
+
+    if (product.userId) {
       const user = await User.collection().findOne({
         $or: [
           { userId: product.userId },
@@ -230,12 +231,13 @@ exports.getProductById = async (req, res) => {
       });
       
       if (user) {
-        sellerName = `${user.firstName} ${user.lastName}`.trim();
-        if (user.userId) {
-          const seller = await Seller.findByUserId(user.userId);
-          if (seller) {
-            shopName = seller.shopName;
-          }
+        sellerName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        // Fallback to name or email if firstName/lastName are missing
+        if (!sellerName) sellerName = user.name || user.email || 'Unknown';
+
+        const seller = await Seller.findByUserId(user.userId || user._id?.toString());
+        if (seller) {
+          shopName = seller.shopName;
         }
       }
     }
