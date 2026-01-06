@@ -77,10 +77,42 @@ exports.getSellerListings = async (req, res) => {
       sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
     };
 
-    const [listings, total] = await Promise.all([
-      SellerProduct.find(query, { skip, limit: limitNum }),
-      SellerProduct.collection().countDocuments(query)
-    ]);
+    const pipeline = [
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: 'productId',
+          as: 'productDetails'
+        }
+      },
+      { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limitNum }],
+          totalCount: [{ $count: 'count' }]
+        }
+      }
+    ];
+
+    const result = await SellerProduct.collection().aggregate(pipeline).toArray();
+    
+    const listings = result[0].data.map(listing => {
+      const { productDetails, ...rest } = listing;
+      return {
+        ...rest,
+        productName: productDetails?.productName || 'Unknown Product',
+        productImages: productDetails?.images || [],
+        productDescription: productDetails?.description || '',
+        productAttributes: productDetails?.attributes || [],
+        productAvgRating: productDetails?.avgRating || 0,
+        productSlug: productDetails?.slug || ''
+      };
+    });
+
+    const total = result[0].totalCount[0]?.count || 0;
 
     res.status(200).json({
       success: true,

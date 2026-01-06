@@ -159,52 +159,13 @@ exports.getProducts = async (req, res) => {
       if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
     });
 
-    // Bulk fetch categories and marketplace listings to avoid N+1 queries
-    const mainCategoryIds = [...new Set(products.map(p => p.mainCategoryId).filter(id => id))];
-    const subCategoryIds = [...new Set(products.map(p => p.subCategoryId).filter(id => id))];
-    const productIdsForListings = products.map(p => p.productId);
-
-    const [mainCats, subCats, allListings] = await Promise.all([
-      MainCategory.collection().find({
-        $or: [
-          { categoryId: { $in: mainCategoryIds } },
-          { _id: { $in: mainCategoryIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-        ]
-      }).toArray(),
-      SubCategory.collection().find({
-        $or: [
-          { subCategoryId: { $in: subCategoryIds } },
-          { _id: { $in: subCategoryIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-        ]
-      }).toArray(),
-      SellerProduct.collection().find({ productId: { $in: productIdsForListings } }).toArray()
-    ]);
-
-    const mainCatMap = new Map();
-    mainCats.forEach(c => {
-      if (c.categoryId) mainCatMap.set(c.categoryId, c.name);
-      if (c._id) mainCatMap.set(c._id.toString(), c.name);
-    });
-
-    const subCatMap = new Map();
-    subCats.forEach(c => {
-      if (c.subCategoryId) subCatMap.set(c.subCategoryId, c.name);
-      if (c._id) subCatMap.set(c._id.toString(), c.name);
-    });
-
-    const listingsMap = new Map();
-    allListings.forEach(l => {
-      if (!listingsMap.has(l.productId)) {
-        listingsMap.set(l.productId, []);
-      }
-      listingsMap.get(l.productId).push(l);
-    });
-
-    // Map names and listings to products
-    const productsWithCategoryNames = products.map((product) => {
-      const mainCategoryName = product.mainCategoryId ? mainCatMap.get(product.mainCategoryId.toString()) : null;
-      const subCategoryName = product.subCategoryId ? subCatMap.get(product.subCategoryId.toString()) : null;
-      const marketplaceListings = listingsMap.get(product.productId) || [];
+    // Map category names and seller names
+    const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
+      const [mainCategory, subCategory, marketplaceListings] = await Promise.all([
+        product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+        SellerProduct.collection().find({ productId: product.productId }).toArray()
+      ]);
 
       let sellerName = null;
       let shopName = null;
@@ -219,13 +180,13 @@ exports.getProducts = async (req, res) => {
 
       return {
         ...product,
-        mainCategoryName: mainCategoryName || null,
-        subCategoryName: subCategoryName || null,
-        marketplaceListings,
+        mainCategoryName: mainCategory ? mainCategory.name : null,
+        subCategoryName: subCategory ? subCategory.name : null,
+        marketplaceListings: marketplaceListings || [],
         ...(sellerName && { sellerName }),
         ...(shopName && { shopName })
       };
-    });
+    }));
 
     res.status(200).json({ 
       success: true, 
@@ -265,7 +226,7 @@ exports.getProductById = async (req, res) => {
         $or: [
           { userId: product.userId },
           { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
-        ].filter(q => q.userId !== undefined || (q._id !== null && q._id !== undefined))
+        ].filter(q => q._id !== null || q.userId !== undefined)
       });
       
       if (user) {

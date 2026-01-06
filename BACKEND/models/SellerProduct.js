@@ -12,13 +12,6 @@ class SellerProduct {
       sellerProductId: crypto.randomUUID(),
       productId: data.productId, // Reference to global Product
       sellerId: ObjectId.isValid(data.sellerId) ? new ObjectId(data.sellerId) : data.sellerId,
-      productName: data.productName || null,
-      images: data.images || [],
-      description: data.description || null,
-      shortDescription: data.shortDescription || null,
-      attributes: data.attributes || [],
-      mainCategoryId: data.mainCategoryId || null,
-      subCategoryId: data.subCategoryId || null,
       price: parseFloat(data.price),
       salePrice: data.salePrice ? parseFloat(data.salePrice) : null,
       stock: parseInt(data.stock) || 0,

@@ -109,13 +109,6 @@ exports.createProduct = async (req, res) => {
     await SellerProduct.create({
       productId: product.productId,
       sellerId: req.userId || userId,
-      productName: product.productName,
-      images: product.images,
-      description: product.description,
-      shortDescription: product.shortDescription,
-      attributes: product.attributes,
-      mainCategoryId: product.mainCategoryId,
-      subCategoryId: product.subCategoryId,
       price: price,
       salePrice: req.body.salePrice || null,
       stock: stock,
