@@ -397,7 +397,7 @@ function KYCPage() {
                 setFormData(initialData);
                 setOriginalData(initialData);
                 if (user.sellerInfo.shopLogo) {
-                    setLogoPreview(`${("TURBOPACK compile-time value", "http://192.168.0.45:6060")}${user.sellerInfo.shopLogo}`);
+                    setLogoPreview(`${("TURBOPACK compile-time value", "http://192.168.0.42:6060")}${user.sellerInfo.shopLogo}`);
                 }
             }
         }
@@ -456,7 +456,7 @@ function KYCPage() {
             };
             setFormData(resetData);
             if (user.sellerInfo.shopLogo) {
-                setLogoPreview(`${("TURBOPACK compile-time value", "http://192.168.0.45:6060")}${user.sellerInfo.shopLogo}`);
+                setLogoPreview(`${("TURBOPACK compile-time value", "http://192.168.0.42:6060")}${user.sellerInfo.shopLogo}`);
             }
         }
     };
@@ -623,7 +623,7 @@ function KYCPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "w-24 h-24 rounded-lg overflow-hidden border-2 border-primary shadow-md",
                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                            src: `${("TURBOPACK compile-time value", "http://192.168.0.45:6060")}${user.sellerInfo.shopLogo}`,
+                                                            src: `${("TURBOPACK compile-time value", "http://192.168.0.42:6060")}${user.sellerInfo.shopLogo}`,
                                                             alt: "Shop Logo",
                                                             className: "w-full h-full object-cover"
                                                         }, void 0, false, {

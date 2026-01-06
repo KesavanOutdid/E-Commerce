@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useProducts } from '@/hooks/useProducts'
@@ -9,39 +9,169 @@ import Loader from '@/app/components/Common/Loader'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 
+type ProductCategory = 'own' | 'admin'
+
+interface PriceModalData {
+    type: 'create' | 'update'
+    productId?: string
+    listingId?: string
+    productName: string
+    currentPrice?: number
+    currentSalePrice?: number
+    currentStock?: number
+    currentDeliveryDays?: number
+}
+
 export default function ProductsPage() {
     const router = useRouter()
     const { user, isAuthenticated, isLoading } = useAuth()
-    const { products, loading, totalPages, totalProducts, fetchProducts, deleteProduct } = useProducts()
+    const {
+        listings,
+        adminProducts,
+        loading,
+        totalPages,
+        totalListings,
+        adminTotalPages,
+        adminTotalProducts,
+        fetchSellerListings,
+        fetchAdminProducts,
+        createListing,
+        updateListing,
+        deleteListing,
+        deleteProduct
+    } = useProducts()
     const hasFetchedProducts = useRef(false)
     const [currentPage, setCurrentPage] = useState(1)
+    const [adminCurrentPage, setAdminCurrentPage] = useState(1)
     const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+    const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('own')
+    const [priceModal, setPriceModal] = useState<PriceModalData | null>(null)
+    const [priceFormData, setPriceFormData] = useState({
+        price: '',
+        salePrice: '',
+        stock: '',
+        deliveryDays: '3',
+    })
+
+    const displayedProducts = selectedCategory === 'own' ? listings : adminProducts
+    const displayedTotalPages = selectedCategory === 'own' ? totalPages : adminTotalPages
+    const displayedTotalProducts = selectedCategory === 'own' ? totalListings : adminTotalProducts
+    const displayedCurrentPage = selectedCategory === 'own' ? currentPage : adminCurrentPage
+
+    const listingsMap = useMemo(() => {
+        const map = new Map()
+        listings.forEach(listing => {
+            map.set(listing.productId, listing.sellerProductId)
+        })
+        return map
+    }, [listings])
 
     useEffect(() => {
         if (isLoading) return
-        
+
         if (!isAuthenticated) {
             router.push('/')
             return
         }
 
         if (!hasFetchedProducts.current && user?.userId) {
-            fetchProducts(user.userId, currentPage, 10)
+            fetchSellerListings(currentPage, 10)
+            fetchAdminProducts(user.userId, adminCurrentPage, 10)
             hasFetchedProducts.current = true
         }
     }, [isAuthenticated, isLoading, router, user])
 
     useEffect(() => {
-        if (user?.userId && hasFetchedProducts.current) {
-            fetchProducts(user.userId, currentPage, 10)
+        if (hasFetchedProducts.current) {
+            fetchSellerListings(currentPage, 10)
         }
     }, [currentPage])
 
+    useEffect(() => {
+        if (hasFetchedProducts.current && user?.userId) {
+            fetchAdminProducts(user.userId, adminCurrentPage, 10)
+        }
+    }, [adminCurrentPage])
+
     const handleDelete = async (productId: string) => {
         const success = await deleteProduct(productId)
-        if (success && user?.userId) {
+        if (success) {
             setDeleteConfirm(null)
-            fetchProducts(user.userId, currentPage, 10)
+            fetchSellerListings(currentPage, 10)
+        }
+    }
+
+    const handlePageChange = (newPage: number) => {
+        if (selectedCategory === 'own') {
+            setCurrentPage(newPage)
+        } else {
+            setAdminCurrentPage(newPage)
+        }
+    }
+
+    const openPriceModal = (data: PriceModalData) => {
+        setPriceModal(data)
+        setPriceFormData({
+            price: data.currentPrice?.toString() || '',
+            salePrice: data.currentSalePrice?.toString() || '',
+            stock: data.currentStock?.toString() || '',
+            deliveryDays: data.currentDeliveryDays?.toString() || '3',
+        })
+    }
+
+    const closePriceModal = () => {
+        setPriceModal(null)
+        setPriceFormData({
+            price: '',
+            salePrice: '',
+            stock: '',
+            deliveryDays: '3',
+        })
+    }
+
+    const handlePriceSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+
+        if (!priceModal) return
+
+        const price = parseFloat(priceFormData.price)
+        const salePrice = priceFormData.salePrice ? parseFloat(priceFormData.salePrice) : undefined
+        const stock = parseInt(priceFormData.stock)
+        const deliveryDays = parseInt(priceFormData.deliveryDays)
+
+        if (isNaN(price) || isNaN(stock) || isNaN(deliveryDays)) {
+            return
+        }
+
+        if (priceModal.type === 'create' && priceModal.productId) {
+            const result = await createListing({
+                productId: priceModal.productId,
+                price,
+                salePrice,
+                stock,
+                deliveryDays,
+            })
+            if (result) {
+                closePriceModal()
+                fetchSellerListings(currentPage, 10)
+                if (user?.userId) {
+                    fetchAdminProducts(user.userId, adminCurrentPage, 10)
+                }
+            }
+        } else if (priceModal.type === 'update' && priceModal.listingId) {
+            const result = await updateListing(priceModal.listingId, {
+                price,
+                salePrice,
+                stock,
+                deliveryDays,
+            })
+            if (result) {
+                closePriceModal()
+                fetchSellerListings(currentPage, 10)
+                if (user?.userId) {
+                    fetchAdminProducts(user.userId, adminCurrentPage, 10)
+                }
+            }
         }
     }
 
@@ -59,197 +189,528 @@ export default function ProductsPage() {
 
     return (
         <>
-            <Breadcrumb pageName="My Products" />
+            <Breadcrumb pageName="Products" />
             <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
                 <div className="container mx-auto max-w-7xl px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <div className="flex justify-between items-center mb-8">
-                            <div>
-                                <h1 className="text-3xl font-bold text-black mb-2">My Products</h1>
-                                <p className="text-gray-600">
-                                    Total Products: {totalProducts}
-                                </p>
+                    <div className="grid grid-cols-12 gap-6">
+                        <div className="col-span-12 md:col-span-3">
+                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 sticky top-4">
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
+                                        <div className="p-2 bg-primary/10 rounded-lg">
+                                            <Icon icon="mdi:filter-variant" width={20} height={20} className="text-primary" />
+                                        </div>
+                                        Filter Products
+                                    </h2>
+                                    <p className="text-xs text-gray-500">Browse by category</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <button
+                                        onClick={() => setSelectedCategory('own')}
+                                        className={`w-full group relative overflow-hidden rounded-xl transition-all duration-300 ${selectedCategory === 'own'
+                                            ? 'bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg scale-105'
+                                            : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102'
+                                            }`}>
+                                        <div className="flex items-center justify-between gap-3 px-4 py-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${selectedCategory === 'own' ? 'bg-white/20' : 'bg-white'
+                                                    }`}>
+                                                    <Icon icon="mdi:storefront" width={20} height={20} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-semibold block">My Listings</span>
+                                                    <span className="text-xs opacity-80">Your products</span>
+                                                </div>
+                                            </div>
+                                            <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${selectedCategory === 'own'
+                                                ? 'bg-white/25 text-white'
+                                                : 'bg-primary/10 text-primary'
+                                                }`}>
+                                                {totalListings}
+                                            </span>
+                                        </div>
+                                        {selectedCategory === 'own' && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setSelectedCategory('admin')}
+                                        className={`w-full group relative overflow-hidden rounded-xl transition-all duration-300 ${selectedCategory === 'admin'
+                                            ? 'bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg scale-105'
+                                            : 'bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102'
+                                            }`}>
+                                        <div className="flex items-center justify-between gap-3 px-4 py-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className={`p-2 rounded-lg ${selectedCategory === 'admin' ? 'bg-white/20' : 'bg-white'
+                                                    }`}>
+                                                    <Icon icon="mdi:shield-crown" width={20} height={20} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-semibold block">Admin Products</span>
+                                                    <span className="text-xs opacity-80">System products</span>
+                                                </div>
+                                            </div>
+                                            <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${selectedCategory === 'admin'
+                                                ? 'bg-white/25 text-white'
+                                                : 'bg-primary/10 text-primary'
+                                                }`}>
+                                                {adminTotalProducts}
+                                            </span>
+                                        </div>
+                                        {selectedCategory === 'admin' && (
+                                            <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
+                                        )}
+                                    </button>
+                                    <Link
+                                        href="/orders"
+                                        className="w-full group relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102">
+                                        <div className="flex items-center justify-between gap-3 px-4 py-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-white">
+                                                    <Icon icon="mdi:shopping" width={20} height={20} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-semibold block">Orders</span>
+                                                    <span className="text-xs opacity-80">Manage orders</span>
+                                                </div>
+                                            </div>
+                                            <Icon icon="mdi:chevron-right" width={20} height={20} />
+                                        </div>
+                                    </Link>
+                                </div>
                             </div>
-                            <Link
-                                href="/products/add"
-                                className="flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition">
-                                <Icon icon="mdi:plus" width={20} height={20} />
-                                Add Product
-                            </Link>
                         </div>
 
-                        {loading ? (
-                            <div className="flex justify-center py-12">
-                                <Loader />
-                            </div>
-                        ) : products.length === 0 ? (
-                            <div className="text-center py-12">
-                                <Icon icon="mdi:package-variant" className="mx-auto text-gray-300 mb-4" width={64} height={64} />
-                                <p className="text-gray-600 text-lg mb-4">No products found</p>
-                                <Link
-                                    href="/products/add"
-                                    className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition">
-                                    <Icon icon="mdi:plus" width={20} height={20} />
-                                    Add Your First Product
-                                </Link>
-                            </div>
-                        ) : (
-                            <>
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead className="bg-gray-50 border-b-2 border-gray-200">
-                                            <tr>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Product</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Category</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Price</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Stock</th>
-                                                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">Status</th>
-                                                <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-200">
-                                            {products.map((product: any) => (
-                                                <tr key={product._id} className="hover:bg-gray-50 transition">
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center gap-3">
-                                                            {product.images && product.images.length > 0 ? (
-                                                                <img
-                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${product.images[0]}`}
-                                                                    alt={product.productName}
-                                                                    className="w-16 h-16 object-cover rounded-lg"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                    <Icon icon="mdi:image-off" className="text-gray-400" width={32} height={32} />
-                                                                </div>
-                                                            )}
-                                                            <div>
-                                                                <p className="font-medium text-black">{product.productName}</p>
-                                                                <p className="text-sm text-gray-600">{product.productId}</p>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-sm text-gray-900">{product.mainCategoryName || 'N/A'}</p>
-                                                        <p className="text-xs text-gray-600">{product.subCategoryName || 'N/A'}</p>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="font-semibold text-black">₹{product.price}</p>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                                            {product.stock} units
-                                                        </p>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                                                            product.isActive
-                                                                ? 'bg-green-100 text-green-700'
-                                                                : 'bg-red-100 text-red-700'
-                                                        }`}>
-                                                            <Icon 
-                                                                icon={product.isActive ? 'mdi:check-circle' : 'mdi:close-circle'} 
-                                                                width={14} 
-                                                                height={14} 
-                                                            />
-                                                            {product.isActive ? 'Active' : 'Inactive'}
+                        <div className="col-span-12 md:col-span-9">
+                            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+                                <div className="mb-8">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <div>
+                                            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                                                {selectedCategory === 'own' ? 'My Listings' : 'Available Products'}
+                                            </h1>
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-gray-600 flex items-center gap-2">
+                                                    <Icon icon="mdi:cube-outline" width={18} height={18} className="text-primary" />
+                                                    <span className="font-semibold text-primary">{displayedProducts.length}</span>
+                                                    {displayedProducts.length === 1 ? 'product' : 'products'}
+                                                </p>
+                                                {selectedCategory === 'own' && displayedProducts.length > 0 && (
+                                                    <p className="text-gray-600 flex items-center gap-2">
+                                                        <Icon icon="mdi:check-decagram" width={18} height={18} className="text-green-600" />
+                                                        <span className="font-semibold text-green-600">
+                                                            {displayedProducts.filter(p => p.approvalStatus === 'approved').length}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <Link
-                                                                href={`/products/view/${product.productId}`}
-                                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition"
-                                                                title="View">
-                                                                <Icon icon="mdi:eye" width={20} height={20} />
-                                                            </Link>
-                                                            <Link
-                                                                href={`/products/edit/${product.productId}`}
-                                                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                                                                title="Edit">
-                                                                <Icon icon="mdi:pencil" width={20} height={20} />
-                                                            </Link>
-                                                            <button
-                                                                onClick={() => setDeleteConfirm(product.productId)}
-                                                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
-                                                                title="Delete">
-                                                                <Icon icon="mdi:delete" width={20} height={20} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                {totalPages > 1 && (
-                                    <div className="mt-8">
-                                        <div className="flex justify-between items-center">
-                                            <div className="text-sm text-gray-600">
-                                                Showing {products.length} of {totalProducts} results
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                                                    disabled={currentPage === 1}
-                                                    className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
-                                                    <Icon icon="mdi:chevron-left" width={20} height={20} />
-                                                    Previous
-                                                </button>
-                                                
-                                                <div className="flex gap-2">
-                                                    {[...Array(Math.min(5, totalPages))].map((_, index) => {
-                                                        let pageNum
-                                                        if (totalPages <= 5) {
-                                                            pageNum = index + 1
-                                                        } else if (currentPage <= 3) {
-                                                            pageNum = index + 1
-                                                        } else if (currentPage >= totalPages - 2) {
-                                                            pageNum = totalPages - 4 + index
-                                                        } else {
-                                                            pageNum = currentPage - 2 + index
-                                                        }
-                                                        
-                                                        return (
-                                                            <button
-                                                                key={index}
-                                                                onClick={() => setCurrentPage(pageNum)}
-                                                                className={`w-10 h-10 rounded-lg font-medium transition ${
-                                                                    currentPage === pageNum
-                                                                        ? 'bg-primary text-white'
-                                                                        : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                                }`}>
-                                                                {pageNum}
-                                                            </button>
-                                                        )
-                                                    })}
-                                                    
-                                                    {totalPages > 5 && currentPage < totalPages - 2 && (
-                                                        <>
-                                                            <span className="px-2 py-2 text-gray-500">...</span>
-                                                            <button
-                                                                onClick={() => setCurrentPage(totalPages)}
-                                                                className="w-10 h-10 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition">
-                                                                {totalPages}
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                </div>
-                                                
-                                                <button
-                                                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                                                    disabled={currentPage === totalPages}
-                                                    className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
-                                                    Next
-                                                    <Icon icon="mdi:chevron-right" width={20} height={20} />
-                                                </button>
+                                                        approved
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                {loading ? (
+                                    <div className="flex justify-center py-12">
+                                        <Loader />
+                                    </div>
+                                ) : displayedProducts.length === 0 ? (
+                                    <div className="text-center py-16">
+                                        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-6">
+                                            <Icon
+                                                icon={selectedCategory === 'own' ? "mdi:package-variant-closed" : "mdi:shield-off"}
+                                                className="text-gray-400"
+                                                width={48}
+                                                height={48}
+                                            />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-gray-800 mb-2">
+                                            {selectedCategory === 'own' ? 'No Products Yet' : 'No Admin Products Available'}
+                                        </h3>
+                                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                                            {selectedCategory === 'own'
+                                                ? 'You haven\'t added any products yet. Browse admin products and add your price to start selling!'
+                                                : 'There are currently no admin products available. Check back later for new products to sell.'}
+                                        </p>
+                                        {selectedCategory === 'own' && (
+                                            <button
+                                                onClick={() => setSelectedCategory('admin')}
+                                                className="inline-flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-3.5 rounded-lg hover:shadow-lg transition-all transform hover:scale-105 font-semibold">
+                                                <Icon icon="mdi:eye" width={22} height={22} />
+                                                Browse Admin Products
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="overflow-x-auto rounded-xl border border-gray-200">
+                                            <table className="w-full">
+                                                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                                                    <tr>
+                                                        <th className="px-6 py-4 text-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon icon="mdi:shopping" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Product</span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-6 py-4 text-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon icon="mdi:tag" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Category</span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-6 py-4 text-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon icon="mdi:currency-inr" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Price</span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-6 py-4 text-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon icon="mdi:package-variant" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Stock</span>
+                                                            </div>
+                                                        </th>
+                                                        <th className="px-6 py-4 text-left">
+                                                            <div className="flex items-center gap-2">
+                                                                <Icon icon="mdi:toggle-switch" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Status</span>
+                                                            </div>
+                                                        </th>
+                                                        {selectedCategory === 'own' && (
+                                                            <th className="px-6 py-4 text-left">
+                                                                <div className="flex items-center gap-2">
+                                                                    <Icon icon="mdi:check-decagram" width={18} height={18} className="text-primary" />
+                                                                    <span className="text-sm font-semibold text-gray-700">Approval</span>
+                                                                </div>
+                                                            </th>
+                                                        )}
+                                                        <th className="px-6 py-4 text-center">
+                                                            <div className="flex items-center justify-center gap-2">
+                                                                <Icon icon="mdi:cog" width={18} height={18} className="text-primary" />
+                                                                <span className="text-sm font-semibold text-gray-700">Actions</span>
+                                                            </div>
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-gray-200 bg-white">
+                                                    {displayedProducts.map((product: any) => {
+                                                        const isListing = selectedCategory === 'own'
+                                                        const images = isListing ? product.productImages : product.images
+                                                        const productName = product.productName
+                                                        const price = product.price
+                                                        const stock = product.stock || 0
+                                                        const description = isListing ? product.productDescription : product.shortDescription
+
+                                                        return (
+                                                            <tr key={product._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center gap-4">
+                                                                        {images && images.length > 0 ? (
+                                                                            <div className="relative">
+                                                                                <img
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${images[0]}`}
+                                                                                    alt={productName}
+                                                                                    className="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 shadow-sm"
+                                                                                />
+                                                                                {images.length > 1 && (
+                                                                                    <div className="absolute -bottom-1 -right-1 bg-primary text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                                                                        +{images.length - 1}
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center border-2 border-gray-200">
+                                                                                <Icon icon="mdi:image-off" className="text-gray-400" width={32} height={32} />
+                                                                            </div>
+                                                                        )}
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="font-semibold text-black text-base truncate mb-1" title={productName}>
+                                                                                {productName}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="text-sm text-gray-600">
+                                                                        {isListing ? 'Seller Listing' : (product.mainCategoryName || '-')}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className="space-y-1">
+                                                                        <p className="text-lg font-bold text-primary">
+                                                                            {price ? `₹${Number(price).toLocaleString('en-IN')}` : '-'}
+                                                                        </p>
+                                                                        {product.salePrice && (
+                                                                            <p className="text-xs text-gray-500 line-through">₹{Number(product.salePrice).toLocaleString('en-IN')}</p>
+                                                                        )}
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium ${stock > 10
+                                                                        ? 'bg-green-50 text-green-700 border border-green-200'
+                                                                        : stock > 0
+                                                                            ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                                                                            : 'bg-red-50 text-red-700 border border-red-200'
+                                                                        }`}>
+                                                                        <Icon icon="mdi:package-variant" width={16} height={16} />
+                                                                        <span className="text-sm">{stock}</span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="px-6 py-4">
+                                                                    <span className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border ${(isListing ? product.sellerStatus === 'active' : product.status)
+                                                                        ? 'bg-green-50 text-green-700 border-green-200'
+                                                                        : 'bg-red-50 text-red-700 border-red-200'
+                                                                        }`}>
+                                                                        <Icon
+                                                                            icon={(isListing ? product.sellerStatus === 'active' : product.status) ? 'mdi:check-circle' : 'mdi:close-circle'}
+                                                                            width={16}
+                                                                            height={16}
+                                                                        />
+                                                                        {(isListing ? product.sellerStatus === 'active' : product.status) ? 'Active' : 'Inactive'}
+                                                                    </span>
+                                                                </td>
+                                                                {selectedCategory === 'own' && (
+                                                                    <td className="px-6 py-4">
+                                                                        <span className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border ${product.approvalStatus === 'approved'
+                                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                                            : 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                                                            }`}>
+                                                                            <Icon
+                                                                                icon={product.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'}
+                                                                                width={16}
+                                                                                height={16}
+                                                                            />
+                                                                            {product.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
+                                                                        </span>
+                                                                    </td>
+                                                                )}
+                                                                <td className="px-6 py-4">
+                                                                    <div className="flex items-center justify-center gap-2">
+                                                                        {isListing ? (
+                                                                            <>
+                                                                                <Link
+                                                                                    href={`/products/view/${product.productId}`}
+                                                                                    className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                    title="View Product">
+                                                                                    <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                        View
+                                                                                    </span>
+                                                                                </Link>
+                                                                                <Link
+                                                                                    href={`/products/edit/${product.productId}`}
+                                                                                    className="group relative p-2.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 hover:shadow-sm"
+                                                                                    title="Edit Product">
+                                                                                    <Icon icon="mdi:pencil" width={20} height={20} />
+                                                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                        Edit Product
+                                                                                    </span>
+                                                                                </Link>
+                                                                                <button
+                                                                                    onClick={() => openPriceModal({
+                                                                                        type: 'update',
+                                                                                        listingId: product.sellerProductId,
+                                                                                        productName: productName,
+                                                                                        currentPrice: product.price,
+                                                                                        currentSalePrice: product.salePrice,
+                                                                                        currentStock: product.stock,
+                                                                                        currentDeliveryDays: product.deliveryDays,
+                                                                                    })}
+                                                                                    className="group relative p-2.5 text-green-600 hover:bg-green-50 rounded-lg transition-all border border-transparent hover:border-green-200 hover:shadow-sm"
+                                                                                    title="Edit Price">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                            Edit Price
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </button>
+                                                                                <button
+                                                                                    onClick={() => setDeleteConfirm(product.productId)}
+                                                                                    className="group relative p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-200 hover:shadow-sm"
+                                                                                    title="Delete Product">
+                                                                                    <Icon icon="mdi:delete" width={20} height={20} />
+                                                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                        Delete
+                                                                                    </span>
+                                                                                </button>
+                                                                            </>
+                                                                        ) : (() => {
+                                                                            const existingListingId = listingsMap.get(product.productId)
+                                                                            const hasListing = product.isMyProduct || existingListingId
+
+                                                                            if (hasListing) {
+                                                                                const listingToUpdate = listings.find(l => l.productId === product.productId)
+                                                                                return (
+                                                                                    <>
+                                                                                        <Link
+                                                                                            href={`/products/view/${product.productId}`}
+                                                                                            className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                            title="View Product">
+                                                                                            <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                                View
+                                                                                            </span>
+                                                                                        </Link>
+                                                                                        {/* <button
+                                                                                            onClick={() => openPriceModal({
+                                                                                                type: 'update',
+                                                                                                listingId: existingListingId,
+                                                                                                productName: productName,
+                                                                                                currentPrice: listingToUpdate?.price || product.price,
+                                                                                                currentSalePrice: listingToUpdate?.salePrice || product.salePrice,
+                                                                                                currentStock: listingToUpdate?.stock || product.stock,
+                                                                                                currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
+                                                                                            })}
+                                                                                            className="group relative px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
+                                                                                            title="Update Price">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                                <span className="text-sm">Update Price</span>
+                                                                                            </div>
+                                                                                        </button> */}
+                                                                                        <button
+                                                                                            onClick={() => openPriceModal({
+                                                                                                type: 'update',
+                                                                                                listingId: existingListingId,
+                                                                                                productName: productName,
+                                                                                                currentPrice: listingToUpdate?.price || product.price,
+                                                                                                currentSalePrice: listingToUpdate?.salePrice || product.salePrice,
+                                                                                                currentStock: listingToUpdate?.stock || product.stock,
+                                                                                                currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
+                                                                                            })}
+                                                                                            className="group relative p-2.5 text-green-600 hover:bg-green-50 rounded-lg transition-all border border-transparent hover:border-green-200 hover:shadow-sm"
+                                                                                            title="Edit Price">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                                    Update Price
+                                                                                                </span>
+                                                                                            </div>
+                                                                                        </button>
+                                                                                    </>
+                                                                                )
+                                                                            }
+
+                                                                            return (
+                                                                                <>
+                                                                                    <Link
+                                                                                        href={`/products/view/${product.productId}`}
+                                                                                        className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                        title="View Product">
+                                                                                        <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                            View
+                                                                                        </span>
+                                                                                    </Link>
+                                                                                    {/* <button
+                                                                                        onClick={() => openPriceModal({
+                                                                                            type: 'create',
+                                                                                            productId: product.productId,
+                                                                                            productName: productName,
+                                                                                        })}
+                                                                                        className="group relative px-4 py-2 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
+                                                                                        title="Add Price">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Icon icon="mdi:plus-circle" width={18} height={18} />
+                                                                                            <span className="text-sm">Add Price</span>
+                                                                                        </div>
+                                                                                    </button> */}
+                                                                                    <button
+                                                                                        onClick={() => openPriceModal({
+                                                                                            type: 'create',
+                                                                                            productId: product.productId,
+                                                                                            productName: productName,
+                                                                                        })}
+                                                                                        className="group relative p-2.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 hover:shadow-sm"
+                                                                                        title="Edit Price">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                                Add Price
+                                                                                            </span>
+                                                                                        </div>
+                                                                                    </button>
+                                                                                </>
+                                                                            )
+                                                                        })()}
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        )
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        {displayedTotalPages > 1 && (
+                                            <div className="mt-8">
+                                                <div className="flex justify-between items-center">
+                                                    <div className="text-sm text-gray-600">
+                                                        Showing {displayedProducts.length} of {displayedTotalProducts} results
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            onClick={() => handlePageChange(Math.max(1, displayedCurrentPage - 1))}
+                                                            disabled={displayedCurrentPage === 1}
+                                                            className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                                                            <Icon icon="mdi:chevron-left" width={20} height={20} />
+                                                            Previous
+                                                        </button>
+
+                                                        <div className="flex gap-2">
+                                                            {[...Array(Math.min(5, displayedTotalPages))].map((_, index) => {
+                                                                let pageNum
+                                                                if (displayedTotalPages <= 5) {
+                                                                    pageNum = index + 1
+                                                                } else if (displayedCurrentPage <= 3) {
+                                                                    pageNum = index + 1
+                                                                } else if (displayedCurrentPage >= displayedTotalPages - 2) {
+                                                                    pageNum = displayedTotalPages - 4 + index
+                                                                } else {
+                                                                    pageNum = displayedCurrentPage - 2 + index
+                                                                }
+
+                                                                return (
+                                                                    <button
+                                                                        key={index}
+                                                                        onClick={() => handlePageChange(pageNum)}
+                                                                        className={`w-10 h-10 rounded-lg font-medium transition ${displayedCurrentPage === pageNum
+                                                                            ? 'bg-primary text-white'
+                                                                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                                            }`}>
+                                                                        {pageNum}
+                                                                    </button>
+                                                                )
+                                                            })}
+
+                                                            {displayedTotalPages > 5 && displayedCurrentPage < displayedTotalPages - 2 && (
+                                                                <>
+                                                                    <span className="px-2 py-2 text-gray-500">...</span>
+                                                                    <button
+                                                                        onClick={() => handlePageChange(displayedTotalPages)}
+                                                                        className="w-10 h-10 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium transition">
+                                                                        {displayedTotalPages}
+                                                                    </button>
+                                                                </>
+                                                            )}
+                                                        </div>
+
+                                                        <button
+                                                            onClick={() => handlePageChange(Math.min(displayedTotalPages, displayedCurrentPage + 1))}
+                                                            disabled={displayedCurrentPage === displayedTotalPages}
+                                                            className="px-3 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1">
+                                                            Next
+                                                            <Icon icon="mdi:chevron-right" width={20} height={20} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
-                            </>
-                        )}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -277,6 +738,145 @@ export default function ProductsPage() {
                                 {loading ? 'Deleting...' : 'Delete'}
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {priceModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-2xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 bg-primary/10 rounded-lg">
+                                    <Icon icon="mdi:currency-usd" className="text-primary" width={28} height={28} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-bold text-black">
+                                        {priceModal.type === 'create' ? 'Add Price' : 'Update Price'}
+                                    </h2>
+                                    <p className="text-sm text-gray-600 mt-1">{priceModal.productName}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={closePriceModal}
+                                className="p-2 hover:bg-gray-100 rounded-lg transition">
+                                <Icon icon="mdi:close" width={24} height={24} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handlePriceSubmit}>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Price (₹) <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₹</span>
+                                        <input
+                                            type="number"
+                                            value={priceFormData.price}
+                                            onChange={(e) => setPriceFormData({ ...priceFormData, price: e.target.value })}
+                                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Sale Price (₹) <span className="text-gray-400 text-xs">(Optional)</span>
+                                    </label>
+                                    <div className="relative">
+                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">₹</span>
+                                        <input
+                                            type="number"
+                                            value={priceFormData.salePrice}
+                                            onChange={(e) => setPriceFormData({ ...priceFormData, salePrice: e.target.value })}
+                                            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            placeholder="0.00"
+                                            step="0.01"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Stock <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Icon icon="mdi:package-variant" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" width={20} height={20} />
+                                        <input
+                                            type="number"
+                                            value={priceFormData.stock}
+                                            onChange={(e) => setPriceFormData({ ...priceFormData, stock: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            placeholder="0"
+                                            min="0"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                        Delivery Days <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="relative">
+                                        <Icon icon="mdi:truck-delivery" className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" width={20} height={20} />
+                                        <input
+                                            type="number"
+                                            value={priceFormData.deliveryDays}
+                                            onChange={(e) => setPriceFormData({ ...priceFormData, deliveryDays: e.target.value })}
+                                            className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                                            placeholder="3"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+                                <div className="flex items-start gap-3">
+                                    <Icon icon="mdi:information" className="text-blue-600 flex-shrink-0 mt-0.5" width={20} height={20} />
+                                    <div className="text-sm text-blue-900">
+                                        <p className="font-semibold mb-1">Pricing Tips</p>
+                                        <ul className="list-disc list-inside space-y-1 text-blue-800">
+                                            <li>Set a competitive price to attract more customers</li>
+                                            <li>Use sale price for promotional offers</li>
+                                            <li>Ensure sufficient stock to avoid order cancellations</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-4 mt-8">
+                                <button
+                                    type="button"
+                                    onClick={closePriceModal}
+                                    className="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-semibold">
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-semibold flex items-center gap-2">
+                                    {loading ? (
+                                        <>
+                                            <Loader />
+                                            <span>{priceModal.type === 'create' ? 'Adding...' : 'Updating...'}</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Icon icon="mdi:check-circle" width={20} height={20} />
+                                            <span>{priceModal.type === 'create' ? 'Add Price' : 'Update Price'}</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             )}

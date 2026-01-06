@@ -57,7 +57,9 @@ class Cart {
         { 
           $push: { 
             items: {
+              sellerProductId: itemData.sellerProductId || null,
               productId: itemData.productId,
+              sellerId: itemData.sellerId || null,
               productName: itemData.productName,
               qty: itemData.qty,
               price: itemData.price,
@@ -86,7 +88,9 @@ class Cart {
       const newCart = {
         userId: userId,
         items: [{
+          sellerProductId: itemData.sellerProductId || null,
           productId: itemData.productId,
+          sellerId: itemData.sellerId || null,
           productName: itemData.productName,
           qty: itemData.qty,
           price: itemData.price,
