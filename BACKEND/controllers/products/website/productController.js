@@ -56,6 +56,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               stock: 1,
               deliveryDays: 1,
               sellerId: 1,
+              sellerProductId: 1,
+              productId: 1,
               currentPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
               sellerName: { $concat: [{ $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] }] },
               shopName: "$seller.shopName"
@@ -93,6 +95,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
             [{
               price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
               sellerId: "$userId",
+              sellerProductId: null,
+              productId: "$productId",
               sellerName: { $cond: [{ $eq: ["$roleId", 1] }, "Admin", { $concat: [{ $ifNull: ["$mainUser.firstName", ""] }, " ", { $ifNull: ["$mainUser.lastName", ""] }] }] },
               shopName: { $cond: [{ $eq: ["$roleId", 1] }, "Main Store", "$mainSeller.shopName"] },
               stock: "$stock",
@@ -111,6 +115,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               in: {
                 price: "$$m.currentPrice",
                 sellerId: "$$m.sellerId",
+                sellerProductId: "$$m.sellerProductId",
+                productId: "$$m.productId",
                 sellerName: "$$m.sellerName",
                 shopName: "$$m.shopName",
                 stock: "$$m.stock",

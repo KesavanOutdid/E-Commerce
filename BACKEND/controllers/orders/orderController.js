@@ -238,8 +238,8 @@ exports.createOrder = async (req, res) => {
       }
 
       if (productIds && Array.isArray(productIds) && productIds.length > 0) {
-        for (const productId of productIds) {
-          await Cart.removeItem(userId, productId, user.email, user.email);
+        for (const item of selectedItems) {
+          await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
         }
       } else {
         await Cart.clearCart(userId);
@@ -380,7 +380,7 @@ exports.verifyOrder = async (req, res) => {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
         }
         
-        await Cart.removeItem(userId, item.productId, user.email, user.email);
+        await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
       }
     }
 

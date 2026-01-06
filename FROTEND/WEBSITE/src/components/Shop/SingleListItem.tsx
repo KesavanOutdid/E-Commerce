@@ -15,6 +15,21 @@ const SingleListItem = ({ item }: { item: Product }) => {
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
 
+  // Extract values from both structures safely
+  const isNewStructure = !!item.product;
+  const product = item.product;
+
+  const id = isNewStructure ? product?._id : item.id;
+  const title = isNewStructure ? product?.productName : item.title;
+  const reviews = isNewStructure ? product?.totalReviews : item.reviews;
+  const displayPrice = isNewStructure ? (product?.minPriceDetails?.price ?? 0) : item.discountedPrice;
+  const originalPrice = isNewStructure ? product?.price : item.price;
+  const deliveryDays = isNewStructure ? product?.minPriceDetails?.deliveryDays : null;
+
+  const productImage = isNewStructure
+    ? (product?.images?.[0] ? `${API_BASE_URL}${product.images[0]}` : "/images/placeholder.png")
+    : (item.imgs?.previews?.[0] ?? "/images/placeholder.png");
+
   // update the QuickView state
   const handleQuickViewUpdate = () => {
     dispatch(updateQuickView({ ...item }));
@@ -43,11 +58,11 @@ const SingleListItem = ({ item }: { item: Product }) => {
   return (
     <div className="group rounded-lg bg-white shadow-1">
       <div className="flex">
-        <Link href={`/shop-details/${item.id}`} className="block max-w-[270px] w-full">
+        <Link href={`/shop-details/${id}`} className="block max-w-[270px] w-full">
           <div className="shadow-list relative overflow-hidden h-[170px] p-4 bg-[#F6F7FB] rounded-l-lg">
             <Image 
-              src={item.imgs.previews[0]} 
-              alt={item.title} 
+              src={productImage} 
+              alt={title || "product image"} 
               fill 
               className="object-contain p-4"
             />
@@ -94,50 +109,52 @@ const SingleListItem = ({ item }: { item: Product }) => {
         <div className="w-full flex flex-col gap-5 sm:flex-row sm:items-center justify-center sm:justify-between py-5 px-4 sm:px-7.5 lg:pl-11 lg:pr-12">
           <div>
             <h3 className="font-medium text-dark ease-out duration-200 hover:text-blue mb-1.5">
-              <Link href={`/shop-details/${item.id}`}> {item.title} </Link>
+              <Link href={`/shop-details/${id}`}> {title} </Link>
             </h3>
 
             <span className="flex items-center gap-2 font-medium text-lg">
-              <span className="text-dark">₹{item.discountedPrice}</span>
-              <span className="text-dark-4 line-through">₹{item.price}</span>
+              <span className="text-dark">₹{displayPrice}</span>
+              {Number(originalPrice) > Number(displayPrice) && (
+                <span className="text-dark-4 line-through">₹{originalPrice}</span>
+              )}
             </span>
+
+            {deliveryDays && (
+              <p className="text-custom-sm text-blue mt-1 flex items-center gap-1">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <rect x="1" y="3" width="15" height="13"></rect>
+                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                  <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                  <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                </svg>
+                Delivery in {deliveryDays} days
+              </p>
+            )}
           </div>
 
           <div className="flex items-center gap-2.5 mb-2">
             <div className="flex items-center gap-1">
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={15}
-                height={15}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={15}
-                height={15}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={15}
-                height={15}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={15}
-                height={15}
-              />
-              <Image
-                src="/images/icons/icon-star.svg"
-                alt="star icon"
-                width={15}
-                height={15}
-              />
+              {[...Array(5)].map((_, i) => (
+                <Image
+                  key={i}
+                  src="/images/icons/icon-star.svg"
+                  alt="star icon"
+                  width={15}
+                  height={15}
+                />
+              ))}
             </div>
 
-            <p className="text-custom-sm">({item.reviews})</p>
+            <p className="text-custom-sm">({reviews})</p>
           </div>
         </div>
       </div>

@@ -11,6 +11,8 @@ type InitialState = {
 export type CartItem = {
   id: string | number; // Support both backend string ID and frontend number if any
   productId: string;
+  sellerProductId?: string | null;
+  sellerId?: string | null;
   title: string;
   productName?: string;
   price: number;
@@ -47,19 +49,21 @@ export const fetchCart = createAsyncThunk(
       const data = await response.json();
       if (data.success) {
         return data.data.items.map((item: any) => ({
-          id: item.productId,
+          id: item.sellerProductId || item.productId,
           productId: item.productId,
+          sellerProductId: item.sellerProductId,
+          sellerId: item.sellerId,
           title: item.productName,
           price: parseFloat(item.price),
           discountedPrice: item.salePrice ? parseFloat(item.salePrice) : parseFloat(item.price),
           quantity: item.qty,
           imgs: {
-            thumbnails: item.images.map((img: string) => 
+            thumbnails: item.images?.map((img: string) => 
               img.startsWith("http") ? img : `${API_BASE_URL}${img}`
-            ),
-            previews: item.images.map((img: string) => 
+            ) || [],
+            previews: item.images?.map((img: string) => 
               img.startsWith("http") ? img : `${API_BASE_URL}${img}`
-            ),
+            ) || [],
           },
           slug: item.slug,
         }));
@@ -73,7 +77,7 @@ export const fetchCart = createAsyncThunk(
 
 export const updateCartItemServer = createAsyncThunk(
   "cart/updateCartItemServer",
-  async ({ productId, qty, totalPrice, gst, subTotal, accessToken }: { productId: string, qty: number, totalPrice: number, gst: number, subTotal: number, accessToken: string }, { rejectWithValue }) => {
+  async ({ productId, sellerProductId, qty, totalPrice, gst, subTotal, accessToken }: { productId: string, sellerProductId?: string | null, qty: number, totalPrice: number, gst: number, subTotal: number, accessToken: string }, { rejectWithValue }) => {
     try {
       const response = await fetch(API_ENDPOINTS.UPDATE_CART(productId), {
         method: "PUT",
@@ -81,11 +85,11 @@ export const updateCartItemServer = createAsyncThunk(
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ qty, totalPrice, gst, subTotal }),
+        body: JSON.stringify({ qty, totalPrice, gst, subTotal, sellerProductId }),
       });
       const data = await response.json();
       if (data.success) {
-        return { productId, qty };
+        return { productId, sellerProductId, qty };
       }
       return rejectWithValue(data.message);
     } catch (error: any) {
@@ -96,9 +100,9 @@ export const updateCartItemServer = createAsyncThunk(
 
 export const removeCartItemServer = createAsyncThunk(
   "cart/removeCartItemServer",
-  async ({ productId, accessToken }: { productId: string, accessToken: string }, { rejectWithValue }) => {
+  async ({ productId, sellerProductId, accessToken }: { productId: string, sellerProductId?: string | null, accessToken: string }, { rejectWithValue }) => {
     try {
-      const response = await fetch(API_ENDPOINTS.REMOVE_FROM_CART(productId), {
+      const response = await fetch(`${API_ENDPOINTS.REMOVE_FROM_CART(productId)}${sellerProductId ? `?sellerProductId=${sellerProductId}` : ""}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -106,7 +110,7 @@ export const removeCartItemServer = createAsyncThunk(
       });
       const data = await response.json();
       if (data.success) {
-        return productId;
+        return { productId, sellerProductId };
       }
       return rejectWithValue(data.message);
     } catch (error: any) {
@@ -143,6 +147,8 @@ export const addToCart = createAsyncThunk(
     const cartItem: CartItem = {
       id: item.id || item.productId,
       productId: item.id || item.productId,
+      sellerProductId: item.sellerProductId || null,
+      sellerId: item.sellerId || null,
       title: item.title || item.productName,
       price: item.price,
       discountedPrice: item.discountedPrice || item.price,
@@ -151,7 +157,7 @@ export const addToCart = createAsyncThunk(
     };
     
     const state = getState() as RootState;
-    const existingItem = state.cartReducer.items.find(i => i.productId === cartItem.productId);
+    const existingItem = state.cartReducer.items.find(i => i.productId === cartItem.productId && ((i.sellerProductId ?? null) === (cartItem.sellerProductId ?? null)));
 
     dispatch(addItemToCart(cartItem));
 
@@ -163,6 +169,7 @@ export const addToCart = createAsyncThunk(
           const totalPrice = cartItem.discountedPrice * newQty;
           await dispatch(updateCartItemServer({ 
             productId: cartItem.productId, 
+            sellerProductId: cartItem.sellerProductId,
             qty: newQty,
             totalPrice,
             gst: 0,
@@ -179,6 +186,8 @@ export const addToCart = createAsyncThunk(
             },
             body: JSON.stringify({
               productId: cartItem.productId,
+              sellerProductId: cartItem.sellerProductId,
+              sellerId: cartItem.sellerId,
               qty: cartItem.quantity,
               totalPrice: cartItem.discountedPrice * cartItem.quantity,
               gst: 0,
@@ -203,16 +212,18 @@ export const cart = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      const { id, title, price, quantity, discountedPrice, imgs } =
+      const { id, title, price, quantity, discountedPrice, imgs, sellerProductId, sellerId } =
         action.payload;
-      const existingItem = state.items.find((item) => item.id === id);
+      const existingItem = state.items.find((item) => item.productId === action.payload.productId && ((item.sellerProductId ?? null) === (sellerProductId ?? null)));
 
       if (existingItem) {
         existingItem.quantity += quantity;
       } else {
         state.items.push({
           id,
-          productId: id.toString(),
+          productId: action.payload.productId,
+          sellerProductId,
+          sellerId,
           title,
           price,
           quantity,
@@ -255,12 +266,13 @@ export const cart = createSlice({
         state.error = action.payload as string;
       })
       .addCase(updateCartItemServer.fulfilled, (state, action) => {
-        const { productId, qty } = action.payload;
-        const item = state.items.find((i) => i.productId === productId);
+        const { productId, sellerProductId, qty } = action.payload;
+        const item = state.items.find((i) => i.productId === productId && ((i.sellerProductId ?? null) === (sellerProductId ?? null)));
         if (item) item.quantity = qty;
       })
       .addCase(removeCartItemServer.fulfilled, (state, action) => {
-        state.items = state.items.filter((i) => i.productId !== action.payload);
+        const { productId, sellerProductId } = action.payload;
+        state.items = state.items.filter((i) => !(i.productId === productId && ((i.sellerProductId ?? null) === (sellerProductId ?? null))));
       })
       .addCase(clearCartServer.fulfilled, (state) => {
         state.items = [];

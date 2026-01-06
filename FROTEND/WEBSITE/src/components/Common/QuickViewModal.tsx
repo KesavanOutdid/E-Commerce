@@ -9,6 +9,7 @@ import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { resetQuickView } from "@/redux/features/quickView-slice";
 import { updateproductDetails } from "@/redux/features/product-details";
+import { API_BASE_URL } from "@/lib/api";
 
 const QuickViewModal = () => {
   const { isModalOpen, closeModal } = useModalContext();
@@ -18,14 +19,33 @@ const QuickViewModal = () => {
   const dispatch = useDispatch<AppDispatch>();
 
   // get the product data
-  const product = useAppSelector((state) => state.quickViewReducer.value);
+  const item = useAppSelector((state) => state.quickViewReducer.value);
+
+  // Safely extract values
+  const isNewStructure = !!item.product;
+  const p = item.product;
+
+  const title = isNewStructure ? p?.productName : item.title;
+  const reviews = isNewStructure ? p?.totalReviews : item.reviews;
+  const rating = isNewStructure ? p?.avgRating : 4.7; // fallback to 4.7 if old structure doesn't have it
+  const description = isNewStructure ? (p?.shortDescription || p?.description) : "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has.";
+  const price = isNewStructure ? (p?.minPriceDetails?.price ?? 0) : item.discountedPrice;
+  const oldPrice = isNewStructure ? p?.price : item.price;
+  const deliveryDays = isNewStructure ? p?.minPriceDetails?.deliveryDays : null;
+  
+  const thumbnails = isNewStructure 
+    ? (p?.images?.map(img => `${API_BASE_URL}${img}`) ?? [])
+    : (item.imgs?.thumbnails ?? []);
+    
+  const previews = isNewStructure
+    ? (p?.images?.map(img => `${API_BASE_URL}${img}`) ?? [])
+    : (item.imgs?.previews ?? []);
 
   const [activePreview, setActivePreview] = useState(0);
 
   // preview modal
   const handlePreviewSlider = () => {
-    dispatch(updateproductDetails(product));
-
+    dispatch(updateproductDetails(item));
     openPreviewModal();
   };
 
@@ -33,13 +53,17 @@ const QuickViewModal = () => {
   const handleAddToCart = () => {
     dispatch(
       addItemToCart({
-        ...product,
+        ...item,
         quantity,
       })
     );
-
     closeModal();
   };
+
+  useEffect(() => {
+    // Reset preview when product changes
+    setActivePreview(0);
+  }, [item]);
 
   useEffect(() => {
     // closing modal while clicking outside
@@ -93,7 +117,7 @@ const QuickViewModal = () => {
             <div className="max-w-[526px] w-full">
               <div className="flex gap-5">
                 <div className="flex flex-col gap-5">
-                  {product.imgs.thumbnails?.map((img, key) => (
+                  {thumbnails?.map((img, key) => (
                     <button
                       onClick={() => setActivePreview(key)}
                       key={key}
@@ -135,9 +159,9 @@ const QuickViewModal = () => {
                       </svg>
                     </button>
 
-                    {product?.imgs?.previews?.[activePreview] && (
+                    {previews?.[activePreview] && (
                       <Image
-                        src={product.imgs.previews[activePreview]}
+                        src={previews[activePreview]}
                         alt="products-details"
                         width={400}
                         height={400}
@@ -154,7 +178,7 @@ const QuickViewModal = () => {
               </span>
 
               <h3 className="font-semibold text-xl xl:text-heading-5 text-dark mb-4">
-                {product.title}
+                {title}
               </h3>
 
               <div className="flex flex-wrap items-center gap-5 mb-6">
@@ -268,8 +292,8 @@ const QuickViewModal = () => {
                   </div>
 
                   <span>
-                    <span className="font-medium text-dark"> 4.7 Rating </span>
-                    <span className="text-dark-2"> (5 reviews) </span>
+                    <span className="font-medium text-dark"> {rating} Rating </span>
+                    <span className="text-dark-2"> ({reviews} reviews) </span>
                   </span>
                 </div>
 
@@ -300,11 +324,33 @@ const QuickViewModal = () => {
 
                   <span className="font-medium text-dark"> In Stock </span>
                 </div>
+
+                {deliveryDays && (
+                  <div className="flex items-center gap-2 px-3 py-1 bg-gray-2 rounded-md">
+                    <svg 
+                      width="16" 
+                      height="16" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="#3C50E0" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <rect x="1" y="3" width="15" height="13"></rect>
+                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                      <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                      <circle cx="18.5" cy="18.5" r="2.5"></circle>
+                    </svg>
+                    <span className="font-medium text-blue text-custom-sm">
+                      Delivery in {deliveryDays} days
+                    </span>
+                  </div>
+                )}
               </div>
 
               <p>
-                Lorem Ipsum is simply dummy text of the printing and typesetting
-                industry. Lorem Ipsum has.
+                {description}
               </p>
 
               <div className="flex flex-wrap justify-between gap-5 mt-6 mb-7.5">
@@ -315,11 +361,13 @@ const QuickViewModal = () => {
 
                   <span className="flex items-center gap-2">
                     <span className="font-semibold text-dark text-xl xl:text-heading-4">
-                      ₹{product.discountedPrice}
+                      ₹{price}
                     </span>
-                    <span className="font-medium text-dark-4 text-lg xl:text-2xl line-through">
-                      ₹{product.price}
-                    </span>
+                    {Number(oldPrice) > Number(price) && (
+                      <span className="font-medium text-dark-4 text-lg xl:text-2xl line-through">
+                        ₹{oldPrice}
+                      </span>
+                    )}
                   </span>
                 </div>
 

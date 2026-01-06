@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
 import { useSelector, useDispatch } from "react-redux";
-import { selectTotalPrice } from "@/redux/features/cart-slice";
+import { removeAllItemsFromCart, selectTotalPrice } from "@/redux/features/cart-slice";
 import { logout } from "@/redux/features/auth-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
 import Image from "next/image";
@@ -12,7 +12,7 @@ import Sidebar from "./Sidebar";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 import { Category } from "@/types/category";
 
-import { setWishlist } from "@/redux/features/wishlist-slice";
+import { removeAllItemsFromWishlist, setWishlist } from "@/redux/features/wishlist-slice";
 
 const CategoryItem = ({ cat }: { cat: Category }) => {
   const [subcategories, setSubcategories] = useState<any[]>([]);
@@ -151,6 +151,8 @@ const Header = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    dispatch(removeAllItemsFromCart());
+    dispatch(removeAllItemsFromWishlist());
     router.push("/signin");
   };
 

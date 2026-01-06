@@ -29,21 +29,29 @@ class Cart {
     });
   }
 
-  static async findItemInCart(userId, productId) {
-    const cart = await this.collection().findOne({
+  static async findItemInCart(userId, productId, sellerProductId = null) {
+    const query = {
       userId: userId,
       status: 'active',
       'items.productId': productId
-    });
+    };
+
+    if (sellerProductId) {
+      query['items.sellerProductId'] = sellerProductId;
+    }
+
+    const cart = await this.collection().findOne(query);
     
     if (!cart) return null;
     
-    const item = cart.items.find(item => item.productId === productId);
+    const item = cart.items.find(item => 
+      item.productId === productId && (!sellerProductId || item.sellerProductId === sellerProductId)
+    );
     return item || null;
   }
 
   static async addItem(userId, itemData, createdBy, userEmail) {
-    const existingItem = await this.findItemInCart(userId, itemData.productId);
+    const existingItem = await this.findItemInCart(userId, itemData.productId, itemData.sellerProductId);
     
     if (existingItem) {
       return { alreadyExists: true, existingItem };
@@ -118,11 +126,17 @@ class Cart {
     }
   }
 
-  static async removeItem(userId, productId, updatedBy, userEmail) {
+  static async removeItem(userId, productId, sellerProductId, userEmail) {
+    const query = { userId: userId, status: 'active' };
+    const pullQuery = { 
+      productId: productId,
+      sellerProductId: sellerProductId || null 
+    };
+
     return await this.collection().findOneAndUpdate(
-      { userId: userId, status: 'active' },
+      query,
       { 
-        $pull: { items: { productId: productId } },
+        $pull: { items: pullQuery },
         $set: { 
           updatedAt: new Date(),
           updatedBy: userEmail
@@ -132,7 +146,20 @@ class Cart {
     );
   }
 
-  static async updateItemQty(userId, productId, updateData, updatedBy, userEmail) {
+  static async updateItemQty(userId, productId, sellerProductId, updateData, userEmail) {
+    const query = { 
+      userId: userId, 
+      status: 'active'
+    };
+    
+    // Use $elemMatch to find the specific item in the array
+    query.items = { 
+      $elemMatch: { 
+        productId: productId, 
+        sellerProductId: sellerProductId || null 
+      } 
+    };
+
     const update = { 
       'items.$.qty': updateData.qty,
       'items.$.updatedAt': new Date(),
@@ -162,11 +189,7 @@ class Cart {
     }
 
     return await this.collection().findOneAndUpdate(
-      { 
-        userId: userId, 
-        status: 'active',
-        'items.productId': productId
-      },
+      query,
       { 
         $set: update
       },

@@ -277,6 +277,7 @@ exports.removeItem = async (req, res) => {
   try {
     const userId = req.userId;
     const { productId } = req.params;
+    const { sellerProductId } = req.query;
     
     if (!userId) {
       return res.status(401).json({ 
@@ -310,7 +311,10 @@ exports.removeItem = async (req, res) => {
       });
     }
 
-    const itemExists = existingCart.items.some(item => item.productId === productId);
+    const itemExists = existingCart.items.some(item => 
+      item.productId === productId && 
+      (item.sellerProductId === (sellerProductId || null))
+    );
     
     if (!itemExists) {
       return res.status(404).json({ 
@@ -319,7 +323,7 @@ exports.removeItem = async (req, res) => {
       });
     }
 
-    const cart = await Cart.removeItem(userId, productId, userId, user.email);
+    const cart = await Cart.removeItem(userId, productId, sellerProductId || null, user.email);
     
     res.status(200).json({ 
       success: true,
@@ -338,7 +342,7 @@ exports.updateItemQty = async (req, res) => {
   try {
     const userId = req.userId;
     const { productId } = req.params;
-    const { qty, totalPrice, gst, subTotal } = req.body;
+    const { qty, totalPrice, gst, subTotal, sellerProductId } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -386,7 +390,10 @@ exports.updateItemQty = async (req, res) => {
       });
     }
 
-    const itemExists = existingCart.items.some(item => item.productId === productId);
+    const itemExists = existingCart.items.some(item => 
+      item.productId === productId && 
+      (item.sellerProductId === (sellerProductId || null))
+    );
     
     if (!itemExists) {
       return res.status(404).json({ 
@@ -425,7 +432,7 @@ exports.updateItemQty = async (req, res) => {
       }
     };
 
-    const cart = await Cart.updateItemQty(userId, productId, updateData, userId, user.email);
+    const cart = await Cart.updateItemQty(userId, productId, sellerProductId || null, updateData, user.email);
     
     res.status(200).json({ 
       success: true,

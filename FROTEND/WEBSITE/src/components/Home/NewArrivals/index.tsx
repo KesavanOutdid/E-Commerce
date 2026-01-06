@@ -17,26 +17,7 @@ const NewArrival = () => {
         const data = await response.json();
         
         if (data.success && data.data.products) {
-          const transformedProducts = data.data.products.map((item: any) => {
-            const p = item.product;
-            return {
-              id: p.productId,
-              title: p.productName,
-              reviews: p.totalReviews || 0,
-              price: parseFloat(p.price) || 0,
-              discountedPrice: parseFloat(p.salePrice || p.price) || 0,
-              imgs: {
-                thumbnails: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
-                previews: p.images?.length > 0 
-                  ? p.images.map((img: string) => `${API_BASE_URL}${img}`) 
-                  : ["/images/products/product-1-bg-1.png"],
-              },
-              slug: p.slug,
-              description: p.description,
-              shortDescription: p.shortDescription,
-            };
-          });
-          setProducts(transformedProducts);
+          setProducts(data.data.products);
         }
       } catch (error) {
         console.error("Failed to fetch products:", error);

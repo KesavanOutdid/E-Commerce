@@ -13,6 +13,7 @@ import { addToCart, clearCartServer } from "@/redux/features/cart-slice";
 import { setAuth } from "@/redux/features/auth-slice";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Script from "next/script";
 
 const ShopDetails = ({ productId }: { productId?: string }) => {
@@ -151,6 +152,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
     const shippingFees = 150;
     const codFees = payment === "cod" ? 50 : 0;
+    const seller = product.minPriceDetails;
     const totalPrice = product.discountedPrice * quantity;
 
     const orderData = {
@@ -170,6 +172,8 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
       paymentType: payment,
       items: [{
         productId: product.id,
+        sellerProductId: seller?.sellerProductId || null,
+        sellerId: seller?.sellerId || null,
         qty: quantity,
         price: product.discountedPrice,
       }],
@@ -283,13 +287,13 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
         const response = await fetch(API_ENDPOINTS.PRODUCT_DETAILS(productId));
         const data = await response.json();
         if (data.success) {
-          const p = data.data;
+          const { product: p, sellerCount } = data.data;
           const transformedProduct = {
             id: p.productId,
             title: p.productName,
             reviews: p.totalReviews || 0,
             price: parseFloat(p.price) || 0,
-            discountedPrice: parseFloat(p.salePrice || p.price) || 0,
+            discountedPrice: p.minPriceDetails?.price || parseFloat(p.salePrice || p.price) || 0,
             imgs: {
               thumbnails: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
               previews: p.images?.length > 0 
@@ -302,7 +306,11 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
             attributes: p.attributes,
             stock: p.stock,
             avgRating: p.avgRating || 0,
-            sellerName: p.sellerName
+            sellerName: p.minPriceDetails?.sellerName || p.sellerName,
+            shopName: p.minPriceDetails?.shopName,
+            otherSellers: p.allOffers || [],
+            sellerCount: sellerCount,
+            minPriceDetails: p.minPriceDetails
           };
           setProduct(transformedProduct);
         }
@@ -373,10 +381,14 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
       return;
     }
 
+    const seller = product.minPriceDetails;
+
     dispatch(
       addToCart({
         item: {
           ...product,
+          sellerProductId: seller?.sellerProductId || null,
+          sellerId: seller?.sellerId || null,
           quantity,
         },
         accessToken,
@@ -386,12 +398,41 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     toast.success("Added to cart");
   };
 
+  const handleAddToCartOtherSeller = (seller: any) => {
+    if (!product) return;
+    
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    dispatch(
+      addToCart({
+        item: {
+          ...product,
+          price: seller.price,
+          discountedPrice: seller.price,
+          sellerProductId: seller.sellerProductId,
+          sellerId: seller.sellerId,
+          quantity: 1, // Default to 1 for marketplace offers
+        },
+        accessToken,
+        isAuthenticated
+      })
+    );
+    toast.success(`Added ${product.title} from ${seller.shopName} to cart`);
+  };
+
   const onLoginSuccess = (userData: any, token: string) => {
+    if (!product) return;
+    const seller = product.minPriceDetails;
     // After login, proceed to add to cart
     dispatch(
       addToCart({
         item: {
           ...product,
+          sellerProductId: seller?.sellerProductId || null,
+          sellerId: seller?.sellerId || null,
           quantity,
         },
         accessToken: token,
@@ -784,68 +825,75 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     </div>
                   </div>
 
-                  <h3 className="font-medium text-custom-1 mb-4.5">
-                    <span className="text-sm sm:text-base text-dark">
-                      Price: ₹{product.discountedPrice}
-                    </span>
+                  <div className="flex items-center gap-3 mb-4.5">
+                    <h3 className="font-bold text-2xl text-dark">
+                      ₹{product.discountedPrice}
+                    </h3>
                     {product.price > product.discountedPrice && (
-                      <span className="line-through text-dark-4 ml-2">
-                        {" "}
-                        ₹{product.price}{" "}
-                      </span>
-                    )}
-                  </h3>
-
-                  <ul className="flex flex-col gap-2">
-                    <li className="flex items-center gap-2.5">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 20 20"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M13.3589 8.35863C13.603 8.11455 13.603 7.71882 13.3589 7.47475C13.1149 7.23067 12.7191 7.23067 12.4751 7.47475L8.75033 11.1995L7.5256 9.97474C7.28152 9.73067 6.8858 9.73067 6.64172 9.97474C6.39764 10.2188 6.39764 10.6146 6.64172 10.8586L8.30838 12.5253C8.55246 12.7694 8.94819 12.7694 9.19227 12.5253L13.3589 8.35863Z"
-                          fill="#3C50E0"
-                        />
-                        <path
-                          fillRule="evenodd"
-                          clipRule="evenodd"
-                          d="M10.0003 1.04169C5.05277 1.04169 1.04199 5.05247 1.04199 10C1.04199 14.9476 5.05277 18.9584 10.0003 18.9584C14.9479 18.9584 18.9587 14.9476 18.9587 10C18.9587 5.05247 14.9479 1.04169 10.0003 1.04169ZM2.29199 10C2.29199 5.74283 5.74313 2.29169 10.0003 2.29169C14.2575 2.29169 17.7087 5.74283 17.7087 10C17.7087 14.2572 14.2575 17.7084 10.0003 17.7084C5.74313 17.7084 2.29199 14.2572 2.29199 10Z"
-                          fill="#3C50E0"
-                        />
-                      </svg>
-                      Free delivery available
-                    </li>
-                  </ul>
-
-                  {product.shortDescription && (
-                    <div className="mt-4 border-b border-gray-3 pb-6">
-                      <div 
-                        className={`text-dark text-sm leading-relaxed ${!showFullDescription ? "line-clamp-2" : ""}`}
-                      >
-                        {product.shortDescription}
+                      <div className="flex items-center gap-2">
+                        <span className="line-through text-gray-400 text-base">
+                          ₹{product.price}
+                        </span>
+                        <span className="text-green-600 text-sm font-bold">
+                          {Math.round(((product.price - product.discountedPrice) / product.price) * 100)}% off
+                        </span>
                       </div>
-                      <button 
-                        onClick={() => setShowFullDescription(!showFullDescription)}
-                        className="text-blue text-sm font-medium mt-1 hover:underline focus:outline-none"
-                      >
-                        {showFullDescription ? "View Less" : "View More"}
-                      </button>
+                    )}
+                  </div>
 
-                      {product.sellerName && (
-                        <div className="flex items-center gap-2 mt-4 text-dark font-medium text-sm">
-                          <svg 
-                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                            className="text-blue"
-                          >
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                          </svg>
-                          <span>Seller: <span className="text-black cursor-pointer hover:underline  ml-1">{product.sellerName}</span></span>
+                  {/* Delivery & Stock Info */}
+                  <div className="flex items-start gap-2 mb-6">
+                    <span className="text-gray-500 font-medium text-md w-20 pt-0.5">Delivery</span>
+                    <div className="flex-1 flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <span className="text-dark  text-md">
+                          {product.minPriceDetails?.deliveryDays 
+                            ? `Delivery by ${new Date(Date.now() + (product.minPriceDetails.deliveryDays * 24 * 60 * 60 * 1000)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', weekday: 'short' })}` 
+                            : "Free delivery available"}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {product.minPriceDetails?.deliveryDays ? `In ${product.minPriceDetails.deliveryDays} days` : "Standard delivery"}
+                        </span>
+                      </div>
+                      <span className={`text-sm font-bold ${parseInt(product.minPriceDetails?.stock || product.stock) > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                          ? `In Stock (${product.minPriceDetails?.stock || product.stock} units)` 
+                          : 'Out of Stock'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Seller Section - Flipkart Style */}
+                  {(product.sellerName || (product.otherSellers?.length > 1)) && (
+                    <div className="mb-6 flex items-start gap-2">
+                      <span className="text-gray-500 font-medium text-md w-20 flex-shrink-0 pt-0.5">Seller</span>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-blue  text-md cursor-pointer hover:underline">
+                            {product.sellerName}
+                          </span>
+                          {product.shopName && (
+                            <span className="bg-blue/10 text-blue text-[10px]  px-1.5 py-0.5 rounded uppercase">
+                              {product.shopName}
+                            </span>
+                          )}
                         </div>
-                      )}
+                        
+                        {product.otherSellers?.length > 1 && (
+                          <div className="pt-1">
+                            <Link 
+                              href={`/shop-details/${productId}/sellers`} 
+                              className="text-blue  text-sm flex items-center gap-1 group"
+                            >
+                              {product.otherSellers.length === 2 
+                                ? `1 other seller from ₹${product.otherSellers.find((s: any) => s.sellerId !== product.minPriceDetails?.sellerId)?.price}`
+                                : `View ${product.otherSellers.length - 1} more sellers from ₹${Math.min(...product.otherSellers.filter((s: any) => s.sellerId !== product.minPriceDetails?.sellerId).map((s: any) => s.price))}`
+                              }
+                              <svg className="transform group-hover:translate-x-0.5 transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </Link>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   )}
 

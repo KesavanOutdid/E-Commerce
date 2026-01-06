@@ -35,21 +35,7 @@ const ShopWithSidebar = () => {
         const data = await response.json();
         if (data.success) {
           const productsData = Array.isArray(data.data) ? data.data : (data.data.products || []);
-          const transformedProducts = productsData.map((item: any) => {
-            const p = item.product || item;
-            return {
-              id: p.productId,
-              title: p.productName,
-              reviews: p.totalReviews || 0,
-              price: parseFloat(p.price) || 0,
-              discountedPrice: parseFloat(p.salePrice || p.price) || 0,
-              imgs: {
-                thumbnails: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
-                previews: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
-              },
-            };
-          });
-          setProducts(transformedProducts);
+          setProducts(productsData);
           if (data.data.pagination) {
             setPaginationData(data.data.pagination);
           }

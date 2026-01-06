@@ -4,33 +4,49 @@ import Image from "next/image";
 import Link from "next/link";
 import { removeCartItemServer, updateCartItemServer } from "@/redux/features/cart-slice";
 import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
+import toast from "react-hot-toast";
 
 const SingleItem = ({ item }) => {
   const dispatch = useAppDispatch();
   const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
   const { closeCartModal } = useCartModalContext();
 
-  const handleRemoveFromCart = () => {
+  const handleRemoveFromCart = async () => {
     if (isAuthenticated && accessToken) {
-      dispatch(removeCartItemServer({ productId: item.productId, accessToken }));
+      try {
+        await dispatch(removeCartItemServer({ 
+          productId: item.productId, 
+          sellerProductId: item.sellerProductId,
+          accessToken 
+        })).unwrap();
+        toast.success("Item removed from cart");
+      } catch (error: any) {
+        toast.error(error || "Failed to remove item");
+      }
     }
   };
 
-  const handleUpdateQuantity = (newQty: number) => {
+  const handleUpdateQuantity = async (newQty: number) => {
     if (newQty < 1) return;
     if (isAuthenticated && accessToken) {
       const totalPrice = item.discountedPrice * newQty;
       const gst = 0; // Following the pattern in cart-slice.ts
       const subTotal = totalPrice;
       
-      dispatch(updateCartItemServer({ 
-        productId: item.productId, 
-        qty: newQty, 
-        totalPrice, 
-        gst, 
-        subTotal, 
-        accessToken 
-      }));
+      try {
+        await dispatch(updateCartItemServer({ 
+          productId: item.productId, 
+          sellerProductId: item.sellerProductId,
+          qty: newQty, 
+          totalPrice, 
+          gst, 
+          subTotal, 
+          accessToken 
+        })).unwrap();
+        toast.success("Cart updated");
+      } catch (error: any) {
+        toast.error(error || "Failed to update quantity");
+      }
     }
   };
 
