@@ -213,42 +213,67 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const [mainCategory, subCategory, marketplaceListings] = await Promise.all([
+    const [mainCategory, subCategory, rawMarketplaceListings] = await Promise.all([
       product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
       product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
       SellerProduct.collection().find({ productId: product.productId }).toArray()
     ]);
 
-    let sellerName = null;
-    let shopName = null;
+    // Collect all seller IDs to fetch their details in bulk
+    const sellerIds = [...new Set([
+      ...(product.userId ? [product.userId] : []),
+      ...rawMarketplaceListings.map(listing => listing.sellerId)
+    ])];
 
-    if (product.userId) {
-      const user = await User.collection().findOne({
+    const [users, sellers] = await Promise.all([
+      User.collection().find({
         $or: [
-          { userId: product.userId },
-          { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
-        ].filter(q => q._id !== null || q.userId !== undefined)
-      });
-      
-      if (user) {
-        sellerName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-        // Fallback to name or email if firstName/lastName are missing
-        if (!sellerName) sellerName = user.name || user.email || 'Unknown';
+          { userId: { $in: sellerIds } },
+          { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
+        ]
+      }).toArray(),
+      Seller.collection().find({
+        userId: { $in: sellerIds }
+      }).toArray()
+    ]);
 
-        const seller = await Seller.findByUserId(user.userId || user._id?.toString());
-        if (seller) {
-          shopName = seller.shopName;
-        }
-      }
-    }
+    const userMap = new Map();
+    users.forEach(u => {
+      if (u.userId) userMap.set(u.userId.toString(), u);
+      if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    const shopMap = new Map();
+    sellers.forEach(s => {
+      if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
+    });
+
+    const getSellerDetails = (userId) => {
+      if (!userId) return { sellerName: null, shopName: null };
+      const user = userMap.get(userId.toString());
+      if (!user) return { sellerName: null, shopName: null };
+
+      let sellerName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      if (!sellerName) sellerName = user.name || user.email || 'Unknown';
+      const shopName = shopMap.get(user.userId?.toString() || user._id?.toString()) || null;
+
+      return { sellerName, shopName };
+    };
+
+    const mainSeller = getSellerDetails(product.userId);
+    
+    const marketplaceListings = rawMarketplaceListings.map(listing => ({
+      ...listing,
+      ...getSellerDetails(listing.sellerId)
+    }));
 
     const productWithCategoryNames = {
       ...product,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
-      marketplaceListings: marketplaceListings || [],
-      ...(sellerName && { sellerName }),
-      ...(shopName && { shopName })
+      marketplaceListings: marketplaceListings,
+      ...(mainSeller.sellerName && { sellerName: mainSeller.sellerName }),
+      ...(mainSeller.shopName && { shopName: mainSeller.shopName })
     };
 
     res.status(200).json({
