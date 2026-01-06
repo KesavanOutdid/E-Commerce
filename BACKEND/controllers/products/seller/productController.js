@@ -113,7 +113,7 @@ exports.createProduct = async (req, res) => {
       salePrice: req.body.salePrice || null,
       stock: stock,
       deliveryDays: req.body.deliveryDays || 3,
-      approvalStatus: 'pending'
+      approvalStatus: 'approved'
     });
 
     await deleteCachePattern('products:list:*');

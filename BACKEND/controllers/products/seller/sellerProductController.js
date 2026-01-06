@@ -50,7 +50,7 @@ exports.listProduct = async (req, res) => {
       salePrice,
       stock,
       deliveryDays,
-      approvalStatus: 'approved' 
+      approvalStatus: 'approved'
     };
 
     const sellerProduct = await SellerProduct.create(sellerProductData);
