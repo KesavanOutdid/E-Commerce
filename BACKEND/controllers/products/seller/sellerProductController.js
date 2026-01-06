@@ -69,13 +69,41 @@ exports.listProduct = async (req, res) => {
 
 exports.getSellerListings = async (req, res) => {
   try {
-    const listings = await SellerProduct.find({ 
+    const page = parseInt(req.query.page) || 1;
+    const limitNum = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limitNum;
+
+    const query = { 
       sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
-    });
+    };
+
+    const [listings, total] = await Promise.all([
+      SellerProduct.find(query, { skip, limit: limitNum }),
+      SellerProduct.collection().countDocuments(query)
+    ]);
+
+    // Fetch product details for each listing to show name/image
+    const listingsWithProducts = await Promise.all(listings.map(async (listing) => {
+      const product = await Product.findById(listing.productId);
+      return {
+        ...listing,
+        productName: product ? product.productName : 'Unknown Product',
+        productImages: product ? product.images : []
+      };
+    }));
 
     res.status(200).json({
       success: true,
-      data: listings
+      message: 'Seller listings fetched successfully',
+      data: {
+        listings: listingsWithProducts,
+        pagination: {
+          total,
+          page,
+          limit: limitNum,
+          pages: Math.ceil(total / limitNum)
+        }
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
