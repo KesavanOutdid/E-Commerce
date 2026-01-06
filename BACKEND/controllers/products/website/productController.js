@@ -24,44 +24,133 @@ const getUserIdFromRequest = (req) => {
 const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }) => {
   return [
     { $match: matchQuery },
-    // Join with seller listings to find all approved offers for this product
+    // Join with marketplace listings and their seller details
     {
       $lookup: {
         from: "seller_products",
         let: { pid: "$productId" },
         pipeline: [
           { $match: { $expr: { $eq: ["$productId", "$$pid"] }, approvalStatus: "approved" } },
-          { $project: { price: 1, salePrice: 1 } }
+          {
+            $lookup: {
+              from: "users",
+              localField: "sellerId",
+              foreignField: "userId",
+              as: "user"
+            }
+          },
+          { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "sellers",
+              localField: "sellerId",
+              foreignField: "userId",
+              as: "seller"
+            }
+          },
+          { $unwind: { path: "$seller", preserveNullAndEmptyArrays: true } },
+          {
+            $project: {
+              price: 1,
+              salePrice: 1,
+              stock: 1,
+              deliveryDays: 1,
+              sellerId: 1,
+              currentPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
+              sellerName: { $concat: [{ $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] }] },
+              shopName: "$seller.shopName"
+            }
+          }
         ],
         as: "marketplaceListings"
       }
     },
-    // Calculate the actual min price for this specific product entry (considering master and offers)
+    // Join main product seller details
+    {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "userId",
+        as: "mainUser"
+      }
+    },
+    { $unwind: { path: "$mainUser", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "sellers",
+        localField: "userId",
+        foreignField: "userId",
+        as: "mainSeller"
+      }
+    },
+    { $unwind: { path: "$mainSeller", preserveNullAndEmptyArrays: true } },
     {
       $addFields: {
-        allPrices: {
+        mainPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
+        // Prepare list of all offers to identify min price and seller count
+        allOffers: {
           $concatArrays: [
-            { $cond: [{ $gt: ["$price", 0] }, ["$price"], []] },
-            { $cond: [{ $gt: ["$salePrice", 0] }, ["$salePrice"], []] },
-            { $map: { input: "$marketplaceListings", as: "m", in: "$$m.price" } },
-            { $map: { input: "$marketplaceListings", as: "m", in: { $ifNull: ["$$m.salePrice", "$$m.price"] } } }
+            [{
+              price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
+              sellerId: "$userId",
+              sellerName: { $cond: [{ $eq: ["$roleId", 1] }, "Admin", { $concat: [{ $ifNull: ["$mainUser.firstName", ""] }, " ", { $ifNull: ["$mainUser.lastName", ""] }] }] },
+              shopName: { $cond: [{ $eq: ["$roleId", 1] }, "Main Store", "$mainSeller.shopName"] },
+              stock: "$stock",
+              deliveryDays: { 
+                $cond: [
+                  { $eq: ["$roleId", 1] }, 
+                  { $ifNull: ["$deliveryDays", 7] }, 
+                  { $ifNull: ["$deliveryDays", 5] }
+                ] 
+              }, 
+              isSeller: { $cond: [{ $eq: ["$roleId", 1] }, false, true] }
+            }],
+            { $map: {
+              input: "$marketplaceListings",
+              as: "m",
+              in: {
+                price: "$$m.currentPrice",
+                sellerId: "$$m.sellerId",
+                sellerName: "$$m.sellerName",
+                shopName: "$$m.shopName",
+                stock: "$$m.stock",
+                deliveryDays: "$$m.deliveryDays",
+                isSeller: true
+              }
+            }}
           ]
         }
       }
     },
     {
       $addFields: {
-        currentMinPrice: { $min: "$allPrices" },
-        offerCount: { $size: "$marketplaceListings" }
+        minPrice: { $min: "$allOffers.price" },
+        sellerCount: {
+          $size: {
+            $filter: {
+              input: "$allOffers",
+              as: "o",
+              cond: { $eq: ["$$o.isSeller", true] }
+            }
+          }
+        }
+      }
+    },
+    {
+      $addFields: {
+        minPriceDetails: {
+          $arrayElemAt: [
+            { $filter: { input: "$allOffers", as: "o", cond: { $eq: ["$$o.price", "$minPrice"] } } },
+            0
+          ]
+        }
       }
     },
     { $sort: sortOptions },
-    { 
+    {
       $group: {
         _id: "$slug",
-        cheapestListing: { $first: "$$ROOT" },
-        totalOffers: { $sum: { $add: [1, "$offerCount"] } },
-        minPriceAcrossSellers: { $min: "$currentMinPrice" }
+        cheapestListing: { $first: "$$ROOT" }
       }
     },
     {
@@ -69,18 +158,27 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
         data: [
           { $skip: skip },
           { $limit: limitNum },
-          { 
+          {
             $project: {
               _id: 0,
-              product: "$cheapestListing",
-              sellerCount: "$totalOffers",
-              minPrice: "$minPriceAcrossSellers"
+              product: {
+                $arrayToObject: {
+                  $filter: {
+                    input: { $objectToArray: "$cheapestListing" },
+                    as: "kv",
+                    cond: { 
+                      $not: { 
+                        $in: ["$$kv.k", ["mainUser", "mainSeller", "mainPrice"]] 
+                      } 
+                    }
+                  }
+                }
+              },
+              sellerCount: "$cheapestListing.sellerCount"
             }
           }
         ],
-        totalCount: [
-          { $count: "count" }
-        ]
+        totalCount: [{ $count: "count" }]
       }
     }
   ];
@@ -238,7 +336,12 @@ exports.getProductsBySubCategory = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
   try {
-    const cacheKey = `products:detail:website:${req.params.id}`;
+    const { id } = req.params;
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid product ID' });
+    }
+
+    const cacheKey = `products:detail:website:${id}`;
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
@@ -249,114 +352,35 @@ exports.getProductById = async (req, res) => {
       });
     }
 
-    const product = await Product.findById(req.params.id);
-    // Check if it's admin or approved seller product
-    const isApproved = product && (product.roleId === 1 || (product.roleId === 2 && product.approvalStatus === 'approved'));
-    const isActive = product && (product.status === true || product.status === "true");
-    
-    if (!product || !isApproved || !isActive) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // Find all other sellers for the same product using slug (Old way)
-    const otherSellersOld = await Product.collection().find({
-      slug: product.slug,
-      _id: { $ne: product._id },
+    // Filter: Specific ID + Approval/Status filters
+    let matchQuery = { 
+      _id: new ObjectId(id),
       $or: [
         { roleId: 1 },
         { roleId: 2, approvalStatus: 'approved' }
       ],
       status: { $in: [true, "true"] }
-    }).toArray();
-
-    // Find all marketplace listings for this product (New way)
-    const marketplaceListings = await SellerProduct.collection().find({
-      productId: product.productId,
-      approvalStatus: 'approved'
-    }).toArray();
-
-    // Fetch user details for all sellers
-    const allSellerIds = [
-      product.userId, 
-      ...otherSellersOld.map(s => s.userId),
-      ...marketplaceListings.map(s => s.sellerId)
-    ];
-    const uniqueSellerIds = [...new Set(allSellerIds.filter(id => id))];
-    
-    const users = await User.collection().find({
-      $or: [
-        { userId: { $in: uniqueSellerIds } },
-        { _id: { $in: uniqueSellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-      ]
-    }).toArray();
-
-    const sellers = await Seller.collection().find({
-      userId: { $in: uniqueSellerIds }
-    }).toArray();
-
-    const userMap = new Map();
-    users.forEach(u => {
-      if (u.userId) userMap.set(u.userId.toString(), u);
-      if (u._id) userMap.set(u._id.toString(), u);
-    });
-
-    const shopMap = new Map();
-    sellers.forEach(s => {
-      if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
-    });
-
-    const getSellerDetails = (productUserId) => {
-      if (!productUserId) return { sellerName: null, shopName: null };
-      const user = userMap.get(productUserId.toString());
-      if (!user) return { sellerName: null, shopName: null };
-
-      return {
-        sellerName: `${user.firstName} ${user.lastName}`.trim(),
-        shopName: user.userId ? shopMap.get(user.userId.toString()) : null
-      };
     };
 
-    const otherSellersWithNames = [
-      ...otherSellersOld.map(seller => {
-        const sellerData = { ...seller };
-        if (seller.roleId === 2) {
-          const { sellerName, shopName } = getSellerDetails(seller.userId);
-          sellerData.sellerName = sellerName;
-          sellerData.shopName = shopName;
-        }
-        return sellerData;
-      }),
-      ...marketplaceListings.map(listing => {
-        const { sellerName, shopName } = getSellerDetails(listing.sellerId);
-        return {
-          ...listing,
-          isMarketplaceListing: true,
-          sellerName,
-          shopName
-        };
-      })
-    ];
+    const aggregationResult = await Product.collection().aggregate(
+      getProductAggregationPipeline(matchQuery, 0, 1)
+    ).toArray();
 
-    const responseData = {
-      ...product,
-      otherSellers: otherSellersWithNames
-    };
-
-    if (product.roleId === 2) {
-      const { sellerName, shopName } = getSellerDetails(product.userId);
-      responseData.sellerName = sellerName;
-      responseData.shopName = shopName;
+    if (!aggregationResult || !aggregationResult[0].data.length) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
     }
+
+    const responseData = aggregationResult[0].data[0];
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
     if (userId) {
       const wishlist = await User.getWishlist(userId);
-      responseData.isWishlisted = wishlist.includes(product.productId) || 
-                                 wishlist.includes(product._id?.toString());
+      responseData.product.isWishlisted = wishlist.includes(responseData.product.productId) || 
+                                        wishlist.includes(id);
     }
 
-    // Cache if NOT logged in
+    // Cache the response if user is NOT logged in
     if (!userId) {
       await setCache(cacheKey, responseData, 3600);
     }

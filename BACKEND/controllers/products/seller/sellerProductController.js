@@ -1,5 +1,7 @@
 const SellerProduct = require('../../../models/SellerProduct');
 const Product = require('../../../models/Product');
+const MainCategory = require('../../../models/MainCategory');
+const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern } = require('../../../services/redisService');
 const { ObjectId } = require('mongodb');
 
@@ -99,8 +101,14 @@ exports.getSellerListings = async (req, res) => {
 
     const result = await SellerProduct.collection().aggregate(pipeline).toArray();
     
-    const listings = result[0].data.map(listing => {
+    const listings = await Promise.all(result[0].data.map(async (listing) => {
       const { productDetails, ...rest } = listing;
+      
+      const [mainCategory, subCategory] = await Promise.all([
+        productDetails?.mainCategoryId ? MainCategory.findById(productDetails.mainCategoryId) : null,
+        productDetails?.subCategoryId ? SubCategory.findById(productDetails.subCategoryId) : null
+      ]);
+
       return {
         ...rest,
         productName: productDetails?.productName || 'Unknown Product',
@@ -108,9 +116,11 @@ exports.getSellerListings = async (req, res) => {
         productDescription: productDetails?.description || '',
         productAttributes: productDetails?.attributes || [],
         productAvgRating: productDetails?.avgRating || 0,
-        productSlug: productDetails?.slug || ''
+        productSlug: productDetails?.slug || '',
+        mainCategoryName: mainCategory ? mainCategory.name : null,
+        subCategoryName: subCategory ? subCategory.name : null
       };
-    });
+    }));
 
     const total = result[0].totalCount[0]?.count || 0;
 
