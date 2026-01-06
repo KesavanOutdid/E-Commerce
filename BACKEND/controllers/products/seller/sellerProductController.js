@@ -69,6 +69,7 @@ exports.listProduct = async (req, res) => {
   }
 };
 
+
 exports.getSellerListings = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
