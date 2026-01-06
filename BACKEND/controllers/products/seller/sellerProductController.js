@@ -50,7 +50,7 @@ exports.listProduct = async (req, res) => {
       salePrice,
       stock,
       deliveryDays,
-      approvalStatus: 'pending' // Usually requires admin approval for the offer
+      approvalStatus: 'approved' 
     };
 
     const sellerProduct = await SellerProduct.create(sellerProductData);
@@ -59,7 +59,7 @@ exports.listProduct = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Product listed successfully, awaiting approval',
+      message: 'Product listed successfully',
       data: sellerProduct
     });
   } catch (error) {
