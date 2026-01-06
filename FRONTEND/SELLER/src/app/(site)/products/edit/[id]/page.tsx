@@ -386,23 +386,37 @@ export default function EditProductPage() {
                                 <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
                                     <Icon icon="mdi:image-multiple" width={24} height={24} className="text-primary" />
                                     Product Images
+                                    <span className="text-sm font-normal text-gray-600">
+                                        ({existingImages.length + newImages.length} total)
+                                    </span>
                                 </h2>
                                 <div className="bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-xl">
                                     {existingImages.length > 0 && (
                                         <div className="mb-4">
-                                            <p className="text-sm font-medium text-gray-700 mb-2">Existing Images</p>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                    <Icon icon="mdi:image-check" width={18} height={18} />
+                                                    Existing Images ({existingImages.length})
+                                                </p>
+                                                <p className="text-xs text-gray-600">
+                                                    Hover to remove
+                                                </p>
+                                            </div>
                                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                                 {existingImages.map((image, index) => (
                                                     <div key={index} className="relative group">
+                                                        <div className="absolute top-2 left-2 bg-primary text-white px-2 py-1 rounded-full text-xs font-medium z-10">
+                                                            #{index + 1}
+                                                        </div>
                                                         <img
                                                             src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
                                                             alt={`Existing ${index + 1}`}
-                                                            className="w-full h-32 object-cover rounded-lg"
+                                                            className="w-full h-32 object-cover rounded-lg border-2 border-gray-200"
                                                         />
                                                         <button
                                                             type="button"
                                                             onClick={() => removeExistingImage(index)}
-                                                            className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition">
+                                                            className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700 z-10">
                                                             <Icon icon="mdi:close" width={16} height={16} />
                                                         </button>
                                                     </div>
@@ -412,31 +426,48 @@ export default function EditProductPage() {
                                     )}
                                     
                                     <div>
-                                        <p className="text-sm font-medium text-gray-700 mb-2">Add New Images</p>
+                                        <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                            <Icon icon="mdi:plus-circle" width={18} height={18} />
+                                            Add New Images
+                                        </p>
                                         <input
                                             type="file"
                                             accept="image/*"
                                             multiple
                                             onChange={handleNewImageChange}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
                                         />
                                         {newImagePreviews.length > 0 && (
-                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                                                {newImagePreviews.map((preview, index) => (
-                                                    <div key={index} className="relative group">
-                                                        <img
-                                                            src={preview}
-                                                            alt={`New ${index + 1}`}
-                                                            className="w-full h-32 object-cover rounded-lg"
-                                                        />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removeNewImage(index)}
-                                                            className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition">
-                                                            <Icon icon="mdi:close" width={16} height={16} />
-                                                        </button>
-                                                    </div>
-                                                ))}
+                                            <div>
+                                                <div className="flex items-center justify-between mb-3 mt-4">
+                                                    <p className="text-sm font-medium text-green-700 flex items-center gap-2">
+                                                        <Icon icon="mdi:image-plus" width={18} height={18} />
+                                                        New Images ({newImages.length})
+                                                    </p>
+                                                    <p className="text-xs text-gray-600">
+                                                        Hover to remove
+                                                    </p>
+                                                </div>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                    {newImagePreviews.map((preview, index) => (
+                                                        <div key={index} className="relative group">
+                                                            <div className="absolute top-2 left-2 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-medium z-10">
+                                                                New #{index + 1}
+                                                            </div>
+                                                            <img
+                                                                src={preview}
+                                                                alt={`New ${index + 1}`}
+                                                                className="w-full h-32 object-cover rounded-lg border-2 border-green-200"
+                                                            />
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => removeNewImage(index)}
+                                                                className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition hover:bg-red-700 z-10">
+                                                                <Icon icon="mdi:close" width={16} height={16} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
                                         )}
                                     </div>

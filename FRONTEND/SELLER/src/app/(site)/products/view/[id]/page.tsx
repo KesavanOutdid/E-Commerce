@@ -28,9 +28,10 @@ export default function ProductViewPage() {
     const params = useParams()
     const productId = params.id as string
     const { user, isAuthenticated, isLoading } = useAuth()
-    const { loading, fetchProductById } = useProducts()
+    const { loading, fetchProductById, fetchSellerListings } = useProducts()
     const [product, setProduct] = useState<any>(null)
     const [selectedImage, setSelectedImage] = useState(0)
+    const [listingData, setListingData] = useState<any>(null)
 
     useEffect(() => {
         if (isLoading) return
@@ -48,7 +49,19 @@ export default function ProductViewPage() {
                 router.push('/products')
             }
         }
+        
+        const loadListingData = async () => {
+            const response = await fetchSellerListings(1, 100)
+            if (response?.data?.listings) {
+                const listing = response.data.listings.find((l: any) => l.productId === productId)
+                if (listing) {
+                    setListingData(listing)
+                }
+            }
+        }
+        
         loadProduct()
+        loadListingData()
     }, [isAuthenticated, isLoading, router, productId])
 
     if (isLoading || loading || !product) {
@@ -89,31 +102,50 @@ export default function ProductViewPage() {
 
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                             <div>
-                                <div className="mb-4">
+                                <div className="mb-4 relative">
                                     <img
                                         src={product.images[selectedImage] ? `${process.env.NEXT_PUBLIC_API_URL}${product.images[selectedImage]}` : '/images/placeholder.png'}
                                         alt={product.productName}
                                         className="w-full h-96 object-contain bg-gray-50 rounded-xl border-2 border-gray-200"
                                     />
+                                    {product.images && product.images.length > 0 && (
+                                        <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                                            <Icon icon="mdi:image-multiple" width={16} height={16} />
+                                            {selectedImage + 1} / {product.images.length}
+                                        </div>
+                                    )}
                                 </div>
                                 {product.images.length > 1 && (
-                                    <div className="grid grid-cols-5 gap-2">
-                                        {product.images.map((image: string, index: number) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setSelectedImage(index)}
-                                                className={`h-20 rounded-lg border-2 overflow-hidden ${
-                                                    selectedImage === index
-                                                        ? 'border-primary'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}>
-                                                <img
-                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
-                                                    alt={`${product.productName} ${index + 1}`}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </button>
-                                        ))}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                                                <Icon icon="mdi:view-gallery" width={18} height={18} />
+                                                Product Images ({product.images.length})
+                                            </p>
+                                        </div>
+                                        <div className="grid grid-cols-5 gap-2">
+                                            {product.images.map((image: string, index: number) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setSelectedImage(index)}
+                                                    className={`h-20 rounded-lg border-2 overflow-hidden relative ${
+                                                        selectedImage === index
+                                                            ? 'border-primary ring-2 ring-primary/50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}>
+                                                    <img
+                                                        src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
+                                                        alt={`${product.productName} ${index + 1}`}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                    {selectedImage === index && (
+                                                        <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
+                                                            <Icon icon="mdi:check-circle" className="text-primary" width={24} height={24} />
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -121,12 +153,74 @@ export default function ProductViewPage() {
                             <div>
                                 <h2 className="text-2xl font-bold text-black mb-4">{product.productName}</h2>
                                 
-                                <div className="mb-4">
-                                    <span className="text-3xl font-bold text-primary">₹{product.price}</span>
-                                    {product.salePrice && (
-                                        <span className="ml-4 text-xl text-gray-500 line-through">₹{product.salePrice}</span>
-                                    )}
-                                </div>
+                                {listingData ? (
+                                    <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-primary/20">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <Icon icon="mdi:storefront" className="text-primary" width={24} height={24} />
+                                            <h3 className="text-lg font-semibold text-gray-900">Your Listing Price</h3>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-white rounded-lg p-4">
+                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                    <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                    Price
+                                                </p>
+                                                <p className="text-2xl font-bold text-primary">₹{Number(listingData.price).toLocaleString('en-IN')}</p>
+                                            </div>
+                                            {listingData.salePrice && (
+                                                <div className="bg-white rounded-lg p-4">
+                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                        <Icon icon="mdi:tag" width={16} height={16} />
+                                                        Sale Price
+                                                    </p>
+                                                    <p className="text-2xl font-bold text-green-600">₹{Number(listingData.salePrice).toLocaleString('en-IN')}</p>
+                                                </div>
+                                            )}
+                                            <div className="bg-white rounded-lg p-4">
+                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                    <Icon icon="mdi:package-variant" width={16} height={16} />
+                                                    Stock
+                                                </p>
+                                                <p className="text-xl font-bold text-gray-900">{listingData.stock} units</p>
+                                            </div>
+                                            <div className="bg-white rounded-lg p-4">
+                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                    <Icon icon="mdi:truck-delivery" width={16} height={16} />
+                                                    Delivery
+                                                </p>
+                                                <p className="text-xl font-bold text-gray-900">{listingData.deliveryDays} days</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mb-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="bg-gray-50 rounded-lg p-4">
+                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                    <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                    Base Price
+                                                </p>
+                                                <p className="text-2xl font-bold text-primary">₹{Number(product.price).toLocaleString('en-IN')}</p>
+                                            </div>
+                                            {product.salePrice && (
+                                                <div className="bg-gray-50 rounded-lg p-4">
+                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                        <Icon icon="mdi:tag" width={16} height={16} />
+                                                        Sale Price
+                                                    </p>
+                                                    <p className="text-2xl font-bold text-green-600">₹{Number(product.salePrice).toLocaleString('en-IN')}</p>
+                                                </div>
+                                            )}
+                                            <div className="bg-gray-50 rounded-lg p-4">
+                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                    <Icon icon="mdi:package-variant" width={16} height={16} />
+                                                    Stock
+                                                </p>
+                                                <p className="text-xl font-bold text-gray-900">{product.stock} units</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="mb-6">
                                     <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
@@ -141,14 +235,20 @@ export default function ProductViewPage() {
                                         />
                                         {product.status ? 'Active' : 'Inactive'}
                                     </span>
-                                    <span className={`ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                                        product.stock > 0
-                                            ? 'bg-blue-100 text-blue-700'
-                                            : 'bg-red-100 text-red-700'
-                                    }`}>
-                                        <Icon icon="mdi:package-variant" width={16} height={16} />
-                                        Stock: {product.stock} units
-                                    </span>
+                                    {listingData && (
+                                        <span className={`ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
+                                            listingData.approvalStatus === 'approved'
+                                                ? 'bg-green-100 text-green-700'
+                                                : 'bg-yellow-100 text-yellow-700'
+                                        }`}>
+                                            <Icon 
+                                                icon={listingData.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} 
+                                                width={16} 
+                                                height={16} 
+                                            />
+                                            {listingData.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    )}
                                 </div>
 
                                 <div className="mb-6">

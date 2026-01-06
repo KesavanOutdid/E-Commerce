@@ -1,1 +1,10 @@
-{}
+{
+  "/(site)/kyc/page": "app/(site)/kyc/page.js",
+  "/(site)/orders/page": "app/(site)/orders/page.js",
+  "/(site)/products/edit/[id]/page": "app/(site)/products/edit/[id]/page.js",
+  "/(site)/products/page": "app/(site)/products/page.js",
+  "/(site)/products/view/[id]/page": "app/(site)/products/view/[id]/page.js",
+  "/(site)/profile/page": "app/(site)/profile/page.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/page": "app/page.js"
+}

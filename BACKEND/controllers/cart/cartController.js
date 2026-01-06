@@ -40,27 +40,57 @@ exports.getCart = async (req, res) => {
           };
         }
 
+        let finalPrice = product.price;
+        let finalSalePrice = product.salePrice;
+        let finalStock = product.stock;
+        let sellerDetails = null;
+
+        if (item.sellerProductId) {
+          const SellerProduct = require('../../models/SellerProduct');
+          const listing = await SellerProduct.findById(item.sellerProductId);
+          
+          if (listing) {
+            finalPrice = listing.price;
+            finalSalePrice = listing.salePrice;
+            finalStock = listing.stock;
+
+            if (item.sellerId) {
+              const seller = await User.findByUserId(item.sellerId);
+              if (seller) {
+                sellerDetails = {
+                  sellerId: seller.userId,
+                  sellerName: seller.name || seller.email,
+                  sellerEmail: seller.email
+                };
+              }
+            }
+          }
+        }
+
         return {
+          sellerProductId: item.sellerProductId || null,
           productId: item.productId,
+          sellerId: item.sellerId || null,
           productName: product.productName,
           qty: item.qty,
-          price: product.price,
-          salePrice: product.salePrice,
+          price: finalPrice,
+          salePrice: finalSalePrice,
           totalPrice: item.totalPrice,
           gst: item.gst,
           subTotal: item.subTotal,
           images: product.images,
-          stock: product.stock,
+          stock: finalStock,
           mainCategoryId: product.mainCategoryId,
           subCategoryId: product.subCategoryId,
           description: product.description,
           shortDescription: product.shortDescription,
           slug: product.slug,
+          sellerDetails: sellerDetails,
           createdAt: item.createdAt,
           createdBy: item.createdBy,
           updatedAt: item.updatedAt,
           updatedBy: item.updatedBy,
-          available: product.stock >= item.qty,
+          available: finalStock >= item.qty,
           productStatus: product.status ? 'active' : 'inactive'
         };
       })
@@ -103,7 +133,7 @@ exports.getCart = async (req, res) => {
 exports.addItem = async (req, res) => {
   try {
     const userId = req.userId;
-    const { productId, qty, totalPrice, gst, subTotal } = req.body;
+    const { sellerProductId, productId, sellerId, qty, totalPrice, gst, subTotal } = req.body;
     
     if (!userId) {
       return res.status(401).json({ 
@@ -151,24 +181,67 @@ exports.addItem = async (req, res) => {
       });
     }
 
-    if (product.stock < qty) {
-      return res.status(400).json({ 
-        success: false, 
-        message: `Only ${product.stock} items available in stock` 
-      });
+    let finalPrice = product.price;
+    let finalSalePrice = product.salePrice;
+    let finalStock = product.stock;
+
+    if (sellerProductId) {
+      const SellerProduct = require('../../models/SellerProduct');
+      const listing = await SellerProduct.findById(sellerProductId);
+      
+      if (!listing) {
+        return res.status(404).json({ 
+          success: false, 
+          message: 'Seller listing not found for this product' 
+        });
+      }
+
+      if (listing.approvalStatus !== 'approved') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'This seller listing is not yet approved' 
+        });
+      }
+
+      if (listing.sellerStatus !== 'active') {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'This seller listing is currently not available' 
+        });
+      }
+
+      finalPrice = listing.price;
+      finalSalePrice = listing.salePrice;
+      finalStock = listing.stock;
+
+      if (finalStock < qty) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Only ${finalStock} items available from this seller` 
+        });
+      }
+    } else {
+      if (product.stock < qty) {
+        return res.status(400).json({ 
+          success: false, 
+          message: `Only ${product.stock} items available in stock` 
+        });
+      }
     }
 
     const itemData = {
+      sellerProductId: sellerProductId || null,
       productId: product.productId,
+      sellerId: sellerId || null,
       productName: product.productName,
       qty: qty,
-      price: product.price,
-      salePrice: product.salePrice,
+      price: finalPrice,
+      salePrice: finalSalePrice,
       totalPrice: totalPrice,
       gst: gst,
       subTotal: subTotal,
       images: product.images,
-      stock: product.stock,
+      stock: finalStock,
       mainCategoryId: product.mainCategoryId,
       subCategoryId: product.subCategoryId
     };

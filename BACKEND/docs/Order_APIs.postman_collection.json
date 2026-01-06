@@ -66,7 +66,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "create"]
 						},
-						"description": "Create a Cash on Delivery (COD) order for ALL items in cart. COD fee of ₹100 will be added automatically. Product stock is automatically reduced. Cart is cleared after order confirmation."
+						"description": "Create a Cash on Delivery (COD) order for ALL items in cart. Supports seller listings - automatically detects sellerProductId and reduces stock from seller's listing or base product. COD fee of ₹100 will be added automatically. Product stock is automatically reduced after order confirmation. Cart is cleared after order confirmation."
 					},
 					"response": []
 				},
@@ -100,7 +100,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "create"]
 						},
-						"description": "Create an Online Payment order for ALL items in cart. Returns Razorpay order details and testPaymentDetails for testing. Product stock reduced after payment verification."
+						"description": "Create an Online Payment order for ALL items in cart. Supports seller listings - automatically detects sellerProductId from cart items. Returns Razorpay order details and testPaymentDetails for testing. Product/seller listing stock reduced after payment verification. Cart items removed after successful verification."
 					},
 					"response": []
 				},
@@ -134,7 +134,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "create"]
 						},
-						"description": "Create a COD order for SPECIFIC products from cart using productIds array. Only selected products are ordered and removed from cart. Product stock automatically reduced."
+						"description": "Create a COD order for SPECIFIC products from cart using productIds array. Supports seller listings - if cart items have sellerProductId, stock is reduced from seller's listing; otherwise from base product. Only selected products are ordered and removed from cart. Stock automatically reduced after confirmation."
 					},
 					"response": []
 				},
@@ -168,7 +168,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "create"]
 						},
-						"description": "Create an ONLINE payment order for SPECIFIC products using productIds array. Returns Razorpay details and testPaymentDetails. Stock reduced after payment verification."
+						"description": "Create an ONLINE payment order for SPECIFIC products using productIds array. Supports seller listings from cart items. Returns Razorpay details and testPaymentDetails. Product/seller listing stock reduced after successful payment verification. Cart items removed after verification."
 					},
 					"response": []
 				},
@@ -202,7 +202,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "verify"]
 						},
-						"description": "Verify Razorpay payment after successful transaction. Use testPaymentDetails from order creation response OR generate signature using: node test_signature_generator.js <order_id> <payment_id>"
+						"description": "Verify Razorpay payment after successful transaction. On successful verification: (1) Updates order status to 'confirmed' (2) Reduces stock from seller listing (if sellerProductId exists) or base product (3) Removes ordered items from cart. Use testPaymentDetails from order creation response OR generate signature using: node test_signature_generator.js <order_id> <payment_id>"
 					},
 					"response": []
 				},
@@ -234,7 +234,7 @@
 								}
 							]
 						},
-						"description": "Get paginated order history for logged-in user. Returns all orders with items, delivery address, payment details."
+						"description": "Get paginated order history for logged-in user. Returns all orders with items (including sellerProductId and sellerId if applicable), delivery address, payment details, and pricing breakdown."
 					},
 					"response": []
 				},
@@ -254,7 +254,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "detail", "{{order_id}}"]
 						},
-						"description": "Get detailed information for a specific order. Only returns orders belonging to the logged-in user."
+						"description": "Get detailed information for a specific order. Order items include sellerProductId and sellerId if the item was purchased from a seller listing. Only returns orders belonging to the logged-in user."
 					},
 					"response": []
 				}
@@ -309,7 +309,7 @@
 								}
 							]
 						},
-						"description": "Get all orders in the system with pagination. Each order item includes seller details (sellerId, sellerName, sellerEmail). Supports filtering by status, paymentType, and paymentStatus."
+						"description": "Get all orders in the system with pagination. Order items include sellerProductId (if seller listing), productId, and enriched seller details (sellerId, sellerName, sellerEmail) derived from product ownership. Supports filtering by status, paymentType, and paymentStatus."
 					},
 					"response": []
 				},
@@ -329,7 +329,7 @@
 							"host": ["{{base_url}}"],
 							"path": ["api", "orders", "admin", "{{order_id}}"]
 						},
-						"description": "Get detailed information for any order by orderId. Can view all users' orders. Each order item includes seller details."
+						"description": "Get detailed information for any order by orderId. Can view all users' orders. Order items include sellerProductId (for seller listings), productId, and enriched seller details (sellerId, sellerName, sellerEmail)."
 					},
 					"response": []
 				},
