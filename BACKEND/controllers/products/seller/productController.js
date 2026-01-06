@@ -120,24 +120,52 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    const filterUserId = req.query.userId || req.userId;
-
-    // Seller sees their own products (or specified userId) OR Admin products
-    let query = {
-      $or: [
-        { userId: filterUserId },
-        { roleId: 1 }
-      ]
-    };
-    
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const limitNum = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limitNum;
 
-    const [products, total] = await Promise.all([
-      Product.find(query, { skip, limit }),
-      Product.count(query)
-    ]);
+    // Show ALL products in the system to prevent duplication
+    let matchQuery = {}; 
+
+    if (req.query.search) {
+      matchQuery.productName = { $regex: req.query.search, $options: 'i' };
+    }
+
+    // Aggregate to group by slug to prevent duplication in the catalog view
+    const pipeline = [
+      { $match: matchQuery },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$slug",
+          product: { $first: "$$ROOT" },
+          isMyProduct: { 
+            $max: { 
+              $cond: [
+                { $eq: ["$userId", ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId] }, 
+                true, 
+                false 
+              ] 
+            } 
+          }
+        }
+      },
+      {
+        $facet: {
+          data: [{ $skip: skip }, { $limit: limitNum }],
+          totalCount: [{ $count: "count" }]
+        }
+      }
+    ];
+
+    const result = await Product.collection().aggregate(pipeline).toArray();
+    
+    const products = result[0].data.map(item => ({
+      ...item.product,
+      isMyProduct: item.isMyProduct
+    }));
+
+    const total = result[0].totalCount[0]?.count || 0;
 
     // Map category names
     const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
@@ -155,14 +183,14 @@ exports.getProducts = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'Seller products fetched successfully',
+      message: 'Unique product catalog fetched successfully',
       data: {
         products: productsWithCategoryNames,
         pagination: {
           total,
           page,
-          limit,
-          pages: Math.ceil(total / limit)
+          limit: limitNum,
+          pages: Math.ceil(total / limitNum)
         }
       }
     });

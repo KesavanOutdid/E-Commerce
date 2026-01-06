@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
-import Login from "./Login";
+import LoginModal from "../Common/LoginModal";
 import PaymentMethod from "./PaymentMethod";
 import Billing from "./Billing";
 import { useAppSelector, useAppDispatch } from "@/redux/store";
@@ -17,6 +17,7 @@ const Checkout = () => {
   const cartItems = useAppSelector((state) => state.cartReducer.items);
   const totalPrice = useAppSelector(selectTotalPrice);
   const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.authReducer);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const [payment, setPayment] = useState("cod");
   const [step, setStep] = useState(1);
@@ -249,6 +250,10 @@ const Checkout = () => {
 
   return (
     <>
+      <LoginModal 
+        isOpen={isLoginModalOpen} 
+        onClose={() => setIsLoginModalOpen(false)} 
+      />
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
       <Breadcrumb title={"Checkout"} pages={["checkout"]} />
       <section className="overflow-hidden py-20 bg-gray-2">
@@ -285,7 +290,19 @@ const Checkout = () => {
                 <form onSubmit={handleOrderPlacement}>
                   {step === 1 && (
                     <div className="transition-all duration-500 ease-in-out">
-                      <Login />
+                      {!isAuthenticated && (
+                        <div className="bg-white shadow-1 rounded-[10px] mb-8">
+                          <div
+                            onClick={() => setIsLoginModalOpen(true)}
+                            className="cursor-pointer flex items-center gap-0.5 py-5 px-5.5"
+                          >
+                            Returning customer?
+                            <span className="flex items-center gap-2.5 pl-1 font-medium text-dark hover:text-blue transition-colors">
+                              Click here to login
+                            </span>
+                          </div>
+                        </div>
+                      )}
                       <Billing 
                         formData={formData} 
                         handleInputChange={handleInputChange} 

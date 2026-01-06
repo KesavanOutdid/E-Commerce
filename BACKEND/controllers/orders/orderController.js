@@ -3,6 +3,7 @@ const Payment = require('../../models/Payment');
 const Cart = require('../../models/Cart');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
+const SellerProduct = require('../../models/SellerProduct');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -138,18 +139,22 @@ exports.createOrder = async (req, res) => {
     }
 
     for (const item of selectedItems) {
-      const product = await Product.findById(item.productId);
-      if (!product) {
-        return res.status(404).json({ 
-          success: false, 
-          message: `Product ${item.productName} is no longer available` 
-        });
-      }
-      if (product.stock < item.qty) {
-        return res.status(400).json({ 
-          success: false, 
-          message: `Only ${product.stock} items available for ${item.productName}` 
-        });
+      if (item.sellerProductId) {
+        const listing = await SellerProduct.findById(item.sellerProductId);
+        if (!listing) {
+          return res.status(404).json({ success: false, message: `Listing for ${item.productName} not found` });
+        }
+        if (listing.stock < item.qty) {
+          return res.status(400).json({ success: false, message: `Only ${listing.stock} items available from this seller for ${item.productName}` });
+        }
+      } else {
+        const product = await Product.findById(item.productId);
+        if (!product) {
+          return res.status(404).json({ success: false, message: `Product ${item.productName} is no longer available` });
+        }
+        if (product.stock < item.qty) {
+          return res.status(400).json({ success: false, message: `Only ${product.stock} items available for ${item.productName}` });
+        }
       }
     }
 
@@ -218,7 +223,11 @@ exports.createOrder = async (req, res) => {
     if (paymentType === 'cod') {
       for (const item of selectedItems) {
         try {
-          await Product.reduceStock(item.productId, item.qty);
+          if (item.sellerProductId) {
+            await SellerProduct.reduceStock(item.sellerProductId, item.qty);
+          } else {
+            await Product.reduceStock(item.productId, item.qty);
+          }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
           return res.status(400).json({ 
@@ -362,7 +371,11 @@ exports.verifyOrder = async (req, res) => {
     if (order.items && order.items.length > 0) {
       for (const item of order.items) {
         try {
-          await Product.reduceStock(item.productId, item.qty);
+          if (item.sellerProductId) {
+            await SellerProduct.reduceStock(item.sellerProductId, item.qty);
+          } else {
+            await Product.reduceStock(item.productId, item.qty);
+          }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
         }

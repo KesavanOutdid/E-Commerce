@@ -1,4 +1,5 @@
 const Product = require('../../../models/Product');
+const SellerProduct = require('../../../models/SellerProduct');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const MainCategory = require('../../../models/MainCategory');
@@ -27,19 +28,19 @@ exports.createProduct = async (req, res) => {
       }
     }
 
-    if (!productName || !mainCategoryId || !subCategoryId || price === undefined || stock === undefined) {
+    if (!productName || !mainCategoryId || !subCategoryId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'productName, mainCategoryId, subCategoryId, price, and stock are required fields' 
+        message: 'productName, mainCategoryId, and subCategoryId are required fields' 
       });
     }
 
-    if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'At least one product image is required' 
-      });
-    }
+    // if (!req.files || req.files.length === 0) {
+    //   return res.status(400).json({ 
+    //     success: false, 
+    //     message: 'At least one product image is required' 
+    //   });
+    // }
 
     const category = await SubCategory.findById(subCategoryId);
     if (!category) {
@@ -160,9 +161,10 @@ exports.getProducts = async (req, res) => {
 
     // Map category names and seller names
     const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
-      const [mainCategory, subCategory] = await Promise.all([
+      const [mainCategory, subCategory, marketplaceListings] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+        SellerProduct.collection().find({ productId: product.productId }).toArray()
       ]);
 
       let sellerName = null;
@@ -180,6 +182,7 @@ exports.getProducts = async (req, res) => {
         ...product,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
+        marketplaceListings: marketplaceListings || [],
         ...(sellerName && { sellerName }),
         ...(shopName && { shopName })
       };
@@ -210,9 +213,10 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const [mainCategory, subCategory] = await Promise.all([
+    const [mainCategory, subCategory, marketplaceListings] = await Promise.all([
       product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-      product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+      product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+      SellerProduct.collection().find({ productId: product.productId }).toArray()
     ]);
 
     let sellerName = null;
@@ -240,6 +244,7 @@ exports.getProductById = async (req, res) => {
       ...product,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
+      marketplaceListings: marketplaceListings || [],
       ...(sellerName && { sellerName }),
       ...(shopName && { shopName })
     };

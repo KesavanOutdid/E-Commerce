@@ -3,12 +3,14 @@ import React, { useEffect, useState } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
+import LoginModal from "../Common/LoginModal";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { useAppSelector, AppDispatch } from "@/redux/store";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { useDispatch } from "react-redux";
 import { addItemToWishlist, removeItemFromWishlist } from "@/redux/features/wishlist-slice";
 import { addToCart, clearCartServer } from "@/redux/features/cart-slice";
+import { setAuth } from "@/redux/features/auth-slice";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Script from "next/script";
@@ -36,6 +38,9 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
   const [activeTab, setActiveTab] = useState("tabOne");
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullSpecs, setShowFullSpecs] = useState(false);
+
+  // Login Modal State
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Buy Now States
   const [showBuyNowModal, setShowBuyNowModal] = useState(false);
@@ -318,7 +323,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
   const handleAddToWishlist = async () => {
     if (!isAuthenticated) {
-      toast.error("Please login to manage wishlist");
+      setShowLoginModal(true);
       return;
     }
 
@@ -362,6 +367,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
   const handleAddToCart = () => {
     if (!product) return;
+    
+    if (!isAuthenticated) {
+      setShowLoginModal(true);
+      return;
+    }
+
     dispatch(
       addToCart({
         item: {
@@ -370,6 +381,21 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
         },
         accessToken,
         isAuthenticated
+      })
+    );
+    toast.success("Added to cart");
+  };
+
+  const onLoginSuccess = (userData: any, token: string) => {
+    // After login, proceed to add to cart
+    dispatch(
+      addToCart({
+        item: {
+          ...product,
+          quantity,
+        },
+        accessToken: token,
+        isAuthenticated: true
       })
     );
     toast.success("Added to cart");
@@ -388,6 +414,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
       <Breadcrumb title={"Shop Details"} pages={["shop details"]} />
+
+      <LoginModal 
+        isOpen={showLoginModal} 
+        onClose={() => setShowLoginModal(false)} 
+        onSuccess={onLoginSuccess}
+      />
 
       {/* Buy Now Modal */}
       {showBuyNowModal && (
@@ -873,7 +905,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         ADD TO CART
                       </button>
 
-                      <button
+                      {/* <button
                         onClick={handleBuyNow}
                         className="inline-flex items-center justify-center gap-2.5 font-medium text-white bg-orange py-3 px-6 rounded-md ease-out duration-200 hover:bg-orange-dark uppercase tracking-wide shadow-md text-xs sm:text-sm min-w-[160px]"
                       >
@@ -891,7 +923,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                           />
                         </svg>
                         BUY NOW
-                      </button>
+                      </button> */}
                     </div>
                   </form>
                 </div>

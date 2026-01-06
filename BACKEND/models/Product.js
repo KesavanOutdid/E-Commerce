@@ -18,9 +18,9 @@ class Product {
       subCategoryId: productData.subCategoryId || null, // Storing Subcategory UUID
       masterProductId: productData.masterProductId || null, // Grouping identical products
       userId: ObjectId.isValid(productData.userId) ? new ObjectId(productData.userId) : productData.userId,
-      price: productData.price,
-      salePrice: productData.salePrice,
-      stock: productData.stock || 0,
+      price: productData.price !== undefined ? productData.price : null,
+      salePrice: productData.salePrice !== undefined ? productData.salePrice : null,
+      stock: productData.stock !== undefined ? productData.stock : 0,
       images: productData.images || [],
       roleId: productData.roleId || null,
       //  DYNAMIC ATTRIBUTES

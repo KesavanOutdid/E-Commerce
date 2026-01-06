@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
 import { useSelector, useDispatch } from "react-redux";
 import { selectTotalPrice } from "@/redux/features/cart-slice";
@@ -135,6 +136,7 @@ const CategoryItem = ({ cat }: { cat: Category }) => {
 };
 
 const Header = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
@@ -149,6 +151,7 @@ const Header = () => {
 
   const handleLogout = () => {
     dispatch(logout());
+    router.push("/signin");
   };
 
   const handleOpenCartModal = () => {

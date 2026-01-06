@@ -1,4 +1,5 @@
 const Product = require('../../../models/Product');
+const SellerProduct = require('../../../models/SellerProduct');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const { ObjectId } = require('mongodb');
@@ -219,8 +220,8 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // Find all other sellers for the same product using slug
-    const otherSellers = await Product.collection().find({
+    // Find all other sellers for the same product using slug (Old way)
+    const otherSellersOld = await Product.collection().find({
       slug: product.slug,
       _id: { $ne: product._id },
       $or: [
@@ -230,8 +231,18 @@ exports.getProductById = async (req, res) => {
       status: { $in: [true, "true"] }
     }).toArray();
 
-    // Fetch user details for the main product and other sellers
-    const allSellerIds = [product.userId, ...otherSellers.map(s => s.userId)];
+    // Find all marketplace listings for this product (New way)
+    const marketplaceListings = await SellerProduct.collection().find({
+      productId: product.productId,
+      approvalStatus: 'approved'
+    }).toArray();
+
+    // Fetch user details for all sellers
+    const allSellerIds = [
+      product.userId, 
+      ...otherSellersOld.map(s => s.userId),
+      ...marketplaceListings.map(s => s.sellerId)
+    ];
     const uniqueSellerIds = [...new Set(allSellerIds.filter(id => id))];
     
     const users = await User.collection().find({
@@ -267,15 +278,26 @@ exports.getProductById = async (req, res) => {
       };
     };
 
-    const otherSellersWithNames = otherSellers.map(seller => {
-      const sellerData = { ...seller };
-      if (seller.roleId === 2) {
-        const { sellerName, shopName } = getSellerDetails(seller.userId);
-        sellerData.sellerName = sellerName;
-        sellerData.shopName = shopName;
-      }
-      return sellerData;
-    });
+    const otherSellersWithNames = [
+      ...otherSellersOld.map(seller => {
+        const sellerData = { ...seller };
+        if (seller.roleId === 2) {
+          const { sellerName, shopName } = getSellerDetails(seller.userId);
+          sellerData.sellerName = sellerName;
+          sellerData.shopName = shopName;
+        }
+        return sellerData;
+      }),
+      ...marketplaceListings.map(listing => {
+        const { sellerName, shopName } = getSellerDetails(listing.sellerId);
+        return {
+          ...listing,
+          isMarketplaceListing: true,
+          sellerName,
+          shopName
+        };
+      })
+    ];
 
     const responseData = {
       ...product,
