@@ -82,21 +82,11 @@ exports.getSellerListings = async (req, res) => {
       SellerProduct.collection().countDocuments(query)
     ]);
 
-    // Fetch product details for each listing to show name/image
-    const listingsWithProducts = await Promise.all(listings.map(async (listing) => {
-      const product = await Product.findById(listing.productId);
-      return {
-        ...listing,
-        productName: product ? product.productName : 'Unknown Product',
-        productImages: product ? product.images : []
-      };
-    }));
-
     res.status(200).json({
       success: true,
       message: 'Seller listings fetched successfully',
       data: {
-        listings: listingsWithProducts,
+        listings,
         pagination: {
           total,
           page,

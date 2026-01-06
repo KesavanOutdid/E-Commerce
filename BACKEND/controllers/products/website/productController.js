@@ -20,17 +20,48 @@ const getUserIdFromRequest = (req) => {
 };
 
 
-// Helper for aggregation pipeline to avoid duplication
-const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { price: 1 }) => {
+// Helper for aggregation pipeline to avoid duplication and include marketplace offers
+const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }) => {
   return [
     { $match: matchQuery },
+    // Join with seller listings to find all approved offers for this product
+    {
+      $lookup: {
+        from: "seller_products",
+        let: { pid: "$productId" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$productId", "$$pid"] }, approvalStatus: "approved" } },
+          { $project: { price: 1, salePrice: 1 } }
+        ],
+        as: "marketplaceListings"
+      }
+    },
+    // Calculate the actual min price for this specific product entry (considering master and offers)
+    {
+      $addFields: {
+        allPrices: {
+          $concatArrays: [
+            { $cond: [{ $gt: ["$price", 0] }, ["$price"], []] },
+            { $cond: [{ $gt: ["$salePrice", 0] }, ["$salePrice"], []] },
+            { $map: { input: "$marketplaceListings", as: "m", in: "$$m.price" } },
+            { $map: { input: "$marketplaceListings", as: "m", in: { $ifNull: ["$$m.salePrice", "$$m.price"] } } }
+          ]
+        }
+      }
+    },
+    {
+      $addFields: {
+        currentMinPrice: { $min: "$allPrices" },
+        offerCount: { $size: "$marketplaceListings" }
+      }
+    },
     { $sort: sortOptions },
     { 
       $group: {
         _id: "$slug",
         cheapestListing: { $first: "$$ROOT" },
-        sellerCount: { $sum: 1 },
-        minPrice: { $min: "$price" }
+        totalOffers: { $sum: { $add: [1, "$offerCount"] } },
+        minPriceAcrossSellers: { $min: "$currentMinPrice" }
       }
     },
     {
@@ -42,8 +73,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
             $project: {
               _id: 0,
               product: "$cheapestListing",
-              sellerCount: 1,
-              minPrice: 1
+              sellerCount: "$totalOffers",
+              minPrice: "$minPriceAcrossSellers"
             }
           }
         ],
@@ -69,7 +100,7 @@ exports.getProducts = async (req, res) => {
       });
     }
 
-    const { categoryId, page = 1, limit = 10 } = req.query;
+    const { categoryId, search, page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
@@ -84,6 +115,13 @@ exports.getProducts = async (req, res) => {
     };
     
     if (categoryId) matchQuery.mainCategoryId = categoryId;
+    if (search) {
+      matchQuery.$or = [
+        { productName: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { shortDescription: { $regex: search, $options: 'i' } }
+      ];
+    }
 
     const aggregationResult = await Product.collection().aggregate(
       getProductAggregationPipeline(matchQuery, skip, limitNum)

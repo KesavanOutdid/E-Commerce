@@ -1,4 +1,5 @@
 const Product = require('../../../models/Product');
+const SellerProduct = require('../../../models/SellerProduct');
 const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
@@ -103,6 +104,24 @@ exports.createProduct = async (req, res) => {
     };
     
     const product = await Product.create(productData);
+
+    // Automatically create a listing for the seller who created the product
+    await SellerProduct.create({
+      productId: product.productId,
+      sellerId: req.userId || userId,
+      productName: product.productName,
+      images: product.images,
+      description: product.description,
+      shortDescription: product.shortDescription,
+      attributes: product.attributes,
+      mainCategoryId: product.mainCategoryId,
+      subCategoryId: product.subCategoryId,
+      price: price,
+      salePrice: req.body.salePrice || null,
+      stock: stock,
+      deliveryDays: req.body.deliveryDays || 3,
+      approvalStatus: 'pending'
+    });
 
     await deleteCachePattern('products:list:*');
 
