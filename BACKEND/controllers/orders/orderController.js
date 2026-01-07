@@ -118,7 +118,10 @@ exports.createOrder = async (req, res) => {
     let selectedItems = cart.items;
 
     if (productIds && Array.isArray(productIds) && productIds.length > 0) {
-      selectedItems = cart.items.filter(item => productIds.includes(item.productId));
+      selectedItems = cart.items.filter(item => 
+        productIds.includes(item.productId) || 
+        (item.sellerProductId && productIds.includes(item.sellerProductId))
+      );
       
       if (selectedItems.length === 0) {
         return res.status(400).json({ 
@@ -128,7 +131,11 @@ exports.createOrder = async (req, res) => {
       }
 
       if (selectedItems.length !== productIds.length) {
-        const foundIds = selectedItems.map(item => item.productId);
+        const foundIds = selectedItems.reduce((acc, item) => {
+          acc.push(item.productId);
+          if (item.sellerProductId) acc.push(item.sellerProductId);
+          return acc;
+        }, []);
         const missingIds = productIds.filter(id => !foundIds.includes(id));
         return res.status(400).json({ 
           success: false, 

@@ -5,6 +5,7 @@ const Seller = require('../../../models/Seller');
 const Order = require('../../../models/Order');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
+const { getDB } = require('../../../config/db');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 
@@ -366,9 +367,6 @@ exports.getProductsBySubCategory = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'Invalid product ID' });
-    }
 
     const cacheKey = `products:detail:website:${id}`;
     const cachedData = await getCache(cacheKey);
@@ -382,13 +380,23 @@ exports.getProductById = async (req, res) => {
     }
 
     // Filter: Specific ID + Approval/Status filters
+    // Support both productId (UUID) and _id (ObjectId)
     let matchQuery = { 
-      _id: new ObjectId(id),
-      $or: [
-        { roleId: 1 },
-        { roleId: 2, approvalStatus: 'approved' }
-      ],
-      status: { $in: [true, "true"] }
+      $and: [
+        {
+          $or: [
+            { productId: id },
+            ...(ObjectId.isValid(id) ? [{ _id: new ObjectId(id) }] : [])
+          ]
+        },
+        {
+          $or: [
+            { roleId: 1 },
+            { roleId: 2, approvalStatus: 'approved' }
+          ]
+        },
+        { status: { $in: [true, "true"] } }
+      ]
     };
 
     const aggregationResult = await Product.collection().aggregate(
@@ -525,6 +533,203 @@ exports.getBestSellers = async (req, res) => {
       success: true, 
       message: 'Best sellers based on orders fetched successfully',
       data: responseData 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.searchProducts = async (req, res) => {
+  try {
+    const { query, page = 1, limit = 10 } = req.query;
+
+    if (!query || query.trim() === '') {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Search query is required' 
+      });
+    }
+
+    const searchQuery = query.trim();
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const cacheKey = `products:search:${searchQuery}:${pageNum}:${limitNum}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Search results fetched successfully (from cache)',
+        data: cachedData 
+      });
+    }
+
+    const searchRegex = { $regex: searchQuery, $options: 'i' };
+    const responseData = {
+      products: [],
+      pagination: {}
+    };
+
+    // Search in Main and Sub Categories to get their product IDs
+    const matchingCategories = await getDB().collection('main_categories').find({
+      name: searchRegex
+    }).toArray();
+
+    const matchingSubCategories = await getDB().collection('sub_categories').find({
+      name: searchRegex
+    }).toArray();
+
+    const categoryIds = matchingCategories.map(cat => cat.categoryId);
+    const subCategoryIds = matchingSubCategories.map(subCat => subCat.subCategoryId);
+
+    // Build product search query - search by product name, description, or matching category/subcategory
+    let matchQuery = {
+      $and: [
+        {
+          $or: [
+            { productName: searchRegex },
+            { description: searchRegex },
+            { shortDescription: searchRegex },
+            { sku: searchRegex },
+            ...(categoryIds.length > 0 ? [{ mainCategoryId: { $in: categoryIds } }] : []),
+            ...(subCategoryIds.length > 0 ? [{ subCategoryId: { $in: subCategoryIds } }] : [])
+          ]
+        },
+        {
+          $or: [
+            { roleId: 1 },
+            { roleId: 2, approvalStatus: 'approved' }
+          ]
+        },
+        { status: { $in: [true, "true"] } }
+      ]
+    };
+
+    const aggregationResult = await Product.collection().aggregate(
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
+    ).toArray();
+
+    responseData.products = aggregationResult[0]?.data || [];
+    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
+
+    responseData.pagination = {
+      total,
+      page: pageNum,
+      limit: limitNum,
+      pages: Math.ceil(total / limitNum)
+    };
+
+    // Add isWishlisted flag if user is logged in
+    const userId = getUserIdFromRequest(req);
+    if (userId) {
+      const wishlist = await User.getWishlist(userId);
+      responseData.products.forEach(p => {
+        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
+                               wishlist.includes(p.product._id?.toString());
+      });
+    }
+
+    // Cache the response if user is NOT logged in
+    if (!userId) {
+      await setCache(cacheKey, responseData, 1800);
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Search results fetched successfully',
+      data: responseData 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getSearchSuggestions = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query || query.trim() === '') {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'No suggestions for empty query',
+        data: []
+      });
+    }
+
+    const searchQuery = query.trim();
+    const cacheKey = `products:suggestions:${searchQuery}`;
+    const cachedData = await getCache(cacheKey);
+
+    if (cachedData) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Suggestions fetched from cache',
+        data: cachedData 
+      });
+    }
+
+    const searchRegex = { $regex: searchQuery, $options: 'i' };
+
+    // Get matching categories and subcategories to include their products
+    const matchingCategories = await getDB().collection('main_categories')
+      .find({ name: searchRegex })
+      .toArray();
+
+    const matchingSubCategories = await getDB().collection('sub_categories')
+      .find({ name: searchRegex })
+      .toArray();
+
+    const categoryIds = matchingCategories.map(cat => cat.categoryId);
+    const subCategoryIds = matchingSubCategories.map(subCat => subCat.subCategoryId);
+
+    // Get matching products (top 10)
+    const matchingProducts = await Product.collection()
+      .find({
+        $and: [
+          {
+            $or: [
+              { productName: searchRegex },
+              { description: searchRegex },
+              { shortDescription: searchRegex },
+              { sku: searchRegex },
+              ...(categoryIds.length > 0 ? [{ mainCategoryId: { $in: categoryIds } }] : []),
+              ...(subCategoryIds.length > 0 ? [{ subCategoryId: { $in: subCategoryIds } }] : [])
+            ]
+          },
+          {
+            $or: [
+              { roleId: 1 },
+              { roleId: 2, approvalStatus: 'approved' }
+            ]
+          },
+          { status: { $in: [true, "true"] } }
+        ]
+      })
+      .project({
+        productId: 1,
+        productName: 1,
+        slug: 1,
+        image: 1
+      })
+      .limit(10)
+      .toArray();
+
+    const suggestions = matchingProducts.map(prod => ({
+      productId: prod.productId,
+      productName: prod.productName,
+      slug: prod.slug,
+      image: prod.image || null
+    }));
+
+    // Cache suggestions for 30 minutes
+    await setCache(cacheKey, suggestions, 1800);
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Suggestions fetched successfully',
+      data: suggestions 
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

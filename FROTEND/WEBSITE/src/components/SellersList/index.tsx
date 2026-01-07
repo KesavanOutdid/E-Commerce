@@ -35,6 +35,11 @@ const SellersList = ({ productId }: { productId: string }) => {
   }, [productId]);
 
   const handleAddToCart = (seller: any) => {
+    if (seller.stock <= 0) {
+      toast.error("This seller is currently out of stock");
+      return;
+    }
+
     if (!isAuthenticated) {
       toast.error("Please login to add to cart");
       router.push("/signin");
@@ -139,7 +144,7 @@ const SellersList = ({ productId }: { productId: string }) => {
                         <span className="text-blue text-[10px]  uppercase tracking-wider">[Best Price]</span>
                       )}
                       {!seller.isSeller && (
-                        <span className="text-green-600 text-[10px]  uppercase tracking-wider">[Original]</span>
+                        <span className="text-green text-[10px]  uppercase tracking-wider">[Original]</span>
                       )}
                     </div>
                     {seller.shopName && <p className="text-xs text-gray-400 mt-0.5">{seller.shopName}</p>}
@@ -151,9 +156,9 @@ const SellersList = ({ productId }: { productId: string }) => {
                       <span className="text-lg text-dark">₹{seller.price}</span>
                     </div>
                     {seller.stock > 0 ? (
-                      <span className="text-green-600 text-[10px] font-bold uppercase tracking-wider">In Stock ({seller.stock})</span>
+                      <span className="text-green text-[10px] font-bold uppercase tracking-wider">In Stock ({seller.stock})</span>
                     ) : (
-                      <span className="text-red-600 text-[10px] font-bold uppercase tracking-wider">Out of Stock</span>
+                      <span className="text-red text-[10px] font-bold uppercase tracking-wider">Out of Stock</span>
                     )}
                   </div>
 
@@ -174,7 +179,12 @@ const SellersList = ({ productId }: { productId: string }) => {
                   <div className="col-span-1 md:col-span-2 flex items-center justify-end gap-3">
                     <button
                       onClick={() => handleAddToCart(seller)}
-                      className="w-full md:w-auto bg-blue text-white px-5 py-2.5 rounded font-bold text-[10px] hover:bg-blue-dark transition-all shadow-md active:scale-95 flex items-center justify-center gap-2"
+                      disabled={seller.stock <= 0}
+                      className={`w-full md:w-auto px-5 py-2.5 rounded font-bold text-[10px] transition-all shadow-md flex items-center justify-center gap-2 ${
+                        seller.stock > 0 
+                          ? "bg-blue text-white hover:bg-blue-dark active:scale-95" 
+                          : "bg-gray-3 text-gray-500 cursor-not-allowed opacity-70"
+                      }`}
                     >
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                       ADD TO CART

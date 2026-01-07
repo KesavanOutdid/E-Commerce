@@ -39,7 +39,7 @@ const BestSeller = () => {
   }, {});
 
   return (
-    <section className="overflow-hidden pb-20">
+    <section id="best-selling-products" className="overflow-hidden pb-20 scroll-mt-31">
       <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-8 xl:px-0">
         <div className="mb-6">
           <span className="flex items-center gap-2.5 font-medium text-dark text-lg mb-1.5">

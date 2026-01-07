@@ -28,6 +28,7 @@ export const Wishlist = () => {
         if (data.success) {
           const transformedItems = data.data.map((product: any) => ({
             id: product.productId,
+            _id: product._id,
             title: product.productName,
             price: parseFloat(product.price),
             discountedPrice: product.salePrice ? parseFloat(product.salePrice) : parseFloat(product.price),

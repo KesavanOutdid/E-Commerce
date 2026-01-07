@@ -18,9 +18,9 @@ class Product {
       subCategoryId: productData.subCategoryId || null, // Storing Subcategory UUID
       masterProductId: productData.masterProductId || null, // Grouping identical products
       userId: ObjectId.isValid(productData.userId) ? new ObjectId(productData.userId) : productData.userId,
-      price: productData.price !== undefined ? productData.price : null,
-      salePrice: productData.salePrice !== undefined ? productData.salePrice : null,
-      stock: productData.stock !== undefined ? productData.stock : 0,
+      price: productData.price !== undefined ? parseFloat(productData.price) : null,
+      salePrice: productData.salePrice !== undefined ? parseFloat(productData.salePrice) : null,
+      stock: productData.stock !== undefined ? parseInt(productData.stock) : 0,
       images: productData.images || [],
       roleId: productData.roleId || null,
       //  DYNAMIC ATTRIBUTES
@@ -122,6 +122,16 @@ class Product {
     
     if (updateData.mainCategoryId) {
       update.mainCategoryId = updateData.mainCategoryId;
+    }
+
+    if (updateData.price !== undefined) {
+      update.price = parseFloat(updateData.price);
+    }
+    if (updateData.salePrice !== undefined) {
+      update.salePrice = parseFloat(updateData.salePrice);
+    }
+    if (updateData.stock !== undefined) {
+      update.stock = parseInt(updateData.stock);
     }
 
     if (updateData.userId) {

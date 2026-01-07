@@ -176,7 +176,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
           <div className="py-4">
             <h3 className="px-6 text-[17px] font-medium text-dark mb-2 tracking-tight">Trending</h3>
             <ul className="space-y-1 mb-4">
-              <li><Link href="/shop" className="px-6 py-2.5 text-sm text-gray-700 hover:bg-gray-100 block" onClick={onClose}>Best Sellers</Link></li>
+              <li><Link href="/#best-selling-products" className="px-6 py-2.5 text-sm text-gray-700 hover:bg-gray-100 block" onClick={onClose}>Best Selling Products</Link></li>
             </ul>
 
             <hr className="border-gray-200 mb-4" />

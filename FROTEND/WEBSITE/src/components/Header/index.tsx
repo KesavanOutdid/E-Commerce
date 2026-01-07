@@ -138,9 +138,13 @@ const CategoryItem = ({ cat }: { cat: Category }) => {
 const Header = () => {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stickyMenu, setStickyMenu] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const suggestionsRef = React.useRef<HTMLDivElement>(null);
   const { openCartModal } = useCartModalContext();
 
   const { user, isAuthenticated, accessToken } = useAppSelector((state) => state.authReducer);
@@ -168,6 +172,65 @@ const Header = () => {
       setStickyMenu(false);
     }
   };
+
+  const fetchSearchSuggestions = async (query: string) => {
+    if (query.trim().length === 0) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setSuggestionsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/products/search/suggestions?query=${encodeURIComponent(query)}`);
+      const data = await response.json();
+      if (data.success) {
+        setSuggestions(data.data || []);
+        setShowSuggestions(true);
+      }
+    } catch (error) {
+      console.error("Failed to fetch suggestions:", error);
+    } finally {
+      setSuggestionsLoading(false);
+    }
+  };
+
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    
+    if (value.trim().length > 0) {
+      fetchSearchSuggestions(value);
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?query=${encodeURIComponent(searchQuery)}`);
+      setShowSuggestions(false);
+      setSearchQuery("");
+    }
+  };
+
+  const handleSuggestionClick = (product: any) => {
+    setShowSuggestions(false);
+    setSearchQuery("");
+    router.push(`/shop-details/${product.productId}`);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     window.addEventListener("scroll", handleStickyMenu);
@@ -241,33 +304,83 @@ const Header = () => {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-grow max-w-[800px]">
-  <form className="relative w-full h-10 shadow-sm">
-    
-    {/* Search Icon */}
-    <svg
-      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-    >
-      <circle cx="11" cy="11" r="8" />
-      <path d="M21 21l-4.35-4.35" />
-    </svg>
+          <div className="flex-grow max-w-[800px] relative" ref={suggestionsRef}>
+            <form className="relative w-full h-10 shadow-sm" onSubmit={handleSearchSubmit}>
+              {/* Search Icon */}
+              <svg
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
+              </svg>
 
-    {/* Input */}
-    <input
-      onChange={(e) => setSearchQuery(e.target.value)}
-      value={searchQuery}
-      type="text"
-      placeholder="Search items..."
-      className="w-full h-full px-4 pr-10 outline-none text-dark text-sm rounded-sm"
-    />
-  </form>
-</div>
+              {/* Input */}
+              <input
+                onChange={handleSearchInput}
+                onFocus={() => searchQuery.trim().length > 0 && setShowSuggestions(true)}
+                value={searchQuery}
+                type="text"
+                placeholder="Search items..."
+                className="w-full h-full px-4 pr-10 outline-none text-dark text-sm rounded-sm"
+                autoComplete="off"
+              />
+            </form>
+
+            {/* Suggestions Dropdown */}
+            {showSuggestions && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white shadow-2xl rounded-lg z-[10001] overflow-hidden">
+                {suggestionsLoading ? (
+                  <div className="px-4 py-6 flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-blue border-t-transparent animate-spin rounded-full"></div>
+                    <span className="text-sm text-black font-medium">Loading suggestions...</span>
+                  </div>
+                ) : (
+                  <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
+                    {suggestions.length > 0 ? (
+                      <div className="py-1">
+                        {suggestions.map((prod: any, index: number) => (
+                          <button
+                            key={prod.productId}
+                            type="button"
+                            onClick={() => handleSuggestionClick(prod)}
+                            className="w-full text-left px-4 py-3 text-sm text-black hover:text-blue hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3"
+                          >
+                            {prod.image && (
+                              <div className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
+                                <Image
+                                  src={`${API_BASE_URL}${prod.image}`}
+                                  alt={prod.productName}
+                                  width={40}
+                                  height={40}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-black-800  truncate text-sm">{prod.productName}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-8 text-center">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto text-gray-400 mb-2">
+                          <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
+                        </svg>
+                        <p className="text-sm text-black font-medium">No products found</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
 
           {/* Actions */}

@@ -17,7 +17,7 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    const { productName, mainCategoryId, subCategoryId, price, stock, description, shortDescription,createdBy } = req.body;
+    const { productName, mainCategoryId, subCategoryId, price, salePrice, stock, description, shortDescription,createdBy } = req.body;
     let { attributes } = req.body;
 
     if (typeof attributes === 'string') {
@@ -100,6 +100,9 @@ exports.createProduct = async (req, res) => {
       userId: req.userId,
       images: images,
       attributes: attributes || [],
+      price: price ? parseFloat(price) : null,
+      salePrice: salePrice ? parseFloat(salePrice) : null,
+      stock: stock ? parseInt(stock) : 0,
       roleId: 1,
       status: true,
       createdby: createdBy
@@ -282,7 +285,6 @@ exports.getProductById = async (req, res) => {
         sellerName: product.roleId === 1 ? "Admin" : mainSeller.sellerName,
         shopName: product.roleId === 1 ? "Main Store" : mainSeller.shopName,
         stock: product.stock,
-        deliveryDays: product.roleId === 1 ? (product.deliveryDays || 7) : (product.deliveryDays || 5),
         isSeller: product.roleId !== 1
       },
       ...marketplaceListings.map(m => ({
@@ -330,7 +332,7 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    let { productName, price, stock, description, shortDescription, updatedby, attributes } = req.body;
+    let { productName, price, salePrice, stock, description, shortDescription, updatedby, attributes } = req.body;
 
     if (typeof attributes === 'string') {
       try {
@@ -352,7 +354,14 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const updateData = { ...req.body, updatedby };
+    const updateData = { 
+      ...req.body, 
+      updatedby,
+      ...(price !== undefined && { price: parseFloat(price) }),
+      ...(salePrice !== undefined && { salePrice: parseFloat(salePrice) }),
+      ...(stock !== undefined && { stock: parseInt(stock) })
+    };
+
     if (attributes !== undefined) {
       updateData.attributes = attributes;
     }
@@ -371,8 +380,6 @@ exports.updateProduct = async (req, res) => {
 
     await deleteCachePattern('products:list:*');
     await deleteCache(`products:detail:${req.params.id}`);
-
-    const { _id, ...responseData } = product;
 
     res.status(200).json({ 
       success: true, 
