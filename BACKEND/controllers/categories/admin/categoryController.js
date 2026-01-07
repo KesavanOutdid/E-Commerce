@@ -103,7 +103,7 @@ exports.getMainCategories = async (req, res) => {
 
 exports.createSubcategory = async (req, res) => {
   try {
-    const { name, parentId, level, createdBy, attributes } = req.body;
+    const { name, parentId, level, createdBy, attributes, commissionPercentage } = req.body;
     if (!name || !parentId || !createdBy) {
       return res.status(400).json({ success: false, message: 'Name, parentId, and createdBy are required' });
     }
@@ -116,7 +116,13 @@ exports.createSubcategory = async (req, res) => {
     if (existing.length > 0) return res.status(409).json({ success: false, message: 'Subcategory already exists' });
 
     const category = await SubCategory.create({ 
-      name, slug, parentId: parent.categoryId, level: level || 2, createdBy, attributes: attributes || [] 
+      name, 
+      slug, 
+      parentId: parent.categoryId, 
+      level: level || 2, 
+      createdBy, 
+      attributes: attributes || [],
+      commissionPercentage: commissionPercentage || 0
     });
     await deleteCachePattern('categories:list:*');
 
@@ -129,7 +135,7 @@ exports.createSubcategory = async (req, res) => {
 exports.updateSubcategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, parentId, level, attributes, status } = req.body;
+    const { name, parentId, level, attributes, status, commissionPercentage } = req.body;
 
     const subcategory = await SubCategory.findById(id);
     if (!subcategory) {
@@ -144,6 +150,7 @@ exports.updateSubcategory = async (req, res) => {
     if (level) updateData.level = level;
     if (attributes) updateData.attributes = attributes;
     if (status !== undefined) updateData.status = status;
+    if (commissionPercentage !== undefined) updateData.commissionPercentage = commissionPercentage;
 
     if (parentId) {
       const parent = await MainCategory.findById(parentId);

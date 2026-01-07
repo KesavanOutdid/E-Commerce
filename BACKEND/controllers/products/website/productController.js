@@ -129,7 +129,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
                   sellerProductId: null,
                   productId: "$productId",
                   sellerName: "Admin",
-                  shopName: "Main Store",
+                  shopName: "Outdid",
                   stock: "$stock",
                   deliveryDays: { 
                     $cond: [

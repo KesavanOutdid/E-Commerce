@@ -293,14 +293,15 @@ const Header = () => {
       <div className="bg-blue py-2">
         <div className="max-w-[1400px] mx-auto px-4 flex items-center gap-4 md:gap-8">
           {/* Logo */}
-          <Link href="/" className="flex-shrink-0 pt-1 border border-transparent hover:border-white p-1 rounded-sm transition-all">
+          <Link href="/" className="flex-shrink-0 flex items-center gap-2 pt-1 border border-transparent hover:border-white p-1 rounded-sm transition-all">
             <Image
-              src="/images/logo/logo.svg"
+              src="/images/icons/icon-07.svg"
               alt="Logo"
               width={100}
-              height={30}
+              height={70}
               className="w-auto h-7 brightness-0 invert"
             />
+            <span className="text-white text-xl  tracking-tight">Shopix</span>
           </Link>
 
           {/* Search Bar */}
@@ -489,6 +490,18 @@ const Header = () => {
               </div>
               <span className="text-[13px] font-medium mb-0.5 hidden sm:block ml-1">Cart</span>
             </button>
+
+            <Link
+              href="/contact"
+              className="flex items-end border border-transparent hover:border-white p-1 px-1.5 rounded-sm transition-all relative group"
+            >
+              <div className="relative">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="group-hover:scale-105 transition-transform">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l2.27-2.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </div>
+              <span className="text-[13px] font-medium mb-0.5 hidden sm:block ml-1">Contact</span>
+            </Link>
           </div>
         </div>
       </div>

@@ -34,4 +34,7 @@ export const API_ENDPOINTS = {
   VERIFY_ORDER: `${API_BASE_URL}/api/orders/verify`,
   ORDER_HISTORY: (page: number, limit: number) => `${API_BASE_URL}/api/orders/history?page=${page}&limit=${limit}`,
   ORDER_DETAILS: (orderId: string) => `${API_BASE_URL}/api/orders/detail/${orderId}`,
+  CONTACT: `${API_BASE_URL}/api/contact`,
+  NEWSLETTER_SUBSCRIBE: `${API_BASE_URL}/api/newsletter/subscribe`,
+  NEWSLETTER: `${API_BASE_URL}/api/newsletter`,
 };

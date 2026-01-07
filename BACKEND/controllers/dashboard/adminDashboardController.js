@@ -153,7 +153,7 @@ exports.getDashboardStats = async (req, res) => {
                             'Unknown Seller'
                         ]
                     },
-                    shopName: { $ifNull: ['$sellerInfo.shopName', 'Main Store'] }
+                    shopName: { $ifNull: ['$sellerInfo.shopName', 'Outdid'] }
                 }
             }
         ]).toArray();

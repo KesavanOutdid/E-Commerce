@@ -276,7 +276,7 @@ exports.getProductById = async (req, res) => {
 
     const mainPrice = parseFloat(product.salePrice) > 0 ? parseFloat(product.salePrice) : parseFloat(product.price);
     
-    // Fetch the Admin's userId dynamically to attribute the "Main Store" offer correctly
+    // Fetch the Admin's userId dynamically to attribute the "Outdid" offer correctly
     const adminUser = await User.collection().findOne({ roles: 1 });
     const adminId = adminUser ? (adminUser.userId || adminUser._id.toString()) : product.userId;
 
@@ -290,7 +290,7 @@ exports.getProductById = async (req, res) => {
         sellerProductId: null,
         productId: product.productId,
         sellerName: "Admin",
-        shopName: "Main Store",
+        shopName: "Outdid",
         stock: parseInt(product.stock),
         isSeller: false
       });

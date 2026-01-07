@@ -1,7 +1,46 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 import Image from "next/image";
+import { API_ENDPOINTS } from "@/lib/api";
+import { toast } from "react-hot-toast";
 
 const Newsletter = () => {
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast.error("Please enter your email");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(API_ENDPOINTS.NEWSLETTER_SUBSCRIBE, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success(data.message || "Subscribed successfully!");
+        setEmail("");
+      } else {
+        toast.error(data.message || "Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      toast.error("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className="overflow-hidden">
       <div className="max-w-[1300px] mx-auto px-4 sm:px-8 xl:px-0">
@@ -28,20 +67,24 @@ const Newsletter = () => {
             </div>
 
             <div className="max-w-[477px] w-full">
-              <form>
+              <form onSubmit={handleSubmit}>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <input
                     type="email"
                     name="email"
                     id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email"
                     className="w-full bg-gray-1 border border-gray-3 outline-none rounded-md placeholder:text-dark-4 py-3 px-5"
+                    disabled={loading}
                   />
                   <button
                     type="submit"
-                    className="inline-flex justify-center py-3 px-7 text-white bg-blue font-medium rounded-md ease-out duration-200 hover:bg-blue-dark"
+                    className="inline-flex justify-center py-3 px-7 text-white bg-blue font-medium rounded-md ease-out duration-200 hover:bg-blue-dark disabled:opacity-50"
+                    disabled={loading}
                   >
-                    Subscribe
+                    {loading ? "Subscribing..." : "Subscribe"}
                   </button>
                 </div>
               </form>

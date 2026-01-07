@@ -14,6 +14,7 @@ class SubCategory {
       slug: data.slug,
       parentId: data.parentId, // Refers to MainCategory categoryId
       level: data.level || 2,
+      commissionPercentage: data.commissionPercentage || 0,
       attributes: data.attributes || [],
       status: data.status !== undefined ? data.status : true,
       createdBy: data.createdBy || null,

@@ -54,7 +54,9 @@ const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 const wishlistRoutes = require('./routes/wishlist');
 const dashboardRoutes = require('./routes/dashboard/dashboardRoutes');
-const contactRoutes = require('./routes/contact/seller/contactRoutes');
+const contactSellerRoutes = require('./routes/contact/seller/contactRoutes');
+const contactRoutes = require('./routes/contact/contactRoutes');
+const newsletterRoutes = require('./routes/newsletter/newsletterRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
@@ -68,7 +70,9 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/contact/seller', contactRoutes);
+app.use('/api/contact/seller', contactSellerRoutes);
+app.use('/api/contact', contactRoutes);
+app.use('/api/newsletter', newsletterRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {
