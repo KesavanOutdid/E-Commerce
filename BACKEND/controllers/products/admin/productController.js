@@ -276,13 +276,17 @@ exports.getProductById = async (req, res) => {
 
     const mainPrice = parseFloat(product.salePrice) > 0 ? parseFloat(product.salePrice) : parseFloat(product.price);
     
+    // Fetch the Admin's userId dynamically to attribute the "Main Store" offer correctly
+    const adminUser = await User.collection().findOne({ roles: 1 });
+    const adminId = adminUser ? (adminUser.userId || adminUser._id.toString()) : product.userId;
+
     const allOffers = [];
 
     // Add main product as an offer ONLY if it has price and stock > 0
     if (mainPrice > 0 && parseInt(product.stock) > 0) {
       allOffers.push({
         price: mainPrice,
-        sellerId: product.userId,
+        sellerId: adminId, 
         sellerProductId: null,
         productId: product.productId,
         sellerName: "Admin",

@@ -9,6 +9,12 @@ const { getDB } = require('../../../config/db');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
 
+// Helper to get admin user ID dynamically
+const getAdminId = async () => {
+  const adminUser = await User.collection().findOne({ roles: 1 });
+  return adminUser ? (adminUser.userId || adminUser._id.toString()) : null;
+};
+
 // Helper to get logged in user ID from token without full middleware
 const getUserIdFromRequest = (req) => {
   const token = req.headers.authorization?.split(' ')[1];
@@ -23,7 +29,7 @@ const getUserIdFromRequest = (req) => {
 
 
 // Helper for aggregation pipeline to avoid duplication and include marketplace offers
-const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }) => {
+const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }, adminId = null) => {
   return [
     { $match: matchQuery },
     // Join with marketplace listings and their seller details
@@ -119,7 +125,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               $concatArrays: [
                 [{
                   price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
-                  sellerId: "$userId",
+                  sellerId: adminId ? adminId : "$userId",
                   sellerProductId: null,
                   productId: "$productId",
                   sellerName: "Admin",
@@ -261,8 +267,10 @@ exports.getProducts = async (req, res) => {
       ];
     }
 
+    const adminId = await getAdminId();
+
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
     ).toArray();
 
     const products = aggregationResult[0].data;
@@ -332,8 +340,10 @@ exports.getProductsBySubCategory = async (req, res) => {
       status: { $in: [true, "true"] }
     };
 
+    const adminId = await getAdminId();
+
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
     ).toArray();
 
     const products = aggregationResult[0].data;
@@ -410,8 +420,10 @@ exports.getProductById = async (req, res) => {
       ]
     };
 
+    const adminId = await getAdminId();
+
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, 0, 1)
+      getProductAggregationPipeline(matchQuery, 0, 1, { minPrice: 1 }, adminId)
     ).toArray();
 
     if (!aggregationResult || !aggregationResult[0].data.length) {
@@ -498,8 +510,10 @@ exports.getBestSellers = async (req, res) => {
     // we'll handle sorting by matching the order of bestSellingIds or just using the pipeline's sort.
     const sortOptions = { totalReviews: -1, avgRating: -1 };
 
+    const adminId = await getAdminId();
+
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions, adminId)
     ).toArray();
 
     let products = aggregationResult[0].data;
@@ -618,8 +632,10 @@ exports.searchProducts = async (req, res) => {
       ]
     };
 
+    const adminId = await getAdminId();
+
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
     ).toArray();
 
     responseData.products = aggregationResult[0]?.data || [];
