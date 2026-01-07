@@ -276,29 +276,38 @@ exports.getProductById = async (req, res) => {
 
     const mainPrice = parseFloat(product.salePrice) > 0 ? parseFloat(product.salePrice) : parseFloat(product.price);
     
-    const allOffers = [
-      {
+    const allOffers = [];
+
+    // Add main product as an offer ONLY if it has price and stock > 0
+    if (mainPrice > 0 && parseInt(product.stock) > 0) {
+      allOffers.push({
         price: mainPrice,
         sellerId: product.userId,
         sellerProductId: null,
         productId: product.productId,
         sellerName: product.roleId === 1 ? "Admin" : mainSeller.sellerName,
         shopName: product.roleId === 1 ? "Main Store" : mainSeller.shopName,
-        stock: product.stock,
+        stock: parseInt(product.stock),
         isSeller: product.roleId !== 1
-      },
-      ...marketplaceListings.map(m => ({
-        price: m.currentPrice,
-        sellerId: m.sellerId,
-        sellerProductId: m.sellerProductId,
-        productId: m.productId,
-        sellerName: m.sellerName,
-        shopName: m.shopName,
-        stock: m.stock,
-        deliveryDays: m.deliveryDays,
-        isSeller: true
-      }))
-    ];
+      });
+    }
+
+    // Add marketplace listings, also filtering for valid price/stock
+    marketplaceListings.forEach(m => {
+      if (m.currentPrice > 0 && parseInt(m.stock) > 0) {
+        allOffers.push({
+          price: m.currentPrice,
+          sellerId: m.sellerId,
+          sellerProductId: m.sellerProductId,
+          productId: m.productId,
+          sellerName: m.sellerName,
+          shopName: m.shopName,
+          stock: parseInt(m.stock),
+          deliveryDays: m.deliveryDays,
+          isSeller: true
+        });
+      }
+    });
 
     const minPrice = allOffers.length > 0 ? Math.min(...allOffers.map(o => o.price)) : 0;
     const sellerCount = allOffers.filter(o => o.isSeller).length;

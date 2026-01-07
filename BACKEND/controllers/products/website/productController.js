@@ -114,40 +114,51 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
         mainPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
         // Prepare list of all offers to identify min price and seller count
         allOffers: {
-          $concatArrays: [
-            [{
-              price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
-              sellerId: "$userId",
-              sellerProductId: null,
-              productId: "$productId",
-              sellerName: { $cond: [{ $eq: ["$roleId", 1] }, "Admin", { $concat: [{ $ifNull: ["$mainUser.firstName", ""] }, " ", { $ifNull: ["$mainUser.lastName", ""] }] }] },
-              shopName: { $cond: [{ $eq: ["$roleId", 1] }, "Main Store", "$mainSeller.shopName"] },
-              stock: "$stock",
-              deliveryDays: { 
-                $cond: [
-                  { $eq: ["$roleId", 1] }, 
-                  { $ifNull: ["$deliveryDays", 7] }, 
-                  { $ifNull: ["$deliveryDays", 5] }
-                ] 
-              }, 
-              isSeller: { $cond: [{ $eq: ["$roleId", 1] }, false, true] }
-            }],
-            { $map: {
-              input: "$marketplaceListings",
-              as: "m",
-              in: {
-                price: "$$m.currentPrice",
-                sellerId: "$$m.sellerId",
-                sellerProductId: "$$m.sellerProductId",
-                productId: "$$m.productId",
-                sellerName: "$$m.sellerName",
-                shopName: "$$m.shopName",
-                stock: "$$m.stock",
-                deliveryDays: "$$m.deliveryDays",
-                isSeller: true
-              }
-            }}
-          ]
+          $filter: {
+            input: {
+              $concatArrays: [
+                [{
+                  price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
+                  sellerId: "$userId",
+                  sellerProductId: null,
+                  productId: "$productId",
+                  sellerName: { $cond: [{ $eq: ["$roleId", 1] }, "Admin", { $concat: [{ $ifNull: ["$mainUser.firstName", ""] }, " ", { $ifNull: ["$mainUser.lastName", ""] }] }] },
+                  shopName: { $cond: [{ $eq: ["$roleId", 1] }, "Main Store", "$mainSeller.shopName"] },
+                  stock: "$stock",
+                  deliveryDays: { 
+                    $cond: [
+                      { $eq: ["$roleId", 1] }, 
+                      { $ifNull: ["$deliveryDays", 7] }, 
+                      { $ifNull: ["$deliveryDays", 5] }
+                    ] 
+                  }, 
+                  isSeller: { $cond: [{ $eq: ["$roleId", 1] }, false, true] }
+                }],
+                { $map: {
+                  input: "$marketplaceListings",
+                  as: "m",
+                  in: {
+                    price: "$$m.currentPrice",
+                    sellerId: "$$m.sellerId",
+                    sellerProductId: "$$m.sellerProductId",
+                    productId: "$$m.productId",
+                    sellerName: "$$m.sellerName",
+                    shopName: "$$m.shopName",
+                    stock: "$$m.stock",
+                    deliveryDays: "$$m.deliveryDays",
+                    isSeller: true
+                  }
+                }}
+              ]
+            },
+            as: "offer",
+            cond: {
+              $and: [
+                { $gt: ["$$offer.price", 0] },
+                { $gt: [{ $toInt: "$$offer.stock" }, 0] }
+              ]
+            }
+          }
         }
       }
     },
