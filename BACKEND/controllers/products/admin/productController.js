@@ -262,16 +262,55 @@ exports.getProductById = async (req, res) => {
 
     const mainSeller = getSellerDetails(product.userId);
     
-    const marketplaceListings = rawMarketplaceListings.map(listing => ({
-      ...listing,
-      ...getSellerDetails(listing.sellerId)
-    }));
+    const marketplaceListings = rawMarketplaceListings.map(listing => {
+      const details = getSellerDetails(listing.sellerId);
+      return {
+        ...listing,
+        ...details,
+        currentPrice: parseFloat(listing.salePrice) > 0 ? parseFloat(listing.salePrice) : parseFloat(listing.price)
+      };
+    });
+
+    const mainPrice = parseFloat(product.salePrice) > 0 ? parseFloat(product.salePrice) : parseFloat(product.price);
+    
+    const allOffers = [
+      {
+        price: mainPrice,
+        sellerId: product.userId,
+        sellerProductId: null,
+        productId: product.productId,
+        sellerName: product.roleId === 1 ? "Admin" : mainSeller.sellerName,
+        shopName: product.roleId === 1 ? "Main Store" : mainSeller.shopName,
+        stock: product.stock,
+        deliveryDays: product.roleId === 1 ? (product.deliveryDays || 7) : (product.deliveryDays || 5),
+        isSeller: product.roleId !== 1
+      },
+      ...marketplaceListings.map(m => ({
+        price: m.currentPrice,
+        sellerId: m.sellerId,
+        sellerProductId: m.sellerProductId,
+        productId: m.productId,
+        sellerName: m.sellerName,
+        shopName: m.shopName,
+        stock: m.stock,
+        deliveryDays: m.deliveryDays,
+        isSeller: true
+      }))
+    ];
+
+    const minPrice = allOffers.length > 0 ? Math.min(...allOffers.map(o => o.price)) : 0;
+    const sellerCount = allOffers.filter(o => o.isSeller).length;
+    const minPriceDetails = allOffers.find(o => o.price === minPrice) || null;
 
     const productWithCategoryNames = {
       ...product,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
       marketplaceListings: marketplaceListings,
+      allOffers: allOffers,
+      minPrice: minPrice,
+      sellerCount: sellerCount,
+      minPriceDetails: minPriceDetails,
       ...(mainSeller.sellerName && { sellerName: mainSeller.sellerName }),
       ...(mainSeller.shopName && { shopName: mainSeller.shopName })
     };
@@ -279,7 +318,10 @@ exports.getProductById = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Product details fetched successfully',
-      data: productWithCategoryNames
+      data: {
+        product: productWithCategoryNames,
+        sellerCount: sellerCount
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
