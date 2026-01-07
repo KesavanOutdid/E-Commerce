@@ -10,6 +10,8 @@ export type Product = {
     images: string[];
     avgRating: number;
     totalReviews: number;
+    mainCategoryName?: string;
+    subCategoryName?: string;
     minPriceDetails?: {
       price: number;
       sellerName: string;

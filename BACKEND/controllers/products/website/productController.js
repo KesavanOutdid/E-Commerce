@@ -2,6 +2,7 @@ const Product = require('../../../models/Product');
 const SellerProduct = require('../../../models/SellerProduct');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
+const Order = require('../../../models/Order');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
 const jwt = require('jsonwebtoken');
@@ -441,6 +442,23 @@ exports.getBestSellers = async (req, res) => {
       });
     }
 
+    // 1. Aggregate orders to find best selling products
+    const orderItemsAggregation = [
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.productId",
+          orderCount: { $sum: 1 },
+          totalQuantity: { $sum: { $toInt: { $ifNull: ["$items.quantity", 1] } } }
+        }
+      },
+      { $sort: { orderCount: -1, totalQuantity: -1 } }
+    ];
+
+    const bestSellingProducts = await Order.collection().aggregate(orderItemsAggregation).toArray();
+    const bestSellingIds = bestSellingProducts.map(p => p._id);
+
+    // 2. Build match query for products
     let matchQuery = { 
       $or: [
         { roleId: 1 },
@@ -450,16 +468,35 @@ exports.getBestSellers = async (req, res) => {
     };
     
     if (categoryId) matchQuery.mainCategoryId = categoryId;
+    
+    // If we have best sellers from orders, we prioritize them
+    if (bestSellingIds.length > 0) {
+      matchQuery.productId = { $in: bestSellingIds };
+    }
 
-    // Best sellers sorted by totalReviews and avgRating
+    // Sort by orderCount if applicable, otherwise fallback to reviews
+    // Since getProductAggregationPipeline doesn't know about orderCount, 
+    // we'll handle sorting by matching the order of bestSellingIds or just using the pipeline's sort.
     const sortOptions = { totalReviews: -1, avgRating: -1 };
 
     const aggregationResult = await Product.collection().aggregate(
       getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions)
     ).toArray();
 
-    const products = aggregationResult[0].data;
+    let products = aggregationResult[0].data;
     const total = aggregationResult[0].totalCount[0]?.count || 0;
+
+    // If we have bestSellingIds, sort the resulting products to match the order of sales
+    if (bestSellingIds.length > 0) {
+      const orderMap = new Map();
+      bestSellingIds.forEach((id, index) => orderMap.set(id, index));
+      
+      products.sort((a, b) => {
+        const indexA = orderMap.has(a.product.productId) ? orderMap.get(a.product.productId) : 9999;
+        const indexB = orderMap.has(b.product.productId) ? orderMap.get(b.product.productId) : 9999;
+        return indexA - indexB;
+      });
+    }
 
     const userId = getUserIdFromRequest(req);
     if (userId) {
@@ -486,7 +523,7 @@ exports.getBestSellers = async (req, res) => {
 
     res.status(200).json({ 
       success: true, 
-      message: 'Best sellers fetched successfully',
+      message: 'Best sellers based on orders fetched successfully',
       data: responseData 
     });
   } catch (error) {

@@ -9,12 +9,16 @@ import Image from "next/image";
 const OrderHistory = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const { accessToken } = useAppSelector((state) => state.authReducer);
+  const limit = 8;
 
   useEffect(() => {
     const fetchOrders = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(API_ENDPOINTS.ORDER_HISTORY(1, 10), {
+        const res = await fetch(API_ENDPOINTS.ORDER_HISTORY(currentPage, limit), {
           headers: {
             Authorization: `Bearer ${accessToken || localStorage.getItem("accessToken")}`,
           },
@@ -22,6 +26,7 @@ const OrderHistory = () => {
         const data: OrderHistoryResponse = await res.json();
         if (data.success) {
           setOrders(data.data);
+          setTotalPages(data.pagination.pages);
         }
       } catch (error) {
         console.error("Error fetching orders:", error);
@@ -31,7 +36,12 @@ const OrderHistory = () => {
     };
 
     fetchOrders();
-  }, [accessToken]);
+  }, [accessToken, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const getStatusTextColor = (status: string) => {
     switch (status.toLowerCase().trim()) {
@@ -96,67 +106,108 @@ const OrderHistory = () => {
       </div>
 
       {orders.length > 0 ? (
-        <div className="flex flex-col gap-4">
-          {orders.map((order) => (
-            <div key={order._id} className="flex flex-col">
-              {order.items.map((item, index) => (
-                <Link
-                  href={`/view-orders/${order.orderId}`}
-                  key={`${order._id}-${index}`}
-                  className="bg-white pt-3 pb-6 px-6 border border-[#f1f3f6] hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-8 mb-[-1px]"
-                >
-                  {/* Product Image */}
-                  <div className="w-24 h-24 relative flex-shrink-0">
-                    <Image
-                      src={item.images[0]?.startsWith('http') ? item.images[0] : `${API_BASE_URL}${item.images[0]}`}
-                      alt={item.productName}
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-
-                  {/* Product Info */}
-                  <div className="flex-grow flex flex-col md:grid md:grid-cols-5 items-start w-full gap-6">
-                    <div className="md:col-span-2">
-                      <h3 className="text-[15px] font-normal text-dark hover:text-blue transition-colors line-clamp-2 mb-1">
-                        {item.productName}
-                      </h3>
-                      <p className="text-xs text-gray-500">
-                        Order ID: {order.orderId}
-                      </p>
+        <>
+          <div className="flex flex-col gap-4">
+            {orders.map((order) => (
+              <div key={order._id} className="flex flex-col">
+                {order.items.map((item, index) => (
+                  <Link
+                    href={`/view-orders/${order.orderId}`}
+                    key={`${order._id}-${index}`}
+                    className="bg-white pt-3 pb-6 px-6 border border-[#f1f3f6] hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-8 mb-[-1px]"
+                  >
+                    {/* Product Image */}
+                    <div className="w-24 h-24 relative flex-shrink-0">
+                      <Image
+                        src={item.images[0]?.startsWith('http') ? item.images[0] : `${API_BASE_URL}${item.images[0]}`}
+                        alt={item.productName}
+                        fill
+                        className="object-contain"
+                      />
                     </div>
 
-                    <div className="text-left">
-                      <p className="text-[15px] font-medium text-dark">
-                        ₹{item.totalPrice.toLocaleString()}
-                      </p>
-                    </div>
-
-                    <div className="flex items-start gap-2.5">
-                      <div>
-                        <p className={`text-sm font-normal capitalize ${getStatusTextColor(order.orderStatus)}`}>
-                          {order.orderStatus.toLowerCase() === 'ordered' ? 'Confirmed' : order.orderStatus}
+                    {/* Product Info */}
+                    <div className="flex-grow flex flex-col md:grid md:grid-cols-5 items-start w-full gap-6">
+                      <div className="md:col-span-2">
+                        <h3 className="text-[15px] font-normal text-dark hover:text-blue transition-colors line-clamp-2 mb-1">
+                          {item.productName}
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          Order ID: {order.orderId}
                         </p>
-                        <p className="text-[12px] text-gray-500 mt-0.5">
-                          {(order.orderStatus === 'confirmed' || order.orderStatus === 'ordered') ? 'Your order has been placed' : ''}
-                          {order.orderStatus === 'delivered' ? `Delivered on ${new Date(order.updatedAt).toLocaleDateString()}` : ''}
-                          {order.orderStatus === 'pending' ? 'Waiting for confirmation' : ''}
-                          {order.orderStatus === 'cancelled' ? 'Order has been cancelled' : ''}
+                      </div>
+
+                      <div className="text-left">
+                        <p className="text-[15px] font-medium text-dark">
+                          ₹{item.totalPrice.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="flex items-start gap-2.5">
+                        <div>
+                          <p className={`text-sm font-normal capitalize ${getStatusTextColor(order.orderStatus)}`}>
+                            {order.orderStatus.toLowerCase() === 'ordered' ? 'Confirmed' : order.orderStatus}
+                          </p>
+                          <p className="text-[12px] text-gray-500 mt-0.5">
+                            {(order.orderStatus === 'confirmed' || order.orderStatus === 'ordered') ? 'Your order has been placed' : ''}
+                            {order.orderStatus === 'delivered' ? `Delivered on ${new Date(order.updatedAt).toLocaleDateString()}` : ''}
+                            {order.orderStatus === 'pending' ? 'Waiting for confirmation' : ''}
+                            {order.orderStatus === 'cancelled' ? 'Order has been cancelled' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-dark">
+                          Ordered on {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
+                  </Link>
+                ))}
+              </div>
+            ))}
+          </div>
 
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-dark">
-                        Ordered on {new Date(order.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </Link>
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8 pb-10">
+              <button
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+              </button>
+              
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`w-10 h-10 rounded-full border transition-colors ${
+                    currentPage === index + 1
+                      ? "bg-blue border-blue text-white"
+                      : "border-gray-300 hover:bg-gray-100 text-dark"
+                  }`}
+                >
+                  {index + 1}
+                </button>
               ))}
+
+              <button
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 transition-colors"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6"/>
+                </svg>
+              </button>
             </div>
-          ))}
-        </div>
+          )}
+        </>
       ) : (
         <div className="bg-white p-10 rounded-sm text-center">
           <div className="flex justify-center mb-5">
