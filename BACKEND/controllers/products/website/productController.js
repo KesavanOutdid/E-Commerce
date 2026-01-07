@@ -86,8 +86,29 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
       }
     },
     { $unwind: { path: "$mainSeller", preserveNullAndEmptyArrays: true } },
+    // Join with categories
+    {
+      $lookup: {
+        from: "main_categories",
+        localField: "mainCategoryId",
+        foreignField: "categoryId",
+        as: "mainCategory"
+      }
+    },
+    { $unwind: { path: "$mainCategory", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "sub_categories",
+        localField: "subCategoryId",
+        foreignField: "subCategoryId",
+        as: "subCategory"
+      }
+    },
+    { $unwind: { path: "$subCategory", preserveNullAndEmptyArrays: true } },
     {
       $addFields: {
+        mainCategoryName: "$mainCategory.name",
+        subCategoryName: "$subCategory.name",
         mainPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
         // Prepare list of all offers to identify min price and seller count
         allOffers: {
@@ -174,7 +195,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
                     as: "kv",
                     cond: { 
                       $not: { 
-                        $in: ["$$kv.k", ["mainUser", "mainSeller", "mainPrice"]] 
+                        $in: ["$$kv.k", ["mainUser", "mainSeller", "mainPrice", "mainCategory", "subCategory"]] 
                       } 
                     }
                   }
