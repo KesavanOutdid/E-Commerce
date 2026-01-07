@@ -285,10 +285,10 @@ exports.getProductById = async (req, res) => {
         sellerId: product.userId,
         sellerProductId: null,
         productId: product.productId,
-        sellerName: product.roleId === 1 ? "Admin" : mainSeller.sellerName,
-        shopName: product.roleId === 1 ? "Main Store" : mainSeller.shopName,
+        sellerName: "Admin",
+        shopName: "Main Store",
         stock: parseInt(product.stock),
-        isSeller: product.roleId !== 1
+        isSeller: false
       });
     }
 

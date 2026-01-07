@@ -122,8 +122,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
                   sellerId: "$userId",
                   sellerProductId: null,
                   productId: "$productId",
-                  sellerName: { $cond: [{ $eq: ["$roleId", 1] }, "Admin", { $concat: [{ $ifNull: ["$mainUser.firstName", ""] }, " ", { $ifNull: ["$mainUser.lastName", ""] }] }] },
-                  shopName: { $cond: [{ $eq: ["$roleId", 1] }, "Main Store", "$mainSeller.shopName"] },
+                  sellerName: "Admin",
+                  shopName: "Main Store",
                   stock: "$stock",
                   deliveryDays: { 
                     $cond: [
@@ -132,7 +132,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
                       { $ifNull: ["$deliveryDays", 5] }
                     ] 
                   }, 
-                  isSeller: { $cond: [{ $eq: ["$roleId", 1] }, false, true] }
+                  isSeller: false
                 }],
                 { $map: {
                   input: "$marketplaceListings",
