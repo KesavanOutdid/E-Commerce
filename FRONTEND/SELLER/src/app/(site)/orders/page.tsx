@@ -12,9 +12,10 @@ import Link from 'next/link'
 export default function OrdersPage() {
     const router = useRouter()
     const { isAuthenticated, isLoading } = useAuth()
-    const { orders, loading, totalPages, totalOrders, fetchSellerOrders } = useOrders()
+    const { orders, loading, totalPages, totalOrders, fetchSellerOrders, searchOrders } = useOrders()
     const hasFetchedOrders = useRef(false)
     const [currentPage, setCurrentPage] = useState(1)
+    const [searchQuery, setSearchQuery] = useState('')
 
     useEffect(() => {
         if (isLoading) return
@@ -38,6 +39,24 @@ export default function OrdersPage() {
 
     const handlePageChange = (newPage: number) => {
         setCurrentPage(newPage)
+    }
+
+    useEffect(() => {
+        if (!hasFetchedOrders.current) return
+
+        const timer = setTimeout(() => {
+            if (searchQuery.trim()) {
+                searchOrders(searchQuery.trim(), currentPage, 10)
+            } else {
+                fetchSellerOrders(currentPage, 10)
+            }
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [searchQuery])
+
+    const handleClearSearch = () => {
+        setSearchQuery('')
     }
 
     const getStatusColor = (status: string) => {
@@ -90,9 +109,9 @@ export default function OrdersPage() {
             <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
                 <div className="container mx-auto max-w-7xl px-4">
                     <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                        <div className="mb-4">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
+                        <div className="mb-6">
+                            <div className="grid grid-cols-12 gap-4 items-center">
+                                <div className="col-span-12 md:col-span-3">
                                     <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
                                         Orders
                                     </h1>
@@ -106,12 +125,36 @@ export default function OrdersPage() {
                                         </span>
                                     </div>
                                 </div>
-                                <Link
-                                    href="/products"
-                                    className="px-3 py-1.5 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-1.5 font-semibold text-sm">
-                                    <Icon icon="mdi:arrow-left" width={16} height={16} />
-                                    Back to Products
-                                </Link>
+
+                                <div className="col-span-12 md:col-span-6">
+                                    <div className="relative">
+                                        <Icon icon="mdi:magnify" width={20} height={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                        <input
+                                            type="text"
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            placeholder="Search by order ID, product name, payment method, or status..."
+                                            className="w-full pl-10 pr-20 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                        />
+                                        {searchQuery && (
+                                            <button
+                                                type="button"
+                                                onClick={handleClearSearch}
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-all">
+                                                Clear
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="col-span-12 md:col-span-3 flex justify-end">
+                                    <Link
+                                        href="/products"
+                                        className="px-4 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-semibold">
+                                        <Icon icon="mdi:arrow-left" width={18} height={18} />
+                                        Back to Products
+                                    </Link>
+                                </div>
                             </div>
                         </div>
 
@@ -135,6 +178,12 @@ export default function OrdersPage() {
                                             <tr>
                                                 <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:shopping" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Product</span>
+                                                    </div>
+                                                </th>
+                                                {/* <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:package-variant" width={16} height={16} className="text-primary" />
                                                         <span className="text-xs font-semibold text-gray-700">Order ID</span>
                                                     </div>
@@ -144,7 +193,7 @@ export default function OrdersPage() {
                                                         <Icon icon="mdi:account" width={16} height={16} className="text-primary" />
                                                         <span className="text-xs font-semibold text-gray-700">Customer</span>
                                                     </div>
-                                                </th>
+                                                </th> */}
                                                 <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:cart" width={16} height={16} className="text-primary" />
@@ -193,6 +242,33 @@ export default function OrdersPage() {
                                             {orders.map((order: any) => (
                                                 <tr key={order._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
                                                     <td className="px-4 py-2.5">
+                                                        <div className="flex items-center gap-3">
+                                                            {order.items && order.items.length > 0 && order.items[0].images && order.items[0].images.length > 0 ? (
+                                                                <div className="relative flex-shrink-0">
+                                                                    <img
+                                                                        src={`${process.env.NEXT_PUBLIC_API_URL}${order.items[0].images[0]}`}
+                                                                        alt={order.items[0].productName}
+                                                                        className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
+                                                                    />
+                                                                    {order.items.length > 1 && (
+                                                                        <div className="absolute -bottom-1 -right-1 bg-primary text-white px-1.5 py-0.5 rounded-full text-[10px] font-semibold">
+                                                                            +{order.items.length - 1}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200 flex-shrink-0">
+                                                                    <Icon icon="mdi:image-off" className="text-gray-400" width={24} height={24} />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex-1 min-w-[150px]">
+                                                                <p className="text-black text-sm font-medium line-clamp-2" title={order.items && order.items.length > 0 ? order.items[0].productName : 'N/A'}>
+                                                                    {order.items && order.items.length > 0 ? order.items[0].productName : 'N/A'}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    {/* <td className="px-4 py-2.5">
                                                         <span className="font-semibold text-primary text-sm">{order.orderId}</span>
                                                     </td>
                                                     <td className="px-4 py-2.5">
@@ -200,7 +276,7 @@ export default function OrdersPage() {
                                                             <p className="font-medium text-gray-900 text-sm">{order.deliveryAddress?.name || 'N/A'}</p>
                                                             <p className="text-[11px] text-gray-500">{order.userEmail}</p>
                                                         </div>
-                                                    </td>
+                                                    </td> */}
                                                     <td className="px-4 py-2.5">
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
                                                             <Icon icon="mdi:package-variant" width={14} height={14} />

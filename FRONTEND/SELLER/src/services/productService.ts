@@ -53,4 +53,19 @@ export const productService = {
         const response = await axios.delete(`/api/products/seller/listing/${listingId}`)
         return response.data
     },
+
+    searchListings: async (search: string, page: number = 1, limit: number = 10) => {
+        const response = await axios.get(`/api/products/seller/listings/search?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
+        return response.data
+    },
+
+    searchAdminProducts: async (userId: string, search: string, page: number = 1, limit: number = 10) => {
+        const response = await axios.get(`/api/products/seller/getproducts?userId=${userId}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
+        return response.data
+    },
+
+    checkProductBySlug: async (productName: string) => {
+        const response = await axios.post('/api/products/seller/check-slug', { productName })
+        return response.data
+    },
 }

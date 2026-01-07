@@ -39,7 +39,9 @@ export default function ProductsPage() {
         createListing,
         updateListing,
         deleteListing,
-        deleteProduct
+        deleteProduct,
+        searchListings,
+        searchAdminProducts
     } = useProducts()
     const hasFetchedProducts = useRef(false)
     const [currentPage, setCurrentPage] = useState(1)
@@ -53,6 +55,8 @@ export default function ProductsPage() {
         stock: '',
         deliveryDays: '3',
     })
+    const [searchQuery, setSearchQuery] = useState('')
+    const [adminSearchQuery, setAdminSearchQuery] = useState('')
 
     const displayedProducts = selectedCategory === 'own' ? listings : adminProducts
     const displayedTotalPages = selectedCategory === 'own' ? totalPages : adminTotalPages
@@ -119,6 +123,42 @@ export default function ProductsPage() {
         } else {
             setAdminCurrentPage(newPage)
         }
+    }
+
+    useEffect(() => {
+        if (selectedCategory !== 'own') return
+
+        const timer = setTimeout(() => {
+            if (searchQuery.trim()) {
+                searchListings(searchQuery.trim(), currentPage, 10)
+            } else {
+                fetchSellerListings(currentPage, 10)
+            }
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [searchQuery, selectedCategory])
+
+    useEffect(() => {
+        if (selectedCategory !== 'admin' || !user?.userId) return
+
+        const timer = setTimeout(() => {
+            if (adminSearchQuery.trim()) {
+                searchAdminProducts(user.userId, adminSearchQuery.trim(), adminCurrentPage, 10)
+            } else {
+                fetchAdminProducts(user.userId, adminCurrentPage, 10)
+            }
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [adminSearchQuery, selectedCategory])
+
+    const handleClearSearch = () => {
+        setSearchQuery('')
+    }
+
+    const handleClearAdminSearch = () => {
+        setAdminSearchQuery('')
     }
 
     const openPriceModal = (data: PriceModalData) => {
@@ -295,18 +335,18 @@ export default function ProductsPage() {
 
                         <div className="col-span-12 md:col-span-9">
                             <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
-                                <div className="mb-4">
-                                    <div className="flex justify-between items-start mb-3">
-                                        <div>
+                                <div className="mb-6">
+                                    <div className="grid grid-cols-12 gap-4 items-center">
+                                        <div className="col-span-12 md:col-span-3">
                                             <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
-                                                {selectedCategory === 'own' ? 'My Listings' : 'Available Products'}
+                                                {selectedCategory === 'own' ? 'My Listings' : 'All Products'}
                                             </h1>
                                             <div className="flex items-center gap-3">
-                                                <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                                                {/* <p className="text-sm text-gray-600 flex items-center gap-1.5">
                                                     <Icon icon="mdi:cube-outline" width={16} height={16} className="text-primary" />
                                                     <span className="font-semibold text-primary">{displayedProducts.length}</span>
                                                     {displayedProducts.length === 1 ? 'product' : 'products'}
-                                                </p>
+                                                </p> */}
                                                 {selectedCategory === 'own' && displayedProducts.length > 0 && (
                                                     <p className="text-sm text-gray-600 flex items-center gap-1.5">
                                                         <Icon icon="mdi:check-decagram" width={16} height={16} className="text-green-600" />
@@ -318,12 +358,36 @@ export default function ProductsPage() {
                                                 )}
                                             </div>
                                         </div>
-                                        <Link
-                                            href="/products/add"
-                                            className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105">
-                                            <Icon icon="mdi:plus-circle" width={20} height={20} />
-                                            <span className="font-semibold">Add Product</span>
-                                        </Link>
+
+                                        <div className="col-span-12 md:col-span-6">
+                                            <div className="relative">
+                                                <Icon icon="mdi:magnify" width={20} height={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                                <input
+                                                    type="text"
+                                                    value={selectedCategory === 'own' ? searchQuery : adminSearchQuery}
+                                                    onChange={(e) => selectedCategory === 'own' ? setSearchQuery(e.target.value) : setAdminSearchQuery(e.target.value)}
+                                                    placeholder="Search by product name or ID..."
+                                                    className="w-full pl-10 pr-20 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                                                />
+                                                {(selectedCategory === 'own' ? searchQuery : adminSearchQuery) && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={selectedCategory === 'own' ? handleClearSearch : handleClearAdminSearch}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-all">
+                                                        Clear
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="col-span-12 md:col-span-3 flex justify-end">
+                                            <Link
+                                                href="/products/add"
+                                                className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-4 py-2.5 rounded-lg hover:shadow-lg transition-all font-semibold">
+                                                <Icon icon="mdi:plus-circle" width={18} height={18} />
+                                                <span>Add Product</span>
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -550,7 +614,7 @@ export default function ProductsPage() {
                                                                                         </span>
                                                                                     </div>
                                                                                 </button>
-                                                                                <button
+                                                                                {/* <button
                                                                                     onClick={() => setDeleteConfirm({ id: product.sellerProductId, type: 'listing' })}
                                                                                     className="group relative p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-all border border-transparent hover:border-red-200"
                                                                                     title="Delete Listing">
@@ -558,7 +622,7 @@ export default function ProductsPage() {
                                                                                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                         Delete Listing
                                                                                     </span>
-                                                                                </button>
+                                                                                </button> */}
                                                                             </>
                                                                         ) : (() => {
                                                                             const existingListingId = listingsMap.get(product.productId)

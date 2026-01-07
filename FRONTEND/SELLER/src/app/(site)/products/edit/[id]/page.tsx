@@ -135,8 +135,6 @@ export default function EditProductPage() {
             formData.subCategoryId !== originalData.subCategoryId ||
             formData.description !== originalData.description ||
             formData.shortDescription !== originalData.shortDescription ||
-            formData.price !== originalData.price ||
-            formData.stock !== originalData.stock ||
             JSON.stringify(formData.attributes) !== JSON.stringify(originalData.attributes) ||
             newImages.length > 0
         )
@@ -154,8 +152,6 @@ export default function EditProductPage() {
         
         const productFormData = new FormData()
         productFormData.append('productName', formData.productName)
-        productFormData.append('price', formData.price)
-        productFormData.append('stock', formData.stock)
         
         if (formData.mainCategoryId !== originalData?.mainCategoryId || formData.subCategoryId !== originalData?.subCategoryId) {
             productFormData.append('mainCategoryId', parentCategoryId)
@@ -251,7 +247,7 @@ export default function EditProductPage() {
                                                     disabled={categoryLoading}>
                                                     <option value="">Select Main Category</option>
                                                     {mainCategories.map((category: any) => (
-                                                        <option key={category._id} value={category._id}>
+                                                        <option key={category._id} value={category.categoryId}>
                                                             {category.name}
                                                         </option>
                                                     ))}
@@ -269,7 +265,7 @@ export default function EditProductPage() {
                                                     disabled={!formData.mainCategoryId || categoryLoading}>
                                                     <option value="">Select Sub Category</option>
                                                     {subCategories.map((category: any) => (
-                                                        <option key={category._id} value={category._id}>
+                                                        <option key={category._id} value={category.subCategoryId}>
                                                             {category.name}
                                                         </option>
                                                     ))}
@@ -318,11 +314,11 @@ export default function EditProductPage() {
                                             <input
                                                 type="number"
                                                 value={formData.price}
-                                                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                                                 min="0"
                                                 step="0.01"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                required
+                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-600 cursor-not-allowed"
+                                                disabled
+                                                readOnly
                                             />
                                         </div>
                                         <div>
@@ -332,10 +328,10 @@ export default function EditProductPage() {
                                             <input
                                                 type="number"
                                                 value={formData.stock}
-                                                onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
                                                 min="0"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                required
+                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-gray-600 cursor-not-allowed"
+                                                disabled
+                                                readOnly
                                             />
                                         </div>
                                     </div>

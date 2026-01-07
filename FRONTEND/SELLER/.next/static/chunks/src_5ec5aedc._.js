@@ -18,6 +18,10 @@ const orderService = {
     getOrderById: async (orderId)=>{
         const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`/api/orders/seller/${orderId}`);
         return response.data;
+    },
+    searchOrders: async (search, page = 1, limit = 10)=>{
+        const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$axios$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get(`/api/orders/seller/search?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`);
+        return response.data;
     }
 };
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
@@ -87,13 +91,37 @@ const useOrders = ()=>{
             setLoading(false);
         }
     };
+    const searchOrders = async (search, page = 1, limit = 10)=>{
+        setLoading(true);
+        try {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$orderService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["orderService"].searchOrders(search, page, limit);
+            if (response.success) {
+                const ordersList = response.data || [];
+                const pagination = response.pagination || {};
+                setOrders(ordersList);
+                setTotalPages(pagination.pages || 1);
+                setTotalOrders(pagination.total || ordersList.length);
+                return response;
+            } else {
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Failed to search orders');
+                return null;
+            }
+        } catch (error) {
+            console.error('Search orders error:', error);
+            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.response?.data?.message || error.message || 'Failed to search orders');
+            return null;
+        } finally{
+            setLoading(false);
+        }
+    };
     return {
         loading,
         orders,
         totalPages,
         totalOrders,
         fetchSellerOrders,
-        fetchOrderById
+        fetchOrderById,
+        searchOrders
     };
 };
 _s(useOrders, "OtJK4YMMyhfeUP/O74F5ij4seYI=");
