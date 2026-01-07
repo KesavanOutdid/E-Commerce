@@ -23,14 +23,14 @@ const MODULES = [
     module: 'Orders',
     actions: ['view', 'update']
   },
-  {
-    module: 'Reviews',
-    actions: ['view', 'delete']
-  },
-  {
-    module: 'Settings',
-    actions: ['view', 'update']
-  }
+//   {
+//     module: 'Reviews',
+//     actions: ['view', 'delete']
+//   },
+//   {
+//     module: 'Settings',
+//     actions: ['view', 'update']
+//   }
 ];
 
 module.exports = MODULES;
