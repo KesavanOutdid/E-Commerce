@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.50:6060/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.50:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -52,5 +52,8 @@ export const API_ENDPOINTS = {
     GET_MODULES: '/admin/permissions/modules',
     GET_BY_ROLE: (roleId) => `/admin/roles/${roleId}/permissions`,
     UPDATE_BY_ROLE: (roleId) => `/admin/roles/${roleId}/permissions`
+  },
+  DASHBOARD: {
+    GET_STATS: '/dashboard/admin/stats'
   }
 };

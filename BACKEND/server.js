@@ -53,6 +53,7 @@ const cartRoutes = require('./routes/cart/cartRoutes');
 const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 const wishlistRoutes = require('./routes/wishlist');
+const dashboardRoutes = require('./routes/dashboard/dashboardRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
@@ -65,6 +66,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {
