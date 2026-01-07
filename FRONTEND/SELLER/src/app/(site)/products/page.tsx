@@ -339,14 +339,14 @@ export default function ProductsPage() {
                                     <div className="grid grid-cols-12 gap-4 items-center">
                                         <div className="col-span-12 md:col-span-3">
                                             <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
-                                                {selectedCategory === 'own' ? 'My Listings' : 'Available Products'}
+                                                {selectedCategory === 'own' ? 'My Listings' : 'All Products'}
                                             </h1>
                                             <div className="flex items-center gap-3">
-                                                <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                                                {/* <p className="text-sm text-gray-600 flex items-center gap-1.5">
                                                     <Icon icon="mdi:cube-outline" width={16} height={16} className="text-primary" />
                                                     <span className="font-semibold text-primary">{displayedProducts.length}</span>
                                                     {displayedProducts.length === 1 ? 'product' : 'products'}
-                                                </p>
+                                                </p> */}
                                                 {selectedCategory === 'own' && displayedProducts.length > 0 && (
                                                     <p className="text-sm text-gray-600 flex items-center gap-1.5">
                                                         <Icon icon="mdi:check-decagram" width={16} height={16} className="text-green-600" />
