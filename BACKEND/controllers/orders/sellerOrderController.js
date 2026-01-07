@@ -180,3 +180,102 @@ exports.getSellerOrderDetail = async (req, res) => {
     });
   }
 };
+
+exports.searchSellerOrders = async (req, res) => {
+  try {
+    const sellerId = req.userId;
+    const { search } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if (!sellerId) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Please log in to view your orders' 
+      });
+    }
+
+    const sellerProducts = await Product.find({ userId: sellerId });
+
+    if (!sellerProducts || sellerProducts.length === 0) {
+      return res.status(200).json({ 
+        success: true,
+        message: 'No products found. Add products to receive orders',
+        data: [],
+        pagination: {
+          total: 0,
+          page: page,
+          limit: limit,
+          pages: 0
+        }
+      });
+    }
+
+    const productIds = sellerProducts.map(product => product.productId);
+
+    const pipeline = [
+      {
+        $match: {
+          'items.productId': { $in: productIds }
+        }
+      }
+    ];
+
+    if (search && search.trim()) {
+      const searchRegex = new RegExp(search.trim(), 'i');
+      pipeline.push({
+        $match: {
+          $or: [
+            { orderId: searchRegex },
+            { 'items.productName': searchRegex },
+            { paymentType: searchRegex },
+            { paymentStatus: searchRegex }
+          ]
+        }
+      });
+    }
+
+    pipeline.push({ $sort: { createdAt: -1 } });
+    pipeline.push({
+      $facet: {
+        data: [{ $skip: skip }, { $limit: limit }],
+        totalCount: [{ $count: 'count' }]
+      }
+    });
+
+    const result = await Order.collection().aggregate(pipeline).toArray();
+
+    const orders = result[0].data || [];
+    const total = result[0].totalCount[0]?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    const filteredOrders = await Promise.all(
+      orders.map(async (order) => {
+        const filteredOrder = {
+          ...order,
+          items: order.items.filter(item => productIds.includes(item.productId))
+        };
+        return await enrichOrderWithSellerDetails(filteredOrder);
+      })
+    );
+
+    res.status(200).json({ 
+      success: true,
+      message: 'Search results retrieved successfully', 
+      data: filteredOrders,
+      pagination: {
+        total: total,
+        page: page,
+        limit: limit,
+        pages: totalPages
+      }
+    });
+  } catch (error) {
+    console.error('Error in searchSellerOrders:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Unable to search orders. Please try again later'
+    });
+  }
+};

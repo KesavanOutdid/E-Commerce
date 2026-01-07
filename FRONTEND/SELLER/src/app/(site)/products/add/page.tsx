@@ -13,7 +13,7 @@ import Link from 'next/link'
 export default function AddProductPage() {
     const router = useRouter()
     const { user, isAuthenticated, isLoading } = useAuth()
-    const { loading: productLoading, createProduct } = useProducts()
+    const { loading: productLoading, createProduct, createListing, checkProductBySlug } = useProducts()
     const { loading: categoryLoading, mainCategories, subCategories, fetchMainCategories, fetchSubCategories, fetchSubCategoryById } = useCategories()
     const hasFetchedCategories = useRef(false)
     
@@ -33,6 +33,9 @@ export default function AddProductPage() {
     const [images, setImages] = useState<File[]>([])
     const [imagePreviews, setImagePreviews] = useState<string[]>([])
     const [imageError, setImageError] = useState('')
+    const [existingProduct, setExistingProduct] = useState<any>(null)
+    const [showPriceStockForm, setShowPriceStockForm] = useState(false)
+    const productCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
     useEffect(() => {
         if (isLoading) return
@@ -62,7 +65,7 @@ export default function AddProductPage() {
     useEffect(() => {
         const loadSubCategoryAttributes = async () => {
             if (formData.subCategoryId) {
-                const subCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId)
+                const subCategory = subCategories.find((cat: any) => cat.subCategoryId === formData.subCategoryId || cat._id === formData.subCategoryId)
                 if (subCategory && subCategory.attributes && subCategory.attributes.length > 0) {
                     setSubCategoryAttributes(subCategory.attributes)
                     const initialAttributes = subCategory.attributes.map((attr: any) => ({
@@ -80,6 +83,38 @@ export default function AddProductPage() {
         }
         loadSubCategoryAttributes()
     }, [formData.subCategoryId, subCategories])
+
+    useEffect(() => {
+        if (productCheckTimeoutRef.current) {
+            clearTimeout(productCheckTimeoutRef.current)
+        }
+
+        if (formData.productName.trim().length > 2) {
+            productCheckTimeoutRef.current = setTimeout(async () => {
+                const result = await checkProductBySlug(formData.productName.trim())
+                if (result && result.exists) {
+                    setExistingProduct(result.product)
+                    if (result.alreadyListed) {
+                        setShowPriceStockForm(false)
+                    } else {
+                        setShowPriceStockForm(true)
+                    }
+                } else {
+                    setExistingProduct(null)
+                    setShowPriceStockForm(false)
+                }
+            }, 500)
+        } else {
+            setExistingProduct(null)
+            setShowPriceStockForm(false)
+        }
+
+        return () => {
+            if (productCheckTimeoutRef.current) {
+                clearTimeout(productCheckTimeoutRef.current)
+            }
+        }
+    }, [formData.productName])
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -144,12 +179,42 @@ export default function AddProductPage() {
         )
     }
 
+    const handleSubmitListing = async (e: React.FormEvent) => {
+        e.preventDefault()
+        
+        if (!existingProduct || !existingProduct.productId) return
+
+        const price = parseFloat(formData.price)
+        const stock = parseInt(formData.stock)
+
+        if (isNaN(price) || isNaN(stock)) {
+            setImageError('Please enter valid price and stock values')
+            return
+        }
+
+        const result = await createListing({
+            productId: existingProduct.productId,
+            price,
+            salePrice: formData.unitSize ? parseFloat(formData.unitSize) : undefined,
+            stock,
+            deliveryDays: 3
+        })
+
+        if (result) {
+            router.push('/products')
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
+        if (showPriceStockForm && existingProduct) {
+            return handleSubmitListing(e)
+        }
+        
         if (!user?.userId) return
 
-        const selectedSubCategory = subCategories.find((cat: any) => cat._id === formData.subCategoryId)
+        const selectedSubCategory = subCategories.find((cat: any) => cat.subCategoryId === formData.subCategoryId || cat._id === formData.subCategoryId)
         if (!selectedSubCategory) {
             setImageError('Please select a valid sub-category from the currently selected main category')
             return
@@ -157,7 +222,7 @@ export default function AddProductPage() {
         
         setImageError('')
         
-        const parentCategoryId = selectedSubCategory.categoryId || selectedSubCategory.parentId || selectedSubCategory.mainCategoryId || formData.mainCategoryId
+        const parentCategoryId = selectedSubCategory.parentId || formData.mainCategoryId
         
         console.log('Selected Main Category ID from form:', formData.mainCategoryId)
         console.log('Selected Sub Category ID:', formData.subCategoryId)
@@ -265,69 +330,113 @@ export default function AddProductPage() {
                                                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
                                                 required
                                             />
+                                            {existingProduct && (
+                                                <div className={`mt-2 p-3 rounded-lg ${showPriceStockForm ? 'bg-blue-50 border border-blue-200' : 'bg-yellow-50 border border-yellow-200'}`}>
+                                                    <div className="flex items-start gap-2">
+                                                        <Icon 
+                                                            icon={showPriceStockForm ? "mdi:information" : "mdi:alert"} 
+                                                            className={showPriceStockForm ? "text-blue-600" : "text-yellow-600"} 
+                                                            width={20} 
+                                                            height={20} 
+                                                        />
+                                                        <div className="flex-1">
+                                                            <p className={`text-sm font-medium ${showPriceStockForm ? 'text-blue-800' : 'text-yellow-800'}`}>
+                                                                {showPriceStockForm 
+                                                                    ? 'Product already exists in catalog!' 
+                                                                    : 'You have already listed this product'}
+                                                            </p>
+                                                            <p className={`text-xs mt-1 ${showPriceStockForm ? 'text-blue-600' : 'text-yellow-600'}`}>
+                                                                {showPriceStockForm 
+                                                                    ? 'Just add your price and stock below to list it' 
+                                                                    : 'You cannot list the same product twice. Please check your listings.'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Main Category <span className="text-red-500">*</span>
-                                                </label>
-                                                <select
-                                                    value={formData.mainCategoryId}
-                                                    onChange={(e) => setFormData({ ...formData, mainCategoryId: e.target.value })}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                    required
-                                                    disabled={categoryLoading}>
-                                                    <option value="">Select Main Category</option>
-                                                    {mainCategories.map((category: any) => (
-                                                        <option key={category._id} value={category._id}>
-                                                            {category.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                        {!showPriceStockForm && (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Main Category <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={formData.mainCategoryId}
+                                                        onChange={(e) => setFormData({ ...formData, mainCategoryId: e.target.value })}
+                                                        className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                        required
+                                                        disabled={categoryLoading}>
+                                                        <option value="">Select Main Category</option>
+                                                        {mainCategories.map((category: any) => (
+                                                            <option key={category._id} value={category.categoryId}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Sub Category <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <select
+                                                        value={formData.subCategoryId}
+                                                        onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })}
+                                                        className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                        required
+                                                        disabled={!formData.mainCategoryId || categoryLoading}>
+                                                        <option value="">Select Sub Category</option>
+                                                        {subCategories.map((category: any) => (
+                                                            <option key={category._id} value={category.subCategoryId}>
+                                                                {category.name}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Sub Category <span className="text-red-500">*</span>
-                                                </label>
-                                                <select
-                                                    value={formData.subCategoryId}
-                                                    onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                    required
-                                                    disabled={!formData.mainCategoryId || categoryLoading}>
-                                                    <option value="">Select Sub Category</option>
-                                                    {subCategories.map((category: any) => (
-                                                        <option key={category._id} value={category._id}>
-                                                            {category.name}
-                                                        </option>
-                                                    ))}
-                                                </select>
+                                        )}
+                                        {showPriceStockForm && existingProduct && (
+                                            <div className="p-4 bg-white rounded-lg border border-gray-200">
+                                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                                    <div>
+                                                        <span className="text-gray-600">Category:</span>
+                                                        <p className="font-medium text-black">{existingProduct.mainCategoryName} / {existingProduct.subCategoryName}</p>
+                                                    </div>
+                                                    <div>
+                                                        <span className="text-gray-600">Description:</span>
+                                                        <p className="font-medium text-black line-clamp-2">{existingProduct.description}</p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Short Description <span className="text-red-500">*</span>
-                                            </label>
-                                            <textarea
-                                                value={formData.shortDescription}
-                                                onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                                                rows={3}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Description <span className="text-red-500">*</span>
-                                            </label>
-                                            <textarea
-                                                value={formData.description}
-                                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                rows={5}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
-                                        </div>
+                                        )}
+                                        {!showPriceStockForm && (
+                                            <>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Short Description <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <textarea
+                                                        value={formData.shortDescription}
+                                                        onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                                                        rows={3}
+                                                        className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                        Description <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <textarea
+                                                        value={formData.description}
+                                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                                        rows={5}
+                                                        className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                        required
+                                                    />
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -370,7 +479,7 @@ export default function AddProductPage() {
                                 </div>
                             </div>
 
-                            {formData.subCategoryId && formData.attributes.length > 0 && (
+                            {!showPriceStockForm && formData.subCategoryId && formData.attributes.length > 0 && (
                                 <div className="mb-6">
                                     <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
                                         <Icon icon="mdi:tag-multiple" width={24} height={24} className="text-primary" />
@@ -398,11 +507,12 @@ export default function AddProductPage() {
                                 </div>
                             )}
 
-                            <div className="mb-6">
-                                <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                    <Icon icon="mdi:image-multiple" width={24} height={24} className="text-primary" />
-                                    Product Images <span className="text-red-500">* (Min 1, Max 10)</span>
-                                </h2>
+                            {!showPriceStockForm && (
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
+                                        <Icon icon="mdi:image-multiple" width={24} height={24} className="text-primary" />
+                                        Product Images <span className="text-red-500">* (Min 1, Max 10)</span>
+                                    </h2>
                                 <div className="bg-gradient-to-br from-orange-50 to-yellow-50 p-6 rounded-xl">
                                     <input
                                         type="file"
@@ -438,6 +548,7 @@ export default function AddProductPage() {
                                     )}
                                 </div>
                             </div>
+                            )}
 
                             <div className="flex justify-end gap-4 mt-8">
                                 <Link
@@ -447,17 +558,17 @@ export default function AddProductPage() {
                                 </Link>
                                 <button
                                     type="submit"
-                                    disabled={productLoading || !isFormValid()}
+                                    disabled={productLoading || (!showPriceStockForm && !isFormValid()) || (showPriceStockForm && (!formData.price || !formData.stock))}
                                     className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
                                     {productLoading ? (
                                         <>
                                             <Loader />
-                                            Creating...
+                                            {showPriceStockForm ? 'Adding Listing...' : 'Creating...'}
                                         </>
                                     ) : (
                                         <>
                                             <Icon icon="mdi:check" width={20} height={20} />
-                                            Create Product
+                                            {showPriceStockForm ? 'Add Listing' : 'Create Product'}
                                         </>
                                     )}
                                 </button>

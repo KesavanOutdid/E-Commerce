@@ -53,6 +53,31 @@ export const useOrders = () => {
         }
     }
 
+    const searchOrders = async (search: string, page: number = 1, limit: number = 10) => {
+        setLoading(true)
+        try {
+            const response = await orderService.searchOrders(search, page, limit)
+            if (response.success) {
+                const ordersList = response.data || []
+                const pagination = response.pagination || {}
+                
+                setOrders(ordersList)
+                setTotalPages(pagination.pages || 1)
+                setTotalOrders(pagination.total || ordersList.length)
+                return response
+            } else {
+                toast.error(response.message || 'Failed to search orders')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Search orders error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to search orders')
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return {
         loading,
         orders,
@@ -60,5 +85,6 @@ export const useOrders = () => {
         totalOrders,
         fetchSellerOrders,
         fetchOrderById,
+        searchOrders,
     }
 }

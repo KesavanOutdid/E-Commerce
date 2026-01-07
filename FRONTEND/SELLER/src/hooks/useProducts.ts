@@ -61,8 +61,8 @@ export const useProducts = () => {
         try {
             const response = await productService.createProduct(formData)
             if (response.success) {
-                toast.success('Product created successfully')
-                return response.data
+                toast.success(response.message || 'Product created successfully')
+                return response.data || true
             } else {
                 toast.error(response.message || 'Failed to create product')
                 return null
@@ -201,6 +201,67 @@ export const useProducts = () => {
         }
     }
 
+    const searchListings = async (search: string, page: number = 1, limit: number = 10) => {
+        setLoading(true)
+        try {
+            const response = await productService.searchListings(search, page, limit)
+            if (response.success) {
+                const listingsList = response.data.listings || []
+                const pagination = response.data.pagination || {}
+                
+                setListings(listingsList)
+                setTotalPages(pagination.pages || 1)
+                setTotalListings(pagination.total || listingsList.length)
+                return response.data
+            } else {
+                toast.error(response.message || 'Failed to search listings')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Search listings error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to search listings')
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const searchAdminProducts = async (userId: string, search: string, page: number = 1, limit: number = 10) => {
+        setLoading(true)
+        try {
+            const response = await productService.searchAdminProducts(userId, search, page, limit)
+            if (response.success) {
+                const productsList = response.data.products || []
+                const pagination = response.data.pagination || {}
+                
+                setAdminProducts(productsList)
+                setAdminTotalPages(pagination.pages || 1)
+                setAdminTotalProducts(pagination.total || productsList.length)
+                return response.data
+            } else {
+                toast.error(response.message || 'Failed to search products')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Search admin products error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to search products')
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const checkProductBySlug = async (productName: string) => {
+        try {
+            const response = await productService.checkProductBySlug(productName)
+            return response
+        } catch (error: any) {
+            console.error('Check product slug error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to check product')
+            return null
+        }
+    }
+
     return {
         loading,
         listings,
@@ -218,5 +279,8 @@ export const useProducts = () => {
         createListing,
         updateListing,
         deleteListing,
+        searchListings,
+        searchAdminProducts,
+        checkProductBySlug,
     }
 }

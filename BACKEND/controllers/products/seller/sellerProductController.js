@@ -172,3 +172,94 @@ exports.updateListing = async (req, res) => {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.searchSellerListings = async (req, res) => {
+    try {
+        const { search } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limitNum = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limitNum;
+
+        const query = {
+            sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
+        };
+
+        const pipeline = [
+            { $match: query },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productDetails'
+                }
+            },
+            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } }
+        ];
+
+        if (search && search.trim()) {
+            const searchRegex = new RegExp(search.trim(), 'i');
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { 'productDetails.productName': searchRegex },
+                        { 'productDetails.productId': searchRegex },
+                        { productId: search.trim() }
+                    ]
+                }
+            });
+        }
+
+        pipeline.push({ $sort: { createdAt: -1 } });
+        pipeline.push({
+            $facet: {
+                data: [{ $skip: skip }, { $limit: limitNum }],
+                totalCount: [{ $count: 'count' }]
+            }
+        });
+
+        const result = await SellerProduct.collection().aggregate(pipeline).toArray();
+
+        const listings = await Promise.all(result[0].data.map(async (listing) => {
+            const { productDetails, ...rest } = listing;
+
+            const [mainCategory, subCategory] = await Promise.all([
+                productDetails?.mainCategoryId ? MainCategory.findById(productDetails.mainCategoryId) : null,
+                productDetails?.subCategoryId ? SubCategory.findById(productDetails.subCategoryId) : null
+            ]);
+
+            return {
+                ...rest,
+                userId: productDetails?.userId,
+                productName: productDetails?.productName || 'Unknown Product',
+                productImages: productDetails?.images || [],
+                productDescription: productDetails?.description || '',
+                productAttributes: productDetails?.attributes || [],
+                productAvgRating: productDetails?.avgRating || 0,
+                productSlug: productDetails?.slug || '',
+                mainCategoryName: mainCategory ? mainCategory.name : null,
+                subCategoryName: subCategory ? subCategory.name : null,
+                mainCategoryId: productDetails?.mainCategoryId || null,
+                subCategoryId: productDetails?.subCategoryId || null
+            };
+        }));
+
+        const total = result[0].totalCount[0]?.count || 0;
+
+        res.status(200).json({
+            success: true,
+            message: 'Search results fetched successfully',
+            data: {
+                listings,
+                pagination: {
+                    total,
+                    page,
+                    limit: limitNum,
+                    pages: Math.ceil(total / limitNum)
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};

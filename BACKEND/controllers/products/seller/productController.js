@@ -49,7 +49,10 @@ exports.createProduct = async (req, res) => {
     }
 
     // Verify mainCategoryId matches subcategory's parentId
-    if (category.parentId !== mainCategoryId) {
+    const categoryParentId = category.parentId?.toString().trim();
+    const providedMainCategoryId = mainCategoryId?.toString().trim();
+    
+    if (categoryParentId !== providedMainCategoryId) {
        return res.status(400).json({
          success: false,
          message: 'The provided mainCategoryId does not match the subcategory\'s parent'
@@ -143,7 +146,11 @@ exports.getProducts = async (req, res) => {
     let matchQuery = {}; 
 
     if (req.query.search) {
-      matchQuery.productName = { $regex: req.query.search, $options: 'i' };
+      const searchRegex = new RegExp(req.query.search, 'i');
+      matchQuery.$or = [
+        { productName: searchRegex },
+        { productId: req.query.search }
+      ];
     }
 
     // Aggregate to group by slug to prevent duplication in the catalog view
@@ -340,6 +347,67 @@ exports.deleteProduct = async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: 'Product deleted successfully' 
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.checkProductBySlug = async (req, res) => {
+  try {
+    const { productName } = req.body;
+
+    if (!productName || !productName.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product name is required'
+      });
+    }
+
+    const normalizedSlug = slugify(productName);
+
+    const existingProduct = await Product.collection().findOne({ 
+      slug: { $regex: new RegExp(`^${normalizedSlug}$`, 'i') } 
+    });
+
+    if (!existingProduct) {
+      return res.status(200).json({
+        success: true,
+        exists: false,
+        message: 'Product does not exist, you can create it'
+      });
+    }
+
+    const alreadyListed = await SellerProduct.collection().findOne({
+      productId: existingProduct.productId,
+      sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
+    });
+
+    const [mainCategory, subCategory] = await Promise.all([
+      existingProduct.mainCategoryId ? MainCategory.findById(existingProduct.mainCategoryId) : null,
+      existingProduct.subCategoryId ? SubCategory.findById(existingProduct.subCategoryId) : null
+    ]);
+
+    res.status(200).json({
+      success: true,
+      exists: true,
+      alreadyListed: !!alreadyListed,
+      message: alreadyListed 
+        ? 'You have already listed this product' 
+        : 'Product exists, you can add your price and stock',
+      product: {
+        productId: existingProduct.productId,
+        productName: existingProduct.productName,
+        slug: existingProduct.slug,
+        description: existingProduct.description,
+        shortDescription: existingProduct.shortDescription,
+        images: existingProduct.images,
+        mainCategoryId: existingProduct.mainCategoryId,
+        subCategoryId: existingProduct.subCategoryId,
+        mainCategoryName: mainCategory ? mainCategory.name : null,
+        subCategoryName: subCategory ? subCategory.name : null,
+        attributes: existingProduct.attributes
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

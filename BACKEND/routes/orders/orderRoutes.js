@@ -17,6 +17,7 @@ router.put('/admin/:id/status', authMiddleware, adminOrderController.updateOrder
 router.put('/admin/:id/payment-status', authMiddleware, adminOrderController.updatePaymentStatus);
 router.delete('/admin/:id', authMiddleware, adminOrderController.deleteOrder);
 
+router.get('/seller/search', authMiddleware, sellerOrderController.searchSellerOrders);
 router.get('/seller', authMiddleware, sellerOrderController.getSellerOrders);
 router.get('/seller/:orderId', authMiddleware, sellerOrderController.getSellerOrderDetail);
 
