@@ -361,6 +361,7 @@ exports.getProductsBySubCategory = async (req, res) => {
   }
 };
 
+
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
