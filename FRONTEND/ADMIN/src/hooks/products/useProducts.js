@@ -22,11 +22,7 @@ export const useProducts = () => {
         approvalStatus: ''
     });
 
-    const [openDialog, setOpenDialog] = useState(false);
-    const [editMode, setEditMode] = useState(false);
-    const [currentProduct, setCurrentProduct] = useState(null);
-
-    const buildQueryString = (page, currentFilters) => {
+    const buildQueryString = useCallback((page, currentFilters) => {
         const params = new URLSearchParams();
         params.append('page', page);
         params.append('limit', pagination.pageSize);
@@ -38,7 +34,7 @@ export const useProducts = () => {
         if (currentFilters.approvalStatus) params.append('approvalStatus', currentFilters.approvalStatus);
 
         return params.toString();
-    };
+    }, [pagination.pageSize]);
 
     const fetchProducts = useCallback(async (page = 1) => {
         try {
@@ -77,16 +73,16 @@ export const useProducts = () => {
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageSize, filters]);
+    }, [buildQueryString, filters]);
 
     // Initial fetch
     useEffect(() => {
         fetchProducts(pagination.currentPage);
-    }, [fetchProducts]); // Removed pagination.currentPage to prevent infinite loop
+    }, [fetchProducts, pagination.currentPage]);
 
     const handlePageChange = useCallback((event, newPage) => {
-        fetchProducts(newPage + 1);
-    }, [fetchProducts]);
+        setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+    }, []);
 
     const handleFilterChange = useCallback((key, value) => {
         if (key === 'limit') {

@@ -14,6 +14,9 @@ export const useCategories = () => {
         totalItems: 0,
         totalPages: 0
     });
+    const [filters, setFilters] = useState({
+        search: ''
+    });
     const [openDialog, setOpenDialog] = useState(false);
     const [editMode, setEditMode] = useState(false);
     const [currentCategory, setCurrentCategory] = useState(null);
@@ -33,7 +36,11 @@ export const useCategories = () => {
     const fetchCategories = useCallback(async (page = 1) => {
         try {
             setLoading(true);
-            const response = await axios.get(`${API_ENDPOINTS.CATEGORIES.GET_ALL}?page=${page}&limit=${pagination.pageSize}`);
+            let url = `${API_ENDPOINTS.CATEGORIES.GET_ALL}?page=${page}&limit=${pagination.pageSize}`;
+            if (filters.search) {
+                url += `&search=${encodeURIComponent(filters.search)}`;
+            }
+            const response = await axios.get(url);
             if (response.data.success) {
                 // Handle different response structures
                 const responseData = response.data.data;
@@ -73,15 +80,26 @@ export const useCategories = () => {
         } finally {
             setLoading(false);
         }
-    }, [pagination.pageSize]);
+    }, [pagination.pageSize, filters]);
 
     const handlePageChange = useCallback((event, newPage) => {
-        fetchCategories(newPage + 1);
-    }, [fetchCategories]);
+        setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+    }, []);
+
+    const handleFilterChange = useCallback((key, value) => {
+        setFilters(prev => {
+            if (prev[key] === value) return prev;
+            return { ...prev, [key]: value };
+        });
+        setPagination(prev => {
+            if (prev.currentPage === 1) return prev;
+            return { ...prev, currentPage: 1 };
+        });
+    }, []);
 
     useEffect(() => {
         fetchCategories(pagination.currentPage);
-    }, [fetchCategories]); // Removed pagination.currentPage to prevent infinite loop
+    }, [fetchCategories, pagination.currentPage]);
 
     const handleOpenDialog = useCallback((category = null) => {
         if (category) {
@@ -181,9 +199,11 @@ export const useCategories = () => {
         editMode,
         formData,
         pagination,
+        filters,
         handleOpenDialog,
         handleCloseDialog,
         handlePageChange,
+        handleFilterChange,
         handleSubmit,
         handleDeleteCategory,
         updateFormData

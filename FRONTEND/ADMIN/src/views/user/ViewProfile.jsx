@@ -6,14 +6,14 @@ import {
   CircularProgress,
   Grid,
   Typography,
-  Divider,
-  Stack
+  Divider
 } from '@mui/material';
 import { IconEdit } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useProfile } from '../../hooks/profile/ProfileHooks';
+import { BASE_URL } from '../../config/apiConfig';
 
 const DetailItem = ({ label, value }) => (
   <Box sx={{ mb: 2 }}>
@@ -59,7 +59,7 @@ const ViewProfile = () => {
       <Grid container spacing={3}>
         <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
           <Avatar 
-            src={profile.profileImage} 
+            src={profile.profileImage ? (profile.profileImage.startsWith('http') ? profile.profileImage : `${BASE_URL}${profile.profileImage}`) : ''} 
             sx={{ width: 100, height: 100, fontSize: '2.5rem', bgcolor: 'primary.light', color: 'primary.main' }}
           >
             {profile.firstName?.charAt(0)}{profile.lastName?.charAt(0)}

@@ -36,6 +36,10 @@ const ProductListPage = Loadable(lazy(() => import('views/products/ProductList')
 const ProductAddPage = Loadable(lazy(() => import('views/products/ProductAdd')));
 const ProductDetailPage = Loadable(lazy(() => import('views/products/ProductDetail')));
 
+// orders routing
+const OrderListPage = Loadable(lazy(() => import('views/orders/OrderList')));
+const OrderDetailPage = Loadable(lazy(() => import('views/orders/OrderDetail')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -160,6 +164,22 @@ const MainRoutes = {
       element: (
         <ProtectedRoute module="Products" action="update">
           <ProductAddPage />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: 'orders/list',
+      element: (
+        <ProtectedRoute module="Orders" action="view">
+          <OrderListPage />
+        </ProtectedRoute>
+      )
+    },
+    {
+      path: 'orders/view/:orderId',
+      element: (
+        <ProtectedRoute module="Orders" action="view">
+          <OrderDetailPage />
         </ProtectedRoute>
       )
     },

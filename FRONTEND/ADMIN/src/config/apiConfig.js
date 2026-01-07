@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.24:9000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.50:6060/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -44,9 +44,9 @@ export const API_ENDPOINTS = {
     DELETE: (id) => `/products/admin/${id}`
   },
   ORDERS: {
-    GET_ALL: '/orders',
-    GET_BY_ID: (id) => `/orders/${id}`,
-    UPDATE_STATUS: (id) => `/orders/${id}/status`
+    GET_ALL: '/orders/admin',
+    GET_BY_ID: (id) => `/orders/admin/${id}`,
+    UPDATE_STATUS: (id) => `/orders/admin/${id}/status`
   },
   PERMISSIONS: {
     GET_MODULES: '/admin/permissions/modules',

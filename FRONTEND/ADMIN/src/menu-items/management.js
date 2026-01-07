@@ -1,5 +1,5 @@
 // assets
-import { IconUsers, IconShield, IconCategory, IconBox } from '@tabler/icons-react';
+import { IconUsers, IconShield, IconCategory, IconBox, IconClipboardList } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
 
@@ -43,6 +43,15 @@ const management = {
       icon: IconBox,
       breadcrumbs: false,
       module: 'Products'
+    },
+    {
+      id: 'orders',
+      title: 'Orders',
+      type: 'item',
+      url: '/orders/list',
+      icon: IconClipboardList,
+      breadcrumbs: false,
+      module: 'Orders'
     }
   ]
 };

@@ -1,8 +1,10 @@
+import React, { useState, useEffect } from 'react';
 import {
     Box,
     Button,
     Grid,
     IconButton,
+    InputAdornment,
     Table,
     TableBody,
     TableCell,
@@ -22,9 +24,10 @@ import {
     FormControlLabel,
     Paper,
     Avatar,
-    Chip
+    Chip,
+    Pagination
 } from '@mui/material';
-import { IconPlus, IconEdit, IconTrash, IconEye, IconCategory } from '@tabler/icons-react';
+import { IconPlus, IconEye, IconCategory, IconSearch } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -45,12 +48,22 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
         handleOpenDialog,
         handleCloseDialog,
         handleSubmit,
-        handleDeleteCategory,
         handlePageChange,
+        handleFilterChange,
         updateFormData
     } = useCategories();
 
     const navigate = useNavigate();
+
+    const [search, setSearch] = useState('');
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            handleFilterChange('search', search);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [search, handleFilterChange]);
 
     const handleImageChange = (e) => { // Added handleImageChange function
         const file = e.target.files[0];
@@ -60,35 +73,57 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
     };
 
     return (
-        <MainCard title="Categories"> {/* Changed title */}
-            <Box sx={{ mb: 2, display: 'flex', justifyContent: 'flex-end' }}> {/* Moved button outside MainCard secondary prop */}
-                <Button variant="contained" startIcon={<IconPlus />} onClick={() => handleOpenDialog()}>
+        <MainCard 
+            title="Categories"
+            secondary={
+                <Button variant="contained" color="primary" startIcon={<IconPlus />} onClick={() => handleOpenDialog()}>
                     Add Category
                 </Button>
+            }
+        >
+            <Box>
+            <Box sx={{ p: 2 }}>
+                <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+                    <Grid item xs={12} sm={4}>
+                        <TextField
+                            fullWidth
+                            placeholder="Search categories..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <IconSearch size={18} />
+                                    </InputAdornment>
+                                )
+                            }}
+                            size="small"
+                        />
+                    </Grid>
+                </Grid>
             </Box>
-
-            <TableContainer component={Paper}> {/* Wrapped TableContainer with Paper */}
-                <Table>
+            <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 1, overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 800 }}>
                     <TableHead>
-                        <TableRow>
-                            <TableCell>SNo</TableCell>
-                            <TableCell>Image</TableCell> {/* Added Image column */}
-                            <TableCell>Name</TableCell>
-                            <TableCell>Created By</TableCell>
-                            <TableCell>Status</TableCell>
-                            <TableCell align="center">Actions</TableCell>
+                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>SNo</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Image</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Name</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Created By</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Status</TableCell>
+                            <TableCell align="center" sx={{ fontSize: '1rem', fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {loading ? ( // Added loading state handling
+                        {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center">
+                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
-                        ) : categories.length === 0 ? ( // Adjusted colSpan for no categories found
+                        ) : categories.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center">
+                                <TableCell colSpan={6} align="center">
                                     <Typography variant="body1" sx={{ py: 3 }}>
                                         No categories found
                                     </Typography>
@@ -96,34 +131,36 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                             </TableRow>
                         ) : (
                             categories.map((category, index) => (
-                                <TableRow key={category._id || category.id}>
-                                    <TableCell>{index + 1 + (pagination.currentPage - 1) * pagination.pageSize}</TableCell> {/* Adjusted SNo calculation */}
-                                    <TableCell> {/* Added Image cell */}
+                                <TableRow key={category._id || category.id} hover>
+                                    <TableCell sx={{ fontSize: '0.95rem' }}>{index + 1 + (pagination.currentPage - 1) * pagination.pageSize}</TableCell>
+                                    <TableCell>
                                         <Avatar
                                             src={category.image ? `${BASE_URL}${category.image}` : ''}
                                             alt={category.name}
                                             variant="rounded"
+                                            sx={{ width: 45, height: 45 }}
                                         >
                                             <IconCategory />
                                         </Avatar>
                                     </TableCell>
                                     <TableCell>
-                                        <Typography variant="subtitle1" fontWeight={500}>
+                                        <Typography variant="subtitle1" fontWeight={600}>
                                             {category.name}
                                         </Typography>
                                     </TableCell>
-                                    <TableCell>{category.createdBy || '-'}</TableCell>
+                                    <TableCell sx={{ fontSize: '0.95rem' }}>{category.createdBy || '-'}</TableCell>
                                     <TableCell>
-                                        <Chip // Replaced Typography with Chip for status
+                                        <Chip
                                             label={category.status ? 'Active' : 'Inactive'}
                                             color={category.status ? 'success' : 'default'}
                                             size="small"
+                                            sx={{ fontSize: '0.75rem', fontWeight: 500 }}
                                         />
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
                                             <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View">
-                                                <IconEye size={18} />
+                                                <IconEye size={20} />
                                             </IconButton>
                                             {/* <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit">
                                                 <IconEdit size={18} />
@@ -141,15 +178,18 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
             </TableContainer>
 
             {!loading && pagination.totalItems > 0 && (
-                <TablePagination
-                    component="div"
-                    count={pagination.totalItems}
-                    page={pagination.currentPage - 1}
-                    onPageChange={handlePageChange}
-                    rowsPerPage={pagination.pageSize}
-                    rowsPerPageOptions={[10]}
-                />
+                <Stack direction="row" justifyContent="center" sx={{ py: 3 }}>
+                    <Pagination
+                        count={pagination.totalPages}
+                        page={pagination.currentPage}
+                        onChange={(event, value) => handlePageChange(event, value - 1)}
+                        color="primary"
+                        showFirstButton
+                        showLastButton
+                    />
+                </Stack>
             )}
+            </Box>
 
             <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
                 <DialogTitle>{editMode ? 'Edit Category' : 'Add Category'}</DialogTitle> {/* Changed title */}

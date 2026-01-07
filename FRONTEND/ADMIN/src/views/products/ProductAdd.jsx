@@ -11,9 +11,7 @@ import {
     FormControlLabel,
     Switch,
     IconButton,
-    Paper,
-    Divider,
-    FormHelperText
+    Paper
 } from '@mui/material';
 import { IconArrowLeft, IconUpload, IconX } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
@@ -32,13 +30,13 @@ const ProductAdd = () => {
 
     const [mainCategories, setMainCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
-    const [loadingCategories, setLoadingCategories] = useState(false);
 
     const [formData, setFormData] = useState({
         productName: '',
         description: '',
         shortDescription: '',
         price: '',
+        salePrice: '',
         stock: '',
         mainCategoryId: '',
         subCategoryId: '',
@@ -56,7 +54,6 @@ const ProductAdd = () => {
     useEffect(() => {
         const fetchMainCategories = async () => {
             try {
-                setLoadingCategories(true);
                 const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_ALL);
                 if (response.data.success) {
                     // Check if data is paginated or direct array
@@ -65,8 +62,6 @@ const ProductAdd = () => {
                 }
             } catch (error) {
                 console.error("Error fetching categories", error);
-            } finally {
-                setLoadingCategories(false);
             }
         };
         fetchMainCategories();
@@ -79,12 +74,13 @@ const ProductAdd = () => {
                 try {
                     const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
                     if (response.data.success) {
-                        const product = response.data.data || response.data;
+                        const product = response.data.data.product || response.data.data || response.data;
                         setFormData({
                             productName: product.productName,
                             description: product.description || '',
                             shortDescription: product.shortDescription || '',
                             price: product.price,
+                            salePrice: product.salePrice || '',
                             stock: product.stock,
                             mainCategoryId: product.mainCategoryId,
                             subCategoryId: product.subCategoryId,
@@ -105,7 +101,7 @@ const ProductAdd = () => {
             };
             fetchProduct();
         }
-    }, [id]);
+    }, [id, isEdit]);
 
     // Normalize IDs: If existing product has ObjectId keys, convert them to UUIDs using the loaded categories
     useEffect(() => {
@@ -151,7 +147,7 @@ const ProductAdd = () => {
 
             if (selectedSub && selectedSub.attributes) {
                 const subAttrs = selectedSub.attributes;
-                const currentAttrs = formData.attributes;
+                const currentAttrs = formData.attributes || [];
                 
                 // Check if there are any attributes in the subcategory that are not in the form
                 const hasMissing = subAttrs.some(sa => !currentAttrs.find(ca => ca.name === sa.name));
@@ -173,7 +169,7 @@ const ProductAdd = () => {
                 }
             }
         }
-    }, [subCategories, formData.subCategoryId, isEdit]);
+    }, [subCategories, formData.subCategoryId, formData.attributes, isEdit]);
 
     const fetchSubCategories = async (parentId) => {
         try {
@@ -270,19 +266,7 @@ const ProductAdd = () => {
     };
 
     const removeExistingImage = (index) => {
-        // Logic to remove from server? Or just remove from UI and handle in backend update?
-        // Backend update handles `images` array. If I send existing images url list?
-        // The backend `updateProduct` appends new images.
-        // The backend doesn't seem to have logic to delete specific images in `updateProduct` based on analysis `updateData.images = [...(existingProduct.images || []), ...newImages];`
-        // Oh, the backend `updateProduct` implementation I saw *appends* images. It doesn't seem to support removing images easily unless I overwrite the whole array? 
-        // "updateData.images = [...(existingProduct.images || []), ...newImages];"
-        // This implies I cannot delete images with the current backend logic provided in the view.
-        // It appends. 
-        // User said "DONT CHANGE ANY BACKEND".
-        // So I will just hide the remove button for existing images or warn that it's not supported yet, or just not implement remove for existing.
-        // I'll implement remove for NEW images.
-        setExistingImages(prev => prev.filter((_, i) => i !== index)); // Just UI removal for now, won't persist if backend doesn't handle it.
-        // Actually, if I can't change backend, I can't easily fix the image deletion logic which forces append.
+        setExistingImages(prev => prev.filter((_, i) => i !== index));
     };
 
     const handleSubmit = async (e) => {
@@ -306,6 +290,7 @@ const ProductAdd = () => {
         data.append('description', formData.description);
         data.append('shortDescription', formData.shortDescription);
         data.append('price', formData.price);
+        data.append('salePrice', formData.salePrice);
         data.append('stock', formData.stock);
         data.append('mainCategoryId', formData.mainCategoryId);
         data.append('subCategoryId', formData.subCategoryId);
@@ -315,6 +300,11 @@ const ProductAdd = () => {
 
         // Attributes - send as JSON string
         data.append('attributes', JSON.stringify(formData.attributes));
+
+        // Existing Images (for edit mode)
+        if (isEdit) {
+            data.append('existingImages', JSON.stringify(existingImages));
+        }
 
         // Images
         images.forEach(image => {
@@ -368,6 +358,13 @@ const ProductAdd = () => {
                                     />
                                     <TextField
                                         fullWidth
+                                        label="Sale Price"
+                                        type="number"
+                                        value={formData.salePrice}
+                                        onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                                    />
+                                    <TextField
+                                        fullWidth
                                         label="Stock"
                                         type="number"
                                         value={formData.stock}
@@ -393,7 +390,7 @@ const ProductAdd = () => {
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     multiline
-                                    rows={4}
+                                    rows={8}
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -493,15 +490,18 @@ const ProductAdd = () => {
                                             src={`${BASE_URL}${img}`}
                                             alt="Product"
                                             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                            onError={(e) => {
+                                                e.target.src = 'https://via.placeholder.com/100x100?text=Error';
+                                            }}
                                         />
-                                        {/* <IconButton
+                                        <IconButton
                                             size="small"
                                             color="error"
-                                            sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'white' }}
+                                            sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'white', boxShadow: 1, '&:hover': { bgcolor: '#fed' } }}
                                             onClick={() => removeExistingImage(index)}
                                         >
                                             <IconX size={16} />
-                                        </IconButton> */}
+                                        </IconButton>
                                     </Box>
                                 </Grid>
                             ))}

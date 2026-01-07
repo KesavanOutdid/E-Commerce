@@ -1,9 +1,7 @@
 import { memo, useMemo } from 'react';
 
 import useMediaQuery from '@mui/material/useMediaQuery';
-import Chip from '@mui/material/Chip';
 import Drawer from '@mui/material/Drawer';
-import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 
 // third party

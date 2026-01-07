@@ -15,6 +15,9 @@ export const useUsers = () => {
     totalItems: 0,
     totalPages: 0
   });
+  const [filters, setFilters] = useState({
+    search: ''
+  });
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -30,7 +33,11 @@ export const useUsers = () => {
   const fetchUsers = useCallback(async (page = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_ENDPOINTS.USERS.GET_ALL}?page=${page}&limit=${pagination.pageSize}`);
+      let url = `${API_ENDPOINTS.USERS.GET_ALL}?page=${page}&limit=${pagination.pageSize}`;
+      if (filters.search) {
+        url += `&search=${encodeURIComponent(filters.search)}`;
+      }
+      const response = await axios.get(url);
       if (response.data.success) {
         const userData = Array.isArray(response.data.data) ? response.data.data : [];
         setUsers(userData);
@@ -55,11 +62,22 @@ export const useUsers = () => {
     } finally {
       setLoading(false);
     }
-  }, [pagination.pageSize]);
+  }, [pagination.pageSize, filters]);
 
   const handlePageChange = useCallback((event, newPage) => {
-    fetchUsers(newPage + 1);
-  }, [fetchUsers]);
+    setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+  }, []);
+
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters(prev => {
+      if (prev[key] === value) return prev;
+      return { ...prev, [key]: value };
+    });
+    setPagination(prev => {
+      if (prev.currentPage === 1) return prev;
+      return { ...prev, currentPage: 1 };
+    });
+  }, []);
 
   const fetchRoles = useCallback(async () => {
     try {
@@ -75,7 +93,7 @@ export const useUsers = () => {
   useEffect(() => {
     fetchUsers(pagination.currentPage);
     fetchRoles();
-  }, [fetchUsers, fetchRoles]); // Removed pagination.currentPage to prevent infinite loop
+  }, [fetchUsers, fetchRoles, pagination.currentPage]);
 
   const handleOpenDialog = useCallback((user = null) => {
     if (user) {
@@ -173,9 +191,11 @@ export const useUsers = () => {
     currentUser,
     formData,
     pagination,
+    filters,
     handleOpenDialog,
     handleCloseDialog,
     handlePageChange,
+    handleFilterChange,
     handleSubmit,
     handleDeleteUser,
     handleViewUser,

@@ -18,7 +18,8 @@ import {
     Chip,
     Stack,
     CircularProgress,
-    Avatar
+    Avatar,
+    Pagination
 } from '@mui/material';
 import { IconSearch, IconPlus, IconEye } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
@@ -216,9 +217,14 @@ const ProductList = () => {
                                     <TableRow key={product._id || product.productId} hover>
                                         <TableCell>
                                             <Avatar
-                                                src={product.images && product.images.length > 0 ? `${BASE_URL}${product.images[0]}` : ''}
+                                                src={product.images && product.images.length > 0 ? `${BASE_URL}${product.images[0]}` : 'https://via.placeholder.com/50x50?text=N/A'}
                                                 variant="rounded"
                                                 sx={{ width: 50, height: 50 }}
+                                                imgProps={{
+                                                    onError: (e) => {
+                                                        e.target.src = 'https://via.placeholder.com/50x50?text=N/A';
+                                                    }
+                                                }}
                                             />
                                         </TableCell>
                                         <TableCell>
@@ -239,7 +245,20 @@ const ProductList = () => {
                                                 {product.shopName}
                                             </Typography>
                                         </TableCell>
-                                        <TableCell align="right">₹{product.price}</TableCell>
+                                        <TableCell align="right">
+                                            {product.salePrice ? (
+                                                <Stack alignItems="flex-end">
+                                                    <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.75rem' }}>
+                                                        ₹{product.price}
+                                                    </Typography>
+                                                    <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
+                                                        ₹{product.salePrice}
+                                                    </Typography>
+                                                </Stack>
+                                            ) : (
+                                                `₹${product.price}`
+                                            )}
+                                        </TableCell>
                                         <TableCell align="right">{product.stock}</TableCell>
                                         <TableCell align="center">{getStatusChip(product.status)}</TableCell>
                                         <TableCell align="center">{getApprovalChip(product)}</TableCell>
@@ -268,17 +287,16 @@ const ProductList = () => {
                     </Table>
                 </TableContainer>
 
-                <TablePagination
-                    rowsPerPageOptions={[5, 10, 25]}
-                    component="div"
-                    count={pagination.totalItems}
-                    rowsPerPage={pagination.pageSize}
-                    page={pagination.currentPage - 1}
-                    onPageChange={handlePageChange}
-                    onRowsPerPageChange={(e) => {
-                        handleFilterChange('limit', e.target.value);
-                    }}
-                />
+                <Stack direction="row" justifyContent="center" sx={{ py: 3 }}>
+                    <Pagination
+                        count={pagination.totalPages}
+                        page={pagination.currentPage}
+                        onChange={(event, value) => handlePageChange(event, value - 1)}
+                        color="primary"
+                        showFirstButton
+                        showLastButton
+                    />
+                </Stack>
             </Box>
         </MainCard>
     );

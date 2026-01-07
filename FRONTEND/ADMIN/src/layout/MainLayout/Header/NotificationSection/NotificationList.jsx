@@ -16,7 +16,6 @@ import Box from '@mui/material/Box';
 
 // assets
 import { IconBrandTelegram, IconBuildingStore, IconMailbox, IconPhoto } from '@tabler/icons-react';
-import User1 from 'assets/images/users/user-round.svg';
 
 function ListItemWrapper({ children }) {
   const theme = useTheme();
@@ -56,9 +55,11 @@ export default function NotificationList() {
           }
         >
           <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
+            <Avatar alt="Admin" sx={{ bgcolor: 'primary.light', color: 'primary.main' }}>
+              A
+            </Avatar>
           </ListItemAvatar>
-          <ListItemText primary="John Doe" />
+          <ListItemText primary="Admin Notification" />
         </ListItem>
         <Stack spacing={2} sx={containerSX}>
           <Typography variant="subtitle2">It is a long established fact that a reader will be distracted</Typography>
@@ -135,9 +136,11 @@ export default function NotificationList() {
           }
         >
           <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
+            <Avatar alt="System" sx={{ bgcolor: 'secondary.light', color: 'secondary.main' }}>
+              S
+            </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">John Doe</Typography>} />
+          <ListItemText primary={<Typography variant="subtitle1">System Notification</Typography>} />
         </ListItem>
         <Stack spacing={2} sx={containerSX}>
           <Typography component="span" variant="subtitle2">
@@ -165,9 +168,11 @@ export default function NotificationList() {
           }
         >
           <ListItemAvatar>
-            <Avatar alt="John Doe" src={User1} />
+            <Avatar alt="System" sx={{ bgcolor: 'secondary.light', color: 'secondary.main' }}>
+              S
+            </Avatar>
           </ListItemAvatar>
-          <ListItemText primary={<Typography variant="subtitle1">John Doe</Typography>} />
+          <ListItemText primary={<Typography variant="subtitle1">System Notification</Typography>} />
         </ListItem>
         <Stack spacing={2} sx={containerSX}>
           <Typography variant="subtitle2">It is a long established fact that a reader will be distracted</Typography>

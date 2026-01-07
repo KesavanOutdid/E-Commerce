@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -9,21 +10,23 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TablePagination,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  InputAdornment,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   CircularProgress,
   Typography,
-  Stack
+  Chip,
+  Stack,
+  Pagination
 } from '@mui/material';
-import { IconPlus, IconEye, IconEdit } from '@tabler/icons-react';
+import { IconPlus, IconEye, IconSearch } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useUsers } from '../../hooks/users/UsersHooks';
@@ -42,12 +45,23 @@ const Users = () => {
     handleSubmit,
     handleViewUser,
     handlePageChange,
+    handleFilterChange,
     updateFormData
   } = useUsers();
 
+  const [search, setSearch] = useState('');
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleFilterChange('search', search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, handleFilterChange]);
+
   return (
     <MainCard 
-      title="Users Management"
+      title="Users"
       secondary={
         <Button 
           variant="contained" 
@@ -59,92 +73,119 @@ const Users = () => {
         </Button>
       }
     >
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer>
-          <Table>
-            <TableHead>
+      <Box sx={{ p: 2 }}>
+        <Grid container spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Grid item xs={12} sm={4}>
+            <TextField
+              fullWidth
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IconSearch size={18} />
+                  </InputAdornment>
+                )
+              }}
+              size="small"
+            />
+          </Grid>
+        </Grid>
+      </Box>
+
+      <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 1, overflowX: 'auto' }}>
+        <Table sx={{ minWidth: 1000 }}>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>SNo</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Name</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Email</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Phone</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Roles</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>KYC Status</TableCell>
+              <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Status</TableCell>
+              <TableCell align="center" sx={{ fontSize: '1rem', fontWeight: 600 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableCell>SNo</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell>Roles</TableCell>
-                <TableCell>KYC Status</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell align="center">View</TableCell>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                  <CircularProgress />
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {users.map((user, index) => (
-                <TableRow key={user.userId}>
-                  <TableCell>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
+            ) : users.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body1">No users found</Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              users.map((user, index) => (
+                <TableRow key={user.userId} hover>
+                  <TableCell sx={{ fontSize: '0.95rem' }}>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
                   <TableCell>
-                    <Typography >
+                    <Typography variant="subtitle1" fontWeight={600}>
                       {user.firstName} {user.lastName}
                     </Typography>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone || '-'}</TableCell>
+                  <TableCell sx={{ fontSize: '0.95rem' }}>{user.email}</TableCell>
+                  <TableCell sx={{ fontSize: '0.95rem' }}>{user.phone || '-'}</TableCell>
                   <TableCell>
                     {user.roleNames?.map((roleName, index) => (
-                      <Typography key={index} variant="body2" sx={{ display: 'inline-block', mr: 1 }}>
-                        {roleName}
-                      </Typography>
+                      <Chip 
+                        key={index} 
+                        label={roleName} 
+                        size="small" 
+                        variant="outlined" 
+                        sx={{ mr: 0.5, fontSize: '0.75rem', fontWeight: 500 }} 
+                      />
                     ))}
                   </TableCell>
                   <TableCell>
                     {user.roles?.includes(2) ? (
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          fontWeight: 600, 
-                          color: user.sellerInfo?.kycApproved ? 'success.main' : 'warning.main' 
-                        }}
-                      >
-                        {user.sellerInfo?.kycApproved ? 'Approved' : 'Pending'}
-                      </Typography>
+                      <Chip
+                        label={user.sellerInfo?.kycApproved ? 'Approved' : 'Pending'}
+                        size="small"
+                        color={user.sellerInfo?.kycApproved ? 'success' : 'warning'}
+                        sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                      />
                     ) : (
-                      '-'
+                      <Typography variant="body1" sx={{ color: 'text.secondary' }}>-</Typography>
                     )}
                   </TableCell>
                   <TableCell>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        fontWeight: 600, 
-                        color: user.status ? 'success.main' : 'error.main' 
-                      }}
-                    >
-                      {user.status ? 'Active' : 'Inactive'}
-                    </Typography>
+                    <Chip
+                      label={user.status ? 'Active' : 'Inactive'}
+                      size="small"
+                      color={user.status ? 'success' : 'default'}
+                      sx={{ fontSize: '0.75rem', fontWeight: 500 }}
+                    />
                   </TableCell>
                   <TableCell align="center">
-                    <Stack direction="row" spacing={1} justifyContent="center">
-                      <IconButton color="info" size="small" onClick={() => handleViewUser(user.userId)} title="View">
-                        <IconEye />
-                      </IconButton>
-                    </Stack>
+                    <IconButton color="primary" size="small" onClick={() => handleViewUser(user.userId)} title="View">
+                      <IconEye size={20} />
+                    </IconButton>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {!loading && (
-        <TablePagination
-          component="div"
-          count={pagination.totalItems}
-          page={pagination.currentPage - 1}
-          onPageChange={handlePageChange}
-          rowsPerPage={pagination.pageSize}
-          rowsPerPageOptions={[10]}
-        />
+      {!loading && pagination.totalItems > 0 && (
+        <Stack direction="row" justifyContent="center" sx={{ py: 3 }}>
+          <Pagination
+            count={pagination.totalPages}
+            page={pagination.currentPage}
+            onChange={(event, value) => handlePageChange(event, value - 1)}
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Stack>
       )}
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

@@ -9,15 +9,23 @@ import {
   Typography,
   Avatar
 } from '@mui/material';
-import { IconDeviceFloppy, IconArrowLeft } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconArrowLeft, IconCamera } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useProfile } from '../../hooks/profile/ProfileHooks';
+import { BASE_URL } from '../../config/apiConfig';
 
 const UpdateProfile = () => {
   const navigate = useNavigate();
   const { profile, loading, saving, formData, isDirty, updateProfileData, handleUpdateProfile } = useProfile();
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      updateProfileData('profileImage', file);
+    }
+  };
 
   if (loading) {
     return (
@@ -28,6 +36,18 @@ const UpdateProfile = () => {
       </MainCard>
     );
   }
+
+  const getAvatarSrc = () => {
+    if (formData.profileImage instanceof File) {
+      return URL.createObjectURL(formData.profileImage);
+    }
+    if (formData.profileImage) {
+      return formData.profileImage.startsWith('http') 
+        ? formData.profileImage 
+        : `${BASE_URL}${formData.profileImage}`;
+    }
+    return '';
+  };
 
   return (
     <MainCard
@@ -41,21 +61,36 @@ const UpdateProfile = () => {
       <form onSubmit={handleUpdateProfile}>
         <Grid container spacing={3}>
           <Grid item xs={12} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 2 }}>
-            <Avatar 
-              src={formData.profileImage} 
-              sx={{ width: 100, height: 100, mb: 1, fontSize: '2.5rem', bgcolor: 'primary.light', color: 'primary.main' }}
-            >
-              {profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}
-            </Avatar>
-            <Typography variant="caption" color="textSecondary">Profile Image URL</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              value={formData.profileImage}
-              onChange={(e) => updateProfileData('profileImage', e.target.value)}
-              placeholder="https://example.com/image.png"
-              sx={{ maxWidth: 400, mt: 1 }}
-            />
+            <Box sx={{ position: 'relative' }}>
+              <Avatar 
+                src={getAvatarSrc()} 
+                sx={{ width: 120, height: 120, mb: 1, fontSize: '3rem', bgcolor: 'primary.light', color: 'primary.main', border: '2px solid', borderColor: 'primary.main' }}
+              >
+                {profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}
+              </Avatar>
+              <Button
+                variant="contained"
+                component="label"
+                sx={{
+                  position: 'absolute',
+                  bottom: 10,
+                  right: 0,
+                  minWidth: 0,
+                  width: 35,
+                  height: 35,
+                  borderRadius: '50%',
+                  p: 0
+                }}
+              >
+                <IconCamera size={20} />
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
+              </Button>
+            </Box>
           </Grid>
 
           <Grid item xs={12} md={6}>

@@ -61,7 +61,24 @@ export const useProfile = () => {
     if (e) e.preventDefault();
     try {
       setSaving(true);
-      const response = await axios.put(API_ENDPOINTS.AUTH.ADMIN_PROFILE, formData);
+      
+      const data = new FormData();
+      data.append('firstName', formData.firstName);
+      data.append('lastName', formData.lastName);
+      data.append('phone', formData.phone);
+      
+      if (formData.profileImage instanceof File) {
+        data.append('profileImage', formData.profileImage);
+      } else if (formData.profileImage) {
+        data.append('profileImage', formData.profileImage);
+      }
+
+      const response = await axios.put(API_ENDPOINTS.AUTH.ADMIN_PROFILE, data, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
       if (response.data.success) {
         Swal.fire('Success', 'Profile updated successfully', 'success');
         const updatedData = response.data.data;

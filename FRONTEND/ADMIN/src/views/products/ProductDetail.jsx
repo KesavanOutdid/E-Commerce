@@ -13,6 +13,7 @@ import {
     TableBody,
     TableCell,
     TableContainer,
+    TableHead,
     TableRow,
     Accordion,
     AccordionSummary,
@@ -38,12 +39,19 @@ const ProductDetail = () => {
     const [loading, setLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
+    const getImageUrl = (img) => {
+        if (!img) return 'https://via.placeholder.com/600x600?text=Photo+N/A';
+        if (img.startsWith('http')) return img;
+        const cleanPath = img.startsWith('/') ? img : `/${img}`;
+        return `${BASE_URL}${cleanPath}`;
+    };
+
     const fetchProduct = useCallback(async () => {
         try {
             setLoading(true);
             const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
             if (response.data.success) {
-                const productData = response.data.data;
+                const productData = response.data.data.product;
                 setProduct(productData);
                 setSelectedImageIndex(0);
             }
@@ -276,23 +284,40 @@ const ProductDetail = () => {
                                     }
                                 }}
                             >
-                                <img
-                                    src={product.images && product.images.length > 0 && product.images[selectedImageIndex]
-                                        ? `${BASE_URL}${product.images[selectedImageIndex]}` 
-                                        : 'https://via.placeholder.com/600x600?text=No+Image+Available'}
-                                    alt={product.productName}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'contain'
-                                    }}
-                                    onError={(e) => {
-                                        e.target.src = 'https://via.placeholder.com/600x600?text=Image+Not+Found';
-                                    }}
-                                />
+                                {(!product.images || product.images.length === 0) ? (
+                                    <Stack 
+                                        alignItems="center" 
+                                        justifyContent="center" 
+                                        sx={{ 
+                                            position: 'absolute', 
+                                            top: 0, 
+                                            left: 0, 
+                                            width: '100%', 
+                                            height: '100%',
+                                            bgcolor: '#f0f0f0'
+                                        }}
+                                    >
+                                        <Typography variant="h2" color="textSecondary" sx={{ fontWeight: 700, opacity: 0.5 }}>
+                                            PHOTO
+                                        </Typography>
+                                    </Stack>
+                                ) : (
+                                    <img
+                                        src={getImageUrl(product.images[selectedImageIndex])}
+                                        alt={product.productName}
+                                        style={{
+                                            position: 'absolute',
+                                            top: 0,
+                                            left: 0,
+                                            width: '100%',
+                                            height: '100%',
+                                            objectFit: 'contain'
+                                        }}
+                                        onError={(e) => {
+                                            e.target.src = 'https://via.placeholder.com/600x600?text=Photo+N/A';
+                                        }}
+                                    />
+                                )}
                                 {product.images && product.images.length > 1 && (
                                     <>
                                         <IconButton
@@ -356,7 +381,7 @@ const ProductDetail = () => {
                                             }}
                                         >
                                             <img
-                                                src={`${BASE_URL}${img}`}
+                                                src={getImageUrl(img)}
                                                 alt={`thumbnail-${idx}`}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                 onError={(e) => {
@@ -384,7 +409,20 @@ const ProductDetail = () => {
                             <DetailRow
                                 icon={<IconCurrencyRupee />}
                                 label="Price"
-                                value={`₹${product.price}`}
+                                value={
+                                    product.salePrice ? (
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
+                                                ₹{product.price}
+                                            </Typography>
+                                            <Typography variant="h4" color="primary" fontWeight={600}>
+                                                ₹{product.salePrice}
+                                            </Typography>
+                                        </Stack>
+                                    ) : (
+                                        `₹${product.price}`
+                                    )
+                                }
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -429,6 +467,48 @@ const ProductDetail = () => {
                     </Grid>
                 </Grid>
 
+                {/* Minimum Price Highlights */}
+                {product.minPriceDetails && (
+                    <Grid size={12}>
+                        <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #bbdefb', mb: 1 }}>
+                            <Grid container spacing={2} alignItems="center">
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Stack direction="row" spacing={2} alignItems="center">
+                                        <Box sx={{ 
+                                            p: 1, 
+                                            bgcolor: 'primary.light', 
+                                            borderRadius: 1.5,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center'
+                                        }}>
+                                            <IconTag size={24} color="#1e88e5" />
+                                        </Box>
+                                        <Box>
+                                            <Typography variant="caption" fontWeight={600} sx={{ color: 'primary.dark', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                                Best Price Offer
+                                            </Typography>
+                                            <Typography variant="h3" color="primary.main" sx={{ mt: -0.5 }}>
+                                                ₹{product.minPrice?.toLocaleString('en-IN')}
+                                            </Typography>
+                                        </Box>
+                                    </Stack>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 6 }}>
+                                    <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                                        <Typography variant="caption" display="block" color="textSecondary">
+                                            Seller: <strong>{product.minPriceDetails.shopName || product.minPriceDetails.sellerName}</strong>
+                                        </Typography>
+                                        <Typography variant="caption" display="block" color="textSecondary">
+                                            Stock: {product.minPriceDetails.stock} | Delivery: {product.minPriceDetails.deliveryDays} Days
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                            </Grid>
+                        </Paper>
+                    </Grid>
+                )}
+
                 {/* Full Width: Specifications / Attributes */}
                 <Grid size={12}>
                     <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee' }}>
@@ -463,10 +543,103 @@ const ProductDetail = () => {
                     </Accordion>
                 </Grid>
 
+                {/* All Seller Offers */}
+                {product.allOffers && product.allOffers.length > 0 && (
+                    <Grid size={12}>
+                        <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee', mt: 2 }}>
+                            <AccordionSummary expandIcon={<IconChevronDown />}>
+                                <Stack direction="row" alignItems="center" spacing={1}>
+                                    <IconTag size={20} />
+                                    <Typography variant="h4">All Seller Offers ({product.sellerCount || product.allOffers.length})</Typography>
+                                </Stack>
+                            </AccordionSummary>
+                            <AccordionDetails sx={{ p: 0 }}>
+                                <TableContainer>
+                                    <Table size="small">
+                                        <TableHead sx={{ bgcolor: '#fafafa' }}>
+                                            <TableRow>
+                                                <TableCell sx={{ fontWeight: 600 }}>Seller / Shop</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>Stock</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>Delivery</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 600 }}>Type</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {product.allOffers.map((offer, idx) => (
+                                                <TableRow 
+                                                    key={idx}
+                                                    sx={{ 
+                                                        bgcolor: offer.price === product.minPrice ? 'rgba(46, 125, 50, 0.04)' : 'inherit',
+                                                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' }
+                                                    }}
+                                                >
+                                                    <TableCell>
+                                                        <Stack direction="row" spacing={1} alignItems="center">
+                                                            <Box>
+                                                                <Typography variant="body2" fontWeight={600}>
+                                                                    {offer.sellerName || '-'}
+                                                                    {offer.price === product.minPrice && (
+                                                                        <Chip 
+                                                                            label="BEST PRICE" 
+                                                                            size="small" 
+                                                                            color="success" 
+                                                                            sx={{ ml: 1, height: 16, fontSize: '0.6rem', fontWeight: 700 }} 
+                                                                        />
+                                                                    )}
+                                                                </Typography>
+                                                                <Typography variant="caption" color="textSecondary">
+                                                                    {offer.shopName || '-'}
+                                                                </Typography>
+                                                            </Box>
+                                                        </Stack>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography variant="body2" fontWeight={700} color="primary.main">
+                                                            ₹{offer.price?.toLocaleString('en-IN')}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell align="right">
+                                                        <Typography variant="body2" color={offer.stock < 10 ? 'error.main' : 'textPrimary'}>
+                                                            {offer.stock}
+                                                        </Typography>
+                                                    </TableCell>
+                                                    <TableCell align="right">{offer.deliveryDays} Days</TableCell>
+                                                    <TableCell align="center">
+                                                        <Chip 
+                                                            label={offer.isSeller ? 'Marketplace' : 'Primary'} 
+                                                            size="small" 
+                                                            variant="outlined"
+                                                            color={offer.isSeller ? 'primary' : 'secondary'}
+                                                            sx={{ fontSize: '0.65rem', height: 20 }}
+                                                        />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </TableContainer>
+                            </AccordionDetails>
+                        </Accordion>
+                    </Grid>
+                )}
+
                 {/* Admin Info */}
                 <Grid size={12}>
                     <Paper sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
                         <Grid container spacing={3}>
+                            {product.roleId === 2 && (
+                                <>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Typography variant="caption" display="block">Seller Name</Typography>
+                                        <Typography variant="body2" fontWeight={500}>{product.sellerName || '-'}</Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                        <Typography variant="caption" display="block">Shop Name</Typography>
+                                        <Typography variant="body2" fontWeight={500}>{product.shopName || '-'}</Typography>
+                                    </Grid>
+                                </>
+                            )}
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Created By</Typography>
                                 <Typography variant="body2" fontWeight={500}>{product.createdby || '-'}</Typography>
