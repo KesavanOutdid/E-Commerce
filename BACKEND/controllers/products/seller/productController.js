@@ -15,7 +15,7 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    const { productName, mainCategoryId, subCategoryId, price, stock, description, shortDescription, userId,createdby } = req.body;
+    const { productName, mainCategoryId, subCategoryId, price, salePrice, stock, description, shortDescription, userId,createdby } = req.body;
     let { attributes } = req.body;
 
     if (typeof attributes === 'string') {
@@ -98,8 +98,8 @@ exports.createProduct = async (req, res) => {
       userId,
       images: images,
       attributes: attributes || [],
-      price: 0,
-      salePrice: 0,
+      price: price || 0,
+      salePrice: salePrice || 0,
       stock: 0,
       roleId: 2,
       approvalStatus: 'pending',
@@ -116,17 +116,19 @@ exports.createProduct = async (req, res) => {
       salePrice: req.body.salePrice || null,
       stock: stock,
       deliveryDays: req.body.deliveryDays || 3,
-      approvalStatus: 'approved'
+      approvalStatus: 'approved',
+      commissionPercentage: category.commissionPercentage || 0
     });
 
     await deleteCachePattern('products:list:*');
 
-    // Return only necessary fields
-    const { _id, ...responseData } = product;
-
     res.status(201).json({ 
       success: true, 
-      message: 'Product created successfully, awaiting approval',
+      message: `Product created successfully. Note: A ${category.commissionPercentage || 0}% commission will be applied to this category.`,
+      data: {
+        productId: product.productId,
+        commissionPercentage: category.commissionPercentage || 0
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
