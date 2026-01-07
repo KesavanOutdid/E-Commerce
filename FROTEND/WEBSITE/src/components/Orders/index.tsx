@@ -82,9 +82,9 @@ const OrderHistory = () => {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 pt-4">
       {/* Flipkart-like Search and Filter Header */}
-      <div className="bg-white pt-0 pb-4 px-4 rounded-sm border border-[#f1f3f6] flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white pt-4 pb-4 px-4 rounded-sm border border-[#f1f3f6] flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-1/2">
           <input 
             type="text" 
