@@ -281,6 +281,43 @@ exports.updateProduct = async (req, res) => {
   }
 };
 
+exports.getProductById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const product = await Product.collection().findOne({ productId: id });
+
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        const sellerListing = await SellerProduct.collection().findOne({
+            productId: product.productId,
+            sellerId: req.userId
+        });
+
+        const [mainCategory, subCategory] = await Promise.all([
+            product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
+            product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+        ]);
+
+        const responseData = {
+            ...product,
+            mainCategoryName: mainCategory ? mainCategory.name : null,
+            subCategoryName: subCategory ? subCategory.name : null,
+            sellerListing: sellerListing || null
+        };
+
+        res.status(200).json({
+            success: true,
+            message: 'Product details fetched successfully',
+            data: responseData
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);

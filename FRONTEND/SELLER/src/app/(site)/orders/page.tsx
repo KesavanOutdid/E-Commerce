@@ -89,27 +89,27 @@ export default function OrdersPage() {
             <Breadcrumb pageName="Orders" />
             <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
                 <div className="container mx-auto max-w-7xl px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <div className="mb-8">
-                            <div className="flex justify-between items-start mb-4">
+                    <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+                        <div className="mb-4">
+                            <div className="flex justify-between items-start mb-3">
                                 <div>
-                                    <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
                                         Orders
                                     </h1>
-                                    <div className="flex items-center gap-4">
-                                        <p className="text-gray-600 flex items-center gap-2">
-                                            <Icon icon="mdi:shopping" width={20} height={20} />
+                                    <div className="flex items-center gap-3">
+                                        <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                                            <Icon icon="mdi:shopping" width={16} height={16} />
                                             <span>Manage your customer orders</span>
                                         </p>
-                                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold">
+                                        <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                                             {totalOrders} total
                                         </span>
                                     </div>
                                 </div>
                                 <Link
                                     href="/products"
-                                    className="px-4 py-2 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-2 font-semibold">
-                                    <Icon icon="mdi:arrow-left" width={20} height={20} />
+                                    className="px-3 py-1.5 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center gap-1.5 font-semibold text-sm">
+                                    <Icon icon="mdi:arrow-left" width={16} height={16} />
                                     Back to Products
                                 </Link>
                             </div>
@@ -133,58 +133,58 @@ export default function OrdersPage() {
                                     <table className="w-full">
                                         <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                                             <tr>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:package-variant" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Order ID</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:package-variant" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Order ID</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:account" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Customer</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:account" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Customer</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:cart" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Items</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:cart" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Items</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:currency-inr" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Total</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:currency-inr" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Total</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:credit-card" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Payment Method</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:credit-card" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Payment Method</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:credit-card" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Payment Status</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:credit-card" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Payment Status</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:truck-delivery" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Status</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:truck-delivery" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Status</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-left">
-                                                    <div className="flex items-center gap-2">
-                                                        <Icon icon="mdi:calendar" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Date</span>
+                                                <th className="px-4 py-2.5 text-left">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <Icon icon="mdi:calendar" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Date</span>
                                                     </div>
                                                 </th>
-                                                <th className="px-6 py-4 text-center">
-                                                    <div className="flex items-center justify-center gap-2">
-                                                        <Icon icon="mdi:cog" width={18} height={18} className="text-primary" />
-                                                        <span className="text-sm font-semibold text-gray-700">Actions</span>
+                                                <th className="px-4 py-2.5 text-center">
+                                                    <div className="flex items-center justify-center gap-1.5">
+                                                        <Icon icon="mdi:cog" width={16} height={16} className="text-primary" />
+                                                        <span className="text-xs font-semibold text-gray-700">Actions</span>
                                                     </div>
                                                 </th>
                                             </tr>
@@ -192,45 +192,41 @@ export default function OrdersPage() {
                                         <tbody className="divide-y divide-gray-200 bg-white">
                                             {orders.map((order: any) => (
                                                 <tr key={order._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
-                                                    <td className="px-6 py-4">
-                                                        <span className="font-semibold text-primary">{order.orderId}</span>
+                                                    <td className="px-4 py-2.5">
+                                                        <span className="font-semibold text-primary text-sm">{order.orderId}</span>
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-4 py-2.5">
                                                         <div>
-                                                            <p className="font-medium text-gray-900">{order.deliveryAddress?.name || 'N/A'}</p>
-                                                            <p className="text-xs text-gray-500">{order.userEmail}</p>
+                                                            <p className="font-medium text-gray-900 text-sm">{order.deliveryAddress?.name || 'N/A'}</p>
+                                                            <p className="text-[11px] text-gray-500">{order.userEmail}</p>
                                                         </div>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
-                                                            <Icon icon="mdi:package-variant" width={16} height={16} />
+                                                    <td className="px-4 py-2.5">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
+                                                            <Icon icon="mdi:package-variant" width={14} height={14} />
                                                             {order.items?.length || 0} item(s)
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-lg font-bold text-primary">₹{Number(order.grandTotal || 0).toLocaleString('en-IN')}</p>
+                                                    <td className="px-4 py-2.5">
+                                                        <p className="text-base font-bold text-primary">₹{Number(order.grandTotal || 0).toLocaleString('en-IN')}</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="space-y-1">
-                                                            <p className="text-xs text-gray-500 capitalize">{order.paymentType}</p>
-                                                        </div>
+                                                    <td className="px-4 py-2.5">
+                                                        <p className="text-[11px] text-gray-500 capitalize">{order.paymentType}</p>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <div className="space-y-1">
-                                                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
-                                                                <Icon icon={order.paymentStatus === 'completed' ? 'mdi:check-circle' : 'mdi:clock-outline'} width={14} height={14} />
-                                                                {order.paymentStatus}
-                                                            </span>
-                                                        </div>
+                                                    <td className="px-4 py-2.5">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
+                                                            <Icon icon={order.paymentStatus === 'completed' ? 'mdi:check-circle' : 'mdi:clock-outline'} width={12} height={12} />
+                                                            {order.paymentStatus}
+                                                        </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border ${getStatusColor(order.orderStatus)}`}>
-                                                            <Icon icon="mdi:truck-delivery" width={14} height={14} />
+                                                    <td className="px-4 py-2.5">
+                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${getStatusColor(order.orderStatus)}`}>
+                                                            <Icon icon="mdi:truck-delivery" width={12} height={12} />
                                                             {order.orderStatus}
                                                         </span>
                                                     </td>
-                                                    <td className="px-6 py-4">
-                                                        <p className="text-sm text-gray-600">
+                                                    <td className="px-4 py-2.5">
+                                                        <p className="text-xs text-gray-600">
                                                             {new Date(order.createdAt).toLocaleDateString('en-IN', {
                                                                 day: '2-digit',
                                                                 month: 'short',
@@ -238,13 +234,13 @@ export default function OrdersPage() {
                                                             })}
                                                         </p>
                                                     </td>
-                                                    <td className="px-6 py-4">
+                                                    <td className="px-4 py-2.5">
                                                         <div className="flex items-center justify-center">
                                                             <Link
                                                                 href={`/orders/${order.orderId}`}
-                                                                className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
                                                                 title="View Order">
-                                                                <Icon icon="mdi:eye" width={20} height={20} />
+                                                                <Icon icon="mdi:eye" width={16} height={16} />
                                                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                     View Details
                                                                 </span>

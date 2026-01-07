@@ -10,11 +10,12 @@ import { Icon } from '@iconify/react/dist/iconify.js'
 import { HeaderItem } from '@/app/types/menu'
 import withBasePath from '@/utils/basePath'
 import { useAuth } from '@/context/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 const Header: React.FC = () => {
     const { user, logout, isAuthenticated } = useAuth()
     const router = useRouter()
+    const pathname = usePathname()
     const [headerData, setHeaderData] = useState<HeaderItem[]>([])
 
     const [navbarOpen, setNavbarOpen] = useState(false)
@@ -98,6 +99,13 @@ const Header: React.FC = () => {
         }
     }, [isSignInOpen, isSignUpOpen, navbarOpen])
 
+    const filteredHeaderData = headerData.filter(item => {
+        if (!isAuthenticated && (item.label === 'Products' || item.label === 'Orders')) {
+            return false
+        }
+        return true
+    })
+
     return (
         <header
             className={`fixed top-0 z-40 w-full transition-all duration-300 ${sticky ? ' shadow-lg bg-white py-4' : 'shadow-none py-4'
@@ -106,7 +114,7 @@ const Header: React.FC = () => {
                 <div className='container mx-auto max-w-7xl px-4 flex items-center justify-between'>
                     <Logo />
                     <nav className='hidden lg:flex grow items-center gap-8 justify-start ml-14'>
-                        {headerData.map((item, index) => (
+                        {filteredHeaderData.map((item, index) => (
                             <HeaderLink key={index} item={item} />
                         ))}
                     </nav>
@@ -144,7 +152,9 @@ const Header: React.FC = () => {
                                                 setIsAccountDropdownOpen(false)
                                                 router.push('/profile')
                                             }}
-                                            className='w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black'>
+                                            className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 ${
+                                                pathname === '/profile' ? 'bg-primary/10 text-primary font-semibold' : 'text-black'
+                                            }`}>
                                             <Icon icon='mdi:account' width={20} height={20} />
                                             Profile
                                         </button>
@@ -153,7 +163,9 @@ const Header: React.FC = () => {
                                                 setIsAccountDropdownOpen(false)
                                                 router.push('/kyc')
                                             }}
-                                            className='w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 text-black'>
+                                            className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 ${
+                                                pathname === '/kyc' ? 'bg-primary/10 text-primary font-semibold' : 'text-black'
+                                            }`}>
                                             <Icon icon='mdi:file-document-check' width={20} height={20} />
                                             KYC
                                         </button>
@@ -257,7 +269,7 @@ const Header: React.FC = () => {
                         </button>
                     </div>
                     <nav className='flex flex-col items-start p-4'>
-                        {headerData.map((item, index) => (
+                        {filteredHeaderData.map((item, index) => (
                             <MobileHeaderLink key={index} item={item} />
                         ))}
                         <div className='mt-4 flex flex-col gap-4 w-full'>
@@ -287,7 +299,11 @@ const Header: React.FC = () => {
                                         <p className='font-semibold text-black'>{user?.firstName} {user?.lastName}</p>
                                     </div>
                                     <button
-                                        className='bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'
+                                        className={`px-4 py-2 rounded-lg border hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2 ${
+                                            pathname === '/profile' 
+                                                ? 'bg-primary/10 border-primary text-primary font-semibold' 
+                                                : 'bg-transparent text-black border-gray-300'
+                                        }`}
                                         onClick={() => {
                                             router.push('/profile')
                                             setNavbarOpen(false)
@@ -296,7 +312,11 @@ const Header: React.FC = () => {
                                         Profile
                                     </button>
                                     <button
-                                        className='bg-transparent text-black px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'
+                                        className={`px-4 py-2 rounded-lg border hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2 ${
+                                            pathname === '/kyc' 
+                                                ? 'bg-primary/10 border-primary text-primary font-semibold' 
+                                                : 'bg-transparent text-black border-gray-300'
+                                        }`}
                                         onClick={() => {
                                             router.push('/kyc')
                                             setNavbarOpen(false)

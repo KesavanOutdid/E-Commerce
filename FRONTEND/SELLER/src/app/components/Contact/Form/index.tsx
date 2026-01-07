@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 
 const ContactForm = () => {
     const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ const ContactForm = () => {
     })
     const [submitted, setSubmitted] = useState(false)
     const [showThanks, setShowThanks] = useState(false)
+    const [showError, setShowError] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('')
     const [loader, setLoader] = useState(false)
     const [isFormValid, setIsFormValid] = useState(false)
 
@@ -38,36 +41,45 @@ const ContactForm = () => {
     const handleSubmit = async (e: any) => {
         e.preventDefault()
         setLoader(true)
+        setShowError(false)
+        setErrorMessage('')
 
-        fetch('https://formsubmit.co/ajax/bhainirav772@gmail.com', {
-            method: 'POST',
-            headers: { 'Content-type': 'application/json' },
-            body: JSON.stringify({
-                Name: formData.firstname,
-                LastName: formData.lastname,
-                Email: formData.email,
-                PhoneNo: formData.phnumber,
-                Message: formData.Message,
-            }),
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data.success) {
-                    setSubmitted(true)
-                    setShowThanks(true)
-                    reset()
+        try {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/contact/seller`, {
+                firstName: formData.firstname,
+                lastName: formData.lastname,
+                email: formData.email,
+                phone: formData.phnumber,
+                message: formData.Message,
+            })
 
-                    setTimeout(() => {
-                        setShowThanks(false)
-                    }, 5000)
-                }
-
+            if (response.data.success) {
+                setSubmitted(true)
+                setShowThanks(true)
                 reset()
-            })
-            .catch((error) => {
-                setLoader(false)
-                console.log(error.message)
-            })
+                setFormData({
+                    firstname: '',
+                    lastname: '',
+                    email: '',
+                    phnumber: '',
+                    Message: '',
+                })
+
+                setTimeout(() => {
+                    setShowThanks(false)
+                }, 5000)
+            }
+            setLoader(false)
+        } catch (error: any) {
+            setLoader(false)
+            const message = error.response?.data?.message || 'Failed to send your message. Please try again later.'
+            setErrorMessage(message)
+            setShowError(true)
+            
+            setTimeout(() => {
+                setShowError(false)
+            }, 5000)
+        }
     }
     return (
         <section id='contact' className='bg-gradient-to-br from-blue-50 to-purple-50 py-12 lg:py-20'>
@@ -165,9 +177,19 @@ const ContactForm = () => {
                         </div>
                     </form>
                     {showThanks && (
-                        <div className='text-white bg-primary rounded-full px-4 text-lg mb-4.5 mt-1 absolute flex items-center gap-2'>
-                            Thank you for contacting us! We will get back to you soon.
-                            <div className='w-3 h-3 rounded-full animate-spin border-2 border-solid border-white border-t-transparent'></div>
+                        <div className='text-white bg-green-500 rounded-lg px-6 py-3 text-base mb-4 mt-4 flex items-center gap-3 shadow-lg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>Thank you for contacting us! We will get back to you soon.</span>
+                        </div>
+                    )}
+                    {showError && (
+                        <div className='text-white bg-red-500 rounded-lg px-6 py-3 text-base mb-4 mt-4 flex items-center gap-3 shadow-lg'>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span>{errorMessage}</span>
                         </div>
                     )}
                 </div>

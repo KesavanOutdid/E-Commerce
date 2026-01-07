@@ -1,12 +1,27 @@
+'use client'
 import { useState } from 'react'
 import Link from 'next/link'
 import { HeaderItem } from '../../../../types/menu'
+import { usePathname } from 'next/navigation'
 
 const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
   const [submenuOpen, setSubmenuOpen] = useState(false)
+  const path = usePathname()
 
   const handleToggle = () => {
     setSubmenuOpen(!submenuOpen)
+  }
+
+  const isActive = () => {
+    if (item.href.startsWith('/#')) {
+      return path === '/' && typeof window !== 'undefined' && window.location.hash === item.href.substring(1)
+    }
+    
+    if (item.href === '/') {
+      return path === '/'
+    }
+    
+    return path.startsWith(item.href)
   }
 
   return (
@@ -14,7 +29,9 @@ const MobileHeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
       <Link
         href={item.href}
         onClick={item.submenu ? handleToggle : undefined}
-        className='flex items-center justify-between w-full py-2 text-black focus:outline-hidden'>
+        className={`flex items-center justify-between w-full py-2 focus:outline-hidden ${
+          isActive() ? 'text-primary font-semibold' : 'text-black'
+        }`}>
         {item.label}
         {item.submenu && (
           <svg

@@ -13,7 +13,7 @@ import Link from 'next/link'
 export default function EditProductPage() {
     const router = useRouter()
     const params = useParams()
-    const productId = params.id as string
+    const id = params.id as string
     const { user, isAuthenticated, isLoading } = useAuth()
     const { loading: productLoading, fetchProductById, updateProduct } = useProducts()
     const { loading: categoryLoading, mainCategories, subCategories, fetchMainCategories, fetchSubCategories } = useCategories()
@@ -47,7 +47,7 @@ export default function EditProductPage() {
         if (!hasFetchedData.current) {
             const fetchData = async () => {
                 await fetchMainCategories()
-                const product = await fetchProductById(productId)
+                const product = await fetchProductById(id)
                 if (product) {
                     const initialData = {
                         productName: product.productName || '',
@@ -57,6 +57,8 @@ export default function EditProductPage() {
                         shortDescription: product.shortDescription || '',
                         price: product.price?.toString() || '',
                         stock: product.stock?.toString() || '',
+                        unitSize: product.unitSize || '',
+                        unitWeight: product.unitWeight || '',
                         attributes: product.attributes && product.attributes.length > 0 
                             ? product.attributes 
                             : [{ name: '', value: '' }],
@@ -73,7 +75,7 @@ export default function EditProductPage() {
             fetchData()
             hasFetchedData.current = true
         }
-    }, [isAuthenticated, isLoading, router, productId])
+    }, [isAuthenticated, isLoading, router, id])
 
     useEffect(() => {
         if (formData.mainCategoryId && formData.mainCategoryId !== originalData?.mainCategoryId) {
@@ -177,7 +179,7 @@ export default function EditProductPage() {
             productFormData.append('images', image)
         })
 
-        const result = await updateProduct(productId, productFormData)
+        const result = await updateProduct(id, productFormData)
         if (result) {
             router.push('/products')
         }

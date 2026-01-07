@@ -5,6 +5,8 @@ interface SellerInfo {
     _id: string
     userId: string
     shopName: string
+    shopLogo?: string | null
+    shopAddress?: any
     gstin: string | null
     panNumber: string | null
     kycApproved: boolean
@@ -23,10 +25,12 @@ interface SellerInfo {
 interface User {
     _id?: string
     userId: string
+    sellerId?: string
     firstName: string
     lastName: string
     email: string
     phone: string
+    role?: string
     roles: number[]
     kycApproved?: boolean
     profileImage?: string | null

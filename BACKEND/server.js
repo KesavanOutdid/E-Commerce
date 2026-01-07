@@ -54,6 +54,7 @@ const orderRoutes = require('./routes/orders/orderRoutes');
 const paymentRoutes = require('./routes/payments/paymentRoutes');
 const wishlistRoutes = require('./routes/wishlist');
 const dashboardRoutes = require('./routes/dashboard/dashboardRoutes');
+const contactRoutes = require('./routes/contact/seller/contactRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
@@ -67,6 +68,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/contact/seller', contactRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {

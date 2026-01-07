@@ -248,182 +248,74 @@ export default function KYCPage() {
     return (
         <>
             <Breadcrumb pageName="KYC Verification" />
-            <section className="bg-gradient-to-br from-blue-50 to-purple-50">
-                <div className="container mx-auto max-w-4xl px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <div className="mb-8 flex justify-between items-start">
+            <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                <div className="container mx-auto max-w-6xl px-4">
+                    {isKYCApproved && (
+                        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
+                            <Icon icon="mdi:check-circle" className="text-green-500" width={24} height={24} />
                             <div>
-                                <h1 className="text-3xl font-bold text-black mb-2">KYC Verification</h1>
-                                <p className="text-gray-600">
-                                    Complete your KYC verification to start selling on our platform
-                                </p>
+                                <p className="text-green-800 font-semibold text-sm">KYC Approved</p>
+                                <p className="text-green-600 text-xs">Your KYC has been verified successfully</p>
                             </div>
-                            {isKYCApproved && !isEditing && (
-                                <button
-                                    type="button"
-                                    onClick={() => setIsEditing(true)}
-                                    className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition flex items-center gap-2">
-                                    <Icon icon="mdi:pencil" width={20} height={20} />
-                                    Edit KYC Details
-                                </button>
-                            )}
                         </div>
+                    )}
 
-                        {isKYCApproved && (
-                            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3">
-                                <Icon icon="mdi:check-circle" className="text-green-500" width={24} height={24} />
-                                <div>
-                                    <p className="text-green-800 font-medium">KYC Approved</p>
-                                    <p className="text-green-600 text-sm">Your KYC has been verified successfully</p>
+                    {loading && !kycStatus ? (
+                        <div className="flex justify-center py-12">
+                            <Loader />
+                        </div>
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h2 className="text-lg font-bold text-black mb-1 flex items-center gap-2">
+                                            <Icon icon="mdi:briefcase" className="text-purple-600" width={24} height={24} />
+                                            Business Information
+                                        </h2>
+                                        <p className="text-sm text-gray-600">
+                                            {isKYCApproved ? 'Your business details' : 'Complete your KYC verification to start selling'}
+                                        </p>
+                                    </div>
+                                    {isKYCApproved && !isEditing && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditing(true)}
+                                            className="text-gray-400 hover:text-primary transition">
+                                            <Icon icon="mdi:pencil" width={20} height={20} />
+                                        </button>
+                                    )}
                                 </div>
-                            </div>
-                        )}
-
-                        {user?.sellerInfo && !isEditing && (
-                            <div className="mb-6">
-                                {user.sellerInfo.shopLogo && (
-                                    <div className="mb-6 p-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl">
-                                        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                            <Icon icon="mdi:store" width={20} height={20} className="text-primary" />
-                                            Shop Logo
-                                        </h3>
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-primary shadow-md">
-                                                <img
-                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${user.sellerInfo.shopLogo}`}
-                                                    alt="Shop Logo"
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium text-gray-700">Current Shop Logo</p>
-                                                <p className="text-xs text-gray-500">This logo represents your shop</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {user.sellerInfo.shopAddress && (
-                                    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl">
-                                        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                            <Icon icon="mdi:map-marker" width={20} height={20} className="text-primary" />
-                                            Shop Address
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Door No</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.doorNo || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Street</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.street || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Landmark</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.landmark || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">City</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.city || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">District</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.district || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">State</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.state || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Country</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.country || 'N/A'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-500 mb-1">Pincode</label>
-                                                <p className="text-sm text-gray-900 font-medium">{user.sellerInfo.shopAddress.pincode || 'N/A'}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {loading && !kycStatus ? (
-                            <div className="flex justify-center py-12">
-                                <Loader />
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-6">
-                                    <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                        <Icon icon="mdi:briefcase" width={24} height={24} className="text-primary" />
-                                        Business Information
-                                    </h2>
-                                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div className="md:col-span-2">
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Shop Name <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopName}
-                                                    onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    GSTIN <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.gstin}
-                                                    onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry GSTIN"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    PAN Number <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.panNumber}
-                                                    onChange={(e) => setFormData({ ...formData, panNumber: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry PAN Number"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                Shop Logo
-                                            </label>
-                                            <div className="flex items-center gap-4">
-                                                {logoPreview ? (
-                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border-2 border-gray-300">
+                                
+                                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-6 mb-4">
+                                    {(!isKYCApproved || isEditing || logoPreview) && (
+                                        <div className="mb-6 pb-6 border-b border-purple-200">
+                                            {logoPreview && (
+                                                <div className="flex items-center gap-4 mb-4">
+                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-purple-600 shadow-lg flex-shrink-0 bg-white">
                                                         <img
                                                             src={logoPreview}
                                                             alt="Shop Logo"
-                                                            className="w-full h-full object-cover"
+                                                            className="w-full h-full object-contain p-1"
                                                         />
                                                     </div>
-                                                ) : (
-                                                    <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-                                                        <Icon icon="mdi:store" width={40} height={40} className="text-gray-400" />
+                                                    <div>
+                                                        <p className="text-base font-bold text-gray-900">Shop Logo</p>
+                                                        <p className="text-sm text-gray-600">{formData.shopName || 'Your Shop'}</p>
                                                     </div>
-                                                )}
-                                                {(!isKYCApproved || isEditing) && (
-                                                    <div className="flex-1">
+                                                </div>
+                                            )}
+                                            {(!isKYCApproved || isEditing) && (
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-3">Shop Logo</label>
+                                                    <div className="flex items-center gap-4">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => fileInputRef.current?.click()}
+                                                            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm">
+                                                            <Icon icon="mdi:upload" width={18} height={18} />
+                                                            {logoPreview ? 'Change Logo' : 'Upload Logo'}
+                                                        </button>
                                                         <input
                                                             ref={fileInputRef}
                                                             type="file"
@@ -431,241 +323,320 @@ export default function KYCPage() {
                                                             onChange={handleLogoSelect}
                                                             className="hidden"
                                                         />
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition">
-                                                            {logoPreview ? 'Change Logo' : 'Upload Logo'}
-                                                        </button>
-                                                        <p className="text-sm text-gray-500 mt-2">
-                                                            Recommended: 500x500px, max 2MB
-                                                        </p>
+                                                        {shopLogo && (
+                                                            <p className="text-xs text-gray-600">Selected: {shopLogo.name}</p>
+                                                        )}
                                                     </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mb-6">
-                                    <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                        <Icon icon="mdi:map-marker" width={24} height={24} className="text-primary" />
-                                        Shop Address
-                                    </h2>
-                                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Door No <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.doorNo}
-                                                    onChange={(e) => handleAddressChange('doorNo', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Door No"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Street <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.street}
-                                                    onChange={(e) => handleAddressChange('street', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Street"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Landmark
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.landmark}
-                                                    onChange={(e) => handleAddressChange('landmark', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Near Landmark"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    City <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.city}
-                                                    onChange={(e) => handleAddressChange('city', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry City"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    District
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.district}
-                                                    onChange={(e) => handleAddressChange('district', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry District"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    State <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.state}
-                                                    onChange={(e) => handleAddressChange('state', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry State"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Country <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.country}
-                                                    onChange={(e) => handleAddressChange('country', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Country"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Pincode <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.shopAddress.pincode}
-                                                    onChange={(e) => handleAddressChange('pincode', e.target.value)}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Pincode"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="mb-6">
-                                    <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                        <Icon icon="mdi:bank" width={24} height={24} className="text-primary" />
-                                        Bank Details
-                                    </h2>
-                                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Account Number <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.accountNumber}
-                                                    onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Account Number"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    IFSC Code <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.ifscCode}
-                                                    onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry IFSC Code"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Account Holder Name <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.accountHolderName}
-                                                    onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry AC Holder Name"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                    Bank Name <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.bankName}
-                                                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                                                    disabled={isKYCApproved && !isEditing}
-                                                    placeholder="Entry Bank Name"
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                                    required
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {(!isKYCApproved || isEditing) && (
-                                    <div className="flex justify-end gap-4 mt-8">
-                                        {isKYCApproved && (
-                                            <button
-                                                type="button"
-                                                onClick={handleCancel}
-                                                className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
-                                                Cancel
-                                            </button>
-                                        )}
-                                        <button
-                                            type="submit"
-                                            disabled={loading || !isFormValid() || !hasFormChanged()}
-                                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                                            {loading ? (
-                                                <>
-                                                    <Loader />
-                                                    {isKYCApproved ? 'Updating...' : 'Submitting...'}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Icon icon="mdi:check" width={20} height={20} />
-                                                    {isKYCApproved ? 'Save Changes' : 'Submit KYC Request'}
-                                                </>
+                                                </div>
                                             )}
-                                        </button>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Shop Name {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopName || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopName}
+                                                onChange={(e) => setFormData({ ...formData, shopName: e.target.value })}
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
                                     </div>
-                                )}
-                            </form>
-                        )}
-                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            GSTIN {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.gstin || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.gstin}
+                                                onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
+                                                placeholder="Enter GSTIN"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            PAN Number {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.panNumber || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.panNumber}
+                                                onChange={(e) => setFormData({ ...formData, panNumber: e.target.value })}
+                                                placeholder="Enter PAN Number"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <h2 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
+                                    <Icon icon="mdi:map-marker-radius" className="text-teal-600" width={24} height={24} />
+                                    Shop Address
+                                </h2>
+                                <div className="bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-lg p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Door No {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.doorNo || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.doorNo}
+                                                onChange={(e) => handleAddressChange('doorNo', e.target.value)}
+                                                placeholder="Enter Door No"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Street {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.street || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.street}
+                                                onChange={(e) => handleAddressChange('street', e.target.value)}
+                                                placeholder="Enter Street"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Landmark</label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.landmark || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.landmark}
+                                                onChange={(e) => handleAddressChange('landmark', e.target.value)}
+                                                placeholder="Enter Landmark"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            City {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.city || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.city}
+                                                onChange={(e) => handleAddressChange('city', e.target.value)}
+                                                placeholder="Enter City"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">District</label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.district || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.district}
+                                                onChange={(e) => handleAddressChange('district', e.target.value)}
+                                                placeholder="Enter District"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            State {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.state || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.state}
+                                                onChange={(e) => handleAddressChange('state', e.target.value)}
+                                                placeholder="Enter State"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Country {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.country || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.country}
+                                                onChange={(e) => handleAddressChange('country', e.target.value)}
+                                                placeholder="Enter Country"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Pincode {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.shopAddress.pincode || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.shopAddress.pincode}
+                                                onChange={(e) => handleAddressChange('pincode', e.target.value)}
+                                                placeholder="Enter Pincode"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <h2 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
+                                    <Icon icon="mdi:bank" className="text-orange-600" width={24} height={24} />
+                                    Bank Details
+                                </h2>
+                                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Account Number {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.accountNumber || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.accountNumber}
+                                                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                                                placeholder="Enter Account Number"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            IFSC Code {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.ifscCode || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.ifscCode}
+                                                onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
+                                                placeholder="Enter IFSC Code"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Account Holder Name {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.accountHolderName || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.accountHolderName}
+                                                onChange={(e) => setFormData({ ...formData, accountHolderName: e.target.value })}
+                                                placeholder="Enter Account Holder Name"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Bank Name {(!isKYCApproved || isEditing) && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isKYCApproved && !isEditing ? (
+                                            <p className="text-sm text-black font-semibold">{formData.bankName || 'N/A'}</p>
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={formData.bankName}
+                                                onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
+                                                placeholder="Enter Bank Name"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        )}
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {(!isKYCApproved || isEditing) && (
+                                <div className="flex justify-end gap-3">
+                                    {isKYCApproved && (
+                                        <button
+                                            type="button"
+                                            onClick={handleCancel}
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition">
+                                            Cancel
+                                        </button>
+                                    )}
+                                    <button
+                                        type="submit"
+                                        disabled={loading || !isFormValid() || !hasFormChanged()}
+                                        className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm">
+                                        {loading ? (
+                                            <>
+                                                <Loader />
+                                                {isKYCApproved ? 'Updating...' : 'Submitting...'}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Icon icon="mdi:check" width={18} height={18} />
+                                                {isKYCApproved ? 'Save Changes' : 'Submit KYC Request'}
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+                            )}
+                        </form>
+                    )}
                 </div>
             </section>
         </>

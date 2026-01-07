@@ -26,12 +26,11 @@ const formatIndiaTime = (dateString: string | null) => {
 export default function ProductViewPage() {
     const router = useRouter()
     const params = useParams()
-    const productId = params.id as string
+    const id = params.id as string
     const { user, isAuthenticated, isLoading } = useAuth()
-    const { loading, fetchProductById, fetchSellerListings } = useProducts()
+    const { loading, fetchProductById } = useProducts()
     const [product, setProduct] = useState<any>(null)
     const [selectedImage, setSelectedImage] = useState(0)
-    const [listingData, setListingData] = useState<any>(null)
 
     useEffect(() => {
         if (isLoading) return
@@ -42,7 +41,7 @@ export default function ProductViewPage() {
         }
 
         const loadProduct = async () => {
-            const data = await fetchProductById(productId)
+            const data = await fetchProductById(id)
             if (data) {
                 setProduct(data)
             } else {
@@ -50,19 +49,8 @@ export default function ProductViewPage() {
             }
         }
         
-        const loadListingData = async () => {
-            const response = await fetchSellerListings(1, 100)
-            if (response?.data?.listings) {
-                const listing = response.data.listings.find((l: any) => l.productId === productId)
-                if (listing) {
-                    setListingData(listing)
-                }
-            }
-        }
-        
         loadProduct()
-        loadListingData()
-    }, [isAuthenticated, isLoading, router, productId])
+    }, [isAuthenticated, isLoading, router, id])
 
     if (isLoading || loading || !product) {
         return (
@@ -153,7 +141,7 @@ export default function ProductViewPage() {
                             <div>
                                 <h2 className="text-2xl font-bold text-black mb-4">{product.productName}</h2>
                                 
-                                {listingData ? (
+                                {product.sellerListing ? (
                                     <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-primary/20">
                                         <div className="flex items-center gap-2 mb-4">
                                             <Icon icon="mdi:storefront" className="text-primary" width={24} height={24} />
@@ -165,15 +153,15 @@ export default function ProductViewPage() {
                                                     <Icon icon="mdi:currency-inr" width={16} height={16} />
                                                     Price
                                                 </p>
-                                                <p className="text-2xl font-bold text-primary">₹{Number(listingData.price).toLocaleString('en-IN')}</p>
+                                                <p className="text-2xl font-bold text-primary">₹{Number(product.sellerListing.price).toLocaleString('en-IN')}</p>
                                             </div>
-                                            {listingData.salePrice && (
+                                            {product.sellerListing.salePrice && (
                                                 <div className="bg-white rounded-lg p-4">
                                                     <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
                                                         <Icon icon="mdi:tag" width={16} height={16} />
                                                         Sale Price
                                                     </p>
-                                                    <p className="text-2xl font-bold text-green-600">₹{Number(listingData.salePrice).toLocaleString('en-IN')}</p>
+                                                    <p className="text-2xl font-bold text-green-600">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</p>
                                                 </div>
                                             )}
                                             <div className="bg-white rounded-lg p-4">
@@ -181,14 +169,14 @@ export default function ProductViewPage() {
                                                     <Icon icon="mdi:package-variant" width={16} height={16} />
                                                     Stock
                                                 </p>
-                                                <p className="text-xl font-bold text-gray-900">{listingData.stock} units</p>
+                                                <p className="text-xl font-bold text-gray-900">{product.sellerListing.stock} units</p>
                                             </div>
                                             <div className="bg-white rounded-lg p-4">
                                                 <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
                                                     <Icon icon="mdi:truck-delivery" width={16} height={16} />
                                                     Delivery
                                                 </p>
-                                                <p className="text-xl font-bold text-gray-900">{listingData.deliveryDays} days</p>
+                                                <p className="text-xl font-bold text-gray-900">{product.sellerListing.deliveryDays} days</p>
                                             </div>
                                         </div>
                                     </div>
@@ -235,18 +223,18 @@ export default function ProductViewPage() {
                                         />
                                         {product.status ? 'Active' : 'Inactive'}
                                     </span>
-                                    {listingData && (
+                                    {product.sellerListing && (
                                         <span className={`ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${
-                                            listingData.approvalStatus === 'approved'
+                                            product.sellerListing.approvalStatus === 'approved'
                                                 ? 'bg-green-100 text-green-700'
                                                 : 'bg-yellow-100 text-yellow-700'
                                         }`}>
                                             <Icon 
-                                                icon={listingData.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} 
+                                                icon={product.sellerListing.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} 
                                                 width={16} 
                                                 height={16} 
                                             />
-                                            {listingData.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                                            {product.sellerListing.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
                                         </span>
                                     )}
                                 </div>

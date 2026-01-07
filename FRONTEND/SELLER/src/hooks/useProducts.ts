@@ -37,10 +37,10 @@ export const useProducts = () => {
         }
     }
 
-    const fetchProductById = async (productId: string) => {
+    const fetchProductById = async (id: string) => {
         setLoading(true)
         try {
-            const response = await productService.getProductById(productId)
+            const response = await productService.getProductById(id)
             if (response.success) {
                 return response.data
             } else {
@@ -76,10 +76,10 @@ export const useProducts = () => {
         }
     }
 
-    const updateProduct = async (productId: string, formData: FormData) => {
+    const updateProduct = async (id: string, formData: FormData) => {
         setLoading(true)
         try {
-            const response = await productService.updateProduct(productId, formData)
+            const response = await productService.updateProduct(id, formData)
             if (response.success) {
                 toast.success('Product updated successfully')
                 return response.data
@@ -96,10 +96,10 @@ export const useProducts = () => {
         }
     }
 
-    const deleteProduct = async (productId: string) => {
+    const deleteProduct = async (id: string) => {
         setLoading(true)
         try {
-            const response = await productService.deleteProduct(productId)
+            const response = await productService.deleteProduct(id)
             if (response.success) {
                 toast.success('Product deleted successfully')
                 return true

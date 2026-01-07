@@ -16,6 +16,18 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
     setSubmenuOpen(false)
   }
 
+  const isActive = () => {
+    if (item.href.startsWith('/#')) {
+      return path === '/' && typeof window !== 'undefined' && window.location.hash === item.href.substring(1)
+    }
+    
+    if (item.href === '/') {
+      return path === '/'
+    }
+    
+    return path.startsWith(item.href)
+  }
+
   return (
     <div
       className='relative'
@@ -24,7 +36,7 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
       <Link
         href={item.href}
         className={`text-base flex font-medium hover:text-primary capitalized  ${
-          path === item.href ? 'text-primary ' : 'text-black'
+          isActive() ? 'text-primary ' : 'text-black'
         }`}>
         {item.label}
         {item.submenu && (

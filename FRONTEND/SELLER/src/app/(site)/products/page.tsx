@@ -25,6 +25,7 @@ interface PriceModalData {
 export default function ProductsPage() {
     const router = useRouter()
     const { user, isAuthenticated, isLoading } = useAuth()
+    console.log(user)
     const {
         listings,
         adminProducts,
@@ -43,7 +44,7 @@ export default function ProductsPage() {
     const hasFetchedProducts = useRef(false)
     const [currentPage, setCurrentPage] = useState(1)
     const [adminCurrentPage, setAdminCurrentPage] = useState(1)
-    const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; type: 'listing' | 'product' } | null>(null)
     const [selectedCategory, setSelectedCategory] = useState<ProductCategory>('own')
     const [priceModal, setPriceModal] = useState<PriceModalData | null>(null)
     const [priceFormData, setPriceFormData] = useState({
@@ -93,11 +94,22 @@ export default function ProductsPage() {
         }
     }, [adminCurrentPage])
 
-    const handleDelete = async (productId: string) => {
-        const success = await deleteProduct(productId)
+    const handleDelete = async () => {
+        if (!deleteConfirm) return
+
+        let success = false
+        if (deleteConfirm.type === 'listing') {
+            success = await deleteListing(deleteConfirm.id)
+        } else {
+            success = await deleteProduct(deleteConfirm.id)
+        }
+
         if (success) {
             setDeleteConfirm(null)
             fetchSellerListings(currentPage, 10)
+            if (user?.userId) {
+                fetchAdminProducts(user.userId, adminCurrentPage, 10)
+            }
         }
     }
 
@@ -246,7 +258,7 @@ export default function ProductsPage() {
                                                     <Icon icon="mdi:shield-crown" width={20} height={20} />
                                                 </div>
                                                 <div className="text-left">
-                                                    <span className="font-semibold block">Admin Products</span>
+                                                    <span className="font-semibold block">All Products</span>
                                                     <span className="text-xs opacity-80">System products</span>
                                                 </div>
                                             </div>
@@ -282,22 +294,22 @@ export default function ProductsPage() {
                         </div>
 
                         <div className="col-span-12 md:col-span-9">
-                            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                                <div className="mb-8">
-                                    <div className="flex justify-between items-start mb-4">
+                            <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
+                                <div className="mb-4">
+                                    <div className="flex justify-between items-start mb-3">
                                         <div>
-                                            <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-2">
+                                            <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
                                                 {selectedCategory === 'own' ? 'My Listings' : 'Available Products'}
                                             </h1>
-                                            <div className="flex items-center gap-4">
-                                                <p className="text-gray-600 flex items-center gap-2">
-                                                    <Icon icon="mdi:cube-outline" width={18} height={18} className="text-primary" />
+                                            <div className="flex items-center gap-3">
+                                                <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                                                    <Icon icon="mdi:cube-outline" width={16} height={16} className="text-primary" />
                                                     <span className="font-semibold text-primary">{displayedProducts.length}</span>
                                                     {displayedProducts.length === 1 ? 'product' : 'products'}
                                                 </p>
                                                 {selectedCategory === 'own' && displayedProducts.length > 0 && (
-                                                    <p className="text-gray-600 flex items-center gap-2">
-                                                        <Icon icon="mdi:check-decagram" width={18} height={18} className="text-green-600" />
+                                                    <p className="text-sm text-gray-600 flex items-center gap-1.5">
+                                                        <Icon icon="mdi:check-decagram" width={16} height={16} className="text-green-600" />
                                                         <span className="font-semibold text-green-600">
                                                             {displayedProducts.filter(p => p.approvalStatus === 'approved').length}
                                                         </span>
@@ -306,6 +318,12 @@ export default function ProductsPage() {
                                                 )}
                                             </div>
                                         </div>
+                                        <Link
+                                            href="/products/add"
+                                            className="flex items-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                            <Icon icon="mdi:plus-circle" width={20} height={20} />
+                                            <span className="font-semibold">Add Product</span>
+                                        </Link>
                                     </div>
                                 </div>
 
@@ -346,48 +364,50 @@ export default function ProductsPage() {
                                             <table className="w-full">
                                                 <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                                                     <tr>
-                                                        <th className="px-6 py-4 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                                <Icon icon="mdi:shopping" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Product</span>
+                                                        <th className="px-4 py-2.5 text-left">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Icon icon="mdi:shopping" width={16} height={16} className="text-primary" />
+                                                                <span className="text-xs font-semibold text-gray-700">Product</span>
                                                             </div>
                                                         </th>
-                                                        <th className="px-6 py-4 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                                <Icon icon="mdi:tag" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Category</span>
+                                                        <th className="px-4 py-2.5 text-left">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Icon icon="mdi:tag" width={16} height={16} className="text-primary" />
+                                                                <span className="text-xs font-semibold text-gray-700">Category</span>
                                                             </div>
                                                         </th>
-                                                        <th className="px-6 py-4 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                                <Icon icon="mdi:currency-inr" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Price</span>
+                                                        <th className="px-4 py-2.5 text-left">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Icon icon="mdi:currency-inr" width={16} height={16} className="text-primary" />
+                                                                <span className="text-xs font-semibold text-gray-700">Price</span>
                                                             </div>
                                                         </th>
-                                                        <th className="px-6 py-4 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                                <Icon icon="mdi:package-variant" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Stock</span>
+                                                        <th className="px-4 py-2.5 text-left">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Icon icon="mdi:package-variant" width={16} height={16} className="text-primary" />
+                                                                <span className="text-xs font-semibold text-gray-700">Stock</span>
                                                             </div>
                                                         </th>
-                                                        <th className="px-6 py-4 text-left">
-                                                            <div className="flex items-center gap-2">
-                                                                <Icon icon="mdi:toggle-switch" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Status</span>
-                                                            </div>
-                                                        </th>
-                                                        {selectedCategory === 'own' && (
-                                                            <th className="px-6 py-4 text-left">
-                                                                <div className="flex items-center gap-2">
-                                                                    <Icon icon="mdi:check-decagram" width={18} height={18} className="text-primary" />
-                                                                    <span className="text-sm font-semibold text-gray-700">Approval</span>
+                                                        {selectedCategory !== 'own' && (
+                                                            <th className="px-4 py-2.5 text-left">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Icon icon="mdi:toggle-switch" width={16} height={16} className="text-primary" />
+                                                                    <span className="text-xs font-semibold text-gray-700">Status</span>
                                                                 </div>
                                                             </th>
                                                         )}
-                                                        <th className="px-6 py-4 text-center">
-                                                            <div className="flex items-center justify-center gap-2">
-                                                                <Icon icon="mdi:cog" width={18} height={18} className="text-primary" />
-                                                                <span className="text-sm font-semibold text-gray-700">Actions</span>
+                                                        {selectedCategory === 'own' && (
+                                                            <th className="px-4 py-2.5 text-left">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Icon icon="mdi:check-decagram" width={16} height={16} className="text-primary" />
+                                                                    <span className="text-xs font-semibold text-gray-700">Approval</span>
+                                                                </div>
+                                                            </th>
+                                                        )}
+                                                        <th className="px-4 py-2.5 text-center">
+                                                            <div className="flex items-center justify-center gap-1.5">
+                                                                <Icon icon="mdi:cog" width={16} height={16} className="text-primary" />
+                                                                <span className="text-xs font-semibold text-gray-700">Actions</span>
                                                             </div>
                                                         </th>
                                                     </tr>
@@ -403,109 +423,114 @@ export default function ProductsPage() {
 
                                                         return (
                                                             <tr key={product._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center gap-4">
+                                                                <td className="px-4 py-2.5">
+                                                                    <div className="flex items-center gap-3">
                                                                         {images && images.length > 0 ? (
-                                                                            <div className="relative">
+                                                                            <div className="relative flex-shrink-0">
                                                                                 <img
                                                                                     src={`${process.env.NEXT_PUBLIC_API_URL}${images[0]}`}
                                                                                     alt={productName}
-                                                                                    className="w-20 h-20 object-cover rounded-xl border-2 border-gray-200 shadow-sm"
+                                                                                    className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
                                                                                 />
                                                                                 {images.length > 1 && (
-                                                                                    <div className="absolute -bottom-1 -right-1 bg-primary text-white px-2 py-0.5 rounded-full text-xs font-semibold">
+                                                                                    <div className="absolute -bottom-1 -right-1 bg-primary text-white px-1.5 py-0.5 rounded-full text-[10px] font-semibold">
                                                                                         +{images.length - 1}
                                                                                     </div>
                                                                                 )}
                                                                             </div>
                                                                         ) : (
-                                                                            <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center border-2 border-gray-200">
-                                                                                <Icon icon="mdi:image-off" className="text-gray-400" width={32} height={32} />
+                                                                            <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200 flex-shrink-0">
+                                                                                <Icon icon="mdi:image-off" className="text-gray-400" width={24} height={24} />
                                                                             </div>
                                                                         )}
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <p className="font-semibold text-black text-base truncate mb-1" title={productName}>
+                                                                        <div className="flex-1 min-w-[150px]">
+                                                                            <p className="text-black text-sm font-medium line-clamp-2" title={productName}>
                                                                                 {productName}
                                                                             </p>
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="text-sm text-gray-600">
-                                                                        {isListing ? 'Seller Listing' : (product.mainCategoryName || '-')}
+                                                                <td className="px-4 py-2.5">
+                                                                    <div className="text-xs text-gray-600">
+                                                                        <p className="text-black text-sm font-medium">{product.mainCategoryName || '-'}</p>
+                                                                        <p>{product.subCategoryName || '-'}</p>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className="space-y-1">
-                                                                        <p className="text-lg font-bold text-primary">
-                                                                            {price ? `₹${Number(price).toLocaleString('en-IN')}` : '-'}
+                                                                <td className="px-4 py-2.5">
+                                                                    <div className="space-y-0.5">
+                                                                        <p className="text-base font-bold text-primary">
+                                                                            {product.salePrice ? `₹${Number(product.salePrice).toLocaleString('en-IN')}` : '-'}
                                                                         </p>
-                                                                        {product.salePrice && (
-                                                                            <p className="text-xs text-gray-500 line-through">₹{Number(product.salePrice).toLocaleString('en-IN')}</p>
+                                                                        {product.price && (
+                                                                            <p className="text-[10px] text-gray-500 line-through">₹{Number(product.price).toLocaleString('en-IN')}</p>
                                                                         )}
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">
-                                                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg font-medium ${stock > 10
+                                                                <td className="px-4 py-2.5">
+                                                                    <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs ${stock > 10
                                                                         ? 'bg-green-50 text-green-700 border border-green-200'
                                                                         : stock > 0
                                                                             ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
                                                                             : 'bg-red-50 text-red-700 border border-red-200'
                                                                         }`}>
-                                                                        <Icon icon="mdi:package-variant" width={16} height={16} />
-                                                                        <span className="text-sm">{stock}</span>
+                                                                        <Icon icon="mdi:package-variant" width={14} height={14} />
+                                                                        <span>{stock}</span>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-6 py-4">
-                                                                    <span className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border ${(isListing ? product.sellerStatus === 'active' : product.status)
-                                                                        ? 'bg-green-50 text-green-700 border-green-200'
-                                                                        : 'bg-red-50 text-red-700 border-red-200'
-                                                                        }`}>
-                                                                        <Icon
-                                                                            icon={(isListing ? product.sellerStatus === 'active' : product.status) ? 'mdi:check-circle' : 'mdi:close-circle'}
-                                                                            width={16}
-                                                                            height={16}
-                                                                        />
-                                                                        {(isListing ? product.sellerStatus === 'active' : product.status) ? 'Active' : 'Inactive'}
-                                                                    </span>
-                                                                </td>
+                                                                {selectedCategory !== 'own' && (
+                                                                    <td className="px-4 py-2.5">
+                                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${(isListing ? product.sellerStatus === 'active' : product.status)
+                                                                            ? 'bg-green-50 text-green-700 border-green-200'
+                                                                            : 'bg-red-50 text-red-700 border-red-200'
+                                                                            }`}>
+                                                                            <Icon
+                                                                                icon={(isListing ? product.sellerStatus === 'active' : product.status) ? 'mdi:check-circle' : 'mdi:close-circle'}
+                                                                                width={14}
+                                                                                height={14}
+                                                                            />
+                                                                            {(isListing ? product.sellerStatus === 'active' : product.status) ? 'Active' : 'Inactive'}
+                                                                        </span>
+                                                                    </td>
+                                                                )}
                                                                 {selectedCategory === 'own' && (
-                                                                    <td className="px-6 py-4">
-                                                                        <span className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-semibold border ${product.approvalStatus === 'approved'
+                                                                    <td className="px-4 py-2.5">
+                                                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold border ${product.approvalStatus === 'approved'
                                                                             ? 'bg-green-50 text-green-700 border-green-200'
                                                                             : 'bg-yellow-50 text-yellow-700 border-yellow-200'
                                                                             }`}>
                                                                             <Icon
                                                                                 icon={product.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'}
-                                                                                width={16}
-                                                                                height={16}
+                                                                                width={14}
+                                                                                height={14}
                                                                             />
                                                                             {product.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
                                                                         </span>
                                                                     </td>
                                                                 )}
-                                                                <td className="px-6 py-4">
-                                                                    <div className="flex items-center justify-center gap-2">
+                                                                <td className="px-4 py-2.5">
+                                                                    <div className="flex items-center justify-center gap-1.5">
                                                                         {isListing ? (
                                                                             <>
                                                                                 <Link
                                                                                     href={`/products/view/${product.productId}`}
-                                                                                    className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                    className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
                                                                                     title="View Product">
-                                                                                    <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                    <Icon icon="mdi:eye" width={16} height={16} />
                                                                                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                         View
                                                                                     </span>
                                                                                 </Link>
-                                                                                <Link
-                                                                                    href={`/products/edit/${product.productId}`}
-                                                                                    className="group relative p-2.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 hover:shadow-sm"
-                                                                                    title="Edit Product">
-                                                                                    <Icon icon="mdi:pencil" width={20} height={20} />
-                                                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                                                                        Edit Product
-                                                                                    </span>
-                                                                                </Link>
+                                                                                {(user?.userId === product.userId &&
+                                                                                    <Link
+                                                                                        href={`/products/edit/${product.productId}`}
+                                                                                        className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
+                                                                                        title="Edit Product">
+                                                                                        <Icon icon="mdi:pencil" width={16} height={16} />
+                                                                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                            Edit Product
+                                                                                        </span>
+                                                                                    </Link>
+                                                                                )}
                                                                                 <button
                                                                                     onClick={() => openPriceModal({
                                                                                         type: 'update',
@@ -516,22 +541,22 @@ export default function ProductsPage() {
                                                                                         currentStock: product.stock,
                                                                                         currentDeliveryDays: product.deliveryDays,
                                                                                     })}
-                                                                                    className="group relative p-2.5 text-green-600 hover:bg-green-50 rounded-lg transition-all border border-transparent hover:border-green-200 hover:shadow-sm"
+                                                                                    className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
                                                                                     title="Edit Price">
                                                                                     <div className="flex items-center gap-2">
-                                                                                        <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                        <Icon icon="mdi:currency-usd" width={16} height={16} />
                                                                                         <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                             Edit Price
                                                                                         </span>
                                                                                     </div>
                                                                                 </button>
                                                                                 <button
-                                                                                    onClick={() => setDeleteConfirm(product.productId)}
-                                                                                    className="group relative p-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-all border border-transparent hover:border-red-200 hover:shadow-sm"
-                                                                                    title="Delete Product">
-                                                                                    <Icon icon="mdi:delete" width={20} height={20} />
+                                                                                    onClick={() => setDeleteConfirm({ id: product.sellerProductId, type: 'listing' })}
+                                                                                    className="group relative p-1.5 text-red-600 hover:bg-red-50 rounded-md transition-all border border-transparent hover:border-red-200"
+                                                                                    title="Delete Listing">
+                                                                                    <Icon icon="mdi:delete" width={16} height={16} />
                                                                                     <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                                                                        Delete
+                                                                                        Delete Listing
                                                                                     </span>
                                                                                 </button>
                                                                             </>
@@ -545,9 +570,9 @@ export default function ProductsPage() {
                                                                                     <>
                                                                                         <Link
                                                                                             href={`/products/view/${product.productId}`}
-                                                                                            className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                            className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
                                                                                             title="View Product">
-                                                                                            <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                            <Icon icon="mdi:eye" width={16} height={16} />
                                                                                             <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                                 View
                                                                                             </span>
@@ -579,10 +604,10 @@ export default function ProductsPage() {
                                                                                                 currentStock: listingToUpdate?.stock || product.stock,
                                                                                                 currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
                                                                                             })}
-                                                                                            className="group relative p-2.5 text-green-600 hover:bg-green-50 rounded-lg transition-all border border-transparent hover:border-green-200 hover:shadow-sm"
+                                                                                            className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
                                                                                             title="Edit Price">
                                                                                             <div className="flex items-center gap-2">
-                                                                                                <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                                <Icon icon="mdi:currency-usd" width={16} height={16} />
                                                                                                 <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                                     Update Price
                                                                                                 </span>
@@ -596,9 +621,9 @@ export default function ProductsPage() {
                                                                                 <>
                                                                                     <Link
                                                                                         href={`/products/view/${product.productId}`}
-                                                                                        className="group relative p-2.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm"
+                                                                                        className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
                                                                                         title="View Product">
-                                                                                        <Icon icon="mdi:eye" width={20} height={20} />
+                                                                                        <Icon icon="mdi:eye" width={16} height={16} />
                                                                                         <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                             View
                                                                                         </span>
@@ -622,10 +647,10 @@ export default function ProductsPage() {
                                                                                             productId: product.productId,
                                                                                             productName: productName,
                                                                                         })}
-                                                                                        className="group relative p-2.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-all border border-transparent hover:border-purple-200 hover:shadow-sm"
+                                                                                        className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
                                                                                         title="Edit Price">
                                                                                         <div className="flex items-center gap-2">
-                                                                                            <Icon icon="mdi:currency-usd" width={18} height={18} />
+                                                                                            <Icon icon="mdi:currency-usd" width={16} height={16} />
                                                                                             <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                                 Add Price
                                                                                             </span>
@@ -723,7 +748,7 @@ export default function ProductsPage() {
                             <h2 className="text-2xl font-bold text-black">Confirm Delete</h2>
                         </div>
                         <p className="text-gray-600 mb-6">
-                            Are you sure you want to delete this product? This action cannot be undone.
+                            Are you sure you want to delete this {deleteConfirm.type === 'listing' ? 'listing' : 'product'}? This action cannot be undone.
                         </p>
                         <div className="flex justify-end gap-4">
                             <button
@@ -732,7 +757,7 @@ export default function ProductsPage() {
                                 Cancel
                             </button>
                             <button
-                                onClick={() => handleDelete(deleteConfirm)}
+                                onClick={handleDelete}
                                 disabled={loading}
                                 className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
                                 {loading ? 'Deleting...' : 'Delete'}

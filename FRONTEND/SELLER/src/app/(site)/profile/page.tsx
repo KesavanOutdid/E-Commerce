@@ -9,7 +9,7 @@ import Loader from '@/app/components/Common/Loader'
 import { Icon } from '@iconify/react/dist/iconify.js'
 
 const formatIndiaTime = (dateString: string | null) => {
-    if (!dateString) return 'N/A'
+    if (!dateString) return '-'
     const date = new Date(dateString)
     return date.toLocaleString('en-IN', {
         timeZone: 'Asia/Kolkata',
@@ -197,30 +197,18 @@ export default function ProfilePage() {
     return (
         <>
             <Breadcrumb pageName="Profile" />
-            <section className="bg-gradient-to-br from-blue-50 to-purple-50">
-                <div className="container mx-auto max-w-4xl px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold text-black">My Profile</h1>
-                            {!isEditing && (
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition">
-                                    <Icon icon="mdi:pencil" width={20} height={20} />
-                                    Edit Profile
-                                </button>
-                            )}
+            <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                <div className="container mx-auto max-w-6xl px-4">
+                    {loading && !profile ? (
+                        <div className="flex justify-center py-12">
+                            <Loader />
                         </div>
-
-                        {loading && !profile ? (
-                            <div className="flex justify-center py-12">
-                                <Loader />
-                            </div>
-                        ) : (
-                            <form onSubmit={handleSubmit}>
-                                <div className="flex flex-col items-center mb-8">
-                                    <div className="relative group">
-                                        <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg">
+                    ) : (
+                        <form onSubmit={handleSubmit}>
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <div className="flex flex-col md:flex-row gap-6 items-start">
+                                    <div className="relative group flex-shrink-0">
+                                        <div className="w-32 h-32 rounded-full overflow-hidden border-3 border-primary shadow-lg">
                                             {imagePreview ? (
                                                 <img
                                                     src={imagePreview}
@@ -240,9 +228,9 @@ export default function ProfilePage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => fileInputRef.current?.click()}
-                                                    className="absolute bottom-0 right-0 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary/90 transition-all transform hover:scale-110"
+                                                    className="absolute bottom-0 right-0 bg-primary text-white p-2.5 rounded-full shadow-lg hover:bg-primary/90 transition-all"
                                                 >
-                                                    <Icon icon="mdi:camera" width={20} height={20} />
+                                                    <Icon icon="mdi:camera" width={18} height={18} />
                                                 </button>
                                                 <input
                                                     ref={fileInputRef}
@@ -254,207 +242,244 @@ export default function ProfilePage() {
                                             </>
                                         )}
                                     </div>
-                                    <p className="mt-3 text-sm text-gray-500">
-                                        {isEditing ? 'Click camera icon to change profile picture' : 'Profile Picture'}
-                                    </p>
-                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            First Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.firstName}
-                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                            disabled={!isEditing}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                            required
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Last Name <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={formData.lastName}
-                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                            disabled={!isEditing}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Email <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="email"
-                                            value={formData.email}
-                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                            disabled={!isEditing}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                            required
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Phone <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            type="tel"
-                                            value={formData.phone}
-                                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                            disabled={!isEditing}
-                                            className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
-                                            required
-                                            readOnly
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="border-t pt-6 mt-6 mb-6">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h2 className="text-xl font-semibold text-black flex items-center gap-2">
-                                            <Icon icon="mdi:map-marker" width={24} height={24} className="text-primary" />
-                                            Addresses
-                                        </h2>
-                                        {isEditing && (
-                                            <button
-                                                type="button"
-                                                onClick={addAddress}
-                                                className="flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition">
-                                                <Icon icon="mdi:plus" width={20} height={20} />
-                                                Add Address
-                                            </button>
+                                    <div className="flex-1 min-w-0">
+                                        <h1 className="text-3xl font-bold text-black mb-1">
+                                            {formData.firstName} {formData.lastName}
+                                        </h1>
+                                        <p className="text-primary text-sm mb-1">Seller Account</p>
+                                        {user?.sellerInfo && (
+                                            <p className="text-gray-600 text-sm">{user.sellerInfo.shopName || 'Shop Name Not Set'}</p>
                                         )}
                                     </div>
 
+                                    <div className="grid grid-cols-2 gap-x-8 gap-y-3 bg-gray-50 p-4 rounded-lg flex-shrink-0">
+                                        {/* <div>
+                                            <p className="text-xs text-gray-500 mb-1">Seller ID:</p>
+                                            <p className="text-sm font-semibold text-black">{user?.sellerId || '-'}</p>
+                                        </div> */}
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">Phone number</p>
+                                            <p className="text-sm font-semibold text-black">{formData.phone || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 mb-1">Email</p>
+                                            <p className="text-sm font-semibold text-black truncate">{formData.email || '-'}</p>
+                                        </div>
+                                        {/* <div>
+                                            <p className="text-xs text-gray-500 mb-1">Account</p>
+                                            <p className="text-sm font-semibold text-black">{user?.role || 'Seller'}</p>
+                                        </div> */}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-bold text-black flex items-center gap-2">
+                                        <Icon icon="mdi:account" className="text-blue-600" width={24} height={24} />
+                                        Personal Information
+                                    </h2>
+                                    {!isEditing && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsEditing(true)}
+                                            className="text-gray-400 hover:text-primary transition">
+                                            <Icon icon="mdi:pencil" width={20} height={20} />
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            First Name {isEditing && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={formData.firstName}
+                                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        ) : (
+                                            <p className="text-sm text-black font-semibold">{formData.firstName || '-'}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">
+                                            Last Name {isEditing && <span className="text-red-500">*</span>}
+                                        </label>
+                                        {isEditing ? (
+                                            <input
+                                                type="text"
+                                                value={formData.lastName}
+                                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                required
+                                            />
+                                        ) : (
+                                            <p className="text-sm text-black font-semibold">{formData.lastName || '-'}</p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Email</label>
+                                        <p className="text-sm text-black font-semibold">{formData.email || '-'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs text-gray-500 mb-1">Phone</label>
+                                        <p className="text-sm text-black font-semibold">{formData.phone || '-'}</p>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-lg font-bold text-black flex items-center gap-2">
+                                        <Icon icon="mdi:map-marker" className="text-green-600" width={24} height={24} />
+                                        Addresses
+                                    </h2>
+                                    {isEditing && (
+                                        <button
+                                            type="button"
+                                            onClick={addAddress}
+                                            className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-lg hover:bg-green-600 transition text-sm">
+                                            <Icon icon="mdi:plus" width={16} height={16} />
+                                            Add Address
+                                        </button>
+                                    )}
+                                </div>
+
+                                <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg p-6">
                                     {formData.addresses.length === 0 ? (
-                                        <div className="bg-gray-50 p-6 rounded-lg text-center text-gray-500">
-                                            <Icon icon="mdi:map-marker-off" width={48} height={48} className="mx-auto mb-2 opacity-50" />
-                                            <p>No addresses added yet</p>
-                                            {isEditing && <p className="text-sm mt-2">Click "Add Address" to add a new address</p>}
+                                        <div className="bg-white/70 p-6 rounded-lg text-center text-gray-500 border border-green-200">
+                                            <Icon icon="mdi:map-marker-off" width={32} height={32} className="mx-auto mb-2 opacity-50" />
+                                            <p className="text-sm">No addresses added yet</p>
+                                            {isEditing && <p className="text-xs mt-1">Click "Add Address" to add a new address</p>}
                                         </div>
                                     ) : (
                                         <div className="space-y-4">
                                             {formData.addresses.map((address, index) => (
-                                                <div key={index} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                                <div key={index} className="bg-white/70 border border-green-200 p-4 rounded-lg">
                                                     <div className="flex justify-between items-center mb-3">
-                                                        <h3 className="font-medium text-black">Address {index + 1}</h3>
+                                                        <h3 className="font-semibold text-sm text-black">Address {index + 1}</h3>
                                                         {isEditing && (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => removeAddress(index)}
                                                                 className="text-red-500 hover:text-red-700">
-                                                                <Icon icon="mdi:delete" width={20} height={20} />
+                                                                <Icon icon="mdi:delete" width={18} height={18} />
                                                             </button>
                                                         )}
-                                                    </div>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Door No
-                                                            </label>
+                                                </div>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Door No</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.doorNo || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'doorNo', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Street
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.doorNo || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Street</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.street || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'street', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Landmark
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.street || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Landmark</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.landmark || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'landmark', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                City
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.landmark || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">City</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.city || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'city', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                District
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.city || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">District</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.district || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'district', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                State
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.district || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">State</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.state || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'state', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Country
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.state || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Country</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.country || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'country', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                                Pincode
-                                                            </label>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.country || '-'}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs text-gray-500 mb-1">Pincode</label>
+                                                        {isEditing ? (
                                                             <input
                                                                 type="text"
                                                                 value={address.pincode || ''}
                                                                 onChange={(e) => handleAddressChange(index, 'pincode', e.target.value)}
-                                                                disabled={!isEditing}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black outline-none transition focus:border-primary disabled:bg-gray-100 disabled:cursor-not-allowed"
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                             />
-                                                        </div>
+                                                        ) : (
+                                                            <p className="text-sm text-black font-semibold">{address.pincode || '-'}</p>
+                                                        )}
                                                     </div>
+                                                </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -462,17 +487,17 @@ export default function ProfilePage() {
                                 </div>
 
                                 {isEditing && (
-                                    <div className="flex justify-end gap-4 mt-8">
+                                    <div className="flex justify-end gap-3" style={{paddingTop:'10px'}}>
                                         <button
                                             type="button"
                                             onClick={handleCancel}
-                                            className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                                            className="px-6 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition">
                                             Cancel
                                         </button>
                                         <button
                                             type="submit"
                                             disabled={loading || !hasFormChanged()}
-                                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
+                                            className="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm">
                                             {loading ? (
                                                 <>
                                                     <Loader />
@@ -484,293 +509,172 @@ export default function ProfilePage() {
                                         </button>
                                     </div>
                                 )}
+                            </div>
 
-                                {user?.sellerInfo && (
-                                    <div className="border-t pt-6 mt-6">
-                                        <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                            <Icon icon="mdi:store" width={24} height={24} className="text-primary" />
-                                            Seller Information
-                                        </h2>
-                                        <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-xl">
-                                            {user.sellerInfo.shopLogo && (
-                                                <div className="mb-6 flex items-center gap-4">
-                                                    <div className="w-20 h-20 rounded-lg overflow-hidden border-2 border-primary shadow-md">
-                                                        <img
-                                                            src={`${process.env.NEXT_PUBLIC_API_URL}${user.sellerInfo.shopLogo}`}
-                                                            alt="Shop Logo"
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium text-gray-700">Shop Logo</p>
-                                                        <p className="text-xs text-gray-500">Uploaded logo for your shop</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Shop Name
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={user.sellerInfo.shopName || 'N/A'}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
+                            {user?.sellerInfo && (
+                                <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
+                                    <h2 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
+                                        <Icon icon="mdi:store" className="text-purple-600" width={24} height={24} />
+                                        Seller Information
+                                    </h2>
+                                    
+                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-6 mb-4">
+                                        {user.sellerInfo.shopLogo && (
+                                            <div className="mb-6 flex items-center gap-4 pb-4 border-b border-purple-200">
+                                                <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-purple-600 shadow-lg flex-shrink-0 bg-white">
+                                                    <img
+                                                        src={`${process.env.NEXT_PUBLIC_API_URL}${user.sellerInfo.shopLogo}`}
+                                                        alt="Shop Logo"
+                                                        className="w-full h-full object-contain p-1"
                                                     />
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        GSTIN
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={user.sellerInfo.gstin || 'N/A'}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                    />
+                                                    <p className="text-base font-bold text-gray-900">Shop Logo</p>
+                                                    <p className="text-sm text-gray-600">{user.sellerInfo.shopName || 'Shop Name'}</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Shop Name</label>
+                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.shopName || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">GSTIN</label>
+                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.gstin || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">PAN Number</label>
+                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.panNumber || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Commission Percentage</label>
+                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">KYC Status</label>
+                                            <div className="flex items-center gap-1.5">
+                                                {user.sellerInfo.kycApproved ? (
+                                                    <>
+                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                        <span className="text-green-600 font-semibold text-sm">Approved</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon icon="mdi:clock-outline" className="text-orange-500" width={16} height={16} />
+                                                        <span className="text-orange-600 font-semibold text-sm">Pending</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Store Status</label>
+                                            <div className="flex items-center gap-1.5">
+                                                {user.sellerInfo.isLive ? (
+                                                    <>
+                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                        <span className="text-green-600 font-semibold text-sm">Live</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
+                                                        <span className="text-red-600 font-semibold text-sm">Not Live</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Onboarding Completed</label>
+                                            <div className="flex items-center gap-1.5">
+                                                {user.sellerInfo.onboardingCompleted ? (
+                                                    <>
+                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                        <span className="text-green-600 font-semibold text-sm">Yes</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
+                                                        <span className="text-red-600 font-semibold text-sm">No</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        </div>
+                                    </div>
+
+                                    {user.sellerInfo.bankDetails && (
+                                        <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg p-6 mb-4">
+                                            <h3 className="text-base font-semibold text-black mb-4 flex items-center gap-2">
+                                                <Icon icon="mdi:bank" className="text-orange-600" width={20} height={20} />
+                                                Bank Details
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Account Number</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.bankDetails.accountNumber || '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        PAN Number
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={user.sellerInfo.panNumber || 'N/A'}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                    />
+                                                    <label className="block text-xs text-gray-500 mb-1">IFSC Code</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.bankDetails.ifscCode || '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Commission Percentage
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : 'N/A'}
-                                                        disabled
-                                                        className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                    />
+                                                    <label className="block text-xs text-gray-500 mb-1">Account Holder Name</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.bankDetails.accountHolderName || '-'}</p>
                                                 </div>
                                                 <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        KYC Status
-                                                    </label>
-                                                    <div className="flex items-center gap-2 px-4 py-3">
-                                                        {user.sellerInfo.kycApproved ? (
-                                                            <>
-                                                                <Icon icon="mdi:check-circle" className="text-green-500" width={24} height={24} />
-                                                                <span className="text-green-600 font-medium">Approved</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Icon icon="mdi:clock-outline" className="text-orange-500" width={24} height={24} />
-                                                                <span className="text-orange-600 font-medium">Pending</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Store Status
-                                                    </label>
-                                                    <div className="flex items-center gap-2 px-4 py-3">
-                                                        {user.sellerInfo.isLive ? (
-                                                            <>
-                                                                <Icon icon="mdi:check-circle" className="text-green-500" width={24} height={24} />
-                                                                <span className="text-green-600 font-medium">Live</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Icon icon="mdi:close-circle" className="text-red-500" width={24} height={24} />
-                                                                <span className="text-red-600 font-medium">Not Live</span>
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                        Onboarding Completed
-                                                    </label>
-                                                    <div className="flex items-center gap-2 px-4 py-3">
-                                                        {user.sellerInfo.onboardingCompleted ? (
-                                                            <>
-                                                                <Icon icon="mdi:check-circle" className="text-green-500" width={24} height={24} />
-                                                                <span className="text-green-600 font-medium">Yes</span>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Icon icon="mdi:close-circle" className="text-red-500" width={24} height={24} />
-                                                                <span className="text-red-600 font-medium">No</span>
-                                                            </>
-                                                        )}
-                                                    </div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Bank Name</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.bankDetails.bankName || '-'}</p>
                                                 </div>
                                             </div>
                                         </div>
+                                    )}
 
-                                        {user.sellerInfo.bankDetails && (
-                                            <div className="mt-6">
-                                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                                    <Icon icon="mdi:bank" width={20} height={20} className="text-primary" />
-                                                    Bank Details
-                                                </h3>
-                                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Account Number
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.bankDetails.accountNumber || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                IFSC Code
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.bankDetails.ifscCode || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Account Holder Name
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.bankDetails.accountHolderName || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Bank Name
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.bankDetails.bankName || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                    </div>
+                                    {user.sellerInfo.shopAddress && (
+                                        <div className="bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-lg p-6">
+                                            <h3 className="text-base font-semibold text-black mb-4 flex items-center gap-2">
+                                                <Icon icon="mdi:map-marker-radius" className="text-teal-600" width={20} height={20} />
+                                                Shop Address
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Door No</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.doorNo || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Street</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.street || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Landmark</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.landmark || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">City</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.city || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">District</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.district || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">State</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.state || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Country</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.country || '-'}</p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs text-gray-500 mb-1">Pincode</label>
+                                                    <p className="text-sm text-black font-semibold">{user.sellerInfo.shopAddress.pincode || '-'}</p>
                                                 </div>
                                             </div>
-                                        )}
-
-                                        {user.sellerInfo.shopAddress && (
-                                            <div className="mt-6">
-                                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                                    <Icon icon="mdi:map-marker" width={20} height={20} className="text-primary" />
-                                                    Shop Address
-                                                </h3>
-                                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Door No
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.doorNo || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Street
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.street || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Landmark
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.landmark || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                City
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.city || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                District
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.district || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                State
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.state || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Country
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.country || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                        <div>
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                                                Pincode
-                                                            </label>
-                                                            <input
-                                                                type="text"
-                                                                value={user.sellerInfo.shopAddress.pincode || 'N/A'}
-                                                                disabled
-                                                                className="w-full rounded-md border border-gray-300 bg-gray-100 px-4 py-3 text-black cursor-not-allowed"
-                                                            />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </form>
-                        )}
-                    </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </form>
+                    )}
                 </div>
             </section>
         </>

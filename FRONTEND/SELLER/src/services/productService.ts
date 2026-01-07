@@ -20,13 +20,13 @@ export const productService = {
         return response.data
     },
 
-    getProductById: async (productId: string) => {
-        const response = await axios.get(`/api/products/${productId}`)
+    getProductById: async (id: string) => {
+        const response = await axios.get(`/api/products/seller/${id}`)
         return response.data
     },
 
-    updateProduct: async (productId: string, formData: FormData) => {
-        const response = await axios.put(`/api/products/seller/${productId}`, formData, {
+    updateProduct: async (id: string, formData: FormData) => {
+        const response = await axios.put(`/api/products/seller/${id}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -34,8 +34,8 @@ export const productService = {
         return response.data
     },
 
-    deleteProduct: async (productId: string) => {
-        const response = await axios.delete(`/api/products/seller/${productId}`)
+    deleteProduct: async (id: string) => {
+        const response = await axios.delete(`/api/products/seller/${id}`)
         return response.data
     },
 
