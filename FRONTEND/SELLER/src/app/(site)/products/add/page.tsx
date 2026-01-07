@@ -24,6 +24,7 @@ export default function AddProductPage() {
         description: '',
         shortDescription: '',
         price: '',
+        salePrice: '',
         stock: '',
         unitSize: '',
         unitWeight: '',
@@ -235,6 +236,9 @@ export default function AddProductPage() {
         productFormData.append('description', formData.description)
         productFormData.append('shortDescription', formData.shortDescription)
         productFormData.append('price', formData.price)
+        if (formData.salePrice) {
+            productFormData.append('salePrice', formData.salePrice)
+        }
         productFormData.append('stock', formData.stock)
         productFormData.append('userId', user.userId)
         productFormData.append('createdby', user.email)
@@ -447,7 +451,7 @@ export default function AddProductPage() {
                                     Pricing & Stock
                                 </h2>
                                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Price (₹) <span className="text-red-500">*</span>
@@ -460,6 +464,20 @@ export default function AddProductPage() {
                                                 step="0.01"
                                                 className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
                                                 required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                                Sale Price (₹)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                value={formData.salePrice}
+                                                onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
+                                                min="0"
+                                                step="0.01"
+                                                className="w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-black outline-none transition focus:border-primary"
+                                                placeholder="Optional"
                                             />
                                         </div>
                                         <div>

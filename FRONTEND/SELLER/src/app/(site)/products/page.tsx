@@ -522,11 +522,21 @@ export default function ProductsPage() {
                                                                 </td>
                                                                 <td className="px-4 py-2.5">
                                                                     <div className="space-y-0.5">
-                                                                        <p className="text-base font-bold text-primary">
-                                                                            {product.salePrice ? `₹${Number(product.salePrice).toLocaleString('en-IN')}` : '-'}
-                                                                        </p>
-                                                                        {product.price && (
-                                                                            <p className="text-[10px] text-gray-500 line-through">₹{Number(product.price).toLocaleString('en-IN')}</p>
+                                                                        {product.salePrice && product.salePrice > 0 ? (
+                                                                            <>
+                                                                                <p className="text-base font-bold text-primary">
+                                                                                    ₹{Number(product.salePrice).toLocaleString('en-IN')}
+                                                                                </p>
+                                                                                {product.price && product.price > 0 && (
+                                                                                    <p className="text-[10px] text-gray-500 line-through">
+                                                                                        ₹{Number(product.price).toLocaleString('en-IN')}
+                                                                                    </p>
+                                                                                )}
+                                                                            </>
+                                                                        ) : (
+                                                                            <p className="text-base font-bold text-primary">
+                                                                                {product.price && product.price > 0 ? `₹${Number(product.price).toLocaleString('en-IN')}` : '-'}
+                                                                            </p>
                                                                         )}
                                                                     </div>
                                                                 </td>
