@@ -191,15 +191,24 @@ exports.getProducts = async (req, res) => {
 
         const total = result[0].totalCount[0]?.count || 0;
 
-        // Map category names
+        // Map category names and seller-specific listing data
         const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
-            const [mainCategory, subCategory] = await Promise.all([
+            const [mainCategory, subCategory, listing] = await Promise.all([
                 product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-                product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+                product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+                SellerProduct.collection().findOne({
+                    productId: product.productId,
+                    sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
+                })
             ]);
 
             return {
                 ...product,
+                // Override master values with seller-specific listing data if it exists
+                price: listing ? listing.price : product.price,
+                salePrice: listing ? listing.salePrice : product.salePrice,
+                stock: listing ? listing.stock : product.stock,
+                deliveryDays: listing ? listing.deliveryDays : null,
                 mainCategoryName: mainCategory ? mainCategory.name : null,
                 subCategoryName: subCategory ? subCategory.name : null,
                 commissionPercentage: subCategory?.commissionPercentage || 0,
@@ -256,36 +265,46 @@ exports.updateProduct = async (req, res) => {
             });
         }
 
-        const updateData = {
-            ...req.body,
+        // Prepare metadata update for Product collection
+        const productUpdateData = {
+            productName,
+            description,
+            shortDescription,
             updatedby,
-            ...(price !== undefined && { price: parseFloat(price) }),
-            ...(stock !== undefined && { stock: parseInt(stock) })
+            attributes: attributes !== undefined ? attributes : undefined,
         };
-        if (req.body.salePrice !== undefined) {
-            updateData.salePrice = parseFloat(req.body.salePrice);
-        }
-        if (attributes !== undefined) {
-            updateData.attributes = attributes;
-        }
+
         if (productName) {
-            updateData.slug = slugify(productName);
-        }
-        if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
-            updateData.images = [...(existingProduct.images || []), ...newImages];
+            productUpdateData.slug = slugify(productName);
         }
 
-        const product = await Product.update(req.params.id, updateData);
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
+            productUpdateData.images = [...(existingProduct.images || []), ...newImages];
+        }
+
+        // Prepare listing update for SellerProduct collection
+        const listingUpdateData = {};
+        if (price !== undefined) listingUpdateData.price = parseFloat(price);
+        if (req.body.salePrice !== undefined) listingUpdateData.salePrice = parseFloat(req.body.salePrice);
+        if (stock !== undefined) listingUpdateData.stock = parseInt(stock);
+        if (req.body.deliveryDays !== undefined) listingUpdateData.deliveryDays = parseInt(req.body.deliveryDays);
+
+        // Perform updates
+        const [updatedProduct] = await Promise.all([
+            Product.update(req.params.id, productUpdateData),
+            Object.keys(listingUpdateData).length > 0 ? SellerProduct.collection().updateOne(
+                { productId: existingProduct.productId, sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId },
+                { $set: listingUpdateData }
+            ) : Promise.resolve()
+        ]);
 
         await deleteCachePattern('products:list:*');
         await deleteCache(`products:detail:${req.params.id}`);
 
-        const { _id, ...responseData } = product;
-
         res.status(200).json({
             success: true,
-            message: 'Product updated successfully'
+            message: 'Product and listing updated successfully'
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -314,9 +333,14 @@ exports.getProductById = async (req, res) => {
 
         const responseData = {
             ...product,
+            // Flatten seller listing data into the top level for consistency
+            price: sellerListing ? sellerListing.price : product.price,
+            salePrice: sellerListing ? sellerListing.salePrice : product.salePrice,
+            stock: sellerListing ? sellerListing.stock : product.stock,
+            deliveryDays: sellerListing ? sellerListing.deliveryDays : null,
             mainCategoryName: mainCategory ? mainCategory.name : null,
             subCategoryName: subCategory ? subCategory.name : null,
-            sellerListing: sellerListing || null,
+            sellerListing: sellerListing || null, // Keep for backward compatibility if needed
             commissionPercentage: subCategory?.commissionPercentage || 0,
         };
 
@@ -344,7 +368,14 @@ exports.deleteProduct = async (req, res) => {
             });
         }
 
-        await Product.delete(req.params.id);
+        // Delete both the master product and the seller's listing
+        await Promise.all([
+            Product.delete(req.params.id),
+            SellerProduct.collection().deleteOne({ 
+                productId: product.productId, 
+                sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
+            })
+        ]);
 
         await deleteCachePattern('products:list:*');
         await deleteCache(`products:detail:${req.params.id}`);

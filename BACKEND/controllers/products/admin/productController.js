@@ -419,60 +419,31 @@ exports.getProductById = async (req, res) => {
       };
     });
 
-    // Find the creator's specific listing to populate top-level price/stock
-    const creatorListing = marketplaceListings.find(m => m.sellerId.toString() === product.userId.toString());
-    const mainPrice = creatorListing 
-      ? (parseFloat(creatorListing.salePrice) > 0 ? parseFloat(creatorListing.salePrice) : parseFloat(creatorListing.price))
-      : 0;
-    
-    const allOffers = [];
-
-    // Add main product as an offer (Creator's offer)
-    if (creatorListing && mainPrice > 0 && parseInt(creatorListing.stock) > 0) {
-      allOffers.push({
-        price: mainPrice,
-        sellerId: product.userId, 
-        sellerProductId: creatorListing.sellerProductId,
-        productId: product.productId,
-        sellerName: product.roleId === 1 ? "Admin" : (mainSeller.sellerName || "Seller"),
-        shopName: product.roleId === 1 ? "Outdid" : (mainSeller.shopName || "Marketplace"),
-        stock: parseInt(creatorListing.stock),
-        deliveryDays: creatorListing.deliveryDays,
-        isSeller: product.roleId === 2
-      });
-    }
-
-    // Add marketplace listings, also filtering for valid price/stock
-    marketplaceListings.forEach(m => {
-      // Prevent showing the same seller twice if they are already the creator
-      const isDuplicate = allOffers.some(o => o.sellerId.toString() === m.sellerId.toString());
-      
-      if (!isDuplicate && m.currentPrice > 0 && parseInt(m.stock) > 0) {
-        allOffers.push({
-          price: m.currentPrice,
-          sellerId: m.sellerId,
-          sellerProductId: m.sellerProductId,
-          productId: m.productId,
-          sellerName: m.sellerName || "Seller",
-          shopName: m.shopName || "Marketplace",
-          stock: parseInt(m.stock),
-          deliveryDays: m.deliveryDays,
-          isSeller: true
-        });
-      }
-    });
+    const allOffers = marketplaceListings
+      .filter(m => m.currentPrice > 0 && parseInt(m.stock) > 0)
+      .map(m => ({
+        price: m.currentPrice,
+        sellerId: m.sellerId,
+        sellerProductId: m.sellerProductId,
+        productId: m.productId,
+        sellerName: m.sellerName || "Seller",
+        shopName: m.shopName || "Marketplace",
+        stock: parseInt(m.stock),
+        deliveryDays: m.deliveryDays,
+        isSeller: true 
+      }));
 
     const minPrice = allOffers.length > 0 ? Math.min(...allOffers.map(o => o.price)) : 0;
-    const sellerCount = allOffers.filter(o => o.isSeller).length;
+    const sellerCount = allOffers.length;
     const minPriceDetails = allOffers.find(o => o.price === minPrice) || null;
 
     const productWithCategoryNames = {
       ...product,
-      // Inject price and stock from creator listing at top level
-      price: creatorListing ? creatorListing.price : 0,
-      salePrice: creatorListing ? creatorListing.salePrice : 0,
-      stock: creatorListing ? creatorListing.stock : 0,
-      deliveryDays: creatorListing ? creatorListing.deliveryDays : null,
+      // Default to cheapest offer for top-level price/stock
+      price: minPriceDetails ? minPriceDetails.price : 0,
+      salePrice: minPriceDetails ? minPriceDetails.price : 0, 
+      stock: minPriceDetails ? minPriceDetails.stock : 0,
+      deliveryDays: minPriceDetails ? minPriceDetails.deliveryDays : null,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
       marketplaceListings: marketplaceListings,
