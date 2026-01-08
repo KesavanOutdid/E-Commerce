@@ -119,7 +119,7 @@ const SearchResults = () => {
                     <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
                   </svg>
                   <h3 className="text-lg font-semibold text-dark mb-2">No products found</h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="text-dark mb-6">
                     We couldn't find any products matching "{query}". Try different keywords or browse by category.
                   </p>
                   <button
@@ -134,7 +134,7 @@ const SearchResults = () => {
               {/* Products Grid/List */}
               {!loading && products.length > 0 && (
                 <>
-                  <div className="mb-6 text-sm text-gray-600">
+                  <div className="mb-6 text-sm text-dark">
                     Showing {products.length} results {paginationData && `(Page ${paginationData.page} of ${paginationData.pages})`}
                   </div>
                   

@@ -339,7 +339,7 @@ const Header = () => {
                 {suggestionsLoading ? (
                   <div className="px-4 py-6 flex items-center justify-center gap-2">
                     <div className="w-5 h-5 border-2 border-blue border-t-transparent animate-spin rounded-full"></div>
-                    <span className="text-sm text-black font-medium">Loading suggestions...</span>
+                    <span className="text-sm text-dark font-medium">Loading suggestions...</span>
                   </div>
                 ) : (
                   <div className="max-h-[500px] overflow-y-auto custom-scrollbar">
@@ -350,7 +350,7 @@ const Header = () => {
                             key={prod.productId}
                             type="button"
                             onClick={() => handleSuggestionClick(prod)}
-                            className="w-full text-left px-4 py-3 text-sm text-black hover:text-blue hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3"
+                            className="w-full text-left px-4 py-3 text-sm text-dark hover:text-blue hover:bg-gray-50 transition-colors duration-150 flex items-center gap-3 group"
                           >
                             {prod.image && (
                               <div className="w-10 h-10 flex-shrink-0 bg-gray-100 rounded-md flex items-center justify-center overflow-hidden">
@@ -364,7 +364,7 @@ const Header = () => {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="text-black-800  truncate text-sm">{prod.productName}</p>
+                              <p className="text-dark group-hover:text-blue truncate text-sm transition-colors">{prod.productName}</p>
                             </div>
                           </button>
                         ))}
@@ -374,7 +374,7 @@ const Header = () => {
                         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto text-gray-400 mb-2">
                           <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
                         </svg>
-                        <p className="text-sm text-black font-medium">No products found</p>
+                        <p className="text-sm text-dark font-medium">No products found</p>
                       </div>
                     )}
                   </div>

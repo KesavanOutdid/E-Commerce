@@ -295,7 +295,9 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
             price: parseFloat(p.price) || 0,
             discountedPrice: p.minPriceDetails?.price || parseFloat(p.salePrice || p.price) || 0,
             imgs: {
-              thumbnails: p.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
+              thumbnails: p.images?.length > 0 
+                ? p.images.map((img: string) => `${API_BASE_URL}${img}`) 
+                : ["/images/products/product-1-bg-1.png"],
               previews: p.images?.length > 0 
                 ? p.images.map((img: string) => `${API_BASE_URL}${img}`) 
                 : ["/images/products/product-1-bg-1.png"],
@@ -697,32 +699,34 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
           <section className="overflow-hidden relative pb-4 pt-20 lg:pt-18 xl:pt-20">
             <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
               <div className="flex flex-col lg:flex-row gap-7.5 xl:gap-17.5 items-start">
-                <div className="lg:w-[45%] w-full lg:sticky lg:top-28">
+                <div className="lg:basis-[45%] w-full lg:sticky lg:top-28 flex-shrink-0">
                   <div className="flex gap-4 sm:gap-6">
                     {/* Thumbnails Left Side */}
-                    <div className="hidden sm:flex flex-col gap-3 sm:gap-4">
-                      {product.imgs?.thumbnails.map((item, key) => (
-                        <button
-                          onClick={() => setPreviewImg(key)}
-                          key={key}
-                          className={`flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue flex-shrink-0 ${key === previewImg
-                            ? "border-blue"
-                            : "border-transparent"
-                            }`}
-                        >
-                          <Image
-                            width={60}
-                            height={60}
-                            src={item}
-                            alt="thumbnail"
-                          />
-                        </button>
-                      ))}
-                    </div>
+                    {product.imgs?.thumbnails?.length > 0 && (
+                      <div className="hidden sm:flex flex-col gap-3 sm:gap-4">
+                        {product.imgs.thumbnails.map((item, key) => (
+                          <button
+                            onClick={() => setPreviewImg(key)}
+                            key={key}
+                            className={`flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue flex-shrink-0 ${key === previewImg
+                              ? "border-blue"
+                              : "border-transparent"
+                              }`}
+                          >
+                            <Image
+                              width={60}
+                              height={60}
+                              src={item}
+                              alt="thumbnail"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {/* Main Image */}
                     <div className="flex-1">
-                      <div className="lg:min-h-[600px] rounded-lg shadow-1 bg-gray-2 p-4 sm:p-7.5 relative flex items-start justify-center text-center">
+                      <div className="min-h-[400px] lg:min-h-[600px] rounded-lg shadow-1 bg-gray-2 p-4 sm:p-7.5 relative flex items-start justify-center text-center">
                         <div className="w-full h-full flex items-start justify-center">
                           <button
                             onClick={handlePreviewSlider}
@@ -746,7 +750,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                             </svg>
                           </button>
 
-                          {product.imgs?.previews?.[previewImg] && (
+                          {product.imgs?.previews?.[previewImg] ? (
                             <Image
                               src={product.imgs.previews[previewImg]}
                               alt="products-details"
@@ -754,36 +758,47 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                               height={600}
                               className="object-contain max-h-[550px]"
                             />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center h-full w-full py-20 text-gray-400">
+                              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                <polyline points="21 15 16 10 5 21" />
+                              </svg>
+                              <p className="mt-2 text-sm font-medium">No Image Available</p>
+                            </div>
                           )}
                         </div>
                       </div>
 
                       {/* Mobile Thumbnails Below */}
-                      <div className="flex sm:hidden flex-wrap gap-3 mt-4">
-                        {product.imgs?.thumbnails.map((item, key) => (
-                          <button
-                            onClick={() => setPreviewImg(key)}
-                            key={key}
-                            className={`flex items-center justify-center w-16 h-16 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue ${key === previewImg
-                              ? "border-blue"
-                              : "border-transparent"
-                              }`}
-                          >
-                            <Image
-                              width={50}
-                              height={50}
-                              src={item}
-                              alt="thumbnail"
-                            />
-                          </button>
-                        ))}
-                      </div>
+                      {product.imgs?.thumbnails?.length > 0 && (
+                        <div className="flex sm:hidden flex-wrap gap-3 mt-4">
+                          {product.imgs.thumbnails.map((item, key) => (
+                            <button
+                              onClick={() => setPreviewImg(key)}
+                              key={key}
+                              className={`flex items-center justify-center w-16 h-16 overflow-hidden rounded-lg bg-gray-2 shadow-1 ease-out duration-200 border-2 hover:border-blue ${key === previewImg
+                                ? "border-blue"
+                                : "border-transparent"
+                                }`}
+                            >
+                              <Image
+                                width={50}
+                                height={50}
+                                src={item}
+                                alt="thumbnail"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* <!-- product content --> */}
-                <div className="lg:w-[55%] w-full">
+                <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-3 gap-4">
                     <h2 className="text-sm sm:text-base xl:text-xl font-normal text-dark">
                       {product.title}
