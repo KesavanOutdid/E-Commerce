@@ -134,7 +134,20 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    let query = { roleId: 1 };
+    // Get all productIds that the admin has listed in SellerProduct
+    const adminListings = await SellerProduct.collection().find({ 
+      sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
+    }).project({ productId: 1 }).toArray();
+    
+    const adminListedProductIds = adminListings.map(l => l.productId);
+
+    // Query products that were either created by admin OR listed by admin
+    let query = { 
+      $or: [
+        { roleId: 1 },
+        { productId: { $in: adminListedProductIds } }
+      ]
+    };
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -145,27 +158,27 @@ exports.getProducts = async (req, res) => {
       Product.count(query)
     ]);
 
-    // Map category names
+    // Map category names and listing data
     const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
       const [mainCategory, subCategory, listing] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
         product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
         SellerProduct.collection().findOne({ 
           productId: product.productId, 
-          sellerId: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : product.userId 
+          sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
         })
       ]);
 
       return {
         ...product,
-        // Override master price/stock with listing data
+        // Override master price/stock with the admin's listing data
         price: listing ? listing.price : product.price,
         salePrice: listing ? listing.salePrice : product.salePrice,
         stock: listing ? listing.stock : product.stock,
         deliveryDays: listing ? listing.deliveryDays : null,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
-        marketplaceListings: [] // Admin view for own products doesn't strictly need marketplace list here
+        marketplaceListings: [] 
       };
     }));
 
@@ -406,19 +419,25 @@ exports.getProductById = async (req, res) => {
       };
     });
 
-    const mainPrice = parseFloat(product.salePrice) > 0 ? parseFloat(product.salePrice) : parseFloat(product.price);
+    // Find the creator's specific listing to populate top-level price/stock
+    const creatorListing = marketplaceListings.find(m => m.sellerId.toString() === product.userId.toString());
+    const mainPrice = creatorListing 
+      ? (parseFloat(creatorListing.salePrice) > 0 ? parseFloat(creatorListing.salePrice) : parseFloat(creatorListing.price))
+      : 0;
+    
     const allOffers = [];
 
     // Add main product as an offer (Creator's offer)
-    if (mainPrice > 0 && parseInt(product.stock) > 0) {
+    if (creatorListing && mainPrice > 0 && parseInt(creatorListing.stock) > 0) {
       allOffers.push({
         price: mainPrice,
         sellerId: product.userId, 
-        sellerProductId: null,
+        sellerProductId: creatorListing.sellerProductId,
         productId: product.productId,
         sellerName: product.roleId === 1 ? "Admin" : (mainSeller.sellerName || "Seller"),
         shopName: product.roleId === 1 ? "Outdid" : (mainSeller.shopName || "Marketplace"),
-        stock: parseInt(product.stock),
+        stock: parseInt(creatorListing.stock),
+        deliveryDays: creatorListing.deliveryDays,
         isSeller: product.roleId === 2
       });
     }
@@ -449,6 +468,11 @@ exports.getProductById = async (req, res) => {
 
     const productWithCategoryNames = {
       ...product,
+      // Inject price and stock from creator listing at top level
+      price: creatorListing ? creatorListing.price : 0,
+      salePrice: creatorListing ? creatorListing.salePrice : 0,
+      stock: creatorListing ? creatorListing.stock : 0,
+      deliveryDays: creatorListing ? creatorListing.deliveryDays : null,
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
       marketplaceListings: marketplaceListings,
@@ -497,8 +521,11 @@ exports.updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    // Separate master product data from listing data
+    const { price, salePrice, stock, deliveryDays, ...masterData } = req.body;
+
     const updateData = { 
-      ...req.body, 
+      ...masterData, 
       updatedby
     };
 
@@ -519,7 +546,6 @@ exports.updateProduct = async (req, res) => {
     }
 
     // UPDATE LISTING DATA (Price, Stock, DeliveryDays) in SellerProduct table
-    const { price, salePrice, stock, deliveryDays } = req.body;
     if (price !== undefined || salePrice !== undefined || stock !== undefined || deliveryDays !== undefined) {
       await SellerProduct.collection().findOneAndUpdate(
         { 
