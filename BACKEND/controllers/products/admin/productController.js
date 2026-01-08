@@ -206,11 +206,20 @@ exports.getAllSellerProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const nonAdminUsers = await User.collection().find({
-      roleId: 2 // Assuming roleId 2 is Seller
+    // Search for users where 'roles' array contains 2 (Seller) and NOT 1 (Admin)
+    const sellerUsers = await User.collection().find({
+      roles: { $in: [2], $nin: [1] }
     }).project({ userId: 1 }).toArray();
     
-    const sellerIds = nonAdminUsers.map(u => u.userId);
+    const sellerIds = sellerUsers.map(u => u.userId);
+
+    if (sellerIds.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'No sellers found',
+        data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
+      });
+    }
 
     const query = { sellerId: { $in: sellerIds } };
 
@@ -219,18 +228,28 @@ exports.getAllSellerProducts = async (req, res) => {
       SellerProduct.collection().countDocuments(query)
     ]);
 
+    if (listings.length === 0) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'No seller products found',
+        data: { products: [], pagination: { total, page, limit, pages: Math.ceil(total / limit) } }
+      });
+    }
+
+    // Fetch product details, seller details, and shop names
     const productIds = [...new Set(listings.map(l => l.productId))];
+    const uniqueSellerIds = [...new Set(listings.map(l => l.sellerId))];
     
     const [products, users, sellers] = await Promise.all([
       Product.collection().find({ productId: { $in: productIds } }).toArray(),
       User.collection().find({
         $or: [
-          { userId: { $in: sellerIds } },
-          { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
+          { userId: { $in: uniqueSellerIds } },
+          { _id: { $in: uniqueSellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
         ]
       }).toArray(),
       Seller.collection().find({
-        userId: { $in: sellerIds }
+        userId: { $in: uniqueSellerIds }
       }).toArray()
     ]);
 
@@ -269,7 +288,7 @@ exports.getAllSellerProducts = async (req, res) => {
         salePrice: listing.salePrice,
         stock: listing.stock,
         deliveryDays: listing.deliveryDays,
-        approvalStatus: listing.approvalStatus, // Seller's listing approval status
+        approvalStatus: listing.approvalStatus,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
         sellerName,
