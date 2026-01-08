@@ -114,7 +114,8 @@ const Footer = () => {
       <div className="py-4 bg-gray-1">
         <div className="max-w-[1300px] mx-auto px-4 sm:px-8 xl:px-0">
           <p className="text-dark text-sm font-medium">
-            &copy; {year} OUTDID UNIFIED PVT LTD | Powered by OUTDID UNIFIED PVT LTD
+           @2026 - All Rights Reserved by OUTDID UNIFIED PVT LTD
+
           </p>
         </div>
       </div>
