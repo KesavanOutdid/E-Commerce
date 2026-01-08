@@ -299,23 +299,24 @@ const ProductDetail = () => {
                             letterSpacing: '0.05rem'
                         }}
                     />
-                    {product.roleId === 2 && !offers.some(o => o.sellerName === 'Admin') && (
+                    {(product.roleId === 1 || (product.marketplaceListings && product.marketplaceListings.some(o => o.sellerName === 'Admin'))) ? (
+                        <Button
+                            variant="contained"
+                            startIcon={<IconEdit />}
+                            onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                        >
+                            Edit Product
+                        </Button>
+                    ) : (
                         <Button
                             variant="contained"
                             color="success"
                             startIcon={<IconBuildingStore />}
                             onClick={handleListProduct}
                         >
-                            List in Our Shop
+                            Add to My List
                         </Button>
                     )}
-                    <Button
-                        variant="contained"
-                        startIcon={<IconEdit />}
-                        onClick={() => navigate(`/products/edit/${product._id || product.productId}`)}
-                    >
-                        Edit
-                    </Button>
                     <Button
                         variant="outlined"
                         color="error"

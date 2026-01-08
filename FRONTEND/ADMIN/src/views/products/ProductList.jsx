@@ -23,7 +23,7 @@ import {
     Tabs,
     Tab
 } from '@mui/material';
-import { IconSearch, IconPlus, IconEye } from '@tabler/icons-react';
+import { IconSearch, IconPlus, IconEye, IconEdit, IconBuildingStore } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -67,8 +67,52 @@ const ProductList = () => {
         handlePageChange,
         handleTypeChange,
         handleFilterChange,
-        updateProductApproval
+        updateProductApproval,
+        listFromCatalog,
+        fetchProducts
     } = useProducts();
+
+    const handleQuickList = async (product) => {
+        const { value: formValues } = await Swal.fire({
+            title: 'List in Our Shop',
+            html:
+                '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
+                `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Sale Price (₹)</div>' +
+                `<input id="swal-input2" class="swal2-input" type="number" placeholder="Sale Price" value="${product.salePrice || 0}">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Stock</div>' +
+                `<input id="swal-input3" class="swal2-input" type="number" placeholder="Stock" value="10">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Delivery Days</div>' +
+                '<input id="swal-input4" class="swal2-input" type="number" placeholder="Delivery Days" value="3">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'List Now',
+            preConfirm: () => {
+                return {
+                    price: document.getElementById('swal-input1').value,
+                    salePrice: document.getElementById('swal-input2').value,
+                    stock: document.getElementById('swal-input3').value,
+                    deliveryDays: document.getElementById('swal-input4').value
+                }
+            }
+        });
+
+        if (formValues) {
+            if (!formValues.price || !formValues.stock) {
+                Swal.fire('Error', 'Price and Stock are required', 'error');
+                return;
+            }
+
+            const success = await listFromCatalog({
+                productId: product.productId || product._id,
+                ...formValues
+            });
+
+            if (success) {
+                fetchProducts(pagination.currentPage);
+            }
+        }
+    };
 
     const [search, setSearch] = useState('');
 
@@ -317,10 +361,10 @@ const ProductList = () => {
                                                     size="small"
                                                     color="primary"
                                                     onClick={() => navigate(`/products/view/${product.productId || product._id}`)}
+                                                    title="View"
                                                 >
                                                     <IconEye size={18} />
                                                 </IconButton>
-
                                             </Stack>
                                         </TableCell>
                                     </TableRow>
