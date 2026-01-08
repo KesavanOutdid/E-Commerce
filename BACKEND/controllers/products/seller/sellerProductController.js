@@ -2,6 +2,8 @@ const Product = require('../../../models/Product');
 const SellerProduct = require('../../../models/SellerProduct');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
+const MainCategory = require('../../../models/MainCategory');
+const SubCategory = require('../../../models/SubCategory');
 const { ObjectId } = require('mongodb');
 
 exports.listProduct = async (req, res) => {
@@ -60,44 +62,76 @@ exports.listProduct = async (req, res) => {
 exports.getSellerListings = async (req, res) => {
     try {
         const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const skip = (page - 1) * limit;
-        const { status, approvalStatus } = req.query;
+        const limitNum = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limitNum;
 
-        const filter = {};
-        
-        if (req.roleId !== 1) {
-            filter.sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
-        }
-        
-        if (status) filter.sellerStatus = status;
-        if (approvalStatus) filter.approvalStatus = approvalStatus;
+        const query = {
+            sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
+        };
 
-        const listings = await SellerProduct.find(filter, { skip, limit });
-        const total = await SellerProduct.collection().countDocuments(filter);
+        console.log('Fetching listings for sellerId:', req.userId, 'Query:', query);
 
-        const productIds = listings.map(l => l.productId);
-        const products = await Product.collection().find({ 
-            productId: { $in: productIds } 
-        }).toArray();
+        const pipeline = [
+            { $match: query },
+            { $sort: { createdAt: -1 } },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'productId',
+                    foreignField: 'productId',
+                    as: 'productDetails'
+                }
+            },
+            { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
+            {
+                $facet: {
+                    data: [{ $skip: skip }, { $limit: limitNum }],
+                    totalCount: [{ $count: 'count' }]
+                }
+            }
+        ];
 
-        const productMap = new Map();
-        products.forEach(p => productMap.set(p.productId, p));
+        const result = await SellerProduct.collection().aggregate(pipeline).toArray();
 
-        const enrichedListings = listings.map(listing => ({
-            ...listing,
-            product: productMap.get(listing.productId) || null
+        const listings = await Promise.all(result[0].data.map(async (listing) => {
+            const { productDetails, ...rest } = listing;
+
+            const [mainCategory, subCategory] = await Promise.all([
+                productDetails?.mainCategoryId ? MainCategory.findById(productDetails.mainCategoryId) : null,
+                productDetails?.subCategoryId ? SubCategory.findById(productDetails.subCategoryId) : null
+            ]);
+
+            return {
+                ...rest,
+                userId: productDetails?.userId,
+                productName: productDetails?.productName || 'Unknown Product',
+                productImages: productDetails?.images || [],
+                productDescription: productDetails?.description || '',
+                productAttributes: productDetails?.attributes || [],
+                productAvgRating: productDetails?.avgRating || 0,
+                productSlug: productDetails?.slug || '',
+                mainCategoryName: mainCategory ? mainCategory.name : null,
+                subCategoryName: subCategory ? subCategory.name : null,
+                commissionPercentage: subCategory?.commissionPercentage || 0,
+
+            };
         }));
+
+        const total = result[0].totalCount[0]?.count || 0;
+
+        console.log('Found', total, 'listings, returning', listings.length, 'items');
 
         res.status(200).json({
             success: true,
-            message: 'Listings retrieved successfully',
-            data: enrichedListings,
-            pagination: {
-                total,
-                page,
-                limit,
-                pages: Math.ceil(total / limit)
+            message: 'Seller listings fetched successfully',
+            data: {
+                listings,
+                pagination: {
+                    total,
+                    page,
+                    limit: limitNum,
+                    pages: Math.ceil(total / limitNum)
+                }
             }
         });
     } catch (error) {
@@ -125,7 +159,7 @@ exports.searchSellerListings = async (req, res) => {
         }
 
         const listings = await SellerProduct.find(filter, { skip, limit });
-        
+
         const productIds = listings.map(l => l.productId);
         const products = await Product.collection().find({
             productId: { $in: productIds },
@@ -137,7 +171,7 @@ exports.searchSellerListings = async (req, res) => {
 
         const matchedProductIds = new Set(products.map(p => p.productId));
         const filteredListings = listings.filter(l => matchedProductIds.has(l.productId));
-        
+
         const productMap = new Map();
         products.forEach(p => productMap.set(p.productId, p));
 
@@ -173,7 +207,7 @@ exports.updateListing = async (req, res) => {
         if (req.roleId !== 1) {
             const listingSellerId = listing.sellerId?.toString();
             const requestUserId = req.userId?.toString();
-            
+
             if (listingSellerId !== requestUserId) {
                 return res.status(403).json({
                     success: false,
@@ -195,6 +229,41 @@ exports.updateListing = async (req, res) => {
             success: true,
             message: 'Listing updated successfully',
             data: updatedListing
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.deleteListing = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const listing = await SellerProduct.findById(id);
+        if (!listing) {
+            return res.status(404).json({
+                success: false,
+                message: 'Listing not found'
+            });
+        }
+
+        if (req.roleId !== 1) {
+            const listingSellerId = listing.sellerId?.toString();
+            const requestUserId = req.userId?.toString();
+
+            if (listingSellerId !== requestUserId) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'You can only delete your own listings'
+                });
+            }
+        }
+
+        await SellerProduct.delete(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Listing deleted successfully'
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -25,6 +25,7 @@ router.post('/seller/list', authMiddleware, sellerListingController.listProduct)
 router.get('/seller/listings', authMiddleware, sellerListingController.getSellerListings);
 router.get('/seller/listings/search', authMiddleware, sellerListingController.searchSellerListings);
 router.put('/seller/listing/:id', authMiddleware, sellerListingController.updateListing);
+router.delete('/seller/listing/:id', authMiddleware, sellerListingController.deleteListing);
 router.get('/seller/getproducts', authMiddleware, sellerProductController.getProducts);
 router.get('/seller/:id', authMiddleware, sellerProductController.getProductById);
 router.put('/seller/:id', authMiddleware, productUpload.array('images', 10), sellerProductController.updateProduct);
