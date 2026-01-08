@@ -4,14 +4,14 @@
   "/(site)/kyc/page": "/kyc",
   "/(site)/orders/[id]/page": "/orders/[id]",
   "/(site)/products/add/page": "/products/add",
+  "/(site)/profile/page": "/profile",
   "/(site)/orders/page": "/orders",
   "/(site)/products/edit/[id]/page": "/products/edit/[id]",
   "/(site)/products/view/[id]/page": "/products/view/[id]",
   "/(site)/products/page": "/products",
-  "/(site)/profile/page": "/profile",
-  "/_not-found/page": "/_not-found",
-  "/(site)/(auth)/signin/page": "/signin",
   "/(site)/documentation/page": "/documentation",
   "/(site)/(auth)/signup/page": "/signup",
+  "/_not-found/page": "/_not-found",
+  "/(site)/(auth)/signin/page": "/signin",
   "/page": "/"
 }

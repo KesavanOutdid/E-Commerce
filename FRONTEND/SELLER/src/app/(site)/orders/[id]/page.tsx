@@ -236,49 +236,6 @@ export default function OrderDetailPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                    <Icon icon="mdi:calculator" width={20} height={20} className="text-primary" />
-                                    Order Summary
-                                </h2>
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">Subtotal</span>
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            ₹{Number(order.subTotal || 0).toLocaleString('en-IN')}
-                                        </span>
-                                    </div>
-                                    {order.gst > 0 && (
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-gray-600">GST</span>
-                                            <span className="text-sm font-semibold text-gray-900">
-                                                ₹{Number(order.gst).toLocaleString('en-IN')}
-                                            </span>
-                                        </div>
-                                    )}
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-sm text-gray-600">Shipping Fee</span>
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            ₹{Number(order.shippingFees || 0).toLocaleString('en-IN')}
-                                        </span>
-                                    </div>
-                                    {order.codFees > 0 && (
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-sm text-gray-600">COD Fee</span>
-                                            <span className="text-sm font-semibold text-gray-900">
-                                                ₹{Number(order.codFees).toLocaleString('en-IN')}
-                                            </span>
-                                        </div>
-                                    )}
-                                    <div className="pt-3 border-t-2 border-gray-300 flex justify-between items-center">
-                                        <span className="text-base font-bold text-gray-900">Grand Total</span>
-                                        <span className="text-xl font-bold text-primary">
-                                            ₹{Number(order.grandTotal || 0).toLocaleString('en-IN')}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
                                 <div className="flex items-start gap-3">
                                     <Icon icon="mdi:information" className="text-blue-600 flex-shrink-0 mt-0.5" width={20} height={20} />

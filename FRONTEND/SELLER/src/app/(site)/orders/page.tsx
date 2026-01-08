@@ -119,11 +119,14 @@ export default function OrdersPage() {
                                     <div className="flex items-center gap-3">
                                         <p className="text-sm text-gray-600 flex items-center gap-1.5">
                                             <Icon icon="mdi:shopping" width={16} height={16} />
-                                            <span>Manage your customer orders</span>
+                                            <span className="py-0.5 text-primary text-xs font-semibold">
+                                                ({totalOrders} total orders) Manage your customer orders
+                                            </span>
+                                            {/* <span>Manage your customer orders</span> */}
                                         </p>
-                                        <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
+                                        {/* <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
                                             {totalOrders} total
-                                        </span>
+                                        </span> */}
                                     </div>
                                 </div>
 
@@ -193,24 +196,24 @@ export default function OrdersPage() {
                                                         <span className="text-xs font-semibold text-gray-700">Customer</span>
                                                     </div>
                                                 </th> */}
-                                                <th className="px-4 py-2.5 text-left">
+                                                {/* <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:cart" width={16} height={16} className="text-primary" />
                                                         <span className="text-xs font-semibold text-gray-700">Items</span>
                                                     </div>
-                                                </th>
-                                                <th className="px-4 py-2.5 text-left">
+                                                </th> */}
+                                                {/* <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:currency-inr" width={16} height={16} className="text-primary" />
                                                         <span className="text-xs font-semibold text-gray-700">Total</span>
                                                     </div>
-                                                </th>
-                                                <th className="px-4 py-2.5 text-left">
+                                                </th> */}
+                                                {/* <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:credit-card" width={16} height={16} className="text-primary" />
                                                         <span className="text-xs font-semibold text-gray-700">Payment Method</span>
                                                     </div>
-                                                </th>
+                                                </th> */}
                                                 <th className="px-4 py-2.5 text-left">
                                                     <div className="flex items-center gap-1.5">
                                                         <Icon icon="mdi:credit-card" width={16} height={16} className="text-primary" />
@@ -276,18 +279,18 @@ export default function OrdersPage() {
                                                             <p className="text-[11px] text-gray-500">{order.userEmail}</p>
                                                         </div>
                                                     </td> */}
-                                                    <td className="px-4 py-2.5">
+                                                    {/* <td className="px-4 py-2.5">
                                                         <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
                                                             <Icon icon="mdi:package-variant" width={14} height={14} />
                                                             {order.items?.length || 0} item(s)
                                                         </span>
-                                                    </td>
-                                                    <td className="px-4 py-2.5">
+                                                    </td> */}
+                                                    {/* <td className="px-4 py-2.5">
                                                         <p className="text-base font-bold text-primary">₹{Number(order.grandTotal || 0).toLocaleString('en-IN')}</p>
-                                                    </td>
-                                                    <td className="px-4 py-2.5">
+                                                    </td> */}
+                                                    {/* <td className="px-4 py-2.5">
                                                         <p className="text-[11px] text-gray-500 capitalize">{order.paymentType}</p>
-                                                    </td>
+                                                    </td> */}
                                                     <td className="px-4 py-2.5">
                                                         <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
                                                             <Icon icon={order.paymentStatus === 'completed' ? 'mdi:check-circle' : 'mdi:clock-outline'} width={12} height={12} />
@@ -302,11 +305,14 @@ export default function OrdersPage() {
                                                     </td>
                                                     <td className="px-4 py-2.5">
                                                         <p className="text-xs text-gray-600">
-                                                            {new Date(order.createdAt).toLocaleDateString('en-IN', {
+                                                            {new Date(order.createdAt).toLocaleString('en-IN', {
                                                                 day: '2-digit',
-                                                                month: 'short',
-                                                                year: 'numeric'
-                                                            })}
+                                                                month: 'long',
+                                                                year: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit',
+                                                                hour12: true
+                                                            }).replace(',', ' at')}
                                                         </p>
                                                     </td>
                                                     <td className="px-4 py-2.5">

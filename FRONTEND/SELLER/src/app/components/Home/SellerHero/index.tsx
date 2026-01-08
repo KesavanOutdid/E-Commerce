@@ -10,7 +10,7 @@ const SellerHero = () => {
                     <div className='space-y-4 lg:space-y-6'>
                         <div className='space-y-3 lg:space-y-4'>
                             <h1 className='text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900'>
-                                Ab se <span className='text-5xl sm:text-6xl lg:text-7xl text-primary'>0%</span>
+                                AtoZ sale <span className='text-5xl sm:text-6xl lg:text-7xl text-primary'>0%</span>
                             </h1>
                             <h2 className='text-3xl sm:text-4xl font-bold text-gray-800'>
                                 Commission<span className='text-xs align-super'>*</span>

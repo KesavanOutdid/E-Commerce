@@ -175,16 +175,53 @@ exports.searchSellerListings = async (req, res) => {
         const productMap = new Map();
         products.forEach(p => productMap.set(p.productId, p));
 
-        const enrichedListings = filteredListings.map(listing => ({
-            ...listing,
-            product: productMap.get(listing.productId) || null
-        }));
+        const mainCategoryIds = new Set();
+        const subCategoryIds = new Set();
+        products.forEach(p => {
+            if (p.mainCategoryId) mainCategoryIds.add(p.mainCategoryId);
+            if (p.subCategoryId) subCategoryIds.add(p.subCategoryId);
+        });
+
+        const mainCategories = await MainCategory.find({
+            categoryId: { $in: Array.from(mainCategoryIds) }
+        });
+        const subCategories = await SubCategory.find({
+            subCategoryId: { $in: Array.from(subCategoryIds) }
+        });
+
+        const mainCategoryMap = new Map();
+        mainCategories.forEach(cat => mainCategoryMap.set(cat.categoryId, cat.name));
+        const subCategoryMap = new Map();
+        subCategories.forEach(cat => subCategoryMap.set(cat.subCategoryId, cat.name));
+
+        const enrichedListings = filteredListings.map(listing => {
+            const product = productMap.get(listing.productId);
+            return {
+                ...listing,
+                product,
+                productName: product?.productName || 'Unknown Product',
+                productImages: product?.images || [],
+                productDescription: product?.description || '',
+                productAttributes: product?.attributes || [],
+                mainCategoryName: product?.mainCategoryId ? mainCategoryMap.get(product.mainCategoryId) : null,
+                subCategoryName: product?.subCategoryId ? subCategoryMap.get(product.subCategoryId) : null
+            };
+        });
+
+        const total = enrichedListings.length;
 
         res.status(200).json({
             success: true,
             message: 'Search results',
-            data: enrichedListings,
-            total: enrichedListings.length
+            data: {
+                listings: enrichedListings,
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    pages: Math.ceil(total / limit)
+                }
+            }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -130,21 +130,13 @@ const Footer = () => {
             </div>
             <div className='py-3'>
                 <h3 className='text-center text-white/60'>
-                    @2025 - All Rights Reserved by{' '}
+                    @2026 - All Rights Reserved by{' '}
                     <Link
-                        href='https://adminmart.com/'
+                        href='http://outdidunified.com/'
                         target='_blank'
                         className='hover:text-white'>
                         {' '}
-                        GetNextJs Templates.com {' '}
-                    </Link>
-                    • Distributed by{' '}
-                    <Link
-                        href='https://themewagon.com/'
-                        target='_blank'
-                        className='hover:text-white'>
-                        {' '}
-                        ThemeWagon
+                        OUTDID UNIFIED PVT LTD {' '}
                     </Link>
                 </h3>
             </div>

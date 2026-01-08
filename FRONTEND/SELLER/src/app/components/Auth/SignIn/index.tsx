@@ -8,6 +8,7 @@ import Logo from '@/app/components/Layout/Header/Logo'
 import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
 import { useAuth } from '@/context/AuthContext'
+import { Icon } from '@iconify/react/dist/iconify.js'
 
 interface SigninProps {
     onSwitchToSignUp?: () => void
@@ -24,6 +25,7 @@ const Signin = ({ onSwitchToSignUp, onCloseModal }: SigninProps) => {
         checkboxToggle: false,
     })
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const loginUser = async (e: any) => {
         e.preventDefault()
@@ -101,16 +103,25 @@ const Signin = ({ onSwitchToSignUp, onCloseModal }: SigninProps) => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Password <span className="text-red-500">*</span>
                     </label>
-                    <input
-                        type='password'
-                        placeholder='Password'
-                        value={loginData.password}
-                        onChange={(e) =>
-                            setLoginData({ ...loginData, password: e.target.value })
-                        }
-                        className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
-                        required
-                    />
+                    <div className="relative">
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder='Password'
+                            value={loginData.password}
+                            onChange={(e) =>
+                                setLoginData({ ...loginData, password: e.target.value })
+                            }
+                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                        >
+                            <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                        </button>
+                    </div>
                 </div>
                 <div className='mb-9'>
                     <button

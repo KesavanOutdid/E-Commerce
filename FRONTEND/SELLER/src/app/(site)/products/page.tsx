@@ -483,11 +483,14 @@ export default function ProductsPage() {
                                                 <tbody className="divide-y divide-gray-200 bg-white">
                                                     {displayedProducts.map((product: any) => {
                                                         const isListing = selectedCategory === 'own'
-                                                        const images = isListing ? product.productImages : product.images
-                                                        const productName = product.productName
+                                                        const productData = isListing ? product.product : product
+                                                        const images = productData?.images || product.productImages || product.images
+                                                        const productName = productData?.productName || product.productName
                                                         const price = product.price
                                                         const stock = product.stock || 0
-                                                        const description = isListing ? product.productDescription : product.shortDescription
+                                                        const description = productData?.shortDescription || product.productDescription || product.shortDescription
+                                                        const mainCategoryName = product.mainCategoryName || productData?.mainCategoryName || '-'
+                                                        const subCategoryName = product.subCategoryName || productData?.subCategoryName || '-'
 
                                                         return (
                                                             <tr key={product._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
@@ -520,8 +523,8 @@ export default function ProductsPage() {
                                                                 </td>
                                                                 <td className="px-4 py-2.5">
                                                                     <div className="text-xs text-gray-600">
-                                                                        <p className="text-black text-sm font-medium">{product.mainCategoryName || '-'}</p>
-                                                                        <p>{product.subCategoryName || '-'}</p>
+                                                                        <p className="text-black text-sm font-medium">{mainCategoryName}</p>
+                                                                        <p>{subCategoryName}</p>
                                                                     </div>
                                                                 </td>
                                                                 {selectedCategory === 'own' && (

@@ -7,6 +7,7 @@ import Logo from '@/app/components/Layout/Header/Logo'
 import { useState } from 'react'
 import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
+import { Icon } from '@iconify/react/dist/iconify.js'
 
 interface SignUpProps {
     onSuccess?: () => void
@@ -26,6 +27,8 @@ const SignUp = ({ onSuccess, onSwitchToSignIn }: SignUpProps) => {
         confirmPassword: '',
         otpCode: '',
     })
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const handleSendOTP = async (e: any) => {
         e.preventDefault()
@@ -171,7 +174,14 @@ const SignUp = ({ onSuccess, onSwitchToSignIn }: SignUpProps) => {
                             type='tel'
                             placeholder='Phone Number'
                             value={formData.phone}
-                            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                            onChange={(e) => {
+                                const value = e.target.value.replace(/\D/g, '')
+                                if (value.length <= 10) {
+                                    setFormData({ ...formData, phone: value })
+                                }
+                            }}
+                            pattern="[0-9]{10}"
+                            maxLength={10}
                             required
                             className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
                         />
@@ -193,27 +203,45 @@ const SignUp = ({ onSuccess, onSwitchToSignIn }: SignUpProps) => {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Password <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            type='password'
-                            placeholder='Password'
-                            value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            required
-                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder='Password'
+                                value={formData.password}
+                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                required
+                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                            >
+                                <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                            </button>
+                        </div>
                     </div>
                     <div className='mb-[22px]'>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Confirm Password <span className="text-red-500">*</span>
                         </label>
-                        <input
-                            type='password'
-                            placeholder='Confirm Password'
-                            value={formData.confirmPassword}
-                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                            required
-                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
-                        />
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder='Confirm Password'
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                required
+                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                            >
+                                <Icon icon={showConfirmPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                            </button>
+                        </div>
                     </div>
                     <div className='mb-9'>
                         <button

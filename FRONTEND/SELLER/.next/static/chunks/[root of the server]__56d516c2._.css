@@ -2770,6 +2770,10 @@
     padding-right: calc(var(--spacing) * 10);
   }
 
+  .pr-12 {
+    padding-right: calc(var(--spacing) * 12);
+  }
+
   .pr-20 {
     padding-right: calc(var(--spacing) * 20);
   }
