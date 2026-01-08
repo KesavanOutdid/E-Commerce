@@ -4,6 +4,7 @@ const Cart = require('../../models/Cart');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
 const SellerProduct = require('../../models/SellerProduct');
+const PriceHistory = require('../../models/PriceHistory');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -25,6 +26,86 @@ const razorpay = isValidRazorpayConfig()
       key_secret: process.env.RAZORPAY_KEY_SECRET
     })
   : null;
+
+const PLATFORM_FEE_PERCENTAGE = 5;
+const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+async function processPlatformFees(orderItems, orderId, paymentType) {
+  const results = {
+    totalPlatformFees: 0,
+    sellerBreakdown: []
+  };
+
+  for (const item of orderItems) {
+    try {
+      let sellerId = null;
+      let salePrice = 0;
+
+      if (item.sellerProductId) {
+        const sellerProduct = await SellerProduct.findById(item.sellerProductId);
+        if (sellerProduct) {
+          sellerId = sellerProduct.sellerId;
+          salePrice = (sellerProduct.salePrice || sellerProduct.price) * item.qty;
+        }
+      }
+
+      if (sellerId && salePrice > 0) {
+        const platformFee = (salePrice * PLATFORM_FEE_PERCENTAGE) / 100;
+        const sellerEarnings = salePrice - platformFee;
+
+        await User.addSellerEarnings(sellerId.toString(), sellerEarnings);
+
+        await PriceHistory.create({
+          userId: sellerId.toString(),
+          type: 'seller_earning',
+          orderId: orderId,
+          productId: item.productId,
+          sellerProductId: item.sellerProductId,
+          sellerId: sellerId.toString(),
+          amount: sellerEarnings,
+          salePrice: salePrice,
+          platformFee: platformFee,
+          paymentType: paymentType
+        });
+
+        results.totalPlatformFees += platformFee;
+        results.sellerBreakdown.push({
+          sellerId: sellerId.toString(),
+          productId: item.productId,
+          sellerProductId: item.sellerProductId,
+          salePrice: salePrice,
+          platformFee: platformFee,
+          sellerEarnings: sellerEarnings
+        });
+      }
+    } catch (error) {
+      console.error(`Error processing platform fees for item ${item.productId}:`, error);
+    }
+  }
+
+  if (results.totalPlatformFees > 0) {
+    try {
+      await User.addPlatformFees(ADMIN_USER_ID, results.totalPlatformFees);
+
+      await PriceHistory.create({
+        userId: ADMIN_USER_ID,
+        type: 'platform_fee',
+        orderId: orderId,
+        productId: null,
+        sellerProductId: null,
+        sellerId: null,
+        amount: results.totalPlatformFees,
+        salePrice: null,
+        platformFee: results.totalPlatformFees,
+        paymentType: paymentType
+      });
+    } catch (error) {
+      console.error('Error updating admin platform fees:', error);
+    }
+  }
+
+  return results;
+}
 
 exports.createOrder = async (req, res) => {
   try {
@@ -242,6 +323,8 @@ exports.createOrder = async (req, res) => {
         }
       }
 
+      await processPlatformFees(selectedItems, order.orderId, paymentType);
+
       if (productIds && Array.isArray(productIds) && productIds.length > 0) {
         for (const item of selectedItems) {
           await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
@@ -385,6 +468,8 @@ exports.verifyOrder = async (req, res) => {
         
         await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
       }
+
+      await processPlatformFees(order.items, order.orderId, order.paymentType);
     }
 
     return res.status(200).json({
