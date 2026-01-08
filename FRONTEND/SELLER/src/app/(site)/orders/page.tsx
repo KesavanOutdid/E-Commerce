@@ -8,6 +8,7 @@ import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
+import OrderTableSkeleton from '@/app/components/Skeleton/OrderTable'
 
 export default function OrdersPage() {
     const router = useRouter()
@@ -159,9 +160,7 @@ export default function OrdersPage() {
                         </div>
 
                         {loading && !orders.length ? (
-                            <div className="flex justify-center items-center py-20">
-                                <Loader />
-                            </div>
+                            <OrderTableSkeleton />
                         ) : orders.length === 0 ? (
                             <div className="text-center py-20">
                                 <div className="mb-4">

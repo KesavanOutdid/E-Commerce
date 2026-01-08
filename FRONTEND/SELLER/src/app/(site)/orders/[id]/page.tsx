@@ -8,6 +8,7 @@ import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
+import OrderViewSkeleton from '@/app/components/Skeleton/OrderView'
 
 export default function OrderDetailPage() {
     const router = useRouter()
@@ -70,9 +71,17 @@ export default function OrderDetailPage() {
 
     if (authLoading || loading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader />
-            </div>
+            <>
+                <Breadcrumb pageName="Order Details" />
+                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                    <div className="container mx-auto max-w-7xl px-4">
+                        <div className="mb-6">
+                            <div className="h-6 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        </div>
+                        <OrderViewSkeleton />
+                    </div>
+                </section>
+            </>
         )
     }
 

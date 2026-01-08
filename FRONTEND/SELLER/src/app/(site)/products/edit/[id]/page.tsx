@@ -7,6 +7,7 @@ import { useProducts } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
+import ProductFormSkeleton from '@/app/components/Skeleton/ProductForm'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 
@@ -183,9 +184,14 @@ export default function EditProductPage() {
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader />
-            </div>
+            <>
+                <Breadcrumb pageName="Edit Product" />
+                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                    <div className="container mx-auto max-w-4xl px-4">
+                        <ProductFormSkeleton />
+                    </div>
+                </section>
+            </>
         )
     }
 
@@ -193,11 +199,16 @@ export default function EditProductPage() {
         return null
     }
 
-    if (!originalData) {
+    if (!originalData || productLoading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader />
-            </div>
+            <>
+                <Breadcrumb pageName="Edit Product" />
+                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                    <div className="container mx-auto max-w-4xl px-4">
+                        <ProductFormSkeleton />
+                    </div>
+                </section>
+            </>
         )
     }
 
@@ -300,7 +311,7 @@ export default function EditProductPage() {
                                 </div>
                             </div>
 
-                            <div className="mb-6">
+                            {/* <div className="mb-6">
                                 <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
                                     <Icon icon="mdi:currency-usd" width={24} height={24} className="text-primary" />
                                     Pricing & Stock
@@ -336,7 +347,7 @@ export default function EditProductPage() {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="mb-6">
                                 <h2 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">

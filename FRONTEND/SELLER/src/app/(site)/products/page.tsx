@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useProducts } from '@/hooks/useProducts'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
+import ProductTableSkeleton from '@/app/components/Skeleton/ProductTable'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 
@@ -20,6 +21,7 @@ interface PriceModalData {
     currentSalePrice?: number
     currentStock?: number
     currentDeliveryDays?: number
+    commissionPercentage?: number
 }
 
 export default function ProductsPage() {
@@ -392,9 +394,7 @@ export default function ProductsPage() {
                                 </div>
 
                                 {loading ? (
-                                    <div className="flex justify-center py-12">
-                                        <Loader />
-                                    </div>
+                                    <ProductTableSkeleton />
                                 ) : displayedProducts.length === 0 ? (
                                     <div className="text-center py-16">
                                         <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 mb-6">
@@ -614,6 +614,7 @@ export default function ProductsPage() {
                                                                                         currentSalePrice: product.salePrice,
                                                                                         currentStock: product.stock,
                                                                                         currentDeliveryDays: product.deliveryDays,
+                                                                                        commissionPercentage: product.commissionPercentage || 0,
                                                                                     })}
                                                                                     className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
                                                                                     title="Edit Price">
@@ -677,6 +678,7 @@ export default function ProductsPage() {
                                                                                                 currentSalePrice: listingToUpdate?.salePrice || product.salePrice,
                                                                                                 currentStock: listingToUpdate?.stock || product.stock,
                                                                                                 currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
+                                                                                                commissionPercentage: listingToUpdate?.commissionPercentage || product.commissionPercentage || 0,
                                                                                             })}
                                                                                             className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
                                                                                             title="Edit Price">
@@ -720,6 +722,7 @@ export default function ProductsPage() {
                                                                                             type: 'create',
                                                                                             productId: product.productId,
                                                                                             productName: productName,
+                                                                                            commissionPercentage: product.commissionPercentage || 0,
                                                                                         })}
                                                                                         className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
                                                                                         title="Edit Price">
@@ -936,6 +939,32 @@ export default function ProductsPage() {
                                     </div>
                                 </div>
                             </div>
+
+                            {priceFormData.price && parseFloat(priceFormData.price) > 0 && priceModal.commissionPercentage && priceModal.commissionPercentage > 0 && (
+                                <div className="mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl">
+                                    <div className="flex items-start gap-3">
+                                        <Icon icon="mdi:calculator" className="text-blue-600 mt-1 flex-shrink-0" width={24} height={24} />
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-blue-900 mb-3 text-lg">Platform Fees Breakdown</h4>
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between items-center bg-white/80 rounded-lg p-3">
+                                                    <span className="text-blue-800 font-medium">Your Sale Price:</span>
+                                                    <span className="font-bold text-blue-900 text-lg">₹{parseFloat(priceFormData.salePrice).toFixed(2)}</span>
+                                                </div>
+                                                <div className="flex justify-between items-center bg-white/80 rounded-lg p-3">
+                                                    <span className="text-blue-800 font-medium">Platform Fees ({priceModal.commissionPercentage}%):</span>
+                                                    <span className="font-bold text-orange-600 text-lg">-₹{(parseFloat(priceFormData.salePrice) * priceModal.commissionPercentage / 100).toFixed(2)}</span>
+                                                </div>
+                                                <div className="border-t-2 border-blue-300 my-2"></div>
+                                                <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-2 border-green-300">
+                                                    <span className="font-bold text-green-900 text-lg">You will receive:</span>
+                                                    <span className="font-bold text-green-700 text-2xl">₹{(parseFloat(priceFormData.salePrice) * (100 - priceModal.commissionPercentage) / 100).toFixed(2)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
                                 <div className="flex items-start gap-3">

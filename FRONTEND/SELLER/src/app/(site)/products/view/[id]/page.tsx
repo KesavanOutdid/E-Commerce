@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useProducts } from '@/hooks/useProducts'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
-import Loader from '@/app/components/Common/Loader'
+import ProductViewSkeleton from '@/app/components/Skeleton/ProductView'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 
@@ -54,9 +54,14 @@ export default function ProductViewPage() {
 
     if (isLoading || loading || !product) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader />
-            </div>
+            <>
+                <Breadcrumb pageName="Product Details" />
+                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                    <div className="container mx-auto max-w-7xl px-4">
+                        <ProductViewSkeleton />
+                    </div>
+                </section>
+            </>
         )
     }
 
@@ -142,44 +147,74 @@ export default function ProductViewPage() {
                                 <h2 className="text-2xl font-bold text-black mb-4">{product.productName}</h2>
                                 
                                 {product.sellerListing ? (
-                                    <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-primary/20">
-                                        <div className="flex items-center gap-2 mb-4">
-                                            <Icon icon="mdi:storefront" className="text-primary" width={24} height={24} />
-                                            <h3 className="text-lg font-semibold text-gray-900">Your Listing Price</h3>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-white rounded-lg p-4">
-                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                    <Icon icon="mdi:currency-inr" width={16} height={16} />
-                                                    Price
-                                                </p>
-                                                <p className="text-2xl font-bold text-primary">₹{Number(product.sellerListing.price).toLocaleString('en-IN')}</p>
+                                    <>
+                                        <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-primary/20">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <Icon icon="mdi:storefront" className="text-primary" width={24} height={24} />
+                                                <h3 className="text-lg font-semibold text-gray-900">Your Listing Price</h3>
                                             </div>
-                                            {product.sellerListing.salePrice && (
+                                            <div className="grid grid-cols-2 gap-4">
                                                 <div className="bg-white rounded-lg p-4">
                                                     <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                        <Icon icon="mdi:tag" width={16} height={16} />
-                                                        Sale Price
+                                                        <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                        Price
                                                     </p>
-                                                    <p className="text-2xl font-bold text-green-600">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</p>
+                                                    <p className="text-2xl font-bold text-primary">₹{Number(product.sellerListing.price).toLocaleString('en-IN')}</p>
                                                 </div>
-                                            )}
-                                            <div className="bg-white rounded-lg p-4">
-                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                    <Icon icon="mdi:package-variant" width={16} height={16} />
-                                                    Stock
-                                                </p>
-                                                <p className="text-xl font-bold text-gray-900">{product.sellerListing.stock} units</p>
-                                            </div>
-                                            <div className="bg-white rounded-lg p-4">
-                                                <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                    <Icon icon="mdi:truck-delivery" width={16} height={16} />
-                                                    Delivery
-                                                </p>
-                                                <p className="text-xl font-bold text-gray-900">{product.sellerListing.deliveryDays} days</p>
+                                                {product.sellerListing.salePrice && (
+                                                    <div className="bg-white rounded-lg p-4">
+                                                        <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                            <Icon icon="mdi:tag" width={16} height={16} />
+                                                            Sale Price
+                                                        </p>
+                                                        <p className="text-2xl font-bold text-green-600">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</p>
+                                                    </div>
+                                                )}
+                                                <div className="bg-white rounded-lg p-4">
+                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                        <Icon icon="mdi:package-variant" width={16} height={16} />
+                                                        Stock
+                                                    </p>
+                                                    <p className="text-xl font-bold text-gray-900">{product.sellerListing.stock} units</p>
+                                                </div>
+                                                <div className="bg-white rounded-lg p-4">
+                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
+                                                        <Icon icon="mdi:truck-delivery" width={16} height={16} />
+                                                        Delivery
+                                                    </p>
+                                                    <p className="text-xl font-bold text-gray-900">{product.sellerListing.deliveryDays} days</p>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
+                                        {product.commissionPercentage > 0 && product.sellerListing.price > 0 && (
+                                            <div className="mb-6 p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl">
+                                                <div className="flex items-start gap-3">
+                                                    <Icon icon="mdi:calculator" className="text-amber-600 mt-1" width={28} height={28} />
+                                                    <div className="flex-1">
+                                                        <h4 className="font-bold text-amber-900 mb-3 text-lg flex items-center gap-2">
+                                                            Platform Fees Breakdown
+                                                            <Icon icon="mdi:information" className="text-amber-600" width={18} height={18} />
+                                                        </h4>
+                                                        <div className="space-y-3">
+                                                            <div className="flex justify-between items-center bg-white/90 rounded-lg p-4 shadow-sm">
+                                                                <span className="text-gray-700 font-medium">Your Sale Price:</span>
+                                                                <span className="font-bold text-gray-900 text-xl">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</span>
+                                                            </div>
+                                                            <div className="flex justify-between items-center bg-white/90 rounded-lg p-4 shadow-sm">
+                                                                <span className="text-gray-700 font-medium">Platform Fees ({product.commissionPercentage}%):</span>
+                                                                <span className="font-bold text-red-600 text-xl">-₹{(product.sellerListing.salePrice * product.commissionPercentage / 100).toFixed(2)}</span>
+                                                            </div>
+                                                            <div className="border-t-2 border-amber-300 my-2"></div>
+                                                            <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-2 border-green-400 shadow-md">
+                                                                <span className="font-bold text-green-900 text-lg">You will receive:</span>
+                                                                <span className="font-bold text-green-700 text-2xl">₹{(product.sellerListing.salePrice * (100 - product.commissionPercentage) / 100).toFixed(2)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
                                 ) : (
                                     <div className="mb-6">
                                         <div className="grid grid-cols-2 gap-4">

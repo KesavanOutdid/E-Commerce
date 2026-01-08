@@ -7,6 +7,7 @@ import { useProducts } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
+import ProductFormSkeleton from '@/app/components/Skeleton/ProductForm'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 
@@ -31,6 +32,7 @@ export default function AddProductPage() {
         attributes: [] as Array<{ name: string; value: string; slug?: string; required?: boolean }>,
     })
     const [subCategoryAttributes, setSubCategoryAttributes] = useState<any[]>([])
+    const [commissionPercentage, setCommissionPercentage] = useState<number>(0)
     const [images, setImages] = useState<File[]>([])
     const [imagePreviews, setImagePreviews] = useState<string[]>([])
     const [imageError, setImageError] = useState('')
@@ -69,6 +71,7 @@ export default function AddProductPage() {
                 const subCategory = subCategories.find((cat: any) => cat.subCategoryId === formData.subCategoryId || cat._id === formData.subCategoryId)
                 if (subCategory && subCategory.attributes && subCategory.attributes.length > 0) {
                     setSubCategoryAttributes(subCategory.attributes)
+                    setCommissionPercentage(subCategory.commissionPercentage || 0)
                     const initialAttributes = subCategory.attributes.map((attr: any) => ({
                         name: attr.name,
                         slug: attr.slug,
@@ -78,6 +81,7 @@ export default function AddProductPage() {
                     setFormData(prev => ({ ...prev, attributes: initialAttributes }))
                 } else {
                     setSubCategoryAttributes([])
+                    setCommissionPercentage(0)
                     setFormData(prev => ({ ...prev, attributes: [] }))
                 }
             }
@@ -263,11 +267,16 @@ export default function AddProductPage() {
         }
     }
 
-    if (isLoading) {
+    if (isLoading || categoryLoading) {
         return (
-            <div className="flex justify-center items-center min-h-screen">
-                <Loader />
-            </div>
+            <>
+                <Breadcrumb pageName="Add Product" />
+                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
+                    <div className="container mx-auto max-w-4xl px-4">
+                        <ProductFormSkeleton />
+                    </div>
+                </section>
+            </>
         )
     }
 
@@ -494,6 +503,31 @@ export default function AddProductPage() {
                                             />
                                         </div>
                                     </div>
+                                    {formData.price && parseFloat(formData.price) > 0 && commissionPercentage > 0 && (
+                                        <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+                                            <div className="flex items-start gap-3">
+                                                <Icon icon="mdi:information" className="text-blue-600 mt-1" width={24} height={24} />
+                                                <div className="flex-1">
+                                                    <h4 className="font-semibold text-blue-900 mb-3">Platform Fees Breakdown</h4>
+                                                    <div className="space-y-2 text-sm">
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-blue-800">Your Sale Price:</span>
+                                                            <span className="font-bold text-blue-900">₹{parseFloat(formData.salePrice).toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="text-blue-800">Platform Fees ({commissionPercentage}%):</span>
+                                                            <span className="font-bold text-orange-600">-₹{(parseFloat(formData.salePrice) * commissionPercentage / 100).toFixed(2)}</span>
+                                                        </div>
+                                                        <div className="border-t-2 border-blue-300 pt-2 mt-2"></div>
+                                                        <div className="flex justify-between items-center">
+                                                            <span className="font-semibold text-blue-900">You will receive:</span>
+                                                            <span className="font-bold text-green-600 text-lg">₹{(parseFloat(formData.salePrice) * (100 - commissionPercentage) / 100).toFixed(2)}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 

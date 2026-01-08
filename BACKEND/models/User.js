@@ -18,6 +18,8 @@ class User {
       profileImage: userData.profileImage || null,
       addresses: userData.addresses || [],
       wishlist: userData.wishlist || [],
+      sellerEarnings: userData.sellerEarnings || 0,
+      platformFees: userData.platformFees || 0,
       status: userData.status !== undefined ? userData.status : true,
       authenticator: userData.authenticator || false,
       lastLoginAt: userData.lastLoginAt || null,
@@ -180,6 +182,28 @@ class User {
 
   static async delete(userId) {
     return await this.collection().deleteOne({ userId });
+  }
+
+  static async addSellerEarnings(userId, amount) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $inc: { sellerEarnings: amount },
+        $set: { updatedAt: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async addPlatformFees(userId, amount) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $inc: { platformFees: amount },
+        $set: { updatedAt: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
   }
 }
 
