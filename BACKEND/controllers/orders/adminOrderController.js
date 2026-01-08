@@ -42,12 +42,23 @@ exports.getAllOrders = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const { status, paymentType, paymentStatus } = req.query;
+    const { status, paymentType, paymentStatus, search } = req.query;
     
     const filter = {};
     if (status) filter.orderStatus = status;
     if (paymentType) filter.paymentType = paymentType.toLowerCase();
     if (paymentStatus) filter.paymentStatus = paymentStatus;
+
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      filter.$or = [
+        { orderId: searchRegex },
+        { 'deliveryAddress.name': searchRegex },
+        { userEmail: searchRegex },
+        { paymentStatus: searchRegex },
+        { orderStatus: searchRegex }
+      ];
+    }
     
     const orders = await Order.findAll({
       limit: limit,

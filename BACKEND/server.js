@@ -58,6 +58,7 @@ const dashboardRoutes = require('./routes/dashboard/dashboardRoutes');
 const contactSellerRoutes = require('./routes/contact/seller/contactRoutes');
 const contactRoutes = require('./routes/contact/contactRoutes');
 const newsletterRoutes = require('./routes/newsletter/newsletterRoutes');
+const searchRoutes = require('./routes/search/searchRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
@@ -75,6 +76,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/contact/seller', contactSellerRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/search', searchRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {

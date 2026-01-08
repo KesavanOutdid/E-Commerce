@@ -4,10 +4,16 @@ async function getRoles(req, res) {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const { search } = req.query;
     const skip = (page - 1) * limit;
 
-    const roles = await Role.findAll({}, { skip, limit });
-    const total = await Role.count({});
+    const query = {};
+    if (search) {
+      query.roleName = new RegExp(search, 'i');
+    }
+
+    const roles = await Role.findAll(query, { skip, limit });
+    const total = await Role.count(query);
 
     return res.status(200).json({
       success: true,

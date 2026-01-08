@@ -27,13 +27,15 @@ import {
   MenuItem,
   Checkbox,
   Divider,
-  Paper
+  Paper,
+  Pagination
 } from '@mui/material';
 import { IconPlus, IconEye, IconShieldLock, IconDeviceFloppy, IconX, IconEdit, IconSearch } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useRoles } from '../../hooks/roles/RolesHooks';
 import { usePermissions } from '../../hooks/roles/PermissionHooks';
+import { useEffect } from 'react';
 
 const PermissionsDialog = ({ role, open, onClose }) => {
   const {
@@ -160,20 +162,26 @@ const Roles = () => {
     openDialog,
     editMode,
     formData,
+    pagination,
     isDirty,
     handleOpenDialog,
     handleCloseDialog,
     handleSubmit,
+    handlePageChange,
+    handleFilterChange,
     updateFormData
   } = useRoles();
 
   const [permDialog, setPermDialog] = useState({ open: false, role: null });
   const [search, setSearch] = useState('');
 
-  const filteredRoles = roles.filter(role => 
-    (role.roleName?.toLowerCase().includes(search.toLowerCase()) || false) ||
-    (role.roleId?.toString().includes(search) || false)
-  );
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleFilterChange('search', search);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, handleFilterChange]);
 
   const handleOpenPermissions = (role) => {
     setPermDialog({ open: true, role });
@@ -242,16 +250,16 @@ const Roles = () => {
                   <CircularProgress />
                 </TableCell>
               </TableRow>
-            ) : filteredRoles.length === 0 ? (
+            ) : roles.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
                   <Typography variant="body1">No roles found</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredRoles.map((role, index) => (
+              roles.map((role, index) => (
                 <TableRow key={role.roleId} hover>
-                  <TableCell sx={{ fontSize: '0.95rem' }}>{index + 1}</TableCell>
+                  <TableCell sx={{ fontSize: '0.95rem' }}>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
                   <TableCell sx={{ fontSize: '0.95rem' }}>{role.roleId}</TableCell>
                   <TableCell>
                     <Typography variant="subtitle1" fontWeight={600}>
@@ -283,6 +291,19 @@ const Roles = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {!loading && pagination.totalItems > 0 && (
+        <Stack direction="row" justifyContent="center" sx={{ py: 3 }}>
+          <Pagination
+            count={pagination.totalPages}
+            page={pagination.currentPage}
+            onChange={(event, value) => handlePageChange(event, value - 1)}
+            color="primary"
+            showFirstButton
+            showLastButton
+          />
+        </Stack>
+      )}
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>{editMode ? 'Edit Role' : 'Add New Role'}</DialogTitle>

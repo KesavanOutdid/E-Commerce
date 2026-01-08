@@ -75,11 +75,21 @@ exports.getMainCategories = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const { search } = req.query;
     const skip = (page - 1) * limit;
 
+    const query = {};
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      query.$or = [
+        { name: searchRegex },
+        { slug: searchRegex }
+      ];
+    }
+
     const [categories, total] = await Promise.all([
-      MainCategory.find({}, { skip, limit, sort: { createdAt: -1 } }),
-      MainCategory.count({})
+      MainCategory.find(query, { skip, limit, sort: { createdAt: -1 } }),
+      MainCategory.count(query)
     ]);
 
     res.status(200).json({

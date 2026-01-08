@@ -38,6 +38,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: {
     GET_ALL: '/products/admin/getproducts', // Admin specific list
     GET_ALL_SELLER: '/products/admin/seller-products', // NEW: Seller products for admin
+    GET_SELLERS_LIST: '/products/admin/sellers-list', // NEW: Get all sellers
     LIST_CATALOG: '/products/admin/list', // NEW: List product from catalog
     GET_BY_ID: (id) => `/products/admin/${id}`, // Use public route for details
     CREATE: '/products/admin',
@@ -67,5 +68,8 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id) => `/contact/seller/${id}`,
     UPDATE_STATUS: (id) => `/contact/seller/${id}/status`,
     DELETE: (id) => `/contact/seller/${id}`
+  },
+  SEARCH: {
+    GLOBAL: '/search/global'
   }
 };

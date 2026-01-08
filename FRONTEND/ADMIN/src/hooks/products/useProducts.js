@@ -20,7 +20,8 @@ export const useProducts = () => {
         mainCategoryId: '',
         subCategoryId: '',
         status: '',
-        approvalStatus: ''
+        approvalStatus: '',
+        sellerId: ''
     });
 
     const buildQueryString = useCallback((page, currentFilters) => {
@@ -33,6 +34,7 @@ export const useProducts = () => {
         if (currentFilters.subCategoryId) params.append('subCategoryId', currentFilters.subCategoryId);
         if (currentFilters.status) params.append('status', currentFilters.status);
         if (currentFilters.approvalStatus) params.append('approvalStatus', currentFilters.approvalStatus);
+        if (currentFilters.sellerId) params.append('sellerId', currentFilters.sellerId);
 
         return params.toString();
     }, [pagination.pageSize]);

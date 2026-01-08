@@ -16,6 +16,15 @@ async function getUsers(req, res) {
     if (req.query.status !== undefined) {
       filter.status = req.query.status === 'true';
     }
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      filter.$or = [
+        { firstName: searchRegex },
+        { lastName: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex }
+      ];
+    }
 
     const users = await User.findAll(filter, { skip, limit });
     const total = await User.count(filter);

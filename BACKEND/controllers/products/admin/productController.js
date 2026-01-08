@@ -148,6 +148,19 @@ exports.getProducts = async (req, res) => {
         { productId: { $in: adminListedProductIds } }
       ]
     };
+
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      query.$and = [
+        {
+          $or: [
+            { productName: searchRegex },
+            { slug: searchRegex },
+            { description: searchRegex }
+          ]
+        }
+      ];
+    }
     
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -205,23 +218,42 @@ exports.getAllSellerProducts = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const { sellerId } = req.query;
 
-    // Search for users where 'roles' array contains 2 (Seller) and NOT 1 (Admin)
-    const sellerUsers = await User.collection().find({
-      roles: { $in: [2], $nin: [1] }
-    }).project({ userId: 1 }).toArray();
-    
-    const sellerIds = sellerUsers.map(u => u.userId);
+    let query = {};
+    if (sellerId) {
+      query = { sellerId };
+    } else {
+      // Search for users where 'roles' array contains 2 (Seller) and NOT 1 (Admin)
+      const sellerUsers = await User.collection().find({
+        roles: { $in: [2], $nin: [1] }
+      }).project({ userId: 1 }).toArray();
+      
+      const sellerIds = sellerUsers.map(u => u.userId);
 
-    if (sellerIds.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'No sellers found',
-        data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
-      });
+      if (sellerIds.length === 0) {
+        return res.status(200).json({ 
+          success: true, 
+          message: 'No sellers found',
+          data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
+        });
+      }
+      query = { sellerId: { $in: sellerIds } };
     }
 
-    const query = { sellerId: { $in: sellerIds } };
+    if (req.query.search) {
+      const searchRegex = new RegExp(req.query.search, 'i');
+      const matchingProducts = await Product.collection().find({
+        $or: [
+          { productName: searchRegex },
+          { slug: searchRegex },
+          { description: searchRegex }
+        ]
+      }).project({ productId: 1 }).toArray();
+      
+      const matchingProductIds = matchingProducts.map(p => p.productId);
+      query.productId = { $in: matchingProductIds };
+    }
 
     const [listings, total] = await Promise.all([
       SellerProduct.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
@@ -753,6 +785,47 @@ exports.updateApprovalStatus = async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: `Product ${approvalStatus} successfully`    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getSellersList = async (req, res) => {
+  try {
+    // Get all users with seller role (2) and not admin (1)
+    const sellers = await User.collection().find({
+      roles: { $in: [2], $nin: [1] }
+    }).project({ 
+      userId: 1, 
+      firstName: 1, 
+      lastName: 1, 
+      email: 1 
+    }).toArray();
+
+    const sellerIds = sellers.map(s => s.userId);
+
+    // Get shop details from Seller model
+    const sellerDetails = await Seller.collection().find({
+      userId: { $in: sellerIds }
+    }).project({ 
+      userId: 1, 
+      shopName: 1 
+    }).toArray();
+
+    const shopMap = new Map();
+    sellerDetails.forEach(s => shopMap.set(s.userId, s.shopName));
+
+    const sellersWithShops = sellers.map(s => ({
+      userId: s.userId,
+      name: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+      email: s.email,
+      shopName: shopMap.get(s.userId) || 'N/A'
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: sellersWithShops
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

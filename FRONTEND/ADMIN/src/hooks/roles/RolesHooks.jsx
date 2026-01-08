@@ -12,28 +12,59 @@ export const useRoles = () => {
   const [currentRole, setCurrentRole] = useState(null);
   const [initialData, setInitialData] = useState(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0
+  });
+  const [filters, setFilters] = useState({
+    search: ''
+  });
   const [formData, setFormData] = useState({
     roleName: '',
     status: true
   });
 
-  const fetchRoles = useCallback(async () => {
+  const fetchRoles = useCallback(async (page = 1) => {
     try {
       setLoading(true);
-      const response = await axios.get(API_ENDPOINTS.ROLES.GET_ALL);
+      const params = new URLSearchParams();
+      params.append('page', page);
+      params.append('limit', pagination.pageSize);
+      if (filters.search) params.append('search', filters.search);
+
+      const response = await axios.get(`${API_ENDPOINTS.ROLES.GET_ALL}?${params.toString()}`);
       if (response.data.success) {
         setRoles(response.data.data || []);
+        if (response.data.pagination) {
+          setPagination({
+            currentPage: response.data.pagination.currentPage,
+            pageSize: response.data.pagination.pageSize,
+            totalItems: response.data.pagination.totalItems,
+            totalPages: response.data.pagination.totalPages
+          });
+        }
       }
     } catch (error) {
       Swal.fire('Error', 'Failed to fetch roles', 'error');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pagination.pageSize, filters.search]);
 
   useEffect(() => {
-    fetchRoles();
-  }, [fetchRoles]);
+    fetchRoles(pagination.currentPage);
+  }, [fetchRoles, pagination.currentPage]);
+
+  const handlePageChange = useCallback((event, newPage) => {
+    setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+  }, []);
+
+  const handleFilterChange = useCallback((key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
+  }, []);
 
   const handleOpenDialog = (role = null) => {
     const data = role 
@@ -97,10 +128,13 @@ export const useRoles = () => {
     openDialog,
     editMode,
     formData,
+    pagination,
     isDirty,
     handleOpenDialog,
     handleCloseDialog,
     handleSubmit,
+    handlePageChange,
+    handleFilterChange,
     updateFormData
   };
 };

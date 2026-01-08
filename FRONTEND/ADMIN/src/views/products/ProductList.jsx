@@ -21,14 +21,19 @@ import {
     Avatar,
     Pagination,
     Tabs,
-    Tab
+    Tab,
+    MenuItem,
+    Select,
+    FormControl,
+    InputLabel
 } from '@mui/material';
 import { IconSearch, IconPlus, IconEye, IconEdit, IconBuildingStore } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useProducts } from '../../hooks/products/useProducts';
-import { API_BASE_URL } from '../../config/apiConfig';
+import { API_BASE_URL, API_ENDPOINTS } from '../../config/apiConfig';
+import axios from '../../utils/axiosInstance';
 
 const BASE_URL = API_BASE_URL.replace('/api', '');
 
@@ -64,6 +69,7 @@ const ProductList = () => {
         loading,
         pagination,
         productType,
+        filters,
         handlePageChange,
         handleTypeChange,
         handleFilterChange,
@@ -71,6 +77,22 @@ const ProductList = () => {
         listFromCatalog,
         fetchProducts
     } = useProducts();
+
+    const [sellers, setSellers] = useState([]);
+
+    useEffect(() => {
+        const fetchSellers = async () => {
+            try {
+                const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_SELLERS_LIST);
+                if (response.data.success) {
+                    setSellers(response.data.data);
+                }
+            } catch (error) {
+                console.error('Fetch sellers error:', error);
+            }
+        };
+        fetchSellers();
+    }, []);
 
     const handleQuickList = async (product) => {
         const { value: formValues } = await Swal.fire({
@@ -262,15 +284,38 @@ const ProductList = () => {
                         />
                     </Grid>
                     <Grid item xs={12} sm={8}>
-                        <Tabs
-                            value={productType}
-                            onChange={(e, newValue) => handleTypeChange(newValue)}
-                            indicatorColor="primary"
-                            textColor="primary"
-                        >
-                            <Tab value="admin" label="Our Products" />
-                            <Tab value="seller" label="Seller Products" />
-                        </Tabs>
+                        <Stack direction="row" spacing={2} alignItems="center" justifyContent="flex-end">
+                            {productType === 'seller' && (
+                                <FormControl size="small" sx={{ minWidth: 200 }}>
+                                    <InputLabel id="seller-select-label">Filter by Seller</InputLabel>
+                                    <Select
+                                        labelId="seller-select-label"
+                                        id="seller-select"
+                                        value={filters.sellerId || ''}
+                                        label="Filter by Seller"
+                                        onChange={(e) => handleFilterChange('sellerId', e.target.value)}
+                                    >
+                                        <MenuItem value="">
+                                            <em>All Sellers</em>
+                                        </MenuItem>
+                                        {sellers.map((seller) => (
+                                            <MenuItem key={seller.userId} value={seller.userId}>
+                                                {seller.shopName} ({seller.name})
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            )}
+                            <Tabs
+                                value={productType}
+                                onChange={(e, newValue) => handleTypeChange(newValue)}
+                                indicatorColor="primary"
+                                textColor="primary"
+                            >
+                                <Tab value="admin" label="Our Products" />
+                                <Tab value="seller" label="Seller Products" />
+                            </Tabs>
+                        </Stack>
                     </Grid>
                 </Grid>
 
