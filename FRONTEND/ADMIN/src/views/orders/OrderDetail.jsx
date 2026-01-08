@@ -191,9 +191,11 @@ const OrderDetail = () => {
                                                             {item.sellerDetails ? (
                                                                 <Box sx={{ mt: 1, p: 1, bgcolor: '#f8f9fa', borderRadius: 1, border: '1px dashed #dee2e6' }}>
                                                                     <Stack spacing={0.5}>
-                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600, color: '#444' }}>
-                                                                            <IconBuildingStore size={14} /> {item.sellerDetails.storeName || 'Individual Seller'}
-                                                                        </Typography>
+                                                                        {item.sellerDetails.storeName && (
+                                                                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600, color: '#444' }}>
+                                                                                <IconBuildingStore size={14} /> {item.sellerDetails.storeName}
+                                                                            </Typography>
+                                                                        )}
                                                                         <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                                                             <IconUser size={14} /> {item.sellerDetails.sellerName}
                                                                         </Typography>

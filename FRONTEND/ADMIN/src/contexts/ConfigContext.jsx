@@ -18,7 +18,7 @@ const initialState = {
 const ConfigContext = createContext(initialState);
 
 function ConfigProvider({ children }) {
-  const [config, setConfig] = useLocalStorage('berry-config-vite-ts', {
+  const [config, setConfig] = useLocalStorage('shopflow-config-admin', {
     fontFamily: initialState.fontFamily,
     borderRadius: initialState.borderRadius
   });

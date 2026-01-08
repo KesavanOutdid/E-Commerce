@@ -8,7 +8,7 @@ import ContactForm from './components/Contact/Form'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
-    title: 'Seller Hub - Sign Up Online',
+    title: 'ShopFlow Seller Hub - Grow Your Business Online',
 }
 
 export default function Home() {

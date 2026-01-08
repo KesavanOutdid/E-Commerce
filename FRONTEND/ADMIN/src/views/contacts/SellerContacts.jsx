@@ -71,25 +71,26 @@ const SellerContacts = () => {
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Name</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Email</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Phone</TableCell>
+                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Message</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Date</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
                         ) : contacts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1">No seller contact messages found</Typography>
                                 </TableCell>
                             </TableRow>
                         ) : (
                             contacts.map((contact, index) => (
-                                <TableRow key={contact._id || index} hover>
+                                <TableRow key={contact._id || index} hover onClick={() => handleViewDetail(contact)} sx={{ cursor: 'pointer' }}>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>
                                         {(pagination.currentPage - 1) * pagination.limit + index + 1}
                                     </TableCell>
@@ -98,6 +99,9 @@ const SellerContacts = () => {
                                     </TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{contact.email}</TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{contact.phone}</TableCell>
+                                    <TableCell sx={{ fontSize: '0.95rem', maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                        {contact.message}
+                                    </TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>
                                         {new Date(contact.createdAt).toLocaleDateString()}
                                     </TableCell>
