@@ -1,5 +1,6 @@
 const User = require('../../models/User');
 const Product = require('../../models/Product');
+const SellerProduct = require('../../models/SellerProduct');
 
 // Add item to wishlist
 exports.addToWishlist = async (req, res) => {
@@ -73,10 +74,47 @@ exports.getWishlist = async (req, res) => {
       ]
     });
 
+    // Fetch seller product details (price, stock) for each product
+    const productsWithDetails = await Promise.all(products.map(async (product) => {
+      // Find all approved listings for this product
+      const listings = await SellerProduct.collection().find({
+        productId: product.productId,
+        approvalStatus: 'approved',
+        sellerStatus: 'active'
+      }).toArray();
+
+      if (listings.length > 0) {
+        // Find the listing with the minimum price
+        const bestListing = listings.reduce((prev, curr) => {
+          const prevPrice = prev.salePrice || prev.price;
+          const currPrice = curr.salePrice || curr.price;
+          return prevPrice < currPrice ? prev : curr;
+        });
+
+        return {
+          ...product,
+          price: bestListing.price,
+          salePrice: bestListing.salePrice,
+          stock: bestListing.stock,
+          sellerProductId: bestListing.sellerProductId,
+          hasStock: bestListing.stock > 0
+        };
+      } else {
+        // No approved listings found
+        return {
+          ...product,
+          price: 0,
+          salePrice: null,
+          stock: 0,
+          hasStock: false
+        };
+      }
+    }));
+
     res.status(200).json({
       success: true,
       message: 'Wishlist fetched successfully',
-      data: products
+      data: productsWithDetails
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
