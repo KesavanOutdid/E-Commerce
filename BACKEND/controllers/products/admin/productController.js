@@ -202,20 +202,27 @@ exports.getProducts = async (req, res) => {
 
 exports.getAllSellerProducts = async (req, res) => {
   try {
-    let query = { roleId: 2 };
-    
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const [products, total] = await Promise.all([
-      Product.find(query, { skip, limit }),
-      Product.count(query)
+    const nonAdminUsers = await User.collection().find({
+      roleId: 2 // Assuming roleId 2 is Seller
+    }).project({ userId: 1 }).toArray();
+    
+    const sellerIds = nonAdminUsers.map(u => u.userId);
+
+    const query = { sellerId: { $in: sellerIds } };
+
+    const [listings, total] = await Promise.all([
+      SellerProduct.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+      SellerProduct.collection().countDocuments(query)
     ]);
 
-    // Fetch seller names and shop names
-    const sellerIds = [...new Set(products.map(p => p.userId).filter(Boolean))];
-    const [users, sellers] = await Promise.all([
+    const productIds = [...new Set(listings.map(l => l.productId))];
+    
+    const [products, users, sellers] = await Promise.all([
+      Product.collection().find({ productId: { $in: productIds } }).toArray(),
       User.collection().find({
         $or: [
           { userId: { $in: sellerIds } },
@@ -226,6 +233,9 @@ exports.getAllSellerProducts = async (req, res) => {
         userId: { $in: sellerIds }
       }).toArray()
     ]);
+
+    const productMap = new Map();
+    products.forEach(p => productMap.set(p.productId, p));
 
     const userMap = new Map();
     users.forEach(u => {
@@ -238,28 +248,28 @@ exports.getAllSellerProducts = async (req, res) => {
       if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
     });
 
-    // Map category names and seller details
-    const productsWithDetails = await Promise.all(products.map(async (product) => {
-      const [mainCategory, subCategory, listing] = await Promise.all([
+    // Map everything together
+    const productsWithDetails = await Promise.all(listings.map(async (listing) => {
+      const product = productMap.get(listing.productId);
+      if (!product) return null;
+
+      const [mainCategory, subCategory] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-        SellerProduct.collection().findOne({ 
-          productId: product.productId, 
-          sellerId: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : product.userId 
-        })
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
       ]);
 
-      const user = product.userId ? userMap.get(product.userId.toString()) : null;
+      const user = listing.sellerId ? userMap.get(listing.sellerId.toString()) : null;
       const sellerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
-      const shopName = product.userId ? shopMap.get(product.userId.toString()) : null;
+      const shopName = listing.sellerId ? shopMap.get(listing.sellerId.toString()) : null;
 
       return {
         ...product,
         // Override master price/stock with listing data
-        price: listing ? listing.price : product.price,
-        salePrice: listing ? listing.salePrice : product.salePrice,
-        stock: listing ? listing.stock : product.stock,
-        deliveryDays: listing ? listing.deliveryDays : null,
+        price: listing.price,
+        salePrice: listing.salePrice,
+        stock: listing.stock,
+        deliveryDays: listing.deliveryDays,
+        approvalStatus: listing.approvalStatus, // Seller's listing approval status
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
         sellerName,
@@ -271,7 +281,7 @@ exports.getAllSellerProducts = async (req, res) => {
       success: true, 
       message: 'All seller products fetched successfully',
       data: {
-        products: productsWithDetails,
+        products: productsWithDetails.filter(p => p !== null),
         pagination: {
           total,
           page,
