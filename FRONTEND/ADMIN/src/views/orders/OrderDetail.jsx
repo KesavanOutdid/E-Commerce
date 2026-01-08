@@ -31,7 +31,10 @@ import {
     IconCalendar,
     IconMapPin,
     IconCreditCard,
-    IconUser
+    IconUser,
+    IconPhone,
+    IconMail,
+    IconBuildingStore
 } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
@@ -159,36 +162,79 @@ const OrderDetail = () => {
                             <Table>
                                 <TableHead>
                                     <TableRow>
-                                        <TableCell>Product</TableCell>
+                                        <TableCell>Product & Seller</TableCell>
                                         <TableCell align="right">Price</TableCell>
                                         <TableCell align="center">Quantity</TableCell>
                                         <TableCell align="right">Total</TableCell>
+                                        <TableCell align="right">Payout Info</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {order.items?.map((item, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>
-                                                <Stack direction="row" spacing={2} alignItems="center">
-                                                    <Avatar
-                                                        src={item.images?.length ? `${BASE_URL}${item.images[0]}` : ''}
-                                                        variant="rounded"
-                                                        sx={{ width: 50, height: 50 }}
-                                                    />
-                                                    <Box>
-                                                        <Typography variant="subtitle2" fontWeight={600}>
-                                                            {item.productName || 'Product Name'}
-                                                        </Typography>
-                                                    </Box>
-                                                </Stack>
-                                            </TableCell>
-                                            <TableCell align="right">₹{item.price}</TableCell>
-                                            <TableCell align="center">{item.qty || item.quantity}</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                ₹{item.totalPrice}
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {order.items?.map((item, index) => {
+                                        const platformFee = (item.totalPrice * 0.05).toFixed(2);
+                                        const sellerEarning = (item.totalPrice - platformFee).toFixed(2);
+                                        
+                                        return (
+                                            <TableRow key={index}>
+                                                <TableCell>
+                                                    <Stack direction="row" spacing={2} alignItems="flex-start">
+                                                        <Avatar
+                                                            src={item.images?.length ? `${BASE_URL}${item.images[0]}` : ''}
+                                                            variant="rounded"
+                                                            sx={{ width: 60, height: 60, mt: 0.5 }}
+                                                        />
+                                                        <Box>
+                                                            <Typography variant="subtitle1" fontWeight={600} color="primary">
+                                                                {item.productName || 'Product Name'}
+                                                            </Typography>
+                                                            
+                                                            {item.sellerDetails ? (
+                                                                <Box sx={{ mt: 1, p: 1, bgcolor: '#f8f9fa', borderRadius: 1, border: '1px dashed #dee2e6' }}>
+                                                                    <Stack spacing={0.5}>
+                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600, color: '#444' }}>
+                                                                            <IconBuildingStore size={14} /> {item.sellerDetails.storeName || 'Individual Seller'}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                            <IconUser size={14} /> {item.sellerDetails.sellerName}
+                                                                        </Typography>
+                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                            <IconMail size={14} /> {item.sellerDetails.sellerEmail}
+                                                                        </Typography>
+                                                                        {item.sellerDetails.sellerPhone && (
+                                                                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                                                                <IconPhone size={14} /> {item.sellerDetails.sellerPhone}
+                                                                            </Typography>
+                                                                        )}
+                                                                    </Stack>
+                                                                </Box>
+                                                            ) : (
+                                                                <Typography variant="caption" color="error">Admin Product</Typography>
+                                                            )}
+                                                        </Box>
+                                                    </Stack>
+                                                </TableCell>
+                                                <TableCell align="right">₹{item.price}</TableCell>
+                                                <TableCell align="center">{item.qty || item.quantity}</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                                    ₹{item.totalPrice}
+                                                </TableCell>
+                                                <TableCell align="right">
+                                                    {item.sellerDetails ? (
+                                                        <Stack spacing={0.5} alignItems="flex-end">
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                Fee (5%): <Typography component="span" variant="caption" color="error">₹{platformFee}</Typography>
+                                                            </Typography>
+                                                            <Typography variant="caption" color="textSecondary">
+                                                                Earn: <Typography component="span" variant="caption" color="success.main" fontWeight={600}>₹{sellerEarning}</Typography>
+                                                            </Typography>
+                                                        </Stack>
+                                                    ) : (
+                                                        <Typography variant="caption" color="textSecondary">Internal</Typography>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         </TableContainer>

@@ -18,7 +18,9 @@ const enrichOrderWithSellerDetails = async (order) => {
             sellerDetails: seller ? {
               sellerId: seller.userId,
               sellerName: seller.name || seller.email,
-              sellerEmail: seller.email
+              sellerEmail: seller.email,
+              sellerPhone: seller.phone,
+              storeName: seller.sellerInfo?.storeName
             } : null
           };
         }
