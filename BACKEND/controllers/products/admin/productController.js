@@ -777,6 +777,17 @@ exports.updateApprovalStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    // Also update all seller product listings for this product
+    await SellerProduct.collection().updateMany(
+      { productId: product.productId },
+      { 
+        $set: { 
+          approvalStatus: updateData.approvalStatus,
+          updatedAt: new Date()
+        } 
+      }
+    );
+
     await deleteCachePattern('products:list:*');
     await deleteCache(`products:detail:${req.params.id}`);
 
