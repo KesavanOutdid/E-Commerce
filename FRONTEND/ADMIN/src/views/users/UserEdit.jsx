@@ -370,15 +370,6 @@ const UserEdit = () => {
                   label={formData.sellerInfo.isLive ? 'Shop Is Live' : 'Shop Offline'}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="Commission Percentage (%)"
-                  type="number"
-                  value={formData.sellerInfo.commissionPercentage}
-                  onChange={(e) => updateSellerData('commissionPercentage', parseFloat(e.target.value))}
-                />
-              </Grid>
 
               {/* Shop Address */}
               <Grid item xs={12}>

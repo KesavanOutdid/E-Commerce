@@ -23,6 +23,15 @@ const MODULES = [
     module: 'Orders',
     actions: ['view', 'update']
   },
+  {
+    module: 'User Contacts',
+    actions: ['view', 'delete']
+  },
+  {
+    module: 'Seller Contacts',
+    actions: ['view', 'delete']
+  },
+  
 //   {
 //     module: 'Reviews',
 //     actions: ['view', 'delete']

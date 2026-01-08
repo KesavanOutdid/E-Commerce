@@ -22,13 +22,8 @@ import SkeletonTotalOrderCard from 'ui-component/cards/Skeleton/EarningCard';
 import LocalMallOutlinedIcon from '@mui/icons-material/LocalMallOutlined';
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 
-export default function TotalOrderLineChartCard({ isLoading }) {
+export default function TotalOrderLineChartCard({ isLoading, totalOrders }) {
   const theme = useTheme();
-
-  const [timeValue, setTimeValue] = React.useState(false);
-  const handleChangeTime = (event, newValue) => {
-    setTimeValue(newValue);
-  };
 
   return (
     <>
@@ -88,38 +83,16 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                       <LocalMallOutlinedIcon fontSize="inherit" />
                     </Avatar>
                   </Grid>
-                  <Grid>
-                    <Button
-                      disableElevation
-                      variant={timeValue ? 'contained' : 'text'}
-                      size="small"
-                      sx={{ color: 'inherit' }}
-                      onClick={(e) => handleChangeTime(e, true)}
-                    >
-                      Month
-                    </Button>
-                    <Button
-                      disableElevation
-                      variant={!timeValue ? 'contained' : 'text'}
-                      size="small"
-                      sx={{ color: 'inherit' }}
-                      onClick={(e) => handleChangeTime(e, false)}
-                    >
-                      Year
-                    </Button>
-                  </Grid>
                 </Grid>
               </Grid>
               <Grid sx={{ mb: 0.75 }}>
                 <Grid container sx={{ alignItems: 'center' }}>
-                  <Grid size={6}>
+                  <Grid size={12}>
                     <Grid container sx={{ alignItems: 'center' }}>
                       <Grid>
-                        {timeValue ? (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>$108</Typography>
-                        ) : (
-                          <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>$961</Typography>
-                        )}
+                        <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
+                          {totalOrders || 0}
+                        </Typography>
                       </Grid>
                       <Grid>
                         <Avatar
@@ -141,22 +114,10 @@ export default function TotalOrderLineChartCard({ isLoading }) {
                             color: 'primary.200'
                           }}
                         >
-                          Total Order
+                          Total Orders
                         </Typography>
                       </Grid>
                     </Grid>
-                  </Grid>
-                  <Grid
-                    size={6}
-                    sx={{
-                      '.apexcharts-tooltip.apexcharts-theme-light': {
-                        color: theme.palette.text.primary,
-                        background: theme.palette.background.default,
-                        ...theme.applyStyles('dark', { border: 'none' })
-                      }
-                    }}
-                  >
-                    {timeValue ? <Chart {...ChartDataMonth} /> : <Chart {...ChartDataYear} />}
                   </Grid>
                 </Grid>
               </Grid>
@@ -168,4 +129,7 @@ export default function TotalOrderLineChartCard({ isLoading }) {
   );
 }
 
-TotalOrderLineChartCard.propTypes = { isLoading: PropTypes.bool };
+TotalOrderLineChartCard.propTypes = {
+  isLoading: PropTypes.bool,
+  totalOrders: PropTypes.number
+};

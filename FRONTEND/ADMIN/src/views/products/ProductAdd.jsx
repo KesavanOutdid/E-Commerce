@@ -38,13 +38,17 @@ const ProductAdd = () => {
         price: '',
         salePrice: '',
         stock: '',
+        deliveryDays: '3',
         mainCategoryId: '',
         subCategoryId: '',
         status: true,
         createdBy: 'admin@gmail.com', // Should be dynamic from auth
+        roleId: 1,
         // attributes will be stored as an array of { attributeId, name, value, type, required }
         attributes: []
     });
+
+    const isListingOnly = isEdit && formData.roleId === 2;
 
     const [images, setImages] = useState([]);
     const [previewImages, setPreviewImages] = useState([]);
@@ -82,10 +86,12 @@ const ProductAdd = () => {
                             price: product.price,
                             salePrice: product.salePrice || '',
                             stock: product.stock,
+                            deliveryDays: product.deliveryDays || '3',
                             mainCategoryId: product.mainCategoryId,
                             subCategoryId: product.subCategoryId,
                             status: product.status,
                             createdBy: product.createdby,
+                            roleId: product.roleId || 1,
                             attributes: product.attributes || []
                         });
                         setExistingImages(product.images || []);
@@ -292,6 +298,7 @@ const ProductAdd = () => {
         data.append('price', formData.price);
         data.append('salePrice', formData.salePrice);
         data.append('stock', formData.stock);
+        data.append('deliveryDays', formData.deliveryDays);
         data.append('mainCategoryId', formData.mainCategoryId);
         data.append('subCategoryId', formData.subCategoryId);
         data.append('status', formData.status);
@@ -322,7 +329,7 @@ const ProductAdd = () => {
 
     return (
         <MainCard
-            title={isEdit ? 'Edit Product' : 'Add Product'}
+            title={isEdit ? (isListingOnly ? 'Edit My Listing' : 'Edit Product') : 'Add Product'}
             secondary={
                 <Button startIcon={<IconArrowLeft />} onClick={() => navigate(-1)}>
                     Back
@@ -330,6 +337,14 @@ const ProductAdd = () => {
             }
         >
             <Box component="form" onSubmit={handleSubmit} sx={{ p: 2 }}>
+                {isListingOnly && (
+                    <Box sx={{ mb: 3, p: 2, bgcolor: '#e3f2fd', borderRadius: 1, border: '1px solid #90caf9' }}>
+                        <Typography variant="body2" color="primary.dark" fontWeight={500}>
+                            <strong>Master & Listing Edit:</strong> Changes to Name, Description, and Category will update the 
+                            Master Product for all sellers. Price, Stock, and Delivery days will update <strong>your specific listing</strong>.
+                        </Typography>
+                    </Box>
+                )}
                 <Grid container spacing={3}>
                     {/* Basic Info */}
                     <Grid item xs={12}>
@@ -369,6 +384,14 @@ const ProductAdd = () => {
                                         type="number"
                                         value={formData.stock}
                                         onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                                        required
+                                    />
+                                    <TextField
+                                        fullWidth
+                                        label="Delivery Days"
+                                        type="number"
+                                        value={formData.deliveryDays}
+                                        onChange={(e) => setFormData({ ...formData, deliveryDays: e.target.value })}
                                         required
                                     />
                                 </Stack>

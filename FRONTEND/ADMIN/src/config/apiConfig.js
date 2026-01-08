@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.50:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.39:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -37,6 +37,8 @@ export const API_ENDPOINTS = {
   },
   PRODUCTS: {
     GET_ALL: '/products/admin/getproducts', // Admin specific list
+    GET_ALL_SELLER: '/products/admin/seller-products', // NEW: Seller products for admin
+    LIST_CATALOG: '/products/admin/list', // NEW: List product from catalog
     GET_BY_ID: (id) => `/products/admin/${id}`, // Use public route for details
     CREATE: '/products/admin',
     UPDATE: (id) => `/products/admin/${id}`,
@@ -55,5 +57,15 @@ export const API_ENDPOINTS = {
   },
   DASHBOARD: {
     GET_STATS: '/dashboard/admin/stats'
+  },
+  CONTACTS: {
+    GET_ALL: '/contact',
+    DELETE: (id) => `/contact/${id}` // Added for potential future use
+  },
+  SELLER_CONTACTS: {
+    GET_ALL: '/contact/seller',
+    GET_BY_ID: (id) => `/contact/seller/${id}`,
+    UPDATE_STATUS: (id) => `/contact/seller/${id}/status`,
+    DELETE: (id) => `/contact/seller/${id}`
   }
 };

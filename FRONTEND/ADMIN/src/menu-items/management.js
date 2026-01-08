@@ -1,5 +1,5 @@
 // assets
-import { IconUsers, IconShield, IconCategory, IconBox, IconClipboardList } from '@tabler/icons-react';
+import { IconUsers, IconShield, IconCategory, IconBox, IconClipboardList, IconMessages } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
 
@@ -52,6 +52,30 @@ const management = {
       icon: IconClipboardList,
       breadcrumbs: false,
       module: 'Orders'
+    },
+    {
+      id: 'contacts',
+      title: 'Contacts',
+      type: 'collapse',
+      icon: IconMessages,
+      children: [
+        {
+          id: 'user-contacts',
+          title: 'User Contacts',
+          type: 'item',
+          url: '/contacts/user',
+          breadcrumbs: false,
+          module: 'User Contacts'
+        },
+        {
+          id: 'seller-contacts',
+          title: 'Seller Contacts',
+          type: 'item',
+          url: '/contacts/seller',
+          breadcrumbs: false,
+          module: 'Seller Contacts'
+        }
+      ]
     }
   ]
 };

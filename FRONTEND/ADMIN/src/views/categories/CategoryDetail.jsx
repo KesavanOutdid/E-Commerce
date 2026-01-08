@@ -200,10 +200,18 @@ const CategoryDetail = () => {
                                         <Accordion key={sub._id || sub.id} sx={{ mb: 1, border: '1px solid #eee' }} disableGutters elevation={0}>
                                             <AccordionSummary expandIcon={<IconChevronDown size={20} />}>
                                                 <Grid container alignItems="center" spacing={2}>
-                                                    <Grid item xs={12} sm={4}>
+                                                    <Grid item xs={12} sm={3}>
+                                                        <Typography variant="caption" color="textSecondary" display="block">Name</Typography>
                                                         <Typography variant="subtitle1" fontWeight="bold">{sub.name}</Typography>
                                                     </Grid>
                                                     <Grid item xs={6} sm={2}>
+                                                        <Typography variant="caption" color="textSecondary" display="block">Platform fees</Typography>
+                                                        <Typography variant="subtitle2" color="primary">
+                                                            {sub.commissionPercentage || 0}
+                                                        </Typography>
+                                                    </Grid>
+                                                    <Grid item xs={6} sm={2}>
+                                                        <Typography variant="caption" color="textSecondary" display="block" sx={{ mb: 0.5 }}>Status</Typography>
                                                         <Chip
                                                             label={sub.status ? 'Active' : 'Inactive'}
                                                             size="small"
@@ -211,12 +219,13 @@ const CategoryDetail = () => {
                                                             variant="outlined"
                                                         />
                                                     </Grid>
-                                                    <Grid item xs={6} sm={4}>
-                                                        <Typography variant="caption" display="block" color="textSecondary">
+                                                    <Grid item xs={6} sm={3}>
+                                                        <Typography variant="caption" color="textSecondary" display="block">Created At</Typography>
+                                                        <Typography variant="caption" display="block" fontWeight={500}>
                                                             {sub.createdAt ? new Date(sub.createdAt).toLocaleString() : '-'}
                                                         </Typography>
                                                     </Grid>
-                                                    <Grid item xs={12} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                                    <Grid item xs={6} sm={2} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, alignSelf: 'center' }}>
                                                         <IconButton
                                                             size="small"
                                                             color="primary"
@@ -265,10 +274,25 @@ const CategoryDetail = () => {
                                                         No specifications defined.
                                                     </Typography>
                                                 )}
-                                                <Box sx={{ mt: 2 }}>
-                                                    <Typography variant="caption" color="textSecondary" display="block">
-                                                        Created by: {sub.createdBy || '-'}{sub.updatedby ? ` | Updated by: ${sub.updatedby}` : ''}
-                                                    </Typography>
+                                                <Box sx={{ mt: 2, pt: 1, borderTop: '1px solid #f0f0f0' }}>
+                                                    <Grid container spacing={2}>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <Typography variant="caption" color="textSecondary" display="block">
+                                                                Created by: <strong>{sub.createdBy || '-'}</strong>
+                                                            </Typography>
+                                                            <Typography variant="caption" color="textSecondary" display="block">
+                                                                Created at: <strong>{sub.createdAt ? new Date(sub.createdAt).toLocaleString() : '-'}</strong>
+                                                            </Typography>
+                                                        </Grid>
+                                                        <Grid item xs={12} sm={6}>
+                                                            <Typography variant="caption" color="textSecondary" display="block">
+                                                                Updated by: <strong>{sub.updatedby || '-'}</strong>
+                                                            </Typography>
+                                                            <Typography variant="caption" color="textSecondary" display="block">
+                                                                Updated at: <strong>{sub.updatedAt ? new Date(sub.updatedAt).toLocaleString() : '-'}</strong>
+                                                            </Typography>
+                                                        </Grid>
+                                                    </Grid>
                                                 </Box>
                                             </AccordionDetails>
                                         </Accordion>
@@ -360,6 +384,16 @@ const CategoryDetail = () => {
                                 label="Sub Category Name"
                                 value={subFormData.name}
                                 onChange={(e) => updateSubFormData('name', e.target.value)}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Platform fees (%)"
+                                type="number"
+                                value={subFormData.commissionPercentage}
+                                onChange={(e) => updateSubFormData('commissionPercentage', parseFloat(e.target.value))}
                                 required
                             />
                         </Grid>

@@ -19,7 +19,9 @@ import {
     Stack,
     CircularProgress,
     Avatar,
-    Pagination
+    Pagination,
+    Tabs,
+    Tab
 } from '@mui/material';
 import { IconSearch, IconPlus, IconEye } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
@@ -30,13 +32,40 @@ import { API_BASE_URL } from '../../config/apiConfig';
 
 const BASE_URL = API_BASE_URL.replace('/api', '');
 
+const ProductAvatar = ({ images, productName }) => {
+    const [error, setError] = useState(false);
+    
+    const src = (!images || images.length === 0 || error) 
+        ? 'https://via.placeholder.com/50x50?text=N/A' 
+        : `${BASE_URL}${images[0]}`;
+
+    return (
+        <Avatar
+            src={src}
+            variant="rounded"
+            sx={{ width: 50, height: 50 }}
+            imgProps={{
+                onError: (e) => {
+                    if (error) {
+                        e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                        return;
+                    }
+                    setError(true);
+                }
+            }}
+        />
+    );
+};
+
 const ProductList = () => {
     const navigate = useNavigate();
     const {
         products,
         loading,
         pagination,
+        productType,
         handlePageChange,
+        handleTypeChange,
         handleFilterChange,
         updateProductApproval
     } = useProducts();
@@ -188,18 +217,31 @@ const ProductList = () => {
                             size="small"
                         />
                     </Grid>
+                    <Grid item xs={12} sm={8}>
+                        <Tabs
+                            value={productType}
+                            onChange={(e, newValue) => handleTypeChange(newValue)}
+                            indicatorColor="primary"
+                            textColor="primary"
+                        >
+                            <Tab value="admin" label="Our Products" />
+                            <Tab value="seller" label="Seller Products" />
+                        </Tabs>
+                    </Grid>
                 </Grid>
 
                 <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 1 }}>
                     <Table>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                <TableCell sx={{ width: '50px' }}>S.No</TableCell>
                                 <TableCell>Image</TableCell>
                                 <TableCell>Name</TableCell>
                                 <TableCell>Category</TableCell>
                                 <TableCell>Seller</TableCell>
                                 <TableCell align="right">Price</TableCell>
                                 <TableCell align="right">Stock</TableCell>
+                                <TableCell align="center">Delivery</TableCell>
                                 <TableCell align="center">Status</TableCell>
                                 <TableCell align="center">Approval</TableCell>
                                 <TableCell align="center">View</TableCell>
@@ -213,19 +255,13 @@ const ProductList = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : products.length > 0 ? (
-                                products.map((product) => (
+                                products.map((product, index) => (
                                     <TableRow key={product._id || product.productId} hover>
+                                        <TableCell sx={{ fontWeight: 500 }}>
+                                            {(pagination.currentPage - 1) * pagination.pageSize + index + 1}
+                                        </TableCell>
                                         <TableCell>
-                                            <Avatar
-                                                src={product.images && product.images.length > 0 ? `${BASE_URL}${product.images[0]}` : 'https://via.placeholder.com/50x50?text=N/A'}
-                                                variant="rounded"
-                                                sx={{ width: 50, height: 50 }}
-                                                imgProps={{
-                                                    onError: (e) => {
-                                                        e.target.src = 'https://via.placeholder.com/50x50?text=N/A';
-                                                    }
-                                                }}
-                                            />
+                                            <ProductAvatar images={product.images} productName={product.productName} />
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight={500}>
@@ -242,8 +278,18 @@ const ProductList = () => {
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2">
-                                                {product.shopName}
+                                                {product.roleId === 1 ? 'Outdid' : (product.shopName || 'Marketplace')}
                                             </Typography>
+                                            {product.roleId === 1 && (
+                                                <Typography variant="caption" color="textSecondary">
+                                                    Admin
+                                                </Typography>
+                                            )}
+                                            {product.roleId === 2 && product.sellerName && (
+                                                <Typography variant="caption" color="textSecondary">
+                                                    {product.sellerName}
+                                                </Typography>
+                                            )}
                                         </TableCell>
                                         <TableCell align="right">
                                             {product.salePrice ? (
@@ -260,6 +306,9 @@ const ProductList = () => {
                                             )}
                                         </TableCell>
                                         <TableCell align="right">{product.stock}</TableCell>
+                                        <TableCell align="center">
+                                            {product.deliveryDays ? `${product.deliveryDays} Days` : '-'}
+                                        </TableCell>
                                         <TableCell align="center">{getStatusChip(product.status)}</TableCell>
                                         <TableCell align="center">{getApprovalChip(product)}</TableCell>
                                         <TableCell align="center">

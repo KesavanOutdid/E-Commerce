@@ -166,6 +166,7 @@ const OrderList = () => {
                     <Table>
                         <TableHead>
                             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                                <TableCell sx={{ width: '50px' }}>S.No</TableCell>
                                 <TableCell>Order ID</TableCell>
                                 <TableCell>Customer</TableCell>
                                 <TableCell>Date</TableCell>
@@ -183,8 +184,11 @@ const OrderList = () => {
                                     </TableCell>
                                 </TableRow>
                             ) : orders.length > 0 ? (
-                                orders.map((order) => (
+                                orders.map((order, index) => (
                                     <TableRow key={order._id || order.orderId} hover>
+                                        <TableCell sx={{ fontWeight: 500 }}>
+                                            {(pagination.currentPage - 1) * pagination.pageSize + index + 1}
+                                        </TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight={500}>
                                                 #{order.orderId || order._id}

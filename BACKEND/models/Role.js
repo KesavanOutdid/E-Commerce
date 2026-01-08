@@ -50,11 +50,12 @@ class Role {
   }
 
   static async update(roleId, updateData) {
+    const { _id, roleId: rId, ...dataToUpdate } = updateData;
     return await this.collection().findOneAndUpdate(
       { roleId },
       { 
         $set: {
-          ...updateData,
+          ...dataToUpdate,
           modifiedAt: new Date()
         }
       },

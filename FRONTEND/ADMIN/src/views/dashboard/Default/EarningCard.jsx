@@ -24,7 +24,7 @@ import FileCopyTwoToneIcon from '@mui/icons-material/FileCopyOutlined';
 import PictureAsPdfTwoToneIcon from '@mui/icons-material/PictureAsPdfOutlined';
 import ArchiveTwoToneIcon from '@mui/icons-material/ArchiveOutlined';
 
-export default function EarningCard({ isLoading }) {
+export default function EarningCard({ isLoading, totalRevenue }) {
   const theme = useTheme();
 
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -142,7 +142,9 @@ export default function EarningCard({ isLoading }) {
               <Grid>
                 <Grid container sx={{ alignItems: 'center' }}>
                   <Grid>
-                    <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>$500.00</Typography>
+                    <Typography sx={{ fontSize: '2.125rem', fontWeight: 500, mr: 1, mt: 1.75, mb: 0.75 }}>
+                      ₹{totalRevenue?.toLocaleString('en-IN') || 0}
+                    </Typography>
                   </Grid>
                   <Grid>
                     <Avatar
@@ -166,7 +168,7 @@ export default function EarningCard({ isLoading }) {
                     color: 'secondary.200'
                   }}
                 >
-                  Total Earning
+                  Total Revenue
                 </Typography>
               </Grid>
             </Grid>
@@ -177,4 +179,7 @@ export default function EarningCard({ isLoading }) {
   );
 }
 
-EarningCard.propTypes = { isLoading: PropTypes.bool };
+EarningCard.propTypes = {
+  isLoading: PropTypes.bool,
+  totalRevenue: PropTypes.number
+};

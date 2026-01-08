@@ -69,11 +69,12 @@ class Permission {
   }
 
   static async update(id, updateData) {
+    const { _id, ...dataToUpdate } = updateData;
     return await this.collection().findOneAndUpdate(
       { _id: new ObjectId(id) },
       { 
         $set: {
-          ...updateData,
+          ...dataToUpdate,
           updatedAt: new Date()
         }
       },

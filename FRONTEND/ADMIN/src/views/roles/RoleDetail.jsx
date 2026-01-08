@@ -15,38 +15,43 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Paper
+  Paper,
+  Chip,
+  Divider,
+  IconButton,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Checkbox
 } from '@mui/material';
-import { IconArrowLeft, IconEdit } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconTrash, IconShieldLock, IconDeviceFloppy, IconChevronDown } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useRoleDetail } from '../../hooks/roles/RolesHooks';
+import { usePermissions } from '../../hooks/roles/PermissionHooks';
 
-const DetailItem = ({ label, value, color }) => (
-  <Box sx={{ mb: 3 }}>
-    <Typography 
-      variant="caption" 
-      sx={{ 
-        color: 'text.secondary', 
-        fontWeight: 500, 
-        textTransform: 'uppercase', 
-        letterSpacing: '0.05em',
-        display: 'block',
-        mb: 0.5
-      }}
-    >
+const DetailItem = ({ label, value, status }) => (
+  <Box sx={{ mb: 2 }}>
+    <Typography variant="caption" color="textSecondary" display="block" gutterBottom>
       {label}
     </Typography>
-    <Typography 
-      variant="body1" 
-      sx={{ 
-        fontWeight: 600, 
-        color: color || 'text.primary',
-        fontSize: '1rem'
-      }}
-    >
-      {value || '-'}
-    </Typography>
+    {status !== undefined ? (
+      <Chip
+        label={status ? 'Active' : 'Inactive'}
+        color={status ? 'success' : 'default'}
+        size="small"
+      />
+    ) : (
+      <Typography variant="body1" fontWeight={500}>
+        {value || '-'}
+      </Typography>
+    )}
   </Box>
 );
 
@@ -54,10 +59,10 @@ const RoleDetail = () => {
   const { roleId } = useParams();
   const { 
     role, 
-    loading, 
+    loading: roleLoading, 
     openDialog,
     formData,
-    isDirty,
+    isDirty: roleDirty,
     handleOpenDialog,
     handleCloseDialog,
     handleSubmit,
@@ -65,38 +70,52 @@ const RoleDetail = () => {
     handleBackToRoles 
   } = useRoleDetail(roleId);
 
-  if (loading) {
+  const {
+    permissions,
+    modules,
+    loading: permLoading,
+    saving: permSaving,
+    isDirty: permDirty,
+    updatePermission,
+    savePermissions
+  } = usePermissions(roleId);
+
+  if (roleLoading) {
     return (
-      <MainCard title="Role Details">
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
-          <CircularProgress />
-        </Box>
-      </MainCard>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (!role) {
     return (
-      <MainCard title="Role Details">
-        <Typography variant="h6" color="error">
-          Role not found
-        </Typography>
-        <Button variant="contained" startIcon={<IconArrowLeft />} onClick={handleBackToRoles} sx={{ mt: 2 }}>
+      <Box sx={{ p: 3 }}>
+        <Typography color="error">Role not found</Typography>
+        <Button startIcon={<IconArrowLeft />} onClick={handleBackToRoles} sx={{ mt: 2 }}>
           Go Back
         </Button>
-      </MainCard>
+      </Box>
     );
   }
 
   return (
     <MainCard
-      title="Role Details"
+      title={
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <IconButton onClick={handleBackToRoles} size="small">
+            <IconArrowLeft />
+          </IconButton>
+          <Typography variant="h3">{role.roleName}</Typography>
+        </Stack>
+      }
       secondary={
         <Stack direction="row" spacing={1}>
-          <Button variant="outlined" startIcon={<IconArrowLeft />} onClick={handleBackToRoles}>
-            Back
-          </Button>
-          <Button variant="contained" color="primary" startIcon={<IconEdit />} onClick={handleOpenDialog}>
+          <Button
+            variant="contained"
+            startIcon={<IconEdit />}
+            onClick={handleOpenDialog}
+          >
             Edit
           </Button>
         </Stack>
@@ -104,28 +123,126 @@ const RoleDetail = () => {
     >
       <Box sx={{ p: 1 }}>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Role Name" value={role.roleName} />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Role ID" value={role.roleId} />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <DetailItem 
-              label="Status" 
-              value={role.status ? 'Active' : 'Inactive'} 
-              color={role.status ? 'success.main' : 'error.main'}
-            />
+          <Grid item xs={12}>
+            <Typography variant="h4" sx={{ mb: 2, color: 'primary.main', borderBottom: '1px solid #eee', pb: 1 }}>
+              Basic Information
+            </Typography>
           </Grid>
 
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Created Date" value={role.createdAt ? new Date(role.createdAt).toLocaleString() : '-'} />
+          <Grid item xs={12}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Role Name" value={role.roleName} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Role ID" value={role.roleId} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Status" status={role.status} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Created By" value={role.createdby || role.createdBy} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Created At" value={role.createdAt ? new Date(role.createdAt).toLocaleString() : '-'} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <DetailItem label="Updated At" value={role.modifiedAt ? new Date(role.modifiedAt).toLocaleString() : '-'} />
+              </Grid>
+            </Grid>
           </Grid>
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Modified Date" value={role.modifiedAt ? new Date(role.modifiedAt).toLocaleString() : '-'} />
-          </Grid>
-          <Grid item xs={12} md={4}>
-            <DetailItem label="Created By" value={role.createdby || role.createdBy || '-'} />
+
+          <Grid item xs={12} sx={{ mt: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
+              <Typography variant="h4" sx={{ color: 'primary.main' }}>
+                Role Permissions
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<IconDeviceFloppy />}
+                onClick={savePermissions}
+                disabled={!permDirty || permSaving}
+              >
+                {permSaving ? 'Saving...' : 'Save Permissions'}
+              </Button>
+            </Stack>
+
+            {permLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                <CircularProgress size={24} />
+              </Box>
+            ) : (
+              <TableContainer component={Paper} sx={{ border: '1px solid #eee', elevation: 0 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 700 }}>Module</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>View</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Create</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Update</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Delete</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Approve</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {modules.map((m) => {
+                      const perm = permissions.find(p => p.module === m.module) || {};
+                      return (
+                        <TableRow key={m.module} hover>
+                          <TableCell sx={{ fontWeight: 600 }}>{m.module}</TableCell>
+                          <TableCell align="center">
+                            {m.actions.includes('view') && (
+                              <Checkbox 
+                                size="small"
+                                checked={!!perm.canView} 
+                                onChange={(e) => updatePermission(m.module, null, 'canView', e.target.checked)} 
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {m.actions.includes('create') && (
+                              <Checkbox 
+                                size="small"
+                                checked={!!perm.canCreate} 
+                                onChange={(e) => updatePermission(m.module, null, 'canCreate', e.target.checked)} 
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {m.actions.includes('update') && (
+                              <Checkbox 
+                                size="small"
+                                checked={!!perm.canUpdate} 
+                                onChange={(e) => updatePermission(m.module, null, 'canUpdate', e.target.checked)} 
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {m.actions.includes('delete') && (
+                              <Checkbox 
+                                size="small"
+                                checked={!!perm.canDelete} 
+                                onChange={(e) => updatePermission(m.module, null, 'canDelete', e.target.checked)} 
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {m.actions.includes('approve') && (
+                              <Checkbox 
+                                size="small"
+                                checked={!!perm.canApprove} 
+                                onChange={(e) => updatePermission(m.module, null, 'canApprove', e.target.checked)} 
+                              />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Grid>
         </Grid>
       </Box>
@@ -163,7 +280,7 @@ const RoleDetail = () => {
             onClick={handleSubmit} 
             variant="contained" 
             color="primary"
-            disabled={!isDirty}
+            disabled={!roleDirty}
           >
             Save Changes
           </Button>

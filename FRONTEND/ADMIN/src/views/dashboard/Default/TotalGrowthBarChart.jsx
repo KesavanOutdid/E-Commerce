@@ -4,12 +4,9 @@ import React from 'react';
 // material-ui
 import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid2';
-import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
 // third party
-import ApexCharts from 'apexcharts';
 import Chart from 'react-apexcharts';
 
 // project imports
@@ -18,67 +15,124 @@ import SkeletonTotalGrowthBarChart from 'ui-component/cards/Skeleton/TotalGrowth
 import MainCard from 'ui-component/cards/MainCard';
 import { gridSpacing } from 'store/constant';
 
-// chart data
-import chartData from './chart-data/total-growth-bar-chart';
-
-const status = [
-  {
-    value: 'today',
-    label: 'Today'
-  },
-  {
-    value: 'month',
-    label: 'This Month'
-  },
-  {
-    value: 'year',
-    label: 'This Year'
-  }
-];
-
-export default function TotalGrowthBarChart({ isLoading }) {
-  const [value, setValue] = React.useState('today');
+export default function TotalGrowthBarChart({ isLoading, chartData: backendChartData }) {
   const theme = useTheme();
   const { mode } = useConfig();
 
-  const { primary } = theme.palette.text;
-  const darkLight = theme.palette.dark.light;
-  const divider = theme.palette.divider;
+  const primary = theme.palette.primary.main;
+  const secondary = theme.palette.secondary.main;
   const grey500 = theme.palette.grey[500];
 
-  const primary200 = theme.palette.primary[200];
-  const primaryDark = theme.palette.primary.dark;
-  const secondaryMain = theme.palette.secondary.main;
-  const secondaryLight = theme.palette.secondary.light;
+  const [series, setSeries] = React.useState([]);
+  const [options, setOptions] = React.useState({
+    chart: {
+      type: 'line',
+      height: 480,
+      toolbar: {
+        show: true
+      },
+      zoom: {
+        enabled: false
+      }
+    },
+    stroke: {
+      width: [0, 3],
+      curve: 'smooth'
+    },
+    plotOptions: {
+      bar: {
+        columnWidth: '50%'
+      }
+    },
+    colors: [secondary, primary],
+    fill: {
+      opacity: [0.85, 1],
+    },
+    labels: [],
+    markers: {
+      size: 0
+    },
+    xaxis: {
+      type: 'category',
+      labels: {
+        style: {
+          colors: grey500
+        }
+      }
+    },
+    yaxis: [
+      {
+        title: {
+          text: 'Orders',
+          style: { color: secondary }
+        },
+        labels: {
+          style: { colors: secondary }
+        }
+      },
+      {
+        opposite: true,
+        title: {
+          text: 'Revenue (₹)',
+          style: { color: primary }
+        },
+        labels: {
+          style: { colors: primary },
+          formatter: (val) => `₹${val?.toLocaleString('en-IN')}`
+        }
+      }
+    ],
+    tooltip: {
+      theme: mode,
+      shared: true,
+      intersect: false,
+      y: {
+        formatter: function (y) {
+          if (typeof y !== 'undefined') {
+            return y.toLocaleString('en-IN');
+          }
+          return y;
+        }
+      }
+    },
+    legend: {
+      labels: {
+        colors: grey500
+      },
+      position: 'top',
+      horizontalAlign: 'right'
+    },
+    grid: {
+      borderColor: theme.palette.divider
+    }
+  });
 
   React.useEffect(() => {
-    const newChartData = {
-      ...chartData.options,
-      colors: [primary200, primaryDark, secondaryMain, secondaryLight],
-      xaxis: {
-        labels: {
-          style: {
-            style: { colors: primary }
-          }
-        }
-      },
-      yaxis: {
-        labels: {
-          style: {
-            style: { colors: primary }
-          }
-        }
-      },
-      grid: { borderColor: divider },
-      tooltip: { theme: mode },
-      legend: { labels: { colors: grey500 } }
-    };
+    if (backendChartData && backendChartData.length > 0) {
+      const categories = backendChartData.map((d) => d._id);
+      const revenue = backendChartData.map((d) => d.revenue);
+      const orders = backendChartData.map((d) => d.orders);
 
-    // do not load chart when loading
-    if (!isLoading) {
-      ApexCharts.exec(`bar-chart`, 'updateOptions', newChartData);
+      setSeries([
+        {
+          name: 'Orders',
+          type: 'column',
+          data: orders
+        },
+        {
+          name: 'Revenue',
+          type: 'line',
+          data: revenue
+        }
+      ]);
+
+      setOptions((prev) => ({
+        ...prev,
+        labels: categories,
+        tooltip: { ...prev.tooltip, theme: mode }
+      }));
     }
-  }, [mode, primary200, primaryDark, secondaryMain, secondaryLight, primary, darkLight, divider, isLoading, grey500]);
+  }, [backendChartData, mode]);
 
   return (
     <>
@@ -92,46 +146,17 @@ export default function TotalGrowthBarChart({ isLoading }) {
                 <Grid>
                   <Grid container direction="column" spacing={1}>
                     <Grid>
-                      <Typography variant="subtitle2">Total Growth</Typography>
+                      <Typography variant="subtitle2">Performance Metrics</Typography>
                     </Grid>
                     <Grid>
-                      <Typography variant="h3">$2,324.00</Typography>
+                      <Typography variant="h3">Revenue & Orders Trend</Typography>
                     </Grid>
                   </Grid>
                 </Grid>
-                <Grid>
-                  <TextField id="standard-select-currency" select value={value} onChange={(e) => setValue(e.target.value)}>
-                    {status.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
               </Grid>
             </Grid>
-            <Grid
-              size={12}
-              sx={{
-                ...theme.applyStyles('light', {
-                  '& .apexcharts-series:nth-of-type(4) path:hover': {
-                    filter: `brightness(0.95)`,
-                    transition: 'all 0.3s ease'
-                  }
-                }),
-                '& .apexcharts-menu': {
-                  bgcolor: 'background.paper'
-                },
-                '.apexcharts-theme-light .apexcharts-menu-item:hover': {
-                  bgcolor: 'dark.main'
-                },
-                '& .apexcharts-theme-light .apexcharts-menu-icon:hover svg, .apexcharts-theme-light .apexcharts-reset-icon:hover svg, .apexcharts-theme-light .apexcharts-selection-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoom-icon:not(.apexcharts-selected):hover svg, .apexcharts-theme-light .apexcharts-zoomin-icon:hover svg, .apexcharts-theme-light .apexcharts-zoomout-icon:hover svg':
-                  {
-                    fill: theme.palette.grey[400]
-                  }
-              }}
-            >
-              <Chart {...chartData} />
+            <Grid size={12}>
+              <Chart options={options} series={series} type="line" height={480} />
             </Grid>
           </Grid>
         </MainCard>
@@ -140,4 +165,7 @@ export default function TotalGrowthBarChart({ isLoading }) {
   );
 }
 
-TotalGrowthBarChart.propTypes = { isLoading: PropTypes.bool };
+TotalGrowthBarChart.propTypes = {
+  isLoading: PropTypes.bool,
+  chartData: PropTypes.array
+};

@@ -44,7 +44,7 @@ const CardWrapper = styled(MainCard)(({ theme }) => ({
   }
 }));
 
-export default function TotalIncomeDarkCard({ isLoading }) {
+export default function TotalIncomeDarkCard({ isLoading, total, label, icon }) {
   const theme = useTheme();
 
   return (
@@ -66,7 +66,7 @@ export default function TotalIncomeDarkCard({ isLoading }) {
                       color: '#fff'
                     }}
                   >
-                    <TableChartOutlinedIcon fontSize="inherit" />
+                    {icon || <TableChartOutlinedIcon fontSize="inherit" />}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
@@ -77,12 +77,12 @@ export default function TotalIncomeDarkCard({ isLoading }) {
                   }}
                   primary={
                     <Typography variant="h4" sx={{ color: '#fff' }}>
-                      $203k
+                      {total || 0}
                     </Typography>
                   }
                   secondary={
                     <Typography variant="subtitle2" sx={{ color: 'primary.light', mt: 0.25 }}>
-                      Total Income
+                      {label || 'Total Income'}
                     </Typography>
                   }
                 />
@@ -95,4 +95,9 @@ export default function TotalIncomeDarkCard({ isLoading }) {
   );
 }
 
-TotalIncomeDarkCard.propTypes = { isLoading: PropTypes.bool };
+TotalIncomeDarkCard.propTypes = {
+  isLoading: PropTypes.bool,
+  total: PropTypes.number,
+  label: PropTypes.string,
+  icon: PropTypes.element
+};

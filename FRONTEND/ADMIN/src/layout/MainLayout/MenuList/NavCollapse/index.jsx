@@ -22,6 +22,8 @@ import Transitions from 'ui-component/extended/Transitions';
 
 import useConfig from 'hooks/useConfig';
 import { useGetMenuMaster } from 'api/menu';
+import { useAuth } from 'contexts/AuthContext';
+import { canView } from 'utils/permissionHelper';
 
 // third party
 
@@ -32,6 +34,7 @@ import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 export default function NavCollapse({ menu, level, parentId }) {
   const theme = useTheme();
   const ref = useRef(null);
+  const { user } = useAuth();
 
   const { borderRadius } = useConfig();
   const { menuMaster } = useGetMenuMaster();
@@ -118,8 +121,13 @@ export default function NavCollapse({ menu, level, parentId }) {
   }, [pathname, menu]);
 
   // menu collapse & item
-  const menus = menu.children?.map((item) => {
-    switch (item.type) {
+  const menus = menu.children
+    ?.filter((item) => {
+      if (!item.module) return true;
+      return canView(user?.permissions, item.module);
+    })
+    .map((item) => {
+      switch (item.type) {
       case 'collapse':
         return <NavCollapse key={item.id} menu={item} level={level + 1} parentId={parentId} />;
       case 'item':

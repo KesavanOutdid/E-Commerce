@@ -447,13 +447,20 @@ exports.getProductById = async (req, res) => {
     const sellerCount = allOffers.length;
     const minPriceDetails = allOffers.find(o => o.price === minPrice) || null;
 
+    // Find if the current requesting admin has a listing for this product
+    const adminListing = rawMarketplaceListings.find(l => 
+      l.sellerId && req.userId && l.sellerId.toString() === req.userId.toString()
+    );
+
     const productWithCategoryNames = {
-      ...product,
-      // Default to cheapest offer for top-level price/stock
-      price: minPriceDetails ? minPriceDetails.price : 0,
-      salePrice: minPriceDetails ? minPriceDetails.price : 0, 
-      stock: minPriceDetails ? minPriceDetails.stock : 0,
-      deliveryDays: minPriceDetails ? minPriceDetails.deliveryDays : null,
+      ...product.toObject ? product.toObject() : product,
+      masterPrice: product.price,
+      masterSalePrice: product.salePrice,
+      // Priority: 1. Admin's own listing, 2. Cheapest marketplace offer, 3. Master product price
+      price: adminListing ? adminListing.price : (minPriceDetails ? minPriceDetails.price : product.price),
+      salePrice: adminListing ? adminListing.salePrice : (minPriceDetails ? minPriceDetails.price : product.salePrice),
+      stock: adminListing ? adminListing.stock : (minPriceDetails ? minPriceDetails.stock : product.stock),
+      deliveryDays: adminListing ? adminListing.deliveryDays : (minPriceDetails ? minPriceDetails.deliveryDays : null),
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
       marketplaceListings: marketplaceListings,

@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 export const useProducts = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [productType, setProductType] = useState('admin'); // 'admin' or 'seller'
     const [pagination, setPagination] = useState({
         currentPage: 1,
         pageSize: 10,
@@ -40,7 +41,11 @@ export const useProducts = () => {
         try {
             setLoading(true);
             const queryString = buildQueryString(page, filters);
-            const response = await axios.get(`${API_ENDPOINTS.PRODUCTS.GET_ALL}?${queryString}`);
+            const endpoint = productType === 'seller' 
+                ? API_ENDPOINTS.PRODUCTS.GET_ALL_SELLER 
+                : API_ENDPOINTS.PRODUCTS.GET_ALL;
+            
+            const response = await axios.get(`${endpoint}?${queryString}`);
 
             if (response.data.success) {
                 const { products: productsData, pagination: paginationData } = response.data.data;
@@ -73,7 +78,7 @@ export const useProducts = () => {
         } finally {
             setLoading(false);
         }
-    }, [buildQueryString, filters]);
+    }, [buildQueryString, filters, productType]);
 
     // Initial fetch
     useEffect(() => {
@@ -82,6 +87,11 @@ export const useProducts = () => {
 
     const handlePageChange = useCallback((event, newPage) => {
         setPagination(prev => ({ ...prev, currentPage: newPage + 1 }));
+    }, []);
+
+    const handleTypeChange = useCallback((type) => {
+        setProductType(type);
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
     }, []);
 
     const handleFilterChange = useCallback((key, value) => {
@@ -173,17 +183,33 @@ export const useProducts = () => {
         }
     };
 
+    const listFromCatalog = async (listingData) => {
+        try {
+            const response = await axios.post(API_ENDPOINTS.PRODUCTS.LIST_CATALOG, listingData);
+            if (response.data.success) {
+                Swal.fire('Success', 'Product listed in our shop successfully', 'success');
+                return true;
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to list product', 'error');
+            return false;
+        }
+    };
+
     return {
         products,
         loading,
         pagination,
         filters,
+        productType,
         handlePageChange,
+        handleTypeChange,
         handleFilterChange,
         fetchProducts,
         deleteProduct,
         createProduct,
         updateProduct,
-        updateProductApproval
+        updateProductApproval,
+        listFromCatalog
     };
 };

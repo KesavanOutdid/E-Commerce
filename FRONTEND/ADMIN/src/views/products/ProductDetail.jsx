@@ -20,7 +20,7 @@ import {
     AccordionDetails,
     Grid2 as Grid
 } from '@mui/material';
-import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconRuler, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconRuler, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX, IconBuildingStore } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
@@ -33,13 +33,22 @@ const BASE_URL = API_BASE_URL.replace('/api', '');
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { updateProductApproval } = useProducts();
+    const { updateProductApproval, listFromCatalog } = useProducts();
 
     const [product, setProduct] = useState(null);
+    const [offers, setOffers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [imageErrors, setImageErrors] = useState({});
 
-    const getImageUrl = (img) => {
+    const handleImageError = (index) => {
+        setImageErrors((prev) => ({ ...prev, [index]: true }));
+    };
+
+    const getImageUrl = (img, index = null) => {
+        if (index !== null && imageErrors[index]) {
+            return 'https://via.placeholder.com/600x600?text=Photo+N/A';
+        }
         if (!img) return 'https://via.placeholder.com/600x600?text=Photo+N/A';
         if (img.startsWith('http')) return img;
         const cleanPath = img.startsWith('/') ? img : `/${img}`;
@@ -53,6 +62,7 @@ const ProductDetail = () => {
             if (response.data.success) {
                 const productData = response.data.data.product;
                 setProduct(productData);
+                setOffers(productData.allOffers || []);
                 setSelectedImageIndex(0);
             }
         } catch (error) {
@@ -114,6 +124,48 @@ const ProductDetail = () => {
         const success = await updateProductApproval(product.productId || product._id, status, reason);
         if (success) {
             fetchProduct();
+        }
+    };
+
+    const handleListProduct = async () => {
+        const { value: formValues } = await Swal.fire({
+            title: 'List in Our Shop',
+            html:
+                '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
+                `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Sale Price (₹)</div>' +
+                `<input id="swal-input2" class="swal2-input" type="number" placeholder="Sale Price" value="${product.salePrice || 0}">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Stock</div>' +
+                `<input id="swal-input3" class="swal2-input" type="number" placeholder="Stock" value="10">` +
+                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Delivery Days</div>' +
+                '<input id="swal-input4" class="swal2-input" type="number" placeholder="Delivery Days" value="3">',
+            focusConfirm: false,
+            showCancelButton: true,
+            confirmButtonText: 'List Now',
+            preConfirm: () => {
+                return {
+                    price: document.getElementById('swal-input1').value,
+                    salePrice: document.getElementById('swal-input2').value,
+                    stock: document.getElementById('swal-input3').value,
+                    deliveryDays: document.getElementById('swal-input4').value
+                }
+            }
+        });
+
+        if (formValues) {
+            if (!formValues.price || !formValues.stock) {
+                Swal.fire('Error', 'Price and Stock are required', 'error');
+                return;
+            }
+
+            const success = await listFromCatalog({
+                productId: product.productId,
+                ...formValues
+            });
+
+            if (success) {
+                fetchProduct();
+            }
         }
     };
 
@@ -247,6 +299,16 @@ const ProductDetail = () => {
                             letterSpacing: '0.05rem'
                         }}
                     />
+                    {product.roleId === 2 && !offers.some(o => o.sellerName === 'Admin') && (
+                        <Button
+                            variant="contained"
+                            color="success"
+                            startIcon={<IconBuildingStore />}
+                            onClick={handleListProduct}
+                        >
+                            List in Our Shop
+                        </Button>
+                    )}
                     <Button
                         variant="contained"
                         startIcon={<IconEdit />}
@@ -303,7 +365,7 @@ const ProductDetail = () => {
                                     </Stack>
                                 ) : (
                                     <img
-                                        src={getImageUrl(product.images[selectedImageIndex])}
+                                        src={getImageUrl(product.images[selectedImageIndex], selectedImageIndex)}
                                         alt={product.productName}
                                         style={{
                                             position: 'absolute',
@@ -314,7 +376,12 @@ const ProductDetail = () => {
                                             objectFit: 'contain'
                                         }}
                                         onError={(e) => {
-                                            e.target.src = 'https://via.placeholder.com/600x600?text=Photo+N/A';
+                                            if (imageErrors[selectedImageIndex]) {
+                                                // If even placeholder fails, stop loop with transparent pixel
+                                                e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                                                return;
+                                            }
+                                            handleImageError(selectedImageIndex);
                                         }}
                                     />
                                 )}
@@ -381,11 +448,15 @@ const ProductDetail = () => {
                                             }}
                                         >
                                             <img
-                                                src={getImageUrl(img)}
+                                                src={getImageUrl(img, idx)}
                                                 alt={`thumbnail-${idx}`}
                                                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                 onError={(e) => {
-                                                    e.target.src = 'https://via.placeholder.com/60x60?text=Error';
+                                                    if (imageErrors[idx]) {
+                                                        e.target.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                                                        return;
+                                                    }
+                                                    handleImageError(idx);
                                                 }}
                                             />
                                         </Box>
@@ -410,17 +481,26 @@ const ProductDetail = () => {
                                 icon={<IconCurrencyRupee />}
                                 label="Price"
                                 value={
-                                    product.salePrice ? (
+                                    (product.salePrice && product.salePrice !== product.price) ? (
                                         <Stack direction="row" spacing={1} alignItems="center">
                                             <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
-                                                ₹{product.price}
+                                                ₹{Number(product.price).toLocaleString('en-IN')}
                                             </Typography>
                                             <Typography variant="h4" color="primary" fontWeight={600}>
-                                                ₹{product.salePrice}
+                                                ₹{Number(product.salePrice).toLocaleString('en-IN')}
+                                            </Typography>
+                                        </Stack>
+                                    ) : (product.price !== product.masterPrice && product.masterPrice) ? (
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
+                                                ₹{Number(product.masterPrice).toLocaleString('en-IN')}
+                                            </Typography>
+                                            <Typography variant="h4" color="primary" fontWeight={600}>
+                                                ₹{Number(product.price).toLocaleString('en-IN')}
                                             </Typography>
                                         </Stack>
                                     ) : (
-                                        `₹${product.price}`
+                                        `₹${Number(product.salePrice || product.price).toLocaleString('en-IN')}`
                                     )
                                 }
                             />

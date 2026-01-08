@@ -29,6 +29,7 @@ export const useCategoryDetail = (categoryId) => {
         status: true,
         parentId: '',
         level: 2,
+        commissionPercentage: 0,
         createdBy: 'admin@gmail.com', // Should come from auth context
         attributes: []
     });
@@ -169,6 +170,7 @@ export const useCategoryDetail = (categoryId) => {
                 status: subCategory.status ?? true,
                 parentId: categoryId,
                 level: subCategory.level || 2,
+                commissionPercentage: subCategory.commissionPercentage || 0,
                 createdBy: subCategory.createdBy || 'admin@gmail.com',
                 attributes: subCategory.attributes || []
             });
@@ -181,6 +183,7 @@ export const useCategoryDetail = (categoryId) => {
                 status: true,
                 parentId: categoryId, // Parent ID must be set for creation
                 level: 2,
+                commissionPercentage: 0,
                 createdBy: 'admin@gmail.com',
                 attributes: []
             });

@@ -14,12 +14,15 @@ import NavCollapse from '../NavCollapse';
 import NavItem from '../NavItem';
 
 import { useGetMenuMaster } from 'api/menu';
+import { useAuth } from 'contexts/AuthContext';
+import { canView } from 'utils/permissionHelper';
 
 // ==============================|| SIDEBAR MENU LIST GROUP ||============================== //
 
 export default function NavGroup({ item, lastItem, remItems, lastItemId, setSelectedID }) {
   const theme = useTheme();
   const { pathname } = useLocation();
+  const { user } = useAuth();
 
   const { menuMaster } = useGetMenuMaster();
   const drawerOpen = menuMaster.isDashboardDrawerOpened;
@@ -77,8 +80,13 @@ export default function NavGroup({ item, lastItem, remItems, lastItemId, setSele
   }, [pathname, currentItem]);
 
   // menu list collapse & items
-  const items = currentItem.children?.map((menu) => {
-    switch (menu?.type) {
+  const items = currentItem.children
+    ?.filter((menu) => {
+      if (!menu.module) return true;
+      return canView(user?.permissions, menu.module);
+    })
+    .map((menu) => {
+      switch (menu?.type) {
       case 'collapse':
         return <NavCollapse key={menu.id} menu={menu} level={1} parentId={currentItem.id} />;
       case 'item':

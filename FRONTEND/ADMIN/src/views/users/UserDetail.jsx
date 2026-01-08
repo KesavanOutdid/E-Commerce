@@ -290,9 +290,6 @@ const UserDetail = () => {
                   } 
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailItem label="Commission %" value={user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'} />
-              </Grid>
 
               {/* Shop Address Section */}
               {user.sellerInfo.shopAddress && (
