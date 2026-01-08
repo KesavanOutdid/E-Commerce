@@ -7,10 +7,10 @@ const { ObjectId } = require('mongodb');
 
 exports.listProduct = async (req, res) => {
     try {
-        if (req.roleId !== 2) {
+        if (req.roleId !== 1 && req.roleId !== 2) {
             return res.status(403).json({
                 success: false,
-                message: 'Only sellers can list products'
+                message: 'Only admins and sellers can list products'
             });
         }
 
@@ -32,7 +32,7 @@ exports.listProduct = async (req, res) => {
             });
         }
 
-        // Check if seller already listed this product
+        // Check if this user/admin already listed this product
         const existingListing = await SellerProduct.collection().findOne({
             productId,
             sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId

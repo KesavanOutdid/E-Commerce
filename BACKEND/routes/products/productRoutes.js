@@ -9,7 +9,9 @@ const websiteProductController = require('../../controllers/products/website/pro
 
 // Admin Routes
 router.post('/admin', authMiddleware, productUpload.array('images', 10), adminProductController.createProduct);
+router.post('/admin/list', authMiddleware, adminProductController.listProduct);
 router.get('/admin/getproducts', authMiddleware, adminProductController.getProducts);
+router.get('/admin/seller-products', authMiddleware, adminProductController.getAllSellerProducts);
 router.get('/admin/listings', authMiddleware, sellerListingController.getSellerListings); // For admin to see all listings
 router.get('/admin/:id', authMiddleware, adminProductController.getProductById);
 router.put('/admin/:id', authMiddleware, productUpload.array('images', 10), adminProductController.updateProduct);
