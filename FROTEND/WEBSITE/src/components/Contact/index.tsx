@@ -9,6 +9,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    email: "",
     subject: "",
     phone: "",
     message: "",
@@ -25,7 +26,7 @@ const Contact = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.firstName || !formData.lastName || !formData.subject || !formData.phone || !formData.message) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.phone || !formData.message) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -47,6 +48,7 @@ const Contact = () => {
         setFormData({
           firstName: "",
           lastName: "",
+          email: "",
           subject: "",
           phone: "",
           message: "",
@@ -183,6 +185,22 @@ const Contact = () => {
 
                 <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
                   <div className="w-full">
+                    <label htmlFor="email" className="block mb-2.5">
+                      Email <span className="text-red">*</span>
+                    </label>
+
+                    <input
+                      type="email"
+                      name="email"
+                      id="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      placeholder="Enter your email"
+                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    />
+                  </div>
+
+                  <div className="w-full">
                     <label htmlFor="subject" className="block mb-2.5">
                       Subject <span className="text-red">*</span>
                     </label>
@@ -197,7 +215,9 @@ const Contact = () => {
                       className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                     />
                   </div>
+                </div>
 
+                <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
                   <div className="w-full">
                     <label htmlFor="phone" className="block mb-2.5">
                       Phone <span className="text-red">*</span>
@@ -213,6 +233,8 @@ const Contact = () => {
                       className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
                     />
                   </div>
+
+                  <div className="w-full"></div>
                 </div>
 
                 <div className="mb-7.5">

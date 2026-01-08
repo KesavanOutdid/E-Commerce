@@ -10,6 +10,7 @@ class Contact {
     const contact = {
       firstName: contactData.firstName,
       lastName: contactData.lastName,
+      email: contactData.email,
       subject: contactData.subject,
       phone: contactData.phone,
       message: contactData.message,

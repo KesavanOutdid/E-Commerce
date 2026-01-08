@@ -2,26 +2,19 @@ const Contact = require('../../models/Contact');
 
 exports.createContact = async (req, res) => {
   try {
-    const { firstName, lastName, subject, phone, message } = req.body;
+    const { firstName, lastName, email, subject, phone, message } = req.body;
 
-    if (!firstName || !lastName || !subject || !phone || !message) {
+    if (!firstName || !lastName || !email || !subject || !phone || !message) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Please provide all required fields: First Name, Last Name, Subject, Phone Number, and Message' 
-      });
-    }
-
-    const phoneRegex = /^[0-9]{10,15}$/;
-    if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Please provide a valid phone number (10-15 digits)' 
+        message: 'Please provide all required fields' 
       });
     }
 
     const contactData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
+      email: email.trim(),
       subject: subject.trim(),
       phone: phone.trim(),
       message: message.trim()
