@@ -232,8 +232,6 @@ exports.createOrder = async (req, res) => {
         try {
           if (item.sellerProductId) {
             await SellerProduct.reduceStock(item.sellerProductId, item.qty);
-          } else {
-            await Product.reduceStock(item.productId, item.qty);
           }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
@@ -380,8 +378,6 @@ exports.verifyOrder = async (req, res) => {
         try {
           if (item.sellerProductId) {
             await SellerProduct.reduceStock(item.sellerProductId, item.qty);
-          } else {
-            await Product.reduceStock(item.productId, item.qty);
           }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);

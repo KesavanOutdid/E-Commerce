@@ -100,15 +100,23 @@ exports.createProduct = async (req, res) => {
       userId: req.userId,
       images: images,
       attributes: attributes || [],
-      price: price ? parseFloat(price) : null,
-      salePrice: salePrice ? parseFloat(salePrice) : null,
-      stock: stock ? parseInt(stock) : 0,
       roleId: 1,
       status: true,
       createdby: createdBy
     };
     
     const product = await Product.create(productData);
+
+    // Automatically create a listing for the admin who created the product
+    await SellerProduct.create({
+      productId: product.productId,
+      sellerId: req.userId,
+      price: price ? parseFloat(price) : 0,
+      salePrice: salePrice ? parseFloat(salePrice) : null,
+      stock: stock ? parseInt(stock) : 0,
+      deliveryDays: req.body.deliveryDays || 3,
+      approvalStatus: 'approved'
+    });
 
     await deleteCachePattern('products:list:*');
 
@@ -139,17 +147,25 @@ exports.getProducts = async (req, res) => {
 
     // Map category names
     const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
-      const [mainCategory, subCategory, marketplaceListings] = await Promise.all([
+      const [mainCategory, subCategory, listing] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
         product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-        SellerProduct.collection().find({ productId: product.productId }).toArray()
+        SellerProduct.collection().findOne({ 
+          productId: product.productId, 
+          sellerId: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : product.userId 
+        })
       ]);
 
       return {
         ...product,
+        // Override master price/stock with listing data
+        price: listing ? listing.price : product.price,
+        salePrice: listing ? listing.salePrice : product.salePrice,
+        stock: listing ? listing.stock : product.stock,
+        deliveryDays: listing ? listing.deliveryDays : null,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
-        marketplaceListings: marketplaceListings || []
+        marketplaceListings: [] // Admin view for own products doesn't strictly need marketplace list here
       };
     }));
 
@@ -211,9 +227,13 @@ exports.getAllSellerProducts = async (req, res) => {
 
     // Map category names and seller details
     const productsWithDetails = await Promise.all(products.map(async (product) => {
-      const [mainCategory, subCategory] = await Promise.all([
+      const [mainCategory, subCategory, listing] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+        SellerProduct.collection().findOne({ 
+          productId: product.productId, 
+          sellerId: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : product.userId 
+        })
       ]);
 
       const user = product.userId ? userMap.get(product.userId.toString()) : null;
@@ -222,6 +242,11 @@ exports.getAllSellerProducts = async (req, res) => {
 
       return {
         ...product,
+        // Override master price/stock with listing data
+        price: listing ? listing.price : product.price,
+        salePrice: listing ? listing.salePrice : product.salePrice,
+        stock: listing ? listing.stock : product.stock,
+        deliveryDays: listing ? listing.deliveryDays : null,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
         sellerName,
@@ -450,7 +475,7 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    let { productName, price, salePrice, stock, description, shortDescription, updatedby, attributes } = req.body;
+    let { productName, description, shortDescription, updatedby, attributes } = req.body;
 
     if (typeof attributes === 'string') {
       try {
@@ -474,10 +499,7 @@ exports.updateProduct = async (req, res) => {
 
     const updateData = { 
       ...req.body, 
-      updatedby,
-      ...(price !== undefined && { price: parseFloat(price) }),
-      ...(salePrice !== undefined && { salePrice: parseFloat(salePrice) }),
-      ...(stock !== undefined && { stock: parseInt(stock) })
+      updatedby
     };
 
     if (attributes !== undefined) {
@@ -494,6 +516,26 @@ exports.updateProduct = async (req, res) => {
     const product = await Product.update(req.params.id, updateData);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    // UPDATE LISTING DATA (Price, Stock, DeliveryDays) in SellerProduct table
+    const { price, salePrice, stock, deliveryDays } = req.body;
+    if (price !== undefined || salePrice !== undefined || stock !== undefined || deliveryDays !== undefined) {
+      await SellerProduct.collection().findOneAndUpdate(
+        { 
+          productId: product.productId, 
+          sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
+        },
+        { 
+          $set: { 
+            ...(price !== undefined && { price: parseFloat(price) }),
+            ...(salePrice !== undefined && { salePrice: parseFloat(salePrice) }),
+            ...(stock !== undefined && { stock: parseInt(stock) }),
+            ...(deliveryDays !== undefined && { deliveryDays: parseInt(deliveryDays) }),
+            updatedAt: new Date()
+          }
+        }
+      );
     }
 
     await deleteCachePattern('products:list:*');

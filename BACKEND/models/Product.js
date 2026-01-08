@@ -18,9 +18,6 @@ class Product {
       subCategoryId: productData.subCategoryId || null, // Storing Subcategory UUID
       masterProductId: productData.masterProductId || null, // Grouping identical products
       userId: ObjectId.isValid(productData.userId) ? new ObjectId(productData.userId) : productData.userId,
-      price: productData.price !== undefined ? parseFloat(productData.price) : null,
-      salePrice: productData.salePrice !== undefined ? parseFloat(productData.salePrice) : null,
-      stock: productData.stock !== undefined ? parseInt(productData.stock) : 0,
       images: productData.images || [],
       roleId: productData.roleId || null,
       //  DYNAMIC ATTRIBUTES
@@ -124,16 +121,6 @@ class Product {
       update.mainCategoryId = updateData.mainCategoryId;
     }
 
-    if (updateData.price !== undefined) {
-      update.price = parseFloat(updateData.price);
-    }
-    if (updateData.salePrice !== undefined) {
-      update.salePrice = parseFloat(updateData.salePrice);
-    }
-    if (updateData.stock !== undefined) {
-      update.stock = parseInt(updateData.stock);
-    }
-
     if (updateData.userId) {
       update.userId = ObjectId.isValid(updateData.userId) ? new ObjectId(updateData.userId) : updateData.userId;
     }
@@ -167,40 +154,6 @@ class Product {
       ? { $or: [{ _id: new ObjectId(id) }, { productId: id }] }
       : { productId: id };
     return await this.collection().deleteOne(query);
-  }
-
-  static async reduceStock(productId, quantity) {
-    const query = ObjectId.isValid(productId) 
-      ? { $or: [{ _id: new ObjectId(productId) }, { productId: productId }] }
-      : { productId: productId };
-
-    const product = await this.collection().findOne(query);
-    
-    if (!product) {
-      throw new Error(`Product not found: ${productId}`);
-    }
-
-    const currentStock = parseInt(product.stock) || 0;
-    const qtyToReduce = parseInt(quantity) || 0;
-
-    if (currentStock < qtyToReduce) {
-      throw new Error(`Insufficient stock for product ${product.productName}. Available: ${currentStock}, Requested: ${qtyToReduce}`);
-    }
-
-    const newStock = currentStock - qtyToReduce;
-
-    const result = await this.collection().findOneAndUpdate(
-      query,
-      { 
-        $set: { 
-          stock: newStock,
-          updatedAt: new Date()
-        }
-      },
-      { returnDocument: 'after' }
-    );
-
-    return result.value;
   }
 }
 

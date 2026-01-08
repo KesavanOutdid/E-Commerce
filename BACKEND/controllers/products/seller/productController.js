@@ -101,9 +101,6 @@ exports.createProduct = async (req, res) => {
       userId,
       images: images,
       attributes: attributes || [],
-      price: 0,
-      salePrice:0,
-      stock: 0,
       roleId: 2,
       approvalStatus: 'pending',
       status: true,createdby
@@ -225,7 +222,7 @@ exports.getProducts = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    let { productName, price, stock, description, shortDescription,updatedby, attributes } = req.body;
+    let { productName, description, shortDescription,updatedby, attributes } = req.body;
 
     if (typeof attributes === 'string') {
       try {
@@ -257,13 +254,8 @@ exports.updateProduct = async (req, res) => {
 
     const updateData = { 
       ...req.body, 
-      updatedby,
-      ...(price !== undefined && { price: parseFloat(price) }),
-      ...(stock !== undefined && { stock: parseInt(stock) })
+      updatedby
     };
-    if (req.body.salePrice !== undefined) {
-      updateData.salePrice = parseFloat(req.body.salePrice);
-    }
     if (attributes !== undefined) {
       updateData.attributes = attributes;
     }
