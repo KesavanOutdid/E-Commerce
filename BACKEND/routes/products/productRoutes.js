@@ -12,6 +12,7 @@ router.post('/admin', authMiddleware, productUpload.array('images', 10), adminPr
 router.post('/admin/list', authMiddleware, adminProductController.listProduct);
 router.get('/admin/getproducts', authMiddleware, adminProductController.getProducts);
 router.get('/admin/seller-products', authMiddleware, adminProductController.getAllSellerProducts);
+router.get('/admin/seller-products/:sellerId', authMiddleware, adminProductController.getProductsBySellerId);
 router.get('/admin/listings', authMiddleware, sellerListingController.getSellerListings); // For admin to see all listings
 router.get('/admin/:id', authMiddleware, adminProductController.getProductById);
 router.put('/admin/:id', authMiddleware, productUpload.array('images', 10), adminProductController.updateProduct);

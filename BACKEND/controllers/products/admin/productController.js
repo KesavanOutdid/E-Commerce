@@ -314,6 +314,92 @@ exports.getAllSellerProducts = async (req, res) => {
   }
 };
 
+exports.getProductsBySellerId = async (req, res) => {
+    try {
+        const { sellerId } = req.params;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        if (!sellerId) {
+            return res.status(400).json({ success: false, message: "Seller ID is required" });
+        }
+
+        const query = { sellerId };
+
+        const [listings, total] = await Promise.all([
+            SellerProduct.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+            SellerProduct.collection().countDocuments(query)
+        ]);
+
+        if (listings.length === 0) {
+            return res.status(200).json({
+                success: true,
+                message: 'No products found for this seller',
+                data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
+            });
+        }
+
+        const productIds = [...new Set(listings.map(l => l.productId))];
+
+        const [products, user, seller] = await Promise.all([
+            Product.collection().find({ productId: { $in: productIds } }).toArray(),
+            User.collection().findOne({
+                $or: [
+                    { userId: sellerId },
+                    { _id: ObjectId.isValid(sellerId) ? new ObjectId(sellerId) : null }
+                ].filter(condition => condition.userId || condition._id)
+            }),
+            Seller.collection().findOne({ userId: sellerId })
+        ]);
+
+        const productMap = new Map();
+        products.forEach(p => productMap.set(p.productId, p));
+
+        const sellerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
+        const shopName = seller ? seller.shopName : null;
+
+        const productsWithDetails = await Promise.all(listings.map(async (listing) => {
+            const product = productMap.get(listing.productId);
+            if (!product) return null;
+
+            const [mainCategory, subCategory] = await Promise.all([
+                product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
+                product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+            ]);
+
+            return {
+                ...product,
+                price: listing.price,
+                salePrice: listing.salePrice,
+                stock: listing.stock,
+                deliveryDays: listing.deliveryDays,
+                approvalStatus: listing.approvalStatus,
+                mainCategoryName: mainCategory ? mainCategory.name : null,
+                subCategoryName: subCategory ? subCategory.name : null,
+                sellerName,
+                shopName
+            };
+        }));
+
+        res.status(200).json({
+            success: true,
+            message: `Products for seller fetched successfully`,
+            data: {
+                products: productsWithDetails.filter(p => p !== null),
+                pagination: {
+                    total,
+                    page,
+                    limit,
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
 exports.listProduct = async (req, res) => {
     try {
         if (req.roleId !== 1) {
