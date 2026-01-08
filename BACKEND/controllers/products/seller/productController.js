@@ -204,6 +204,7 @@ exports.getProducts = async (req, res) => {
 
             return {
                 ...product,
+                hasListing: !!listing,
                 // Override master values with seller-specific listing data if it exists
                 price: listing ? listing.price : product.price,
                 salePrice: listing ? listing.salePrice : product.salePrice,

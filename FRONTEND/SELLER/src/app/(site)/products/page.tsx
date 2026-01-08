@@ -32,6 +32,8 @@ export default function ProductsPage() {
         listings,
         adminProducts,
         loading,
+        listingsLoading,
+        adminProductsLoading,
         totalPages,
         totalListings,
         adminTotalPages,
@@ -60,10 +62,12 @@ export default function ProductsPage() {
     const [searchQuery, setSearchQuery] = useState('')
     const [adminSearchQuery, setAdminSearchQuery] = useState('')
 
-    const displayedProducts = selectedCategory === 'own' ? listings : adminProducts
+    const displayedProducts = (selectedCategory === 'own' && !listingsLoading) ? listings :
+        (selectedCategory === 'admin' && !adminProductsLoading) ? adminProducts : []
     const displayedTotalPages = selectedCategory === 'own' ? totalPages : adminTotalPages
     const displayedTotalProducts = selectedCategory === 'own' ? totalListings : adminTotalProducts
     const displayedCurrentPage = selectedCategory === 'own' ? currentPage : adminCurrentPage
+    const displayedLoading = selectedCategory === 'own' ? listingsLoading : adminProductsLoading
 
     const listingsMap = useMemo(() => {
         const map = new Map()
@@ -128,31 +132,29 @@ export default function ProductsPage() {
     }
 
     useEffect(() => {
-        if (selectedCategory !== 'own') return
+        if (!hasFetchedProducts.current || selectedCategory !== 'own') return
 
-        const timer = setTimeout(() => {
-            if (searchQuery.trim()) {
+        if (searchQuery.trim()) {
+            const timer = setTimeout(() => {
                 searchListings(searchQuery.trim(), currentPage, 10)
-            } else {
-                fetchSellerListings(currentPage, 10)
-            }
-        }, 500)
-
-        return () => clearTimeout(timer)
+            }, 500)
+            return () => clearTimeout(timer)
+        } else {
+            fetchSellerListings(currentPage, 10)
+        }
     }, [searchQuery, selectedCategory])
 
     useEffect(() => {
-        if (selectedCategory !== 'admin' || !user?.userId) return
+        if (!hasFetchedProducts.current || selectedCategory !== 'admin' || !user?.userId) return
 
-        const timer = setTimeout(() => {
-            if (adminSearchQuery.trim()) {
+        if (adminSearchQuery.trim()) {
+            const timer = setTimeout(() => {
                 searchAdminProducts(user.userId, adminSearchQuery.trim(), adminCurrentPage, 10)
-            } else {
-                fetchAdminProducts(user.userId, adminCurrentPage, 10)
-            }
-        }, 500)
-
-        return () => clearTimeout(timer)
+            }, 500)
+            return () => clearTimeout(timer)
+        } else {
+            fetchAdminProducts(user.userId, adminCurrentPage, 10)
+        }
     }, [adminSearchQuery, selectedCategory])
 
     const handleClearSearch = () => {
@@ -393,7 +395,7 @@ export default function ProductsPage() {
                                     </div>
                                 </div>
 
-                                {loading ? (
+                                {displayedLoading ? (
                                     <ProductTableSkeleton />
                                 ) : displayedProducts.length === 0 ? (
                                     <div className="text-center py-16">
@@ -440,12 +442,14 @@ export default function ProductsPage() {
                                                                 <span className="text-xs font-semibold text-gray-700">Category</span>
                                                             </div>
                                                         </th>
-                                                        <th className="px-4 py-2.5 text-left">
-                                                            <div className="flex items-center gap-1.5">
-                                                                <Icon icon="mdi:currency-inr" width={16} height={16} className="text-primary" />
-                                                                <span className="text-xs font-semibold text-gray-700">Price</span>
-                                                            </div>
-                                                        </th>
+                                                        {selectedCategory === 'own' && (
+                                                            <th className="px-4 py-2.5 text-left">
+                                                                <div className="flex items-center gap-1.5">
+                                                                    <Icon icon="mdi:currency-inr" width={16} height={16} className="text-primary" />
+                                                                    <span className="text-xs font-semibold text-gray-700">Price</span>
+                                                                </div>
+                                                            </th>
+                                                        )}
                                                         <th className="px-4 py-2.5 text-left">
                                                             <div className="flex items-center gap-1.5">
                                                                 <Icon icon="mdi:package-variant" width={16} height={16} className="text-primary" />
@@ -520,26 +524,28 @@ export default function ProductsPage() {
                                                                         <p>{product.subCategoryName || '-'}</p>
                                                                     </div>
                                                                 </td>
-                                                                <td className="px-4 py-2.5">
-                                                                    <div className="space-y-0.5">
-                                                                        {product.salePrice && product.salePrice > 0 ? (
-                                                                            <>
-                                                                                <p className="text-base font-bold text-primary">
-                                                                                    ₹{Number(product.salePrice).toLocaleString('en-IN')}
-                                                                                </p>
-                                                                                {product.price && product.price > 0 && (
-                                                                                    <p className="text-[10px] text-gray-500 line-through">
-                                                                                        ₹{Number(product.price).toLocaleString('en-IN')}
+                                                                {selectedCategory === 'own' && (
+                                                                    <td className="px-4 py-2.5">
+                                                                        <div className="space-y-0.5">
+                                                                            {product.salePrice && product.salePrice > 0 ? (
+                                                                                <>
+                                                                                    <p className="text-base font-bold text-primary">
+                                                                                        ₹{Number(product.salePrice).toLocaleString('en-IN')}
                                                                                     </p>
-                                                                                )}
-                                                                            </>
-                                                                        ) : (
-                                                                            <p className="text-base font-bold text-primary">
-                                                                                {product.price && product.price > 0 ? `₹${Number(product.price).toLocaleString('en-IN')}` : '-'}
-                                                                            </p>
-                                                                        )}
-                                                                    </div>
-                                                                </td>
+                                                                                    {product.price && product.price > 0 && (
+                                                                                        <p className="text-[10px] text-gray-500 line-through">
+                                                                                            ₹{Number(product.price).toLocaleString('en-IN')}
+                                                                                        </p>
+                                                                                    )}
+                                                                                </>
+                                                                            ) : (
+                                                                                <p className="text-base font-bold text-primary">
+                                                                                    {product.price && product.price > 0 ? `₹${Number(product.price).toLocaleString('en-IN')}` : '-'}
+                                                                                </p>
+                                                                            )}
+                                                                        </div>
+                                                                    </td>
+                                                                )}
                                                                 <td className="px-4 py-2.5">
                                                                     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md font-medium text-xs ${stock > 10
                                                                         ? 'bg-green-50 text-green-700 border border-green-200'
@@ -594,7 +600,7 @@ export default function ProductsPage() {
                                                                                         View
                                                                                     </span>
                                                                                 </Link>
-                                                                                {(user?.userId === product.userId &&
+                                                                                {/* {(user?.userId === product.userId &&
                                                                                     <Link
                                                                                         href={`/products/edit/${product.productId}`}
                                                                                         className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
@@ -604,7 +610,7 @@ export default function ProductsPage() {
                                                                                             Edit Product
                                                                                         </span>
                                                                                     </Link>
-                                                                                )}
+                                                                                )} */}
                                                                                 <button
                                                                                     onClick={() => openPriceModal({
                                                                                         type: 'update',
@@ -616,10 +622,10 @@ export default function ProductsPage() {
                                                                                         currentDeliveryDays: product.deliveryDays,
                                                                                         commissionPercentage: product.commissionPercentage || 0,
                                                                                     })}
-                                                                                    className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
-                                                                                    title="Edit Price">
+                                                                                    className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
+                                                                                    title="Add Price">
                                                                                     <div className="flex items-center gap-2">
-                                                                                        <Icon icon="mdi:currency-usd" width={16} height={16} />
+                                                                                        <Icon icon="mdi:plus-circle" width={16} height={16} />
                                                                                         <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                             Edit Price
                                                                                         </span>
@@ -635,88 +641,18 @@ export default function ProductsPage() {
                                                                                     </span>
                                                                                 </button> */}
                                                                             </>
-                                                                        ) : (() => {
-                                                                            const existingListingId = listingsMap.get(product.productId)
-                                                                            const hasListing = product.isMyProduct || existingListingId
-
-                                                                            if (hasListing) {
-                                                                                const listingToUpdate = listings.find(l => l.productId === product.productId)
-                                                                                return (
-                                                                                    <>
-                                                                                        <Link
-                                                                                            href={`/products/view/${product.productId}`}
-                                                                                            className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
-                                                                                            title="View Product">
-                                                                                            <Icon icon="mdi:eye" width={16} height={16} />
-                                                                                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                                                                                View
-                                                                                            </span>
-                                                                                        </Link>
-                                                                                        {/* <button
-                                                                                            onClick={() => openPriceModal({
-                                                                                                type: 'update',
-                                                                                                listingId: existingListingId,
-                                                                                                productName: productName,
-                                                                                                currentPrice: listingToUpdate?.price || product.price,
-                                                                                                currentSalePrice: listingToUpdate?.salePrice || product.salePrice,
-                                                                                                currentStock: listingToUpdate?.stock || product.stock,
-                                                                                                currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
-                                                                                            })}
-                                                                                            className="group relative px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
-                                                                                            title="Update Price">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <Icon icon="mdi:currency-usd" width={18} height={18} />
-                                                                                                <span className="text-sm">Update Price</span>
-                                                                                            </div>
-                                                                                        </button> */}
-                                                                                        <button
-                                                                                            onClick={() => openPriceModal({
-                                                                                                type: 'update',
-                                                                                                listingId: existingListingId,
-                                                                                                productName: productName,
-                                                                                                currentPrice: listingToUpdate?.price || product.price,
-                                                                                                currentSalePrice: listingToUpdate?.salePrice || product.salePrice,
-                                                                                                currentStock: listingToUpdate?.stock || product.stock,
-                                                                                                currentDeliveryDays: listingToUpdate?.deliveryDays || 3,
-                                                                                                commissionPercentage: listingToUpdate?.commissionPercentage || product.commissionPercentage || 0,
-                                                                                            })}
-                                                                                            className="group relative p-1.5 text-green-600 hover:bg-green-50 rounded-md transition-all border border-transparent hover:border-green-200"
-                                                                                            title="Edit Price">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <Icon icon="mdi:currency-usd" width={16} height={16} />
-                                                                                                <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                                                                                    Update Price
-                                                                                                </span>
-                                                                                            </div>
-                                                                                        </button>
-                                                                                    </>
-                                                                                )
-                                                                            }
-
-                                                                            return (
-                                                                                <>
-                                                                                    <Link
-                                                                                        href={`/products/view/${product.productId}`}
-                                                                                        className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
-                                                                                        title="View Product">
-                                                                                        <Icon icon="mdi:eye" width={16} height={16} />
-                                                                                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
-                                                                                            View
-                                                                                        </span>
-                                                                                    </Link>
-                                                                                    {/* <button
-                                                                                        onClick={() => openPriceModal({
-                                                                                            type: 'create',
-                                                                                            productId: product.productId,
-                                                                                            productName: productName,
-                                                                                        })}
-                                                                                        className="group relative px-4 py-2 bg-gradient-to-r from-primary to-purple-600 text-white rounded-lg hover:shadow-lg transition-all transform hover:scale-105 font-semibold"
-                                                                                        title="Add Price">
-                                                                                        <div className="flex items-center gap-2">
-                                                                                            <Icon icon="mdi:plus-circle" width={18} height={18} />
-                                                                                            <span className="text-sm">Add Price</span>
-                                                                                        </div>
-                                                                                    </button> */}
+                                                                        ) : (
+                                                                            <>
+                                                                                <Link
+                                                                                    href={`/products/view/${product.productId}`}
+                                                                                    className="group relative p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all border border-transparent hover:border-blue-200"
+                                                                                    title="View Product">
+                                                                                    <Icon icon="mdi:eye" width={16} height={16} />
+                                                                                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                                                        View
+                                                                                    </span>
+                                                                                </Link>
+                                                                                {!product.hasListing && (
                                                                                     <button
                                                                                         onClick={() => openPriceModal({
                                                                                             type: 'create',
@@ -725,17 +661,17 @@ export default function ProductsPage() {
                                                                                             commissionPercentage: product.commissionPercentage || 0,
                                                                                         })}
                                                                                         className="group relative p-1.5 text-purple-600 hover:bg-purple-50 rounded-md transition-all border border-transparent hover:border-purple-200"
-                                                                                        title="Edit Price">
+                                                                                        title="Add Price">
                                                                                         <div className="flex items-center gap-2">
-                                                                                            <Icon icon="mdi:currency-usd" width={16} height={16} />
+                                                                                            <Icon icon="mdi:plus-circle" width={16} height={16} />
                                                                                             <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
                                                                                                 Add Price
                                                                                             </span>
                                                                                         </div>
                                                                                     </button>
-                                                                                </>
-                                                                            )
-                                                                        })()}
+                                                                                )}
+                                                                            </>
+                                                                        )}
                                                                     </div>
                                                                 </td>
                                                             </tr>

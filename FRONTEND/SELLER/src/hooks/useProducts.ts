@@ -5,6 +5,8 @@ import toast from 'react-hot-toast'
 
 export const useProducts = () => {
     const [loading, setLoading] = useState(false)
+    const [listingsLoading, setListingsLoading] = useState(false)
+    const [adminProductsLoading, setAdminProductsLoading] = useState(false)
     const [listings, setListings] = useState<any[]>([])
     const [adminProducts, setAdminProducts] = useState<any[]>([])
     const [totalPages, setTotalPages] = useState(0)
@@ -13,7 +15,7 @@ export const useProducts = () => {
     const [adminTotalProducts, setAdminTotalProducts] = useState(0)
 
     const fetchSellerListings = async (page: number = 1, limit: number = 10) => {
-        setLoading(true)
+        setListingsLoading(true)
         try {
             const response = await productService.getSellerListings(page, limit)
             if (response.success) {
@@ -33,7 +35,7 @@ export const useProducts = () => {
             toast.error(error.response?.data?.message || error.message || 'Failed to fetch listings')
             return null
         } finally {
-            setLoading(false)
+            setListingsLoading(false)
         }
     }
 
@@ -117,7 +119,7 @@ export const useProducts = () => {
     }
 
     const fetchAdminProducts = async (userId: string, page: number = 1, limit: number = 10) => {
-        setLoading(true)
+        setAdminProductsLoading(true)
         try {
             const response = await productService.getAdminProducts(userId, page, limit)
             if (response.success) {
@@ -137,7 +139,7 @@ export const useProducts = () => {
             toast.error(error.response?.data?.message || error.message || 'Failed to fetch admin products')
             return null
         } finally {
-            setLoading(false)
+            setAdminProductsLoading(false)
         }
     }
 
@@ -202,7 +204,7 @@ export const useProducts = () => {
     }
 
     const searchListings = async (search: string, page: number = 1, limit: number = 10) => {
-        setLoading(true)
+        setListingsLoading(true)
         try {
             const response = await productService.searchListings(search, page, limit)
             if (response.success) {
@@ -222,12 +224,12 @@ export const useProducts = () => {
             toast.error(error.response?.data?.message || error.message || 'Failed to search listings')
             return null
         } finally {
-            setLoading(false)
+            setListingsLoading(false)
         }
     }
 
     const searchAdminProducts = async (userId: string, search: string, page: number = 1, limit: number = 10) => {
-        setLoading(true)
+        setAdminProductsLoading(true)
         try {
             const response = await productService.searchAdminProducts(userId, search, page, limit)
             if (response.success) {
@@ -247,7 +249,7 @@ export const useProducts = () => {
             toast.error(error.response?.data?.message || error.message || 'Failed to search products')
             return null
         } finally {
-            setLoading(false)
+            setAdminProductsLoading(false)
         }
     }
 
@@ -264,6 +266,8 @@ export const useProducts = () => {
 
     return {
         loading,
+        listingsLoading,
+        adminProductsLoading,
         listings,
         adminProducts,
         totalPages,
