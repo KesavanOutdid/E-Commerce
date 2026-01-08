@@ -54,6 +54,7 @@ exports.getAllOrders = async (req, res) => {
       filter.$or = [
         { orderId: searchRegex },
         { 'deliveryAddress.name': searchRegex },
+        { 'deliveryAddress.email': searchRegex },
         { userEmail: searchRegex },
         { paymentStatus: searchRegex },
         { orderStatus: searchRegex }

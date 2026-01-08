@@ -94,8 +94,9 @@ exports.globalSearch = async (req, res) => {
                 const orderQuery = {
                     $or: [
                         { orderId: searchRegex },
-                        { 'shippingAddress.firstName': searchRegex },
-                        { 'shippingAddress.lastName': searchRegex },
+                        { 'deliveryAddress.name': searchRegex },
+                        { 'deliveryAddress.email': searchRegex },
+                        { userEmail: searchRegex },
                         { paymentStatus: searchRegex },
                         { orderStatus: searchRegex }
                     ]

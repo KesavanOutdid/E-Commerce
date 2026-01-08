@@ -1,5 +1,18 @@
 // assets
-import { IconUsers, IconShield, IconCategory, IconBox, IconClipboardList, IconMessages } from '@tabler/icons-react';
+import { 
+  IconUsers, 
+  IconShield, 
+  IconCategory, 
+  IconBox, 
+  IconClipboardList, 
+  IconMessages,
+  IconKey,
+  IconUser,
+  IconPackage,
+  IconListCheck,
+  IconMessage2,
+  IconMessageDots
+} from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
 
@@ -9,53 +22,77 @@ const management = {
   type: 'group',
   children: [
     {
-      id: 'roles',
-      title: 'Roles',
-      type: 'item',
-      url: '/roles',
+      id: 'user-management',
+      title: 'User Management',
+      type: 'collapse',
       icon: IconShield,
-      breadcrumbs: false,
-      module: 'Roles'
+      children: [
+        {
+          id: 'roles',
+          title: 'Roles',
+          type: 'item',
+          url: '/roles',
+          icon: IconKey,
+          breadcrumbs: false,
+          module: 'Roles'
+        },
+        {
+          id: 'users',
+          title: 'Users',
+          type: 'item',
+          url: '/users',
+          icon: IconUser,
+          breadcrumbs: false,
+          module: 'Users'
+        }
+      ]
     },
     {
-      id: 'users',
-      title: 'Users',
-      type: 'item',
-      url: '/users',
-      icon: IconUsers,
-      breadcrumbs: false,
-      module: 'Users'
-    },
-    {
-      id: 'categories',
-      title: 'Categories',
-      type: 'item',
-      url: '/categories',
-      icon: IconCategory,
-      breadcrumbs: false,
-      module: 'Categories'
-    },
-    {
-      id: 'products',
-      title: 'Products',
-      type: 'item',
-      url: '/products/list',
+      id: 'product-management',
+      title: 'Product Management',
+      type: 'collapse',
       icon: IconBox,
-      breadcrumbs: false,
-      module: 'Products'
+      children: [
+        {
+          id: 'categories',
+          title: 'Categories',
+          type: 'item',
+          url: '/categories',
+          icon: IconCategory,
+          breadcrumbs: false,
+          module: 'Categories'
+        },
+        {
+          id: 'products',
+          title: 'Products',
+          type: 'item',
+          url: '/products/list',
+          icon: IconPackage,
+          breadcrumbs: false,
+          module: 'Products'
+        }
+      ]
     },
     {
-      id: 'orders',
-      title: 'Orders',
-      type: 'item',
-      url: '/orders/list',
+      id: 'order-management',
+      title: 'Order Management',
+      type: 'collapse',
       icon: IconClipboardList,
-      breadcrumbs: false,
-      module: 'Orders'
+      children: [
+        {
+          id: 'orders',
+          title: 'Orders',
+          type: 'item',
+          url: '/orders/list',
+          icon: IconListCheck,
+          breadcrumbs: false,
+          module: 'Orders'
+        }
+      ]
     },
     {
-      id: 'contacts',
-      title: 'Contacts',
+      id: 'contact-management',
+      title: 'Contact Management',
       type: 'collapse',
       icon: IconMessages,
       children: [
@@ -64,6 +101,7 @@ const management = {
           title: 'User Contacts',
           type: 'item',
           url: '/contacts/user',
+          icon: IconMessage2,
           breadcrumbs: false,
           module: 'User Contacts'
         },
@@ -72,6 +110,7 @@ const management = {
           title: 'Seller Contacts',
           type: 'item',
           url: '/contacts/seller',
+          icon: IconMessageDots,
           breadcrumbs: false,
           module: 'Seller Contacts'
         }

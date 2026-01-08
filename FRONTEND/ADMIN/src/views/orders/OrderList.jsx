@@ -128,7 +128,7 @@ const OrderList = () => {
                     <Grid item xs={12} sm={4}>
                         <TextField
                             fullWidth
-                            placeholder="Search Order ID..."
+                            placeholder="Search by ID, Name or Email..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
                             InputProps={{

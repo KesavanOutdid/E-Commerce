@@ -50,19 +50,18 @@ const UserContacts = () => {
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Subject</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Phone</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Date</TableCell>
-                            <TableCell align="center" sx={{ fontSize: '1rem', fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
                         ) : contacts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={6} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1">No contact messages found</Typography>
                                 </TableCell>
                             </TableRow>
@@ -79,11 +78,6 @@ const UserContacts = () => {
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{contact.phone}</TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>
                                         {new Date(contact.createdAt).toLocaleDateString()}
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <IconButton color="primary" size="small" onClick={() => handleViewDetail(contact)} title="View Detail">
-                                            <IconEye size={20} />
-                                        </IconButton>
                                     </TableCell>
                                 </TableRow>
                             ))

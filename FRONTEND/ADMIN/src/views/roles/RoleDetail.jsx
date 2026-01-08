@@ -1,3 +1,4 @@
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Box,
@@ -186,59 +187,70 @@ const RoleDetail = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {modules.map((m) => {
-                      const perm = permissions.find(p => p.module === m.module) || {};
-                      return (
-                        <TableRow key={m.module} hover>
-                          <TableCell sx={{ fontWeight: 600 }}>{m.module}</TableCell>
-                          <TableCell align="center">
-                            {m.actions.includes('view') && (
-                              <Checkbox 
-                                size="small"
-                                checked={!!perm.canView} 
-                                onChange={(e) => updatePermission(m.module, null, 'canView', e.target.checked)} 
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {m.actions.includes('create') && (
-                              <Checkbox 
-                                size="small"
-                                checked={!!perm.canCreate} 
-                                onChange={(e) => updatePermission(m.module, null, 'canCreate', e.target.checked)} 
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {m.actions.includes('update') && (
-                              <Checkbox 
-                                size="small"
-                                checked={!!perm.canUpdate} 
-                                onChange={(e) => updatePermission(m.module, null, 'canUpdate', e.target.checked)} 
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {m.actions.includes('delete') && (
-                              <Checkbox 
-                                size="small"
-                                checked={!!perm.canDelete} 
-                                onChange={(e) => updatePermission(m.module, null, 'canDelete', e.target.checked)} 
-                              />
-                            )}
-                          </TableCell>
-                          <TableCell align="center">
-                            {m.actions.includes('approve') && (
-                              <Checkbox 
-                                size="small"
-                                checked={!!perm.canApprove} 
-                                onChange={(e) => updatePermission(m.module, null, 'canApprove', e.target.checked)} 
-                              />
-                            )}
+                    {Array.from(new Set(modules.map(m => m.group))).map((group) => (
+                      <React.Fragment key={group}>
+                        <TableRow sx={{ bgcolor: 'grey.100' }}>
+                          <TableCell colSpan={6} sx={{ fontWeight: 700, py: 1 }}>
+                            {group}
                           </TableCell>
                         </TableRow>
-                      );
-                    })}
+                        {modules
+                          .filter(m => m.group === group)
+                          .map((m) => {
+                            const perm = permissions.find(p => p.module === m.module) || {};
+                            return (
+                              <TableRow key={m.module} hover>
+                                <TableCell sx={{ fontWeight: 600, pl: 4 }}>{m.module}</TableCell>
+                                <TableCell align="center">
+                                  {m.actions.includes('view') && (
+                                    <Checkbox 
+                                      size="small"
+                                      checked={!!perm.canView} 
+                                      onChange={(e) => updatePermission(m.module, null, 'canView', e.target.checked)} 
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {m.actions.includes('create') && (
+                                    <Checkbox 
+                                      size="small"
+                                      checked={!!perm.canCreate} 
+                                      onChange={(e) => updatePermission(m.module, null, 'canCreate', e.target.checked)} 
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {m.actions.includes('update') && (
+                                    <Checkbox 
+                                      size="small"
+                                      checked={!!perm.canUpdate} 
+                                      onChange={(e) => updatePermission(m.module, null, 'canUpdate', e.target.checked)} 
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {m.actions.includes('delete') && (
+                                    <Checkbox 
+                                      size="small"
+                                      checked={!!perm.canDelete} 
+                                      onChange={(e) => updatePermission(m.module, null, 'canDelete', e.target.checked)} 
+                                    />
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {m.actions.includes('approve') && (
+                                    <Checkbox 
+                                      size="small"
+                                      checked={!!perm.canApprove} 
+                                      onChange={(e) => updatePermission(m.module, null, 'canApprove', e.target.checked)} 
+                                    />
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                      </React.Fragment>
+                    ))}
                   </TableBody>
                 </Table>
               </TableContainer>

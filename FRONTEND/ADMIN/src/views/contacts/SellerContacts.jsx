@@ -63,25 +63,6 @@ const SellerContacts = () => {
 
     return (
         <MainCard title="Seller Contacts">
-            <Box sx={{ mb: 3 }}>
-                <Grid container spacing={2}>
-                    <Grid item xs={12} sm={4} md={3}>
-                        <FormControl fullWidth size="small">
-                            <InputLabel>Status Filter</InputLabel>
-                            <Select
-                                value={filters.status}
-                                label="Status Filter"
-                                onChange={(e) => handleFilterChange('status', e.target.value)}
-                            >
-                                <MenuItem value="">All</MenuItem>
-                                <MenuItem value="true">Active (Read)</MenuItem>
-                                <MenuItem value="false">Pending (Unread)</MenuItem>
-                            </Select>
-                        </FormControl>
-                    </Grid>
-                </Grid>
-            </Box>
-
             <TableContainer sx={{ border: '1px solid #e0e0e0', borderRadius: 1, overflowX: 'auto' }}>
                 <Table sx={{ minWidth: 1000 }}>
                     <TableHead>
@@ -90,21 +71,19 @@ const SellerContacts = () => {
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Name</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Email</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Phone</TableCell>
-                            <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Status</TableCell>
                             <TableCell sx={{ fontSize: '1rem', fontWeight: 600 }}>Date</TableCell>
-                            <TableCell align="center" sx={{ fontSize: '1rem', fontWeight: 600 }}>Actions</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                                     <CircularProgress />
                                 </TableCell>
                             </TableRow>
                         ) : contacts.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={7} align="center" sx={{ py: 3 }}>
+                                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
                                     <Typography variant="body1">No seller contact messages found</Typography>
                                 </TableCell>
                             </TableRow>
@@ -119,54 +98,8 @@ const SellerContacts = () => {
                                     </TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{contact.email}</TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{contact.phone}</TableCell>
-                                    <TableCell>
-                                        <Chip
-                                            label={contact.status ? 'Read' : 'Unread'}
-                                            color={contact.status ? 'success' : 'warning'}
-                                            size="small"
-                                        />
-                                    </TableCell>
                                     <TableCell sx={{ fontSize: '0.95rem' }}>
                                         {new Date(contact.createdAt).toLocaleDateString()}
-                                    </TableCell>
-                                    <TableCell align="center">
-                                        <Stack direction="row" spacing={0.5} justifyContent="center">
-                                            <IconButton 
-                                                color="primary" 
-                                                size="small" 
-                                                onClick={() => handleViewDetail(contact)} 
-                                                title="View Detail"
-                                            >
-                                                <IconEye size={18} />
-                                            </IconButton>
-                                            {!contact.status ? (
-                                                <IconButton 
-                                                    color="success" 
-                                                    size="small" 
-                                                    onClick={() => onStatusUpdate(contact._id, true)} 
-                                                    title="Mark as Read"
-                                                >
-                                                    <IconCheck size={18} />
-                                                </IconButton>
-                                            ) : (
-                                                <IconButton 
-                                                    color="warning" 
-                                                    size="small" 
-                                                    onClick={() => onStatusUpdate(contact._id, false)} 
-                                                    title="Mark as Unread"
-                                                >
-                                                    <IconX size={18} />
-                                                </IconButton>
-                                            )}
-                                            <IconButton 
-                                                color="error" 
-                                                size="small" 
-                                                onClick={() => deleteContact(contact._id)} 
-                                                title="Delete"
-                                            >
-                                                <IconTrash size={18} />
-                                            </IconButton>
-                                        </Stack>
                                     </TableCell>
                                 </TableRow>
                             ))
