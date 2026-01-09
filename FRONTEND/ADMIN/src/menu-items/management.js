@@ -11,7 +11,8 @@ import {
   IconPackage,
   IconListCheck,
   IconMessage2,
-  IconMessageDots
+  IconMessageDots,
+  IconMapPin
 } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
@@ -70,6 +71,14 @@ const management = {
           icon: IconPackage,
           breadcrumbs: false,
           module: 'Products'
+        },
+        {
+          id: 'pickup-addresses',
+          title: 'Pickup Addresses',
+          type: 'item',
+          url: '/user/pickup-addresses',
+          icon: IconMapPin,
+          breadcrumbs: false
         }
       ]
     },

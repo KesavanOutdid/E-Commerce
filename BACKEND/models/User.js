@@ -1,5 +1,6 @@
 const { getDB } = require('../config/db');
 const { ObjectId } = require('mongodb');
+const crypto = require('crypto');
 
 class User {
   static collection() {
@@ -17,6 +18,7 @@ class User {
       roles: Array.isArray(userData.roles) ? userData.roles : [userData.roles || 3],
       profileImage: userData.profileImage || null,
       addresses: userData.addresses || [],
+      pickupAddresses: userData.pickupAddresses || [],
       wishlist: userData.wishlist || [],
       sellerEarnings: userData.sellerEarnings || 0,
       platformFees: userData.platformFees || 0,
@@ -132,6 +134,55 @@ class User {
           addresses: user.addresses,
           updatedAt: new Date()
         }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  // Pickup Address Helpers
+  static async addPickupAddress(userId, address) {
+    const addressWithId = {
+      ...address,
+      id: crypto.randomUUID(),
+      createdAt: new Date()
+    };
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $push: { pickupAddresses: addressWithId },
+        $set: { updatedAt: new Date() }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async updatePickupAddress(userId, addressId, addressData) {
+    const user = await this.findByUserId(userId);
+    if (!user || !user.pickupAddresses) return null;
+
+    const index = user.pickupAddresses.findIndex(addr => addr.id === addressId);
+    if (index === -1) return null;
+
+    const update = {};
+    Object.keys(addressData).forEach(key => {
+      update[`pickupAddresses.${index}.${key}`] = addressData[key];
+    });
+    update[`pickupAddresses.${index}.updatedAt`] = new Date();
+    update.updatedAt = new Date();
+
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { $set: update },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async removePickupAddress(userId, addressId) {
+    return await this.collection().findOneAndUpdate(
+      { userId },
+      { 
+        $pull: { pickupAddresses: { id: addressId } },
+        $set: { updatedAt: new Date() }
       },
       { returnDocument: 'after' }
     );

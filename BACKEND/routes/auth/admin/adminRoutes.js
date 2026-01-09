@@ -9,6 +9,7 @@ const { getRoles, getRole, createRole, updateRole, deleteRole } = require('../..
 const { getModuleConfig, getRolePermissions, updateRolePermissions } = require('../../../controllers/auth/admin/permissionsController');
 const { getAdminProfile, updateAdminProfile } = require('../../../controllers/auth/admin/profileController');
 const { getKycRequests, getKycRequestDetails, updateKycStatus, updateCommission } = require('../../../controllers/auth/admin/kycController');
+const { addPickupAddress, getPickupAddresses, updatePickupAddress, removePickupAddress } = require('../../../controllers/auth/pickupAddressController');
 const upload = require('../../../middleware/profileUploadMiddleware');
 
 router.post('/login', adminLogin);
@@ -19,6 +20,12 @@ router.post('/set-new-password', setNewPassword);
 
 router.get('/profile', authMiddleware, getAdminProfile);
 router.put('/profile', authMiddleware, upload.single('profileImage'), updateAdminProfile);
+
+// Pickup Address Management
+router.post('/pickup-addresses', authMiddleware, addPickupAddress);
+router.get('/pickup-addresses', authMiddleware, getPickupAddresses);
+router.put('/pickup-addresses/:addressId', authMiddleware, updatePickupAddress);
+router.delete('/pickup-addresses/:addressId', authMiddleware, removePickupAddress);
 
 router.get('/users', authMiddleware, checkPermission('Users', null, 'view'), getUsers);
 router.get('/users/:userId', authMiddleware, checkPermission('Users', null, 'view'), getUser);

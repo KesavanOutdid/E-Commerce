@@ -59,6 +59,7 @@ const contactSellerRoutes = require('./routes/contact/seller/contactRoutes');
 const contactRoutes = require('./routes/contact/contactRoutes');
 const newsletterRoutes = require('./routes/newsletter/newsletterRoutes');
 const searchRoutes = require('./routes/search/searchRoutes');
+const reviewRoutes = require('./routes/reviews/reviewRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
@@ -77,6 +78,7 @@ app.use('/api/contact/seller', contactSellerRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {

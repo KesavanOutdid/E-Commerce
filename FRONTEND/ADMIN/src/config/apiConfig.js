@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.39:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.52:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -7,7 +7,8 @@ export const API_ENDPOINTS = {
     ADMIN_PROFILE: '/admin/profile',
     FORGOT_PASSWORD: '/admin/forgot-password',
     VALIDATE_OTP: '/admin/validate-otp',
-    SET_NEW_PASSWORD: '/admin/set-new-password'
+    SET_NEW_PASSWORD: '/admin/set-new-password',
+    PICKUP_ADDRESSES: '/admin/pickup-addresses'
   },
   USERS: {
     GET_ALL: '/admin/users',

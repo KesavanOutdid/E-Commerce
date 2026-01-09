@@ -7,6 +7,7 @@ const { forgotPassword, validateOtp, setNewPassword } = require('../../../contro
 const { getGoogleConfig, googleAuthentication } = require('../../../controllers/auth/seller/googleLoginController');
 const { getSellerProfile, updateSellerProfile } = require('../../../controllers/auth/seller/profileController');
 const { requestKyc, getKycStatus } = require('../../../controllers/auth/seller/kycController');
+const { addPickupAddress, getPickupAddresses, updatePickupAddress, removePickupAddress } = require('../../../controllers/auth/pickupAddressController');
 const upload = require('../../../middleware/profileUploadMiddleware');
 const shopUpload = require('../../../middleware/shopUploadMiddleware');
 
@@ -23,6 +24,12 @@ router.post('/set-new-password', setNewPassword);
 
 router.get('/profile', authMiddleware, getSellerProfile);
 router.put('/profile', authMiddleware, shopUpload.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'shopLogo', maxCount: 1 }]), updateSellerProfile);
+
+// Pickup Address Management
+router.post('/pickup-addresses', authMiddleware, addPickupAddress);
+router.get('/pickup-addresses', authMiddleware, getPickupAddresses);
+router.put('/pickup-addresses/:addressId', authMiddleware, updatePickupAddress);
+router.delete('/pickup-addresses/:addressId', authMiddleware, removePickupAddress);
 
 router.post('/kyc/request', authMiddleware, shopUpload.single('shopLogo'), requestKyc);
 router.get('/kyc/status', authMiddleware, getKycStatus);

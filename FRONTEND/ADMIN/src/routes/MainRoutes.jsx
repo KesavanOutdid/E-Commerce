@@ -30,6 +30,7 @@ const CategoryDetailPage = Loadable(lazy(() => import('views/categories/Category
 // profile routing
 const ViewProfilePage = Loadable(lazy(() => import('views/user/ViewProfile')));
 const UpdateProfilePage = Loadable(lazy(() => import('views/user/UpdateProfile')));
+const PickupAddressPage = Loadable(lazy(() => import('views/user/PickupAddress')));
 
 // products routing
 const ProductListPage = Loadable(lazy(() => import('views/products/ProductList')));
@@ -210,6 +211,10 @@ const MainRoutes = {
     {
       path: 'user/update-profile',
       element: <UpdateProfilePage />
+    },
+    {
+      path: 'user/pickup-addresses',
+      element: <PickupAddressPage />
     }
   ]
 };
