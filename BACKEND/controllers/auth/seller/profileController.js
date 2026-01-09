@@ -31,7 +31,6 @@ async function getSellerProfile(req, res) {
         panNumber: null,
         bankDetails: null,
         kycApproved: false,
-        isLive: false,
         onboardingCompleted: false
       });
     }

@@ -856,8 +856,7 @@ Authorization: Bearer {{seller_token}}
       "bankName": "HDFC Bank"
     },
     "kycApproved": false,
-    "onboardingCompleted": true,
-    "isLive": false
+    "onboardingCompleted": true
   }
 }
 ```
@@ -904,10 +903,7 @@ Authorization: Bearer {{seller_token}}
     "kycApprovedBy": null,
     "kycApprovedAt": null,
     "onboardingCompleted": true,
-    "isLive": false,
-    "commissionPercentage": 0,
-    "goLiveApprovedBy": null,
-    "goLiveApprovedAt": null
+    "commissionPercentage": 0
   }
 }
 ```
@@ -924,8 +920,7 @@ Authorization: Bearer {{seller_token}}
     "email": "seller@shop.com",
     "phone": "9123456789",
     "kycApproved": false,
-    "onboardingCompleted": false,
-    "isLive": false
+    "onboardingCompleted": false
   }
 }
 ```
@@ -1384,10 +1379,7 @@ Authorization: Bearer {{admin_token}}
     "kycApproved": true,
     "kycApprovedBy": "admin@ecommerce.com",
     "kycApprovedAt": "2025-12-29T18:20:00.000Z",
-    "commissionPercentage": 15,
-    "isLive": true,
-    "goLiveApprovedBy": "admin@ecommerce.com",
-    "goLiveApprovedAt": "2025-12-29T18:20:00.000Z"
+    "commissionPercentage": 15
   }
 }
 ```

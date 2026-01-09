@@ -568,22 +568,6 @@ export default function ProfilePage() {
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Store Status</label>
-                                            <div className="flex items-center gap-1.5">
-                                                {user.sellerInfo.isLive ? (
-                                                    <>
-                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
-                                                        <span className="text-green-600 font-semibold text-sm">Live</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
-                                                        <span className="text-red-600 font-semibold text-sm">Not Live</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <div>
                                             <label className="block text-xs text-gray-500 mb-1">Onboarding Completed</label>
                                             <div className="flex items-center gap-1.5">
                                                 {user.sellerInfo.onboardingCompleted ? (

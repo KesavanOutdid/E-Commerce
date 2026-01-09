@@ -7,21 +7,21 @@ const sellerProductController = require('../../controllers/products/seller/produ
 const websiteProductController = require('../../controllers/products/website/productController');
 
 // Admin Routes
-router.post('/admin', authMiddleware, productUpload.array('images', 10), adminProductController.createProduct);
-router.post('/admin/add-variant/:masterProductId', authMiddleware, productUpload.array('images', 10), adminProductController.addVariant);
+router.post('/admin', authMiddleware, productUpload.any(), adminProductController.createProduct);
+router.post('/admin/add-variant/:masterProductId', authMiddleware, productUpload.any(), adminProductController.addVariant);
 router.get('/admin/getproducts', authMiddleware, adminProductController.getProducts);
 router.get('/admin/seller-products', authMiddleware, adminProductController.getAllSellerProducts);
 router.get('/admin/:id', authMiddleware, adminProductController.getProductById);
-router.put('/admin/:id', authMiddleware, productUpload.array('images', 10), adminProductController.updateProduct);
+router.put('/admin/:id', authMiddleware, productUpload.any(), adminProductController.updateProduct);
 router.put('/admin/update-approval/:id', authMiddleware, adminProductController.updateApprovalStatus);
 router.delete('/admin/:id', authMiddleware, adminProductController.deleteProduct);
 
 // Seller Routes
-router.post('/seller', authMiddleware, productUpload.array('images', 10), sellerProductController.createProduct);
-router.post('/seller/add-variant/:masterProductId', authMiddleware, productUpload.array('images', 10), sellerProductController.addVariant);
+router.post('/seller', authMiddleware, productUpload.any(), sellerProductController.createProduct);
+router.post('/seller/add-variant/:masterProductId', authMiddleware, productUpload.any(), sellerProductController.addVariant);
 router.get('/seller/getproducts', authMiddleware, sellerProductController.getProducts);
 router.get('/seller/:id', authMiddleware, sellerProductController.getProductById);
-router.put('/seller/:id', authMiddleware, productUpload.array('images', 10), sellerProductController.updateProduct);
+router.put('/seller/:id', authMiddleware, productUpload.any(), sellerProductController.updateProduct);
 router.delete('/seller/:id', authMiddleware, sellerProductController.deleteProduct);
 router.post('/seller/check-slug', authMiddleware, sellerProductController.checkProductBySlug);
 

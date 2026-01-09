@@ -70,10 +70,13 @@ exports.createProduct = async (req, res) => {
 
     for (let i = 0; i < variants.length; i++) {
       const variantData = variants[i];
-      if (!variantData.imageIndices || !Array.isArray(variantData.imageIndices) || variantData.imageIndices.length === 0) {
+      const hasImageIndices = variantData.imageIndices && Array.isArray(variantData.imageIndices) && variantData.imageIndices.length > 0;
+      const hasVariantFiles = req.files && req.files.some(f => f.fieldname === `variantImages_${i}`);
+      
+      if (!hasImageIndices && !hasVariantFiles) {
         return res.status(400).json({
           success: false,
-          message: `Variant ${i + 1}: At least one image must be selected`
+          message: `Variant ${i + 1}: At least one image must be uploaded or selected`
         });
       }
     }
@@ -122,7 +125,7 @@ exports.createProduct = async (req, res) => {
     });
     const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
 
-    const allImages = req.files.map(file => `/uploads/products/${file.filename}`);
+    const allImages = req.files ? req.files.filter(f => f.fieldname === 'images').map(file => `/uploads/products/${file.filename}`) : [];
 
     // 1. Create Master Product
     const masterProductData = {
@@ -136,6 +139,7 @@ exports.createProduct = async (req, res) => {
       warranty,
       mainCategoryId,
       subCategoryId,
+      images: allImages, // Master product gets the main images
       userId: req.userId,
       roleId: 1,
       status: true,
@@ -149,12 +153,13 @@ exports.createProduct = async (req, res) => {
     for (let i = 0; i < variants.length; i++) {
         const variantData = variants[i];
         
-        let variantImages = allImages;
-        if (variantData.imageIndices && Array.isArray(variantData.imageIndices)) {
-            variantImages = variantData.imageIndices.map(idx => allImages[idx]).filter(img => img !== undefined);
-        } else if (variants.length > 1) {
-            variantImages = allImages;
-        }
+        // Get images specifically for this variant
+        const variantSpecificImages = req.files 
+            ? req.files.filter(f => f.fieldname === `variantImages_${i}`).map(file => `/uploads/products/${file.filename}`)
+            : [];
+        
+        // If no variant-specific images, maybe fallback to master images or keep empty
+        const variantImages = variantSpecificImages.length > 0 ? variantSpecificImages : allImages;
 
         const variant = await ProductVariant.create({
             productId: masterProduct.productId,
@@ -444,6 +449,11 @@ exports.updateProduct = async (req, res) => {
         try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
       }
 
+      let parsedVariants = req.body.variants;
+      if (typeof parsedVariants === 'string') {
+        try { parsedVariants = JSON.parse(parsedVariants); } catch (e) { parsedVariants = undefined; }
+      }
+
       const updateData = { 
         productName, 
         description, 
@@ -455,20 +465,55 @@ exports.updateProduct = async (req, res) => {
       if (productName) updateData.slug = slugify(productName);
       
       if (req.files && req.files.length > 0) {
-        const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
-        updateData.images = [...(existingProduct.images || []), ...newImages];
+        const masterImages = req.files.filter(f => f.fieldname === 'images').map(file => `/uploads/products/${file.filename}`);
+        if (masterImages.length > 0) {
+          updateData.images = [...(existingProduct.images || []), ...masterImages];
+        }
       }
 
       // Remove undefined keys
       Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
 
       await Product.update(id, updateData);
+
+      // 1.1 Update Variants if provided
+      if (parsedVariants && Array.isArray(parsedVariants)) {
+        for (let i = 0; i < parsedVariants.length; i++) {
+          const vData = parsedVariants[i];
+          if (vData.variantId) {
+            const variantUpdateData = {
+              price: vData.price !== undefined ? parseFloat(vData.price) : undefined,
+              salePrice: vData.salePrice !== undefined ? parseFloat(vData.salePrice) : undefined,
+              stock: vData.stock !== undefined ? parseInt(vData.stock) : undefined,
+              deliveryDays: vData.deliveryDays !== undefined ? parseInt(vData.deliveryDays) : undefined,
+              pickupAddress: vData.pickupAddress !== undefined ? vData.pickupAddress : undefined,
+              attributes: vData.attributes !== undefined ? vData.attributes : undefined,
+              images: vData.existingImages // Use the existingImages list from frontend
+            };
+
+            // Add new variant-specific images if uploaded
+            if (req.files) {
+              const newVariantImages = req.files
+                .filter(f => f.fieldname === `variantImages_${i}`)
+                .map(file => `/uploads/products/${file.filename}`);
+              
+              if (newVariantImages.length > 0) {
+                variantUpdateData.images = [...(variantUpdateData.images || []), ...newVariantImages];
+              }
+            }
+
+            Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
+            await ProductVariant.update(vData.variantId, variantUpdateData);
+          }
+        }
+      }
+
       await deleteCachePattern('products:list:*');
       await deleteCache(`products:detail:${id}`);
 
       return res.status(200).json({ 
         success: true, 
-        message: 'Product Master updated successfully',
+        message: 'Product Master and Variants updated successfully',
       });
     }
 

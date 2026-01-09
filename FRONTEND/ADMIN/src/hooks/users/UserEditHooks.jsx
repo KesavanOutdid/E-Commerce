@@ -24,8 +24,6 @@ export const useUserEdit = (userId) => {
       gstin: '',
       panNumber: '',
       kycApproved: false,
-      isLive: false,
-      commissionPercentage: 10,
       shopAddress: {
         doorNo: '',
         street: '',
@@ -76,8 +74,6 @@ export const useUserEdit = (userId) => {
             gstin: user.sellerInfo.gstin || '',
             panNumber: user.sellerInfo.panNumber || '',
             kycApproved: user.sellerInfo.kycApproved ?? false,
-            isLive: user.sellerInfo.isLive ?? false,
-            commissionPercentage: user.sellerInfo.commissionPercentage ?? 10,
             shopAddress: {
               doorNo: user.sellerInfo.shopAddress?.doorNo || '',
               street: user.sellerInfo.shopAddress?.street || '',
@@ -100,8 +96,6 @@ export const useUserEdit = (userId) => {
             gstin: '',
             panNumber: '',
             kycApproved: false,
-            isLive: false,
-            commissionPercentage: 10,
             shopAddress: {
               doorNo: '',
               street: '',
@@ -188,7 +182,7 @@ export const useUserEdit = (userId) => {
     });
   };
 
-  const updateShopAddressData = (field, value) => {
+  const updateBusinessAddressData = (field, value) => {
     setFormData((prev) => {
       const newShopAddress = { ...prev.sellerInfo.shopAddress, [field]: value };
       const newSellerInfo = { ...prev.sellerInfo, shopAddress: newShopAddress };
@@ -267,7 +261,7 @@ export const useUserEdit = (userId) => {
 
       if (formData.roles.includes(2)) {
         if (formData.sellerInfo.shopAddress?.pincode && formData.sellerInfo.shopAddress.pincode.length !== 6) {
-          Swal.fire('Error', 'Shop Pincode must be exactly 6 digits', 'error');
+          Swal.fire('Error', 'Business Pincode must be exactly 6 digits', 'error');
           return;
         }
       }
@@ -291,8 +285,6 @@ export const useUserEdit = (userId) => {
           gstin: formData.sellerInfo.gstin,
           panNumber: formData.sellerInfo.panNumber,
           kycApproved: formData.sellerInfo.kycApproved,
-          isLive: formData.sellerInfo.isLive,
-          commissionPercentage: formData.sellerInfo.commissionPercentage,
           shopAddress: formData.sellerInfo.shopAddress,
           bankDetails: formData.sellerInfo.bankDetails
         };
@@ -332,7 +324,7 @@ export const useUserEdit = (userId) => {
     isDirty,
     updateFormData,
     updateSellerData,
-    updateShopAddressData,
+    updateBusinessAddressData,
     updateUserAddressData,
     updateBankDetailsData,
     handleSubmit,

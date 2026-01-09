@@ -36,7 +36,8 @@ const ProductDetail = () => {
     const { updateProductApproval, listFromCatalog } = useProducts();
 
     const [product, setProduct] = useState(null);
-    const [offers, setOffers] = useState([]);
+    const [variants, setVariants] = useState([]);
+    const [minPriceVariant, setMinPriceVariant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [imageErrors, setImageErrors] = useState({});
@@ -61,8 +62,21 @@ const ProductDetail = () => {
             const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
             if (response.data.success) {
                 const productData = response.data.data.product;
+                const variantData = response.data.data.variants || [];
+                
+                // If product has no images, collect from variants
+                if (!productData.images || productData.images.length === 0) {
+                    const allVariantImages = variantData.reduce((acc, v) => {
+                        return [...acc, ...(v.images || [])];
+                    }, []);
+                    // Remove duplicates
+                    productData.images = [...new Set(allVariantImages)];
+                }
+
                 setProduct(productData);
-                setOffers(productData.allOffers || []);
+                setVariants(variantData);
+                // Use the correct field from backend
+                setMinPriceVariant(productData.minPriceDetails || response.data.data.minPriceVariant || null);
                 setSelectedImageIndex(0);
             }
         } catch (error) {
@@ -129,7 +143,7 @@ const ProductDetail = () => {
 
     const handleListProduct = async () => {
         const { value: formValues } = await Swal.fire({
-            title: 'List in Our Shop',
+            title: 'List in Our Marketplace',
             html:
                 '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
                 `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
@@ -480,37 +494,30 @@ const ProductDetail = () => {
                         <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconCurrencyRupee />}
-                                label="Price"
+                                label="Starting Price"
                                 value={
-                                    (product.salePrice && product.salePrice !== product.price) ? (
-                                        <Stack direction="row" spacing={1} alignItems="center">
-                                            <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
-                                                ₹{Number(product.price).toLocaleString('en-IN')}
-                                            </Typography>
-                                            <Typography variant="h4" color="primary" fontWeight={600}>
-                                                ₹{Number(product.salePrice).toLocaleString('en-IN')}
-                                            </Typography>
-                                        </Stack>
-                                    ) : (product.price !== product.masterPrice && product.masterPrice) ? (
-                                        <Stack direction="row" spacing={1} alignItems="center">
-                                            <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
-                                                ₹{Number(product.masterPrice).toLocaleString('en-IN')}
-                                            </Typography>
-                                            <Typography variant="h4" color="primary" fontWeight={600}>
-                                                ₹{Number(product.price).toLocaleString('en-IN')}
-                                            </Typography>
-                                        </Stack>
-                                    ) : (
-                                        `₹${Number(product.salePrice || product.price).toLocaleString('en-IN')}`
-                                    )
+                                    minPriceVariant ? (
+                                        minPriceVariant.salePrice ? (
+                                            <Stack direction="row" spacing={1} alignItems="center">
+                                                <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
+                                                    ₹{Number(minPriceVariant.price).toLocaleString('en-IN')}
+                                                </Typography>
+                                                <Typography variant="h4" color="primary" fontWeight={600}>
+                                                    ₹{Number(minPriceVariant.salePrice).toLocaleString('en-IN')}
+                                                </Typography>
+                                            </Stack>
+                                        ) : (
+                                            `₹${Number(minPriceVariant.price).toLocaleString('en-IN')}`
+                                        )
+                                    ) : '-'
                                 }
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                             <DetailRow
                                 icon={<IconCube />}
-                                label="Stock"
-                                value={product.stock}
+                                label="Total Stock"
+                                value={variants.reduce((acc, v) => acc + (v.stock || 0), 0)}
                             />
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
@@ -527,6 +534,13 @@ const ProductDetail = () => {
                                 value={product.subCategoryName}
                             />
                         </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <DetailRow
+                                icon={<IconTag />}
+                                label="Brand"
+                                value={product.brand}
+                            />
+                        </Grid>
 
                         <Grid size={12}>
                             <Box sx={{ mt: 2 }}>
@@ -536,6 +550,21 @@ const ProductDetail = () => {
                                 <ExpandableText text={product.description} />
                             </Box>
                         </Grid>
+
+                        {product.highlights && product.highlights.length > 0 && (
+                            <Grid size={12}>
+                                <Box sx={{ mt: 2 }}>
+                                    <Typography variant="subtitle2" color="secondary" gutterBottom>
+                                        Key Highlights
+                                    </Typography>
+                                    <Box component="ul" sx={{ mt: 0.5, pl: 2, '& li': { fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 } }}>
+                                        {product.highlights.map((item, i) => (
+                                            <li key={i}>{item}</li>
+                                        ))}
+                                    </Box>
+                                </Box>
+                            </Grid>
+                        )}
 
                         <Grid size={12}>
                             <Box sx={{ mt: 2 }}>
@@ -570,7 +599,7 @@ const ProductDetail = () => {
                                                 Best Price Offer
                                             </Typography>
                                             <Typography variant="h3" color="primary.main" sx={{ mt: -0.5 }}>
-                                                ₹{product.minPrice?.toLocaleString('en-IN')}
+                                                ₹{product.minPriceDetails?.currentPrice?.toLocaleString('en-IN') || product.minPrice?.toLocaleString('en-IN')}
                                             </Typography>
                                         </Box>
                                     </Stack>
@@ -600,17 +629,27 @@ const ProductDetail = () => {
                             </Stack>
                         </AccordionSummary>
                         <AccordionDetails>
-                            {product.attributes && product.attributes.length > 0 ? (
+                            {(product.attributes && product.attributes.length > 0) || (product.specifications && product.specifications.length > 0) ? (
                                 <TableContainer>
                                     <Table size="small">
                                         <TableBody>
-                                            {product.attributes.map((attr, idx) => (
-                                                <TableRow key={idx}>
+                                            {product.attributes && product.attributes.map((attr, idx) => (
+                                                <TableRow key={`attr-${idx}`}>
                                                     <TableCell sx={{ fontWeight: 'bold', width: '30%', color: 'text.secondary' }}>
                                                         {attr.name}
                                                     </TableCell>
                                                     <TableCell>
                                                         {attr.value}
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            {product.specifications && product.specifications.map((spec, idx) => (
+                                                <TableRow key={`spec-${idx}`}>
+                                                    <TableCell sx={{ fontWeight: 'bold', width: '30%', color: 'text.secondary' }}>
+                                                        {spec.key || spec.name}
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        {spec.value}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -624,14 +663,14 @@ const ProductDetail = () => {
                     </Accordion>
                 </Grid>
 
-                {/* All Seller Offers */}
-                {product.allOffers && product.allOffers.length > 0 && (
+                {/* Marketplace Offers Section */}
+                {variants && variants.length > 0 && (
                     <Grid size={12}>
                         <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee', mt: 2 }}>
                             <AccordionSummary expandIcon={<IconChevronDown />}>
                                 <Stack direction="row" alignItems="center" spacing={1}>
-                                    <IconTag size={20} />
-                                    <Typography variant="h4">All Seller Offers ({product.sellerCount || product.allOffers.length})</Typography>
+                                    <IconBuildingStore size={20} />
+                                    <Typography variant="h4">Marketplace Offers & Variants ({variants.length})</Typography>
                                 </Stack>
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 0 }}>
@@ -639,7 +678,8 @@ const ProductDetail = () => {
                                     <Table size="small">
                                         <TableHead sx={{ bgcolor: '#fafafa' }}>
                                             <TableRow>
-                                                <TableCell sx={{ fontWeight: 600 }}>Seller / Shop</TableCell>
+                                                <TableCell sx={{ fontWeight: 600 }}>Seller / Company</TableCell>
+                                                <TableCell sx={{ fontWeight: 600 }}>Specifications / Variant</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Stock</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Delivery</TableCell>
@@ -647,38 +687,48 @@ const ProductDetail = () => {
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
-                                            {product.allOffers.map((offer, idx) => (
-                                                <TableRow 
-                                                    key={idx}
-                                                    sx={{ 
-                                                        bgcolor: offer.price === product.minPrice ? 'rgba(46, 125, 50, 0.04)' : 'inherit',
-                                                        '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.02)' }
-                                                    }}
-                                                >
+                                            {variants.map((offer, idx) => (
+                                                <TableRow key={idx} hover>
                                                     <TableCell>
-                                                        <Stack direction="row" spacing={1} alignItems="center">
-                                                            <Box>
-                                                                <Typography variant="body2" fontWeight={600}>
-                                                                    {offer.sellerName || '-'}
-                                                                    {offer.price === product.minPrice && (
-                                                                        <Chip 
-                                                                            label="BEST PRICE" 
-                                                                            size="small" 
-                                                                            color="success" 
-                                                                            sx={{ ml: 1, height: 16, fontSize: '0.6rem', fontWeight: 700 }} 
-                                                                        />
-                                                                    )}
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight={600}>
+                                                                {offer.sellerName || '-'}
+                                                            </Typography>
+                                                            <Typography variant="caption" color="textSecondary" display="block">
+                                                                {offer.shopName || '-'}
+                                                            </Typography>
+                                                            {offer.pickupAddress && (
+                                                                <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic', mt: 0.5, display: 'block' }}>
+                                                                    Pickup: {offer.pickupAddress}
                                                                 </Typography>
-                                                                <Typography variant="caption" color="textSecondary">
-                                                                    {offer.shopName || '-'}
-                                                                </Typography>
-                                                            </Box>
+                                                            )}
+                                                        </Box>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                                            {offer.attributes?.map((attr, ai) => (
+                                                                <Chip 
+                                                                    key={ai} 
+                                                                    label={`${attr.name}: ${attr.value}`} 
+                                                                    size="small" 
+                                                                    variant="outlined" 
+                                                                    sx={{ fontSize: '0.65rem', height: 20 }}
+                                                                />
+                                                            ))}
+                                                            {!offer.attributes?.length && <Typography variant="caption" color="textSecondary">Standard</Typography>}
                                                         </Stack>
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        <Typography variant="body2" fontWeight={700} color="primary.main">
-                                                            ₹{offer.price?.toLocaleString('en-IN')}
-                                                        </Typography>
+                                                        <Box>
+                                                            <Typography variant="body2" fontWeight={700} color="primary.main">
+                                                                ₹{offer.price?.toLocaleString('en-IN')}
+                                                            </Typography>
+                                                            {offer.price === product.minPrice && (
+                                                                <Typography variant="caption" color="success.main" sx={{ fontWeight: 800, fontSize: '0.6rem' }}>
+                                                                    BEST PRICE
+                                                                </Typography>
+                                                            )}
+                                                        </Box>
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         <Typography variant="body2" color={offer.stock < 10 ? 'error.main' : 'textPrimary'}>
@@ -716,7 +766,7 @@ const ProductDetail = () => {
                                         <Typography variant="body2" fontWeight={500}>{product.sellerName || '-'}</Typography>
                                     </Grid>
                                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                                        <Typography variant="caption" display="block">Shop Name</Typography>
+                                        <Typography variant="caption" display="block">Company Name</Typography>
                                         <Typography variant="body2" fontWeight={500}>{product.shopName || '-'}</Typography>
                                     </Grid>
                                 </>
@@ -802,7 +852,6 @@ const ProductDetail = () => {
                         </Grid>
                     </Paper>
                 </Grid>
-
             </Grid>
         </MainCard>
     );

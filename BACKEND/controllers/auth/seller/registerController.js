@@ -128,7 +128,6 @@ async function register(req, res) {
       userId,
       shopName: null,
       onboardingCompleted: false,
-      isLive: false,
       kycApproved: false
     });
 

@@ -68,10 +68,13 @@ exports.createProduct = async (req, res) => {
 
         for (let i = 0; i < variants.length; i++) {
             const variantData = variants[i];
-            if (!variantData.imageIndices || !Array.isArray(variantData.imageIndices) || variantData.imageIndices.length === 0) {
+            const hasImageIndices = variantData.imageIndices && Array.isArray(variantData.imageIndices) && variantData.imageIndices.length > 0;
+            const hasVariantFiles = req.files && req.files.some(f => f.fieldname === `variantImages_${i}`);
+            
+            if (!hasImageIndices && !hasVariantFiles) {
                 return res.status(400).json({
                     success: false,
-                    message: `Variant ${i + 1}: At least one image must be selected`
+                    message: `Variant ${i + 1}: At least one image must be uploaded or selected`
                 });
             }
         }
@@ -123,7 +126,7 @@ exports.createProduct = async (req, res) => {
         });
         const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
 
-        const allImages = req.files.map(file => `/uploads/products/${file.filename}`);
+        const allImages = req.files ? req.files.filter(f => f.fieldname === 'images').map(file => `/uploads/products/${file.filename}`) : [];
 
         // 1. Create Master Product (The "Flipkart Catalog" entry)
         const masterProductData = {
@@ -137,6 +140,7 @@ exports.createProduct = async (req, res) => {
             warranty,
             mainCategoryId,
             subCategoryId,
+            images: allImages,
             userId,
             roleId: 2,
             status: true,
@@ -150,10 +154,24 @@ exports.createProduct = async (req, res) => {
         for (let i = 0; i < variants.length; i++) {
             const variantData = variants[i];
             
-            let variantImages = allImages;
-            if (variantData.imageIndices && Array.isArray(variantData.imageIndices)) {
-                variantImages = variantData.imageIndices.map(idx => allImages[idx]).filter(img => img !== undefined);
-            } else if (variants.length > 1) {
+            // Get images specifically for this variant
+            const variantSpecificFiles = req.files 
+                ? req.files.filter(f => f.fieldname === `variantImages_${i}`).map(file => `/uploads/products/${file.filename}`)
+                : [];
+            
+            // If imageIndices are provided, pick from the master images
+            let variantImages = [];
+            if (variantData.imageIndices && Array.isArray(variantData.imageIndices) && variantData.imageIndices.length > 0) {
+                variantImages = variantData.imageIndices
+                    .map(index => allImages[index])
+                    .filter(img => img !== undefined);
+            }
+
+            // Combine indices-based images with direct uploads
+            variantImages = [...variantImages, ...variantSpecificFiles];
+
+            // Fallback to master images if variant has no images at all
+            if (variantImages.length === 0) {
                 variantImages = allImages;
             }
 
@@ -255,7 +273,7 @@ exports.getProducts = async (req, res) => {
 exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params; // Can be Master ID or Variant ID
-        let { productName, description, shortDescription, attributes, price, salePrice, stock, deliveryDays } = req.body;
+        let { productName, description, shortDescription, attributes, price, salePrice, stock, deliveryDays, pickupAddress } = req.body;
 
         // 1. Check if it's a Master Product
         const masterProduct = await Product.findById(id);
@@ -264,12 +282,74 @@ exports.updateProduct = async (req, res) => {
                 return res.status(403).json({ success: false, message: 'Not authorized to update this master product' });
             }
 
-            const updateData = { productName, description, shortDescription };
+            if (typeof attributes === 'string') {
+                try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
+            }
+
+            let parsedVariants = req.body.variants;
+            if (typeof parsedVariants === 'string') {
+                try { parsedVariants = JSON.parse(parsedVariants); } catch (e) { parsedVariants = undefined; }
+            }
+
+            const updateData = { 
+                productName, 
+                description, 
+                shortDescription,
+                attributes: attributes !== undefined ? attributes : undefined
+            };
             if (productName) updateData.slug = slugify(productName);
             
+            if (req.files && req.files.length > 0) {
+                const masterImages = req.files.filter(f => f.fieldname === 'images').map(file => `/uploads/products/${file.filename}`);
+                if (masterImages.length > 0) {
+                    updateData.images = [...(masterProduct.images || []), ...masterImages];
+                }
+            }
+
+            // Remove undefined keys
+            Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
             await Product.update(id, updateData);
+
+            // 1.1 Update Variants if provided (Bulk update)
+            if (parsedVariants && Array.isArray(parsedVariants)) {
+                for (let i = 0; i < parsedVariants.length; i++) {
+                    const vData = parsedVariants[i];
+                    if (vData.variantId) {
+                        const variantUpdateData = {
+                            price: vData.price !== undefined ? parseFloat(vData.price) : undefined,
+                            salePrice: vData.salePrice !== undefined ? parseFloat(vData.salePrice) : undefined,
+                            stock: vData.stock !== undefined ? parseInt(vData.stock) : undefined,
+                            deliveryDays: vData.deliveryDays !== undefined ? parseInt(vData.deliveryDays) : undefined,
+                            pickupAddress: vData.pickupAddress !== undefined ? vData.pickupAddress : undefined,
+                            attributes: vData.attributes !== undefined ? vData.attributes : undefined,
+                            images: vData.existingImages // Use the existingImages list from frontend
+                        };
+
+                        // Add new variant-specific images if uploaded
+                        if (req.files) {
+                            const newVariantImages = req.files
+                                .filter(f => f.fieldname === `variantImages_${i}`)
+                                .map(file => `/uploads/products/${file.filename}`);
+                            
+                            if (newVariantImages.length > 0) {
+                                variantUpdateData.images = [...(variantUpdateData.images || []), ...newVariantImages];
+                            }
+                        }
+
+                        Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
+                        
+                        // Ensure this variant belongs to the seller
+                        const existingVariant = await ProductVariant.findById(vData.variantId);
+                        if (existingVariant && existingVariant.sellerId.toString() === req.userId.toString()) {
+                            await ProductVariant.update(vData.variantId, variantUpdateData);
+                        }
+                    }
+                }
+            }
+
             await deleteCachePattern('products:list:*');
-            return res.status(200).json({ success: true, message: 'Master product updated successfully' });
+            return res.status(200).json({ success: true, message: 'Master product and its variants updated successfully' });
         }
 
         // 2. Check if it's a Variant
@@ -288,7 +368,8 @@ exports.updateProduct = async (req, res) => {
                 price: price !== undefined ? parseFloat(price) : undefined,
                 salePrice: salePrice !== undefined ? parseFloat(salePrice) : undefined,
                 stock: stock !== undefined ? parseInt(stock) : undefined,
-                deliveryDays: deliveryDays !== undefined ? parseInt(deliveryDays) : undefined
+                deliveryDays: deliveryDays !== undefined ? parseInt(deliveryDays) : undefined,
+                pickupAddress: pickupAddress !== undefined ? pickupAddress : undefined
             };
 
             // Remove undefined keys

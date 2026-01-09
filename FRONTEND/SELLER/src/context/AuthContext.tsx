@@ -13,10 +13,7 @@ interface SellerInfo {
     kycApprovedBy: string | null
     kycApprovedAt: string | null
     onboardingCompleted: boolean
-    isLive: boolean
     commissionPercentage: number | null
-    goLiveApprovedBy: string | null
-    goLiveApprovedAt: string | null
     bankDetails: any
     createdAt: string
     updatedAt: string

@@ -71,17 +71,10 @@ components:
         kycApprovedAt:
           type: string
           format: date-time
-        isLive:
-          type: boolean
         commissionPercentage:
           type: number
           minimum: 0
           maximum: 100
-        goLiveApprovedBy:
-          type: string
-        goLiveApprovedAt:
-          type: string
-          format: date-time
         bankDetails:
           type: object
           properties:
@@ -899,15 +892,8 @@ paths:
                         format: date-time
                       onboardingCompleted:
                         type: boolean
-                      isLive:
-                        type: boolean
                       commissionPercentage:
                         type: number
-                      goLiveApprovedBy:
-                        type: string
-                      goLiveApprovedAt:
-                        type: string
-                        format: date-time
 
   # ============================================================
   # USER (CUSTOMER) ENDPOINTS

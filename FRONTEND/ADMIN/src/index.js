@@ -25,6 +25,22 @@ import '@fontsource/poppins/500.css';
 import '@fontsource/poppins/600.css';
 import '@fontsource/poppins/700.css';
 
+// Suppress ResizeObserver loop limit exceeded error
+const resizeObserverErrorHandler = (e) => {
+  const message = e instanceof PromiseRejectionEvent ? e.reason?.message : e.message;
+  if (message === 'ResizeObserver loop completed with undelivered notifications.' || message === 'ResizeObserver loop limit exceeded') {
+    if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+    if (e.preventDefault) e.preventDefault();
+    const resizeObserverErrDiv = document.getElementById('webpack-dev-server-client-overlay-div');
+    const resizeObserverErr = document.getElementById('webpack-dev-server-client-overlay');
+    if (resizeObserverErr) resizeObserverErr.setAttribute('style', 'display: none');
+    if (resizeObserverErrDiv) resizeObserverErrDiv.setAttribute('style', 'display: none');
+  }
+};
+
+window.addEventListener('error', resizeObserverErrorHandler);
+window.addEventListener('unhandledrejection', resizeObserverErrorHandler);
+
 // ==============================|| REACT DOM RENDER ||============================== //
 
 const container = document.getElementById('root');

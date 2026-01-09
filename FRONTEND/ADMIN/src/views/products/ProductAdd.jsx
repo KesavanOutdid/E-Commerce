@@ -11,9 +11,16 @@ import {
     FormControlLabel,
     Switch,
     IconButton,
-    Paper
+    Paper,
+    Autocomplete,
+    InputAdornment,
+    Tooltip,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions
 } from '@mui/material';
-import { IconArrowLeft, IconUpload, IconX } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconX, IconPlus, IconDeviceFloppy, IconEdit } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
 import { API_ENDPOINTS, API_BASE_URL } from '../../config/apiConfig';
@@ -30,29 +37,68 @@ const ProductAdd = () => {
 
     const [mainCategories, setMainCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
+    const [pickupAddresses, setPickupAddresses] = useState([]);
+    const [addressDialogOpen, setAddressDialogOpen] = useState(false);
+    const [editingAddressId, setEditingAddressId] = useState(null);
+    const [addressForm, setAddressForm] = useState({
+        name: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        district: '',
+        state: '',
+        pincode: '',
+        phone: '',
+        isDefault: false
+    });
 
     const [formData, setFormData] = useState({
         productName: '',
         description: '',
         shortDescription: '',
-        price: '',
-        salePrice: '',
-        stock: '',
-        deliveryDays: '3',
         mainCategoryId: '',
         subCategoryId: '',
         status: true,
         createdBy: 'admin@gmail.com', // Should be dynamic from auth
         roleId: 1,
-        // attributes will be stored as an array of { attributeId, name, value, type, required }
-        attributes: []
+        brand: '',
+        highlights: [],
+        specifications: [],
+        warranty: '',
+        // Master attributes (shared across all variants)
+        attributes: [],
+        // Variants
+        variants: [
+            {
+                price: '',
+                salePrice: '',
+                stock: '',
+                deliveryDays: '3',
+                pickupAddress: '',
+                attributes: [], // Variant specific attributes (e.g., Color, Size)
+                images: [],
+                previewImages: [],
+                existingImages: []
+            }
+        ]
     });
 
     const isListingOnly = isEdit && formData.roleId === 2;
 
-    const [images, setImages] = useState([]);
-    const [previewImages, setPreviewImages] = useState([]);
-    const [existingImages, setExistingImages] = useState([]); // For edit mode
+    // Fetch Pickup Addresses
+    useEffect(() => {
+        const fetchPickupAddresses = async () => {
+            try {
+                const response = await axios.get(API_ENDPOINTS.AUTH.PICKUP_ADDRESSES);
+                if (response.data.success) {
+                    setPickupAddresses(response.data.data || []);
+                }
+            } catch (error) {
+                console.error("Error fetching pickup addresses", error);
+            }
+        };
+        fetchPickupAddresses();
+    }, []);
 
     // Fetch Main Categories on mount
     useEffect(() => {
@@ -79,22 +125,43 @@ const ProductAdd = () => {
                     const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
                     if (response.data.success) {
                         const product = response.data.data.product || response.data.data || response.data;
+                        const variants = response.data.data.variants || (product.variants ? product.variants : []);
+                        
                         setFormData({
                             productName: product.productName,
                             description: product.description || '',
                             shortDescription: product.shortDescription || '',
-                            price: product.price,
-                            salePrice: product.salePrice || '',
-                            stock: product.stock,
-                            deliveryDays: product.deliveryDays || '3',
                             mainCategoryId: product.mainCategoryId,
                             subCategoryId: product.subCategoryId,
                             status: product.status,
                             createdBy: product.createdby,
                             roleId: product.roleId || 1,
-                            attributes: product.attributes || []
+                            brand: product.brand || '',
+                            highlights: product.highlights || [],
+                            specifications: product.specifications || [],
+                            warranty: product.warranty || '',
+                            attributes: product.attributes || [],
+                            variants: variants.length > 0 ? variants.map(v => ({
+                                variantId: v.variantId,
+                                price: v.price,
+                                salePrice: v.salePrice || '',
+                                stock: v.stock,
+                                deliveryDays: v.deliveryDays || '3',
+                                attributes: v.attributes || [],
+                                images: [],
+                                previewImages: [],
+                                existingImages: v.images || []
+                            })) : [{
+                                price: product.price || '',
+                                salePrice: product.salePrice || '',
+                                stock: product.stock || '',
+                                deliveryDays: product.deliveryDays || '3',
+                                attributes: [],
+                                images: [],
+                                previewImages: [],
+                                existingImages: []
+                            }]
                         });
-                        setExistingImages(product.images || []);
 
                         if (product.mainCategoryId) {
                             fetchSubCategories(product.mainCategoryId);
@@ -231,91 +298,270 @@ const ProductAdd = () => {
         const value = e.target.value;
         const selectedSub = subCategories.find(sub => (sub.subCategoryId || sub._id || sub.id) === value);
 
-        // Initialize attributes based on selected subcategory template
-        // We preserve values if the attribute name matches? No, clearer to reset or merge.
-        // Let's map the subcategory attributes to our form attributes structure.
         const newAttributes = selectedSub?.attributes?.map(attr => ({
-            attributeId: attr._id || attr.id, // If exisiting
+            attributeId: attr._id || attr.id,
             name: attr.name,
             type: attr.type,
             required: attr.required,
-            value: '' // Reset value
+            value: ''
         })) || [];
 
         setFormData(prev => ({
             ...prev,
             subCategoryId: value,
-            attributes: newAttributes
+            attributes: [], // Reset master attributes
+            variants: prev.variants.map(v => ({
+                ...v,
+                attributes: newAttributes // Assign category attributes to variants by default
+            }))
         }));
     };
 
     const handleAttributeChange = (index, value) => {
-        const updatedAttributes = [...formData.attributes];
-        updatedAttributes[index].value = value;
-        setFormData(prev => ({ ...prev, attributes: updatedAttributes }));
+        setFormData(prev => {
+            const newAttrs = [...prev.attributes];
+            newAttrs[index] = { ...newAttrs[index], value };
+            return { ...prev, attributes: newAttrs };
+        });
     };
 
-    const handleImageChange = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            setImages(prev => [...prev, ...files]);
+    const handleAddSpecification = () => {
+        setFormData(prev => ({
+            ...prev,
+            specifications: [...(prev.specifications || []), { key: '', value: '' }]
+        }));
+    };
 
-            // Generate previews
-            const newPreviews = files.map(file => URL.createObjectURL(file));
-            setPreviewImages(prev => [...prev, ...newPreviews]);
+    const handleRemoveSpecification = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            specifications: prev.specifications.filter((_, i) => i !== index)
+        }));
+    };
+
+    const handleSpecificationChange = (index, field, value) => {
+        const newSpecs = [...formData.specifications];
+        newSpecs[index][field] = value;
+        setFormData(prev => ({ ...prev, specifications: newSpecs }));
+    };
+
+    const handleSubmitPickupAddress = async () => {
+        // Validation
+        const required = ['name', 'addressLine1', 'city', 'district', 'state', 'pincode', 'phone'];
+        const missing = required.filter(f => !addressForm[f]);
+        if (missing.length > 0) {
+            Swal.fire('Error', `Please fill required fields: ${missing.join(', ')}`, 'error');
+            return;
+        }
+
+        try {
+            let response;
+            if (editingAddressId) {
+                response = await axios.put(`${API_ENDPOINTS.AUTH.PICKUP_ADDRESSES}/${editingAddressId}`, addressForm);
+            } else {
+                response = await axios.post(API_ENDPOINTS.AUTH.PICKUP_ADDRESSES, addressForm);
+            }
+
+            if (response.data.success) {
+                setPickupAddresses(response.data.data || []);
+                setAddressDialogOpen(false);
+                setAddressForm({
+                    name: '', addressLine1: '', addressLine2: '', city: '',
+                    district: '', state: '', pincode: '', phone: '', isDefault: false
+                });
+                setEditingAddressId(null);
+                Swal.fire('Success', `Address ${editingAddressId ? 'updated' : 'added'} successfully`, 'success');
+            }
+        } catch (error) {
+            console.error("Error saving address", error);
+            Swal.fire('Error', error.response?.data?.message || 'Failed to save address', 'error');
         }
     };
 
-    const removeImage = (index) => {
-        setImages(prev => prev.filter((_, i) => i !== index));
-        setPreviewImages(prev => prev.filter((_, i) => i !== index));
+    const handleOpenAddressDialog = (address = null) => {
+        if (address) {
+            setAddressForm({
+                name: address.name || '',
+                addressLine1: address.addressLine1 || '',
+                addressLine2: address.addressLine2 || '',
+                city: address.city || '',
+                district: address.district || '',
+                state: address.state || '',
+                pincode: address.pincode || '',
+                phone: address.phone || '',
+                isDefault: address.isDefault || false
+            });
+            setEditingAddressId(address._id || address.id);
+        } else {
+            setAddressForm({
+                name: '', addressLine1: '', addressLine2: '', city: '',
+                district: '', state: '', pincode: '', phone: '', isDefault: false
+            });
+            setEditingAddressId(null);
+        }
+        setAddressDialogOpen(true);
     };
 
-    const removeExistingImage = (index) => {
-        setExistingImages(prev => prev.filter((_, i) => i !== index));
+    const addVariant = () => {
+        const baseAttributes = formData.variants[0]?.attributes.map(attr => ({ ...attr, value: '' })) || [];
+        setFormData(prev => ({
+            ...prev,
+            variants: [
+                ...prev.variants,
+                {
+                    price: '',
+                    salePrice: '',
+                    stock: '',
+                    deliveryDays: '3',
+                    pickupAddress: '',
+                    attributes: baseAttributes,
+                    images: [],
+                    previewImages: [],
+                    existingImages: []
+                }
+            ]
+        }));
+    };
+
+    const removeVariant = (index) => {
+        if (formData.variants.length > 1) {
+            setFormData(prev => ({
+                ...prev,
+                variants: prev.variants.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
+    const handleVariantChange = (index, field, value) => {
+        const updatedVariants = [...formData.variants];
+        updatedVariants[index][field] = value;
+        setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    };
+
+    const handleVariantAttributeChange = (vIndex, aIndex, value) => {
+        const updatedVariants = [...formData.variants];
+        updatedVariants[vIndex].attributes[aIndex].value = value;
+        setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    };
+
+    const handleImageChange = (e, vIndex) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            const updatedVariants = [...formData.variants];
+            updatedVariants[vIndex].images = [...updatedVariants[vIndex].images, ...files];
+            
+            const newPreviews = files.map(file => URL.createObjectURL(file));
+            updatedVariants[vIndex].previewImages = [...updatedVariants[vIndex].previewImages, ...newPreviews];
+            
+            setFormData(prev => ({ ...prev, variants: updatedVariants }));
+        }
+    };
+
+    const removeImage = (vIndex, imgIndex) => {
+        const updatedVariants = [...formData.variants];
+        updatedVariants[vIndex].images = updatedVariants[vIndex].images.filter((_, i) => i !== imgIndex);
+        updatedVariants[vIndex].previewImages = updatedVariants[vIndex].previewImages.filter((_, i) => i !== imgIndex);
+        setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    };
+
+    const removeExistingImage = (vIndex, imgIndex) => {
+        const updatedVariants = [...formData.variants];
+        updatedVariants[vIndex].existingImages = updatedVariants[vIndex].existingImages.filter((_, i) => i !== imgIndex);
+        setFormData(prev => ({ ...prev, variants: updatedVariants }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         // Validation
-        if (!formData.productName || !formData.mainCategoryId || !formData.subCategoryId || !formData.price || !formData.stock) {
+        if (!formData.productName || !formData.mainCategoryId || !formData.subCategoryId) {
             Swal.fire('Error', 'Please fill in all required fields.', 'error');
             return;
         }
 
-        // Validate required attributes
-        const missingAttributes = formData.attributes.filter(attr => attr.required && !attr.value);
-        if (missingAttributes.length > 0) {
-            Swal.fire('Error', `Please fill in required attributes: ${missingAttributes.map(a => a.name).join(', ')}`, 'error');
-            return;
+        // Validate variants
+        for (let i = 0; i < formData.variants.length; i++) {
+            const v = formData.variants[i];
+            if (!v.price || !v.stock) {
+                Swal.fire('Error', `Please fill in Price and Stock for Variant ${i + 1}`, 'error');
+                return;
+            }
+            
+            const missingAttrs = v.attributes.filter(attr => attr.required && !attr.value);
+            if (missingAttrs.length > 0) {
+                Swal.fire('Error', `Variant ${i + 1}: Please fill in required attributes: ${missingAttrs.map(a => a.name).join(', ')}`, 'error');
+                return;
+            }
+        }
+
+        // Validate images per variant
+        for (let i = 0; i < formData.variants.length; i++) {
+            const v = formData.variants[i];
+            const hasExisting = v.existingImages && v.existingImages.length > 0;
+            const hasNew = v.images && v.images.length > 0;
+            if (!isEdit && !hasNew) {
+                Swal.fire('Error', `Variant ${i + 1}: Please upload at least one image.`, 'error');
+                return;
+            }
+            if (isEdit && !hasExisting && !hasNew) {
+                Swal.fire('Error', `Variant ${i + 1}: Please upload at least one image.`, 'error');
+                return;
+            }
         }
 
         const data = new FormData();
         data.append('productName', formData.productName);
         data.append('description', formData.description);
         data.append('shortDescription', formData.shortDescription);
-        data.append('price', formData.price);
-        data.append('salePrice', formData.salePrice);
-        data.append('stock', formData.stock);
-        data.append('deliveryDays', formData.deliveryDays);
         data.append('mainCategoryId', formData.mainCategoryId);
         data.append('subCategoryId', formData.subCategoryId);
         data.append('status', formData.status);
+        data.append('brand', formData.brand);
+        data.append('highlights', JSON.stringify(formData.highlights));
+        
+        // Map attributes to specifications for the master product
+        const categorySpecs = (formData.attributes || [])
+            .filter(attr => attr.value)
+            .map(attr => ({
+                key: attr.name,
+                value: attr.value
+            }));
+        const customSpecs = (formData.specifications || [])
+            .filter(spec => spec.key && spec.value)
+            .map(spec => ({
+                key: spec.key,
+                value: spec.value
+            }));
+        data.append('specifications', JSON.stringify([...categorySpecs, ...customSpecs]));
+        
+        data.append('warranty', formData.warranty);
+        
         if (!isEdit) data.append('createdBy', formData.createdBy);
-        else data.append('updatedby', formData.createdBy); // reuse email
+        else data.append('updatedby', formData.createdBy);
 
-        // Attributes - send as JSON string
+        // Master Attributes
         data.append('attributes', JSON.stringify(formData.attributes));
+        
+        // Variants - send as JSON string with imageIndices
+        const variantsWithIndices = formData.variants.map((v, index) => {
+            const { images, previewImages, ...vData } = v;
+            return {
+                ...vData,
+                // Provide dummy imageIndices to satisfy backend validation
+                // Backend expects an array of indices into the global 'images' array.
+                // Since we're sending variantSpecificImages, we'll just send [0] or something.
+                imageIndices: images.length > 0 ? images.map((_, idx) => idx) : [0]
+            };
+        });
+        data.append('variants', JSON.stringify(variantsWithIndices));
 
-        // Existing Images (for edit mode)
-        if (isEdit) {
-            data.append('existingImages', JSON.stringify(existingImages));
-        }
-
-        // Images
-        images.forEach(image => {
-            data.append('images', image);
+        // Images per variant
+        formData.variants.forEach((v, vIndex) => {
+            if (v.images && v.images.length > 0) {
+                v.images.forEach(image => {
+                    data.append(`variantImages_${vIndex}`, image);
+                });
+            }
         });
 
         const success = isEdit
@@ -362,39 +608,20 @@ const ProductAdd = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} md={6}>
-                                <Stack direction="row" spacing={2}>
-                                    <TextField
-                                        fullWidth
-                                        label="Price"
-                                        type="number"
-                                        value={formData.price}
-                                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                                        required
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Sale Price"
-                                        type="number"
-                                        value={formData.salePrice}
-                                        onChange={(e) => setFormData({ ...formData, salePrice: e.target.value })}
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Stock"
-                                        type="number"
-                                        value={formData.stock}
-                                        onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                                        required
-                                    />
-                                    <TextField
-                                        fullWidth
-                                        label="Delivery Days"
-                                        type="number"
-                                        value={formData.deliveryDays}
-                                        onChange={(e) => setFormData({ ...formData, deliveryDays: e.target.value })}
-                                        required
-                                    />
-                                </Stack>
+                                <TextField
+                                    fullWidth
+                                    label="Brand"
+                                    value={formData.brand}
+                                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                />
+                            </Grid>
+                            <Grid item xs={12} md={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Warranty"
+                                    value={formData.warranty}
+                                    onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
+                                />
                             </Grid>
                             <Grid item xs={12}>
                                 <TextField
@@ -414,6 +641,18 @@ const ProductAdd = () => {
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     multiline
                                     rows={8}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Key Highlights (One per line)"
+                                    placeholder="Enter each highlight on a new line"
+                                    value={Array.isArray(formData.highlights) ? formData.highlights.join('\n') : formData.highlights}
+                                    onChange={(e) => setFormData({ ...formData, highlights: e.target.value.split('\n') })}
+                                    multiline
+                                    rows={4}
+                                    helperText="Optional: Add key features of the product"
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -475,11 +714,10 @@ const ProductAdd = () => {
                             {formData.attributes.length > 0 && (
                                 <Grid item xs={12}>
                                     <Paper variant="outlined" sx={{ p: 2, mt: 1 }}>
-                                        <Typography variant="subtitle1" sx={{ mb: 2 }}>Specifications</Typography>
+                                        <Typography variant="subtitle1" sx={{ mb: 2 }}>Category Specifications</Typography>
                                         <Grid container spacing={2}>
                                             {formData.attributes.map((attr, index) => (
                                                 <Grid item xs={12} md={6} key={index}>
-                                                    {/* Render input based on type if implemented, else text */}
                                                     <TextField
                                                         fullWidth
                                                         label={`${attr.name} ${attr.required ? '*' : ''}`}
@@ -496,79 +734,261 @@ const ProductAdd = () => {
                                     </Paper>
                                 </Grid>
                             )}
+
+                            {/* Custom Specifications */}
+                            <Grid item xs={12}>
+                                <Paper variant="outlined" sx={{ p: 2, mt: 1 }}>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                        <Typography variant="subtitle1">Other Specifications</Typography>
+                                        <Button startIcon={<IconPlus size={18} />} onClick={handleAddSpecification} size="small">
+                                            Add Spec
+                                        </Button>
+                                    </Stack>
+                                    <Grid container spacing={2}>
+                                        {(formData.specifications || []).map((spec, index) => (
+                                            <Grid item xs={12} key={index}>
+                                                <Stack direction="row" spacing={2} alignItems="flex-start">
+                                                    <TextField
+                                                        label="Label"
+                                                        value={spec.key}
+                                                        onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
+                                                        size="small"
+                                                        sx={{ flex: 1 }}
+                                                    />
+                                                    <TextField
+                                                        label="Value"
+                                                        value={spec.value}
+                                                        onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
+                                                        size="small"
+                                                        sx={{ flex: 2 }}
+                                                    />
+                                                    <IconButton color="error" onClick={() => handleRemoveSpecification(index)}>
+                                                        <IconX size={18} />
+                                                    </IconButton>
+                                                </Stack>
+                                            </Grid>
+                                        ))}
+                                        {(!formData.specifications || formData.specifications.length === 0) && (
+                                            <Grid item xs={12}>
+                                                <Typography variant="body2" color="textSecondary" align="center">
+                                                    No additional specifications added.
+                                                </Typography>
+                                            </Grid>
+                                        )}
+                                    </Grid>
+                                </Paper>
+                            </Grid>
                         </Grid>
                     </Grid>
 
-                    {/* Images */}
+                    {/* Variants Section */}
                     <Grid item xs={12}>
-                        <Typography variant="h4" sx={{ mb: 2, color: 'primary.main', borderBottom: '1px solid #eee', pb: 1 }}>
-                            Product Images
-                        </Typography>
-
-                        <Grid container spacing={2}>
-                            {existingImages.map((img, index) => (
-                                <Grid item key={`exist-${index}`}>
-                                    <Box sx={{ position: 'relative', width: 100, height: 100, border: '1px solid #ddd', borderRadius: 1 }}>
-                                        <img
-                                            src={`${BASE_URL}${img}`}
-                                            alt="Product"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                                            onError={(e) => {
-                                                e.target.src = 'https://via.placeholder.com/100x100?text=Error';
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
+                            <Typography variant="h4" sx={{ color: 'primary.main' }}>
+                                Product Variants
+                            </Typography>
+                            <Button variant="outlined" size="small" startIcon={<IconPlus />} onClick={addVariant}>
+                                Add Variant
+                            </Button>
+                        </Stack>
+                        
+                        {formData.variants.map((variant, vIndex) => (
+                            <Paper key={vIndex} variant="outlined" sx={{ p: 2, mb: 2, bgcolor: '#fcfcfc' }}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                    <Typography variant="subtitle1" fontWeight={700}>Variant {vIndex + 1}</Typography>
+                                    {formData.variants.length > 1 && (
+                                        <IconButton color="error" size="small" onClick={() => removeVariant(vIndex)}>
+                                            <IconX size={18} />
+                                        </IconButton>
+                                    )}
+                                </Stack>
+                                
+                                <Grid container spacing={2}>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Price"
+                                            type="number"
+                                            value={variant.price}
+                                            onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
+                                            required
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Sale Price"
+                                            type="number"
+                                            value={variant.salePrice}
+                                            onChange={(e) => handleVariantChange(vIndex, 'salePrice', e.target.value)}
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Stock"
+                                            type="number"
+                                            value={variant.stock}
+                                            onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
+                                            required
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12} md={3}>
+                                        <TextField
+                                            fullWidth
+                                            label="Delivery Days"
+                                            type="number"
+                                            value={variant.deliveryDays}
+                                            onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
+                                            required
+                                            size="small"
+                                        />
+                                    </Grid>
+                                    <Grid item xs={12}>
+                                        <Autocomplete
+                                            freeSolo
+                                            options={pickupAddresses}
+                                            getOptionLabel={(option) => {
+                                                if (typeof option === 'string') return option;
+                                                return `${option.name} (${option.city}, ${option.pincode})`;
                                             }}
+                                            value={pickupAddresses.find(a => 
+                                                (a.name === variant.pickupAddress) || 
+                                                (`${a.name} (${a.city}, ${a.pincode})` === variant.pickupAddress)
+                                            ) || variant.pickupAddress || ''}
+                                            onInputChange={(event, newValue) => {
+                                                handleVariantChange(vIndex, 'pickupAddress', newValue);
+                                            }}
+                                            onChange={(event, newValue) => {
+                                                const val = typeof newValue === 'string' ? newValue : 
+                                                            newValue ? `${newValue.name} (${newValue.city}, ${newValue.pincode})` : '';
+                                                handleVariantChange(vIndex, 'pickupAddress', val);
+                                            }}
+                                            renderInput={(params) => (
+                                                <TextField
+                                                    {...params}
+                                                    fullWidth
+                                                    label="Pickup Address / Warehouse *"
+                                                    placeholder="Search or enter warehouse"
+                                                    size="small"
+                                                    required={!variant.pickupAddress}
+                                                    InputProps={{
+                                                        ...params.InputProps,
+                                                        endAdornment: (
+                                                            <>
+                                                                <InputAdornment position="end" sx={{ mr: 2 }}>
+                                                                    <Tooltip title="Add New Pickup Address">
+                                                                        <IconButton 
+                                                                            size="small" 
+                                                                            color="primary" 
+                                                                            onClick={() => handleOpenAddressDialog()}
+                                                                        >
+                                                                            <IconPlus size={18} />
+                                                                        </IconButton>
+                                                                    </Tooltip>
+                                                                </InputAdornment>
+                                                                {params.InputProps.endAdornment}
+                                                            </>
+                                                        )
+                                                    }}
+                                                />
+                                            )}
                                         />
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'white', boxShadow: 1, '&:hover': { bgcolor: '#fed' } }}
-                                            onClick={() => removeExistingImage(index)}
-                                        >
-                                            <IconX size={16} />
-                                        </IconButton>
-                                    </Box>
-                                </Grid>
-                            ))}
+                                    </Grid>
+                                    
+                                    {/* Variant Attributes */}
+                                    {variant.attributes.length > 0 && (
+                                        <Grid item xs={12}>
+                                            <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Specifications for this variant:</Typography>
+                                            <Grid container spacing={2}>
+                                                {variant.attributes.map((attr, aIndex) => (
+                                                    <Grid item xs={12} md={4} key={aIndex}>
+                                                        <TextField
+                                                            fullWidth
+                                                            label={attr.name}
+                                                            placeholder={`Enter ${attr.name}`}
+                                                            value={attr.value}
+                                                            onChange={(e) => handleVariantAttributeChange(vIndex, aIndex, e.target.value)}
+                                                            required={attr.required}
+                                                            size="small"
+                                                        />
+                                                    </Grid>
+                                                ))}
+                                            </Grid>
+                                        </Grid>
+                                    )}
+                                    {/* Variant Images */}
+                                    <Grid item xs={12}>
+                                        <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Variant Images *</Typography>
+                                        <Grid container spacing={2}>
+                                            {variant.existingImages && variant.existingImages.map((img, imgIndex) => (
+                                                <Grid item key={`exist-${vIndex}-${imgIndex}`}>
+                                                    <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
+                                                        <img
+                                                            src={`${BASE_URL}${img}`}
+                                                            alt="Product"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                                            onError={(e) => { e.target.src = 'https://via.placeholder.com/80x80?text=Error'; }}
+                                                        />
+                                                        <IconButton
+                                                            size="small"
+                                                            color="error"
+                                                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                                            onClick={() => removeExistingImage(vIndex, imgIndex)}
+                                                        >
+                                                            <IconX size={14} />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
 
-                            {previewImages.map((img, index) => (
-                                <Grid item key={`new-${index}`}>
-                                    <Box sx={{ position: 'relative', width: 100, height: 100, border: '1px solid #ddd', borderRadius: 1 }}>
-                                        <img
-                                            src={img}
-                                            alt="Preview"
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                                        />
-                                        <IconButton
-                                            size="small"
-                                            color="error"
-                                            sx={{ position: 'absolute', top: -10, right: -10, bgcolor: 'white', '&:hover': { bgcolor: '#fed' } }}
-                                            onClick={() => removeImage(index)}
-                                        >
-                                            <IconX size={16} />
-                                        </IconButton>
-                                    </Box>
-                                </Grid>
-                            ))}
+                                            {variant.previewImages && variant.previewImages.map((img, imgIndex) => (
+                                                <Grid item key={`new-${vIndex}-${imgIndex}`}>
+                                                    <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
+                                                        <img
+                                                            src={img}
+                                                            alt="Preview"
+                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                                        />
+                                                        <IconButton
+                                                            size="small"
+                                                            color="error"
+                                                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                                            onClick={() => removeImage(vIndex, imgIndex)}
+                                                        >
+                                                            <IconX size={14} />
+                                                        </IconButton>
+                                                    </Box>
+                                                </Grid>
+                                            ))}
 
-                            <Grid item>
-                                <Button
-                                    variant="outlined"
-                                    component="label"
-                                    sx={{ width: 100, height: 100, borderStyle: 'dashed' }}
-                                >
-                                    <Stack alignItems="center" spacing={1}>
-                                        <IconUpload />
-                                        <Typography variant="caption">Upload</Typography>
-                                    </Stack>
-                                    <input
-                                        type="file"
-                                        hidden
-                                        multiple
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                    />
-                                </Button>
-                            </Grid>
-                        </Grid>
+                                            <Grid item>
+                                                <Button
+                                                    variant="outlined"
+                                                    component="label"
+                                                    sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
+                                                >
+                                                    <Stack alignItems="center" spacing={0.5}>
+                                                        <IconUpload size={20} />
+                                                        <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Upload</Typography>
+                                                    </Stack>
+                                                    <input
+                                                        type="file"
+                                                        hidden
+                                                        multiple
+                                                        accept="image/*"
+                                                        onChange={(e) => handleImageChange(e, vIndex)}
+                                                    />
+                                                </Button>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </Paper>
+                        ))}
                     </Grid>
 
                     <Grid item xs={12}>
@@ -583,6 +1003,92 @@ const ProductAdd = () => {
                     </Grid>
                 </Grid>
             </Box>
+
+            {/* Pickup Address Dialog */}
+            <Dialog open={addressDialogOpen} onClose={() => setAddressDialogOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>{editingAddressId ? 'Edit Pickup Address' : 'Add New Pickup Address'}</DialogTitle>
+                <DialogContent>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Address Name (e.g. Warehouse A)"
+                                value={addressForm.name}
+                                onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Address Line 1"
+                                value={addressForm.addressLine1}
+                                onChange={(e) => setAddressForm({ ...addressForm, addressLine1: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Address Line 2 (Optional)"
+                                value={addressForm.addressLine2}
+                                onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="City"
+                                value={addressForm.city}
+                                onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="District"
+                                value={addressForm.district}
+                                onChange={(e) => setAddressForm({ ...addressForm, district: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="State"
+                                value={addressForm.state}
+                                onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                            <TextField
+                                fullWidth
+                                label="Pincode"
+                                value={addressForm.pincode}
+                                onChange={(e) => setAddressForm({ ...addressForm, pincode: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Contact Phone"
+                                value={addressForm.phone}
+                                onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setAddressDialogOpen(false)}>Cancel</Button>
+                    <Button variant="contained" onClick={handleSubmitPickupAddress}>
+                        {editingAddressId ? 'Update' : 'Save'} Address
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </MainCard>
     );
 };

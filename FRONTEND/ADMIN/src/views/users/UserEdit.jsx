@@ -35,7 +35,7 @@ const UserEdit = () => {
     isDirty, 
     updateFormData, 
     updateSellerData, 
-    updateShopAddressData,
+    updateBusinessAddressData,
     updateUserAddressData,
     updateBankDetailsData,
     handleSubmit, 
@@ -271,12 +271,12 @@ const UserEdit = () => {
           {isSeller && (
             <>
               <Grid item xs={12}>
-                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Seller Information</Typography>
+                <Typography variant="h4" sx={{ color: 'primary.main', mt: 2 }}>Business Information</Typography>
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  label="Shop Name"
+                  label="Company Name"
                   value={formData.sellerInfo.shopName}
                   onChange={(e) => updateSellerData('shopName', e.target.value)}
                 />
@@ -298,9 +298,9 @@ const UserEdit = () => {
                 />
               </Grid>
 
-              {/* Shop Logo Section */}
+              {/* Company Logo Section */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Shop Logo</Typography>
+                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Company Logo</Typography>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Avatar
                     src={formData.sellerInfo.shopLogoPreview || (formData.sellerInfo.shopLogo ? (formData.sellerInfo.shopLogo.startsWith('http') ? formData.sellerInfo.shopLogo : `${BASE_URL}${formData.sellerInfo.shopLogo}`) : '')}
@@ -311,7 +311,7 @@ const UserEdit = () => {
                     <input
                       accept="image/*"
                       style={{ display: 'none' }}
-                      id="shop-logo-file"
+                      id="company-logo-file"
                       type="file"
                       onChange={(e) => {
                         const file = e.target.files[0];
@@ -325,7 +325,7 @@ const UserEdit = () => {
                         }
                       }}
                     />
-                    <label htmlFor="shop-logo-file">
+                    <label htmlFor="company-logo-file">
                       <Button variant="outlined" component="span" startIcon={<IconUpload />}>
                         Upload Logo
                       </Button>
@@ -358,29 +358,17 @@ const UserEdit = () => {
                   label={formData.sellerInfo.kycApproved ? 'KYC Approved' : 'KYC Pending'}
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.sellerInfo.isLive}
-                      onChange={(e) => updateSellerData('isLive', e.target.checked)}
-                      color="success"
-                    />
-                  }
-                  label={formData.sellerInfo.isLive ? 'Shop Is Live' : 'Shop Offline'}
-                />
-              </Grid>
 
-              {/* Shop Address */}
+              {/* Business Address */}
               <Grid item xs={12}>
-                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Shop Address</Typography>
+                <Typography variant="h5" sx={{ mt: 2, mb: 1 }}>Business Address</Typography>
               </Grid>
               <Grid item xs={12} md={3}>
                 <TextField
                   fullWidth
                   label="Door No"
                   value={formData.sellerInfo.shopAddress?.doorNo || ''}
-                  onChange={(e) => updateShopAddressData('doorNo', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('doorNo', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -388,7 +376,7 @@ const UserEdit = () => {
                   fullWidth
                   label="Street"
                   value={formData.sellerInfo.shopAddress?.street || ''}
-                  onChange={(e) => updateShopAddressData('street', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('street', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -396,7 +384,7 @@ const UserEdit = () => {
                   fullWidth
                   label="Landmark"
                   value={formData.sellerInfo.shopAddress?.landmark || ''}
-                  onChange={(e) => updateShopAddressData('landmark', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('landmark', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -404,7 +392,7 @@ const UserEdit = () => {
                   fullWidth
                   label="City"
                   value={formData.sellerInfo.shopAddress?.city || ''}
-                  onChange={(e) => updateShopAddressData('city', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('city', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={3}>
@@ -412,7 +400,7 @@ const UserEdit = () => {
                   fullWidth
                   label="District"
                   value={formData.sellerInfo.shopAddress?.district || ''}
-                  onChange={(e) => updateShopAddressData('district', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('district', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -420,7 +408,7 @@ const UserEdit = () => {
                   fullWidth
                   label="State"
                   value={formData.sellerInfo.shopAddress?.state || ''}
-                  onChange={(e) => updateShopAddressData('state', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('state', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -428,7 +416,7 @@ const UserEdit = () => {
                   fullWidth
                   label="Country"
                   value={formData.sellerInfo.shopAddress?.country || ''}
-                  onChange={(e) => updateShopAddressData('country', e.target.value)}
+                  onChange={(e) => updateBusinessAddressData('country', e.target.value)}
                 />
               </Grid>
               <Grid item xs={12} md={4}>
@@ -439,7 +427,7 @@ const UserEdit = () => {
                   onChange={(e) => {
                     const value = e.target.value.replace(/\D/g, '');
                     if (value.length <= 6) {
-                      updateShopAddressData('pincode', value);
+                      updateBusinessAddressData('pincode', value);
                     }
                   }}
                   inputProps={{ maxLength: 6 }}

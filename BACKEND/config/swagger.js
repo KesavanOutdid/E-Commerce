@@ -149,10 +149,7 @@ const options = {
                         kycApproved: { type: 'boolean' },
                         kycApprovedBy: { type: 'string' },
                         kycApprovedAt: { type: 'string', format: 'date-time' },
-                        isLive: { type: 'boolean' },
                         commissionPercentage: { type: 'number', minimum: 0, maximum: 100 },
-                        goLiveApprovedBy: { type: 'string' },
-                        goLiveApprovedAt: { type: 'string', format: 'date-time' },
                         bankDetails: {
                             type: 'object',
                             properties: {

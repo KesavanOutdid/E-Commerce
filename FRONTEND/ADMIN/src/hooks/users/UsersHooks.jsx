@@ -16,7 +16,8 @@ export const useUsers = () => {
     totalPages: 0
   });
   const [filters, setFilters] = useState({
-    search: ''
+    search: '',
+    kycStatus: ''
   });
   const [openDialog, setOpenDialog] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -36,6 +37,9 @@ export const useUsers = () => {
       let url = `${API_ENDPOINTS.USERS.GET_ALL}?page=${page}&limit=${pagination.pageSize}`;
       if (filters.search) {
         url += `&search=${encodeURIComponent(filters.search)}`;
+      }
+      if (filters.kycStatus) {
+        url += `&kycStatus=${encodeURIComponent(filters.kycStatus)}`;
       }
       const response = await axios.get(url);
       if (response.data.success) {
@@ -178,6 +182,23 @@ export const useUsers = () => {
     navigate(`/users/${userId}`);
   }, [navigate]);
 
+  const updateKycStatus = async (userId, action, data = {}) => {
+    try {
+      const response = await axios.put(API_ENDPOINTS.KYC.UPDATE_STATUS(userId), {
+        action,
+        ...data
+      });
+      if (response.data.success) {
+        Swal.fire('Success', response.data.message, 'success');
+        fetchUsers(pagination.currentPage);
+        return true;
+      }
+    } catch (error) {
+      Swal.fire('Error', error.response?.data?.message || 'Failed to update KYC status', 'error');
+    }
+    return false;
+  };
+
   const updateFormData = useCallback((field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   }, []);
@@ -199,6 +220,7 @@ export const useUsers = () => {
     handleSubmit,
     handleDeleteUser,
     handleViewUser,
+    updateKycStatus,
     updateFormData
   };
 };

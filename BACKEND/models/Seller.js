@@ -16,10 +16,7 @@ class Seller {
       kycApprovedBy: sellerData.kycApprovedBy || null,
       kycApprovedAt: sellerData.kycApprovedAt || null,
       onboardingCompleted: sellerData.onboardingCompleted || false,
-      isLive: sellerData.isLive || false,
-      commissionPercentage: sellerData.commissionPercentage || null,
-      goLiveApprovedBy: sellerData.goLiveApprovedBy || null,
-      goLiveApprovedAt: sellerData.goLiveApprovedAt || null,
+      commissionPercentage: sellerData.commissionPercentage || 10,
       bankDetails: sellerData.bankDetails || null,
       shopAddress: sellerData.shopAddress || null,
       shopLogo: sellerData.shopLogo || null,
@@ -71,29 +68,12 @@ class Seller {
     );
   }
 
-  static async approveGoLive(userId, approvedBy, commissionPercentage) {
-    return await this.collection().findOneAndUpdate(
-      { userId },
-      { 
-        $set: { 
-          isLive: true,
-          commissionPercentage: commissionPercentage || 10,
-          goLiveApprovedBy: approvedBy,
-          goLiveApprovedAt: new Date(),
-          updatedAt: new Date()
-        }
-      },
-      { returnDocument: 'after' }
-    );
-  }
-
   static async rejectKyc(userId, rejectedBy, reason) {
     return await this.collection().findOneAndUpdate(
       { userId },
       { 
         $set: { 
           kycApproved: false,
-          isLive: false,
           kycRejectedBy: rejectedBy,
           kycRejectedAt: new Date(),
           kycRejectionReason: reason,

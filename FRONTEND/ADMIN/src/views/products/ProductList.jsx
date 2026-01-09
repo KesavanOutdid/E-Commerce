@@ -37,12 +37,18 @@ import axios from '../../utils/axiosInstance';
 
 const BASE_URL = API_BASE_URL.replace('/api', '');
 
-const ProductAvatar = ({ images, productName }) => {
+const ProductAvatar = ({ product }) => {
     const [error, setError] = useState(false);
     
-    const src = (!images || images.length === 0 || error) 
+    // Fallback: If master images are empty, try the first variant's images
+    let imageList = product.images || [];
+    if (imageList.length === 0 && product.variants && product.variants.length > 0) {
+        imageList = product.variants[0].images || [];
+    }
+
+    const src = (imageList.length === 0 || error) 
         ? 'https://via.placeholder.com/50x50?text=N/A' 
-        : `${BASE_URL}${images[0]}`;
+        : `${BASE_URL}${imageList[0]}`;
 
     return (
         <Avatar
@@ -96,7 +102,7 @@ const ProductList = () => {
 
     const handleQuickList = async (product) => {
         const { value: formValues } = await Swal.fire({
-            title: 'List in Our Shop',
+            title: 'List in Our Marketplace',
             html:
                 '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
                 `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
@@ -119,21 +125,31 @@ const ProductList = () => {
             }
         });
 
-        if (formValues) {
-            if (!formValues.price || !formValues.stock) {
-                Swal.fire('Error', 'Price and Stock are required', 'error');
-                return;
-            }
+            if (formValues) {
+                if (!formValues.price || !formValues.stock) {
+                    Swal.fire('Error', 'Price and Stock are required', 'error');
+                    return;
+                }
 
-            const success = await listFromCatalog({
-                productId: product.productId || product._id,
-                ...formValues
-            });
+                // If it's a marketplace product being listed, we need to send it as a variant
+                const variants = [{
+                    price: formValues.price,
+                    salePrice: formValues.salePrice,
+                    stock: formValues.stock,
+                    deliveryDays: formValues.deliveryDays,
+                    attributes: product.attributes || [] // Copy master attributes to variant if needed
+                }];
 
-            if (success) {
-                fetchProducts(pagination.currentPage);
+                const listingPayload = {
+                    productId: product.productId || product._id,
+                    variants: variants
+                };
+
+                const result = await listFromCatalog(listingPayload);
+                if (result) {
+                    fetchProducts(pagination.currentPage);
+                }
             }
-        }
     };
 
     const [search, setSearch] = useState('');
@@ -350,11 +366,14 @@ const ProductList = () => {
                                             {(pagination.currentPage - 1) * pagination.pageSize + index + 1}
                                         </TableCell>
                                         <TableCell>
-                                            <ProductAvatar images={product.images} productName={product.productName} />
+                                            <ProductAvatar product={product} />
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="subtitle2" fontWeight={500}>
                                                 {product.productName}
+                                            </Typography>
+                                            <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>
+                                                {product.variantsCount || (product.variants?.length) || 0} Variants
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
@@ -381,22 +400,31 @@ const ProductList = () => {
                                             )}
                                         </TableCell>
                                         <TableCell align="right">
-                                            {product.salePrice ? (
-                                                <Stack alignItems="flex-end">
-                                                    <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.75rem' }}>
-                                                        ₹{product.price}
-                                                    </Typography>
-                                                    <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
-                                                        ₹{product.salePrice}
-                                                    </Typography>
-                                                </Stack>
-                                            ) : (
-                                                `₹${product.price}`
-                                            )}
+                                            {(() => {
+                                                const displayPrice = product.price || (product.variants?.[0]?.price);
+                                                const displaySalePrice = product.salePrice || (product.variants?.[0]?.salePrice);
+                                                
+                                                if (displaySalePrice && Number(displaySalePrice) > 0) {
+                                                    return (
+                                                        <Stack alignItems="flex-end">
+                                                            <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.75rem' }}>
+                                                                ₹{displayPrice}
+                                                            </Typography>
+                                                            <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
+                                                                ₹{displaySalePrice}
+                                                            </Typography>
+                                                        </Stack>
+                                                    );
+                                                }
+                                                return `₹${displayPrice || '-'}`;
+                                            })()}
                                         </TableCell>
-                                        <TableCell align="right">{product.stock}</TableCell>
+                                        <TableCell align="right">{product.stock ?? (product.variants?.[0]?.stock ?? '-')}</TableCell>
                                         <TableCell align="center">
-                                            {product.deliveryDays ? `${product.deliveryDays} Days` : '-'}
+                                            {(() => {
+                                                const days = product.deliveryDays || (product.variants?.[0]?.deliveryDays);
+                                                return days ? `${days} Days` : '-';
+                                            })()}
                                         </TableCell>
                                         <TableCell align="center">{getStatusChip(product.status)}</TableCell>
                                         <TableCell align="center">{getApprovalChip(product)}</TableCell>

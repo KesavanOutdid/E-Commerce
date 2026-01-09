@@ -142,7 +142,6 @@ async function googleAuthentication(req, res) {
       userId,
       shopName,
       onboardingCompleted: false,
-      isLive: false,
       kycApproved: false
     });
 

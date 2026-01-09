@@ -77,6 +77,36 @@ export const useUserDetail = (userId) => {
     }
   };
 
+  const handleApproveKyc = async (action = 'approve', commissionPercentage = 10) => {
+    try {
+      const response = await axios.put(API_ENDPOINTS.KYC.UPDATE_STATUS(userId), { 
+        action,
+        commissionPercentage 
+      });
+      if (response.data.success) {
+        Swal.fire('Success', response.data.message, 'success');
+        fetchUserDetails();
+      }
+    } catch (error) {
+      Swal.fire('Error', error.response?.data?.message || 'Action failed', 'error');
+    }
+  };
+
+  const handleRejectKyc = async (reason) => {
+    try {
+      const response = await axios.put(API_ENDPOINTS.KYC.UPDATE_STATUS(userId), { 
+        action: 'reject', 
+        reason 
+      });
+      if (response.data.success) {
+        Swal.fire('Success', 'KYC rejected successfully', 'success');
+        fetchUserDetails();
+      }
+    } catch (error) {
+      Swal.fire('Error', error.response?.data?.message || 'Action failed', 'error');
+    }
+  };
+
   return {
     user,
     loading,
@@ -84,6 +114,8 @@ export const useUserDetail = (userId) => {
     getRoleName,
     handleBackToUsers,
     handleEditUser,
-    handleDeleteUser
+    handleDeleteUser,
+    handleApproveKyc,
+    handleRejectKyc
   };
 };

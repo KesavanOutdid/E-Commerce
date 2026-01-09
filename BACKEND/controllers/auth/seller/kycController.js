@@ -151,8 +151,7 @@ async function getKycStatus(req, res) {
           email: user.email,
           phone: user.phone,
           kycApproved: false,
-          onboardingCompleted: false,
-          isLive: false
+          onboardingCompleted: false
         }
       });
     }
@@ -176,10 +175,7 @@ async function getKycStatus(req, res) {
         kycApprovedBy: sellerInfo.kycApprovedBy,
         kycApprovedAt: sellerInfo.kycApprovedAt,
         onboardingCompleted: sellerInfo.onboardingCompleted,
-        isLive: sellerInfo.isLive,
-        commissionPercentage: sellerInfo.commissionPercentage,
-        goLiveApprovedBy: sellerInfo.goLiveApprovedBy,
-        goLiveApprovedAt: sellerInfo.goLiveApprovedAt
+        commissionPercentage: sellerInfo.commissionPercentage
       }
     });
 

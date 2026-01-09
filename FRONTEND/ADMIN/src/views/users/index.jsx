@@ -30,6 +30,7 @@ import { IconPlus, IconEye, IconSearch } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import { useUsers } from '../../hooks/users/UsersHooks';
+import Swal from 'sweetalert2';
 
 const Users = () => {
   const {
@@ -40,12 +41,14 @@ const Users = () => {
     editMode,
     formData,
     pagination,
+    filters,
     handleOpenDialog,
     handleCloseDialog,
     handleSubmit,
     handleViewUser,
     handlePageChange,
     handleFilterChange,
+    updateKycStatus,
     updateFormData
   } = useUsers();
 
@@ -58,6 +61,143 @@ const Users = () => {
     }, 500);
     return () => clearTimeout(timer);
   }, [search, handleFilterChange]);
+
+  const handleKycApprovalClick = async (user) => {
+    if (!user.sellerInfo) return;
+    
+    // If already approved, show current status
+    if (user.sellerInfo.kycApproved) {
+      Swal.fire({
+        title: 'KYC Status',
+        text: `${user.firstName}'s KYC is already APPROVED`,
+        icon: 'info'
+      });
+      return;
+    }
+
+    const { sellerInfo } = user;
+    const { bankDetails, shopAddress } = sellerInfo;
+
+    // Initial KYC Approval/Rejection with Details
+    const result = await Swal.fire({
+      title: 'KYC Approval',
+      html: `
+        <div style="text-align: left; font-size: 0.9rem; max-height: 400px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+              <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Company Details</div>
+              <div style="margin-bottom: 8px;"><strong>Company Name:</strong> ${sellerInfo.shopName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>GSTIN:</strong> ${sellerInfo.gstin || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>PAN:</strong> ${sellerInfo.panNumber || 'N/A'}</div>
+            </div>
+            
+            <div>
+              <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Bank Details</div>
+              <div style="margin-bottom: 8px;"><strong>Bank Name:</strong> ${bankDetails?.bankName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>A/C Holder:</strong> ${bankDetails?.accountHolderName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>A/C Number:</strong> ${bankDetails?.accountNumber || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>IFSC:</strong> ${bankDetails?.ifscCode || 'N/A'}</div>
+            </div>
+          </div>
+          
+          <div>
+            <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Business Address</div>
+            <div style="line-height: 1.5;">
+              ${shopAddress?.doorNo || ''} ${shopAddress?.street || ''},<br>
+              ${shopAddress?.landmark ? shopAddress.landmark + ',' : ''} ${shopAddress?.city || ''},<br>
+              ${shopAddress?.district || ''} ${shopAddress?.state || ''} - ${shopAddress?.pincode || ''}
+            </div>
+          </div>
+        </div>
+        
+      `,
+      width: '500px',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Approve',
+      denyButtonText: 'Reject',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#2e7d32',
+      denyButtonColor: '#d32f2f',
+    });
+
+    if (result.isConfirmed) {
+      const { value: commission } = await Swal.fire({
+        title: 'Approve KYC',
+        text: `Enter commission percentage for ${user.firstName}`,
+        input: 'number',
+        inputLabel: 'Commission %',
+        inputValue: 10,
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value || value < 0 || value > 100) {
+            return 'Please enter a valid percentage (0-100)';
+          }
+        }
+      });
+
+      if (commission) {
+        await updateKycStatus(user.userId, 'approve', { commissionPercentage: commission });
+      }
+    } else if (result.isDenied) {
+      const { value: reason } = await Swal.fire({
+        title: 'Rejection Reason',
+        input: 'textarea',
+        inputLabel: 'Please provide a reason for KYC rejection',
+        inputPlaceholder: 'Type your reason here...',
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value) {
+            return 'You need to write something!';
+          }
+        }
+      });
+
+      if (reason) {
+        await updateKycStatus(user.userId, 'reject', { reason });
+      }
+    }
+  };
+
+  const getKycChip = (user) => {
+    if (!user.roles?.includes(2)) {
+      return <Typography variant="body1" sx={{ color: 'text.secondary' }}>-</Typography>;
+    }
+
+    const info = user.sellerInfo;
+    let label = 'PENDING';
+    let color = { bg: '#fff8e1', text: '#f57f17', border: '#ffecb3' };
+
+    if (info?.kycApproved) {
+      label = 'APPROVED';
+      color = { bg: '#e8f5e9', text: '#2e7d32', border: '#c8e6c9' };
+    } else if (info?.kycRejectionReason) {
+      label = 'REJECTED';
+      color = { bg: '#ffeede', text: '#d32f2f', border: '#ffcdd2' };
+    }
+
+    return (
+      <Chip
+        label={label}
+        size="small"
+        onClick={() => handleKycApprovalClick(user)}
+        sx={{
+          bgcolor: color.bg,
+          color: color.text,
+          fontWeight: 600,
+          borderRadius: '16px',
+          border: '1px solid',
+          borderColor: color.border,
+          textTransform: 'uppercase',
+          fontSize: '0.65rem',
+          cursor: 'pointer',
+          '&:hover': {
+            bgcolor: color.border
+          }
+        }}
+      />
+    );
+  };
 
   return (
     <MainCard 
@@ -90,6 +230,21 @@ const Users = () => {
               }}
               size="small"
             />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth size="small">
+              <InputLabel>KYC Status</InputLabel>
+              <Select
+                value={filters.kycStatus || ''}
+                label="KYC Status"
+                onChange={(e) => handleFilterChange('kycStatus', e.target.value)}
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+              </Select>
+            </FormControl>
           </Grid>
         </Grid>
       </Box>
@@ -143,18 +298,9 @@ const Users = () => {
                       />
                     ))}
                   </TableCell>
-                  <TableCell>
-                    {user.roles?.includes(2) ? (
-                      <Chip
-                        label={user.sellerInfo?.kycApproved ? 'Approved' : 'Pending'}
-                        size="small"
-                        color={user.sellerInfo?.kycApproved ? 'success' : 'warning'}
-                        sx={{ fontSize: '0.75rem', fontWeight: 500 }}
-                      />
-                    ) : (
-                      <Typography variant="body1" sx={{ color: 'text.secondary' }}>-</Typography>
-                    )}
-                  </TableCell>
+              <TableCell>
+                {getKycChip(user)}
+              </TableCell>
                   <TableCell>
                     <Chip
                       label={user.status ? 'Active' : 'Inactive'}

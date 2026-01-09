@@ -52,6 +52,11 @@ export const API_ENDPOINTS = {
     GET_BY_ID: (id) => `/orders/admin/${id}`,
     UPDATE_STATUS: (id) => `/orders/admin/${id}/status`
   },
+  KYC: {
+    GET_ALL: '/admin/sellers/kyc',
+    GET_BY_ID: (userId) => `/admin/sellers/kyc/${userId}`,
+    UPDATE_STATUS: (userId) => `/admin/sellers/kyc/${userId}/status`
+  },
   PERMISSIONS: {
     GET_MODULES: '/admin/permissions/modules',
     GET_BY_ROLE: (roleId) => `/admin/roles/${roleId}/permissions`,

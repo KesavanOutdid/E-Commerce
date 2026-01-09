@@ -12,9 +12,6 @@ async function getKycRequests(req, res) {
 
     if (status === 'pending') {
       filter.kycApproved = false;
-    } else if (status === 'pending-golive') {
-      filter.kycApproved = true;
-      filter.isLive = false;
     } else if (req.query.kycApproved !== undefined) {
       filter.kycApproved = req.query.kycApproved === 'true';
     }
@@ -113,10 +110,10 @@ async function updateKycStatus(req, res) {
     const { action, commissionPercentage, reason } = req.body;
     const adminEmail = req.userEmail;
 
-    if (!action || !['approve', 'approve-golive', 'reject'].includes(action)) {
+    if (!action || !['approve', 'reject'].includes(action)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid action is required (approve, approve-golive, reject)'
+        message: 'Valid action is required (approve, reject)'
       });
     }
 
@@ -154,33 +151,22 @@ async function updateKycStatus(req, res) {
         });
       }
 
-      updatedSeller = await Seller.approveKyc(userId, adminEmail);
-      message = 'KYC approved successfully. Pending go-live approval.';
-
-    } else if (action === 'approve-golive') {
-      if (!commissionPercentage || commissionPercentage < 0 || commissionPercentage > 100) {
+      const commission = commissionPercentage !== undefined ? Number(commissionPercentage) : 10;
+      if (isNaN(commission) || commission < 0 || commission > 100) {
         return res.status(400).json({
           success: false,
-          message: 'Valid commission percentage (0-100) is required for go-live approval'
+          message: 'Valid commission percentage (0-100) is required'
         });
       }
 
-      if (!seller.kycApproved) {
-        return res.status(400).json({
-          success: false,
-          message: 'KYC must be approved before go-live approval'
-        });
-      }
-
-      if (seller.isLive) {
-        return res.status(400).json({
-          success: false,
-          message: 'Seller is already live'
-        });
-      }
-
-      updatedSeller = await Seller.approveGoLive(userId, adminEmail, commissionPercentage);
-      message = 'Seller approved to go live successfully';
+      updatedSeller = await Seller.update(userId, { 
+        kycApproved: true,
+        kycApprovedBy: adminEmail,
+        kycApprovedAt: new Date(),
+        commissionPercentage: commission,
+        updatedAt: new Date()
+      });
+      message = 'KYC approved successfully';
 
     } else if (action === 'reject') {
       updatedSeller = await Seller.rejectKyc(userId, adminEmail, reason);
@@ -190,7 +176,7 @@ async function updateKycStatus(req, res) {
     return res.status(200).json({
       success: true,
       message,
-      data: updatedSeller.value
+      data: updatedSeller.value || updatedSeller
     });
 
   } catch (error) {
@@ -243,33 +229,15 @@ async function updateCommission(req, res) {
         });
       }
 
-      updatedSeller = await Seller.approveKyc(userId, adminEmail);
-      message = 'KYC approved successfully. Pending go-live approval.';
-
-    } else if (action === 'approve-golive') {
-      if (commissionPercentage === undefined || commissionPercentage < 0 || commissionPercentage > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid commission percentage (0-100) is required for go-live approval'
-        });
-      }
-
-      if (!seller.kycApproved) {
-        return res.status(400).json({
-          success: false,
-          message: 'KYC must be approved before go-live approval'
-        });
-      }
-
-      if (seller.isLive) {
-        return res.status(400).json({
-          success: false,
-          message: 'Seller is already live'
-        });
-      }
-
-      updatedSeller = await Seller.approveGoLive(userId, adminEmail, commissionPercentage);
-      message = 'Seller approved to go live successfully';
+      const commission = commissionPercentage !== undefined ? Number(commissionPercentage) : 10;
+      updatedSeller = await Seller.update(userId, { 
+        kycApproved: true,
+        kycApprovedBy: adminEmail,
+        kycApprovedAt: new Date(),
+        commissionPercentage: commission,
+        updatedAt: new Date()
+      });
+      message = 'KYC approved successfully';
 
     } else if (action === 'reject') {
       updatedSeller = await Seller.rejectKyc(userId, adminEmail, reason);
@@ -289,7 +257,7 @@ async function updateCommission(req, res) {
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Valid action is required (approve, approve-golive, reject, update-commission)'
+        message: 'Valid action is required (approve, reject, update-commission)'
       });
     }
 

@@ -1,3 +1,4 @@
+import React from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Avatar,
@@ -5,7 +6,8 @@ import {
   Button,
   CircularProgress,
   Typography,
-  Stack
+  Stack,
+  TextField
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
@@ -13,6 +15,7 @@ import { IconArrowLeft, IconEdit, IconTrash } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import { useUserDetail } from '../../hooks/users/UserDetailHooks';
 import { BASE_URL } from '../../config/apiConfig';
+import Swal from 'sweetalert2';
 
 const DetailItem = ({ label, value, color }) => (
   <Box sx={{ mb: 3 }}>
@@ -48,7 +51,102 @@ const DetailItem = ({ label, value, color }) => (
 
 const UserDetail = () => {
   const { userId } = useParams();
-  const { user, loading, getRoleName, handleBackToUsers, handleEditUser, handleDeleteUser } = useUserDetail(userId);
+  const { 
+    user, 
+    loading, 
+    getRoleName, 
+    handleBackToUsers, 
+    handleEditUser, 
+    handleDeleteUser,
+    handleApproveKyc,
+    handleRejectKyc
+  } = useUserDetail(userId);
+
+  const handleApproveClick = async () => {
+    if (!user.sellerInfo) return;
+
+    const { sellerInfo } = user;
+    const { bankDetails, shopAddress } = sellerInfo;
+
+    // Initial KYC Approval/Rejection Modal (Product Approval style) with Details
+    const result = await Swal.fire({
+      title: 'KYC Approval',
+      html: `
+        <div style="text-align: left; font-size: 0.9rem; max-height: 400px; overflow-y: auto; padding: 15px; border: 1px solid #eee; border-radius: 8px; background: #fafafa;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+            <div>
+              <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Company Details</div>
+              <div style="margin-bottom: 8px;"><strong>Company Name:</strong> ${sellerInfo.shopName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>GSTIN:</strong> ${sellerInfo.gstin || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>PAN:</strong> ${sellerInfo.panNumber || 'N/A'}</div>
+            </div>
+            
+            <div>
+              <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Bank Details</div>
+              <div style="margin-bottom: 8px;"><strong>Bank Name:</strong> ${bankDetails?.bankName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>A/C Holder:</strong> ${bankDetails?.accountHolderName || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>A/C Number:</strong> ${bankDetails?.accountNumber || 'N/A'}</div>
+              <div style="margin-bottom: 8px;"><strong>IFSC:</strong> ${bankDetails?.ifscCode || 'N/A'}</div>
+            </div>
+          </div>
+          
+          <div>
+            <div style="color: #2196f3; font-weight: 700; font-size: 1rem; border-bottom: 2px solid #e3f2fd; margin-bottom: 12px; padding-bottom: 5px;">Business Address</div>
+            <div style="line-height: 1.5;">
+              ${shopAddress?.doorNo || ''} ${shopAddress?.street || ''},<br>
+              ${shopAddress?.landmark ? shopAddress.landmark + ',' : ''} ${shopAddress?.city || ''},<br>
+              ${shopAddress?.district || ''} ${shopAddress?.state || ''} - ${shopAddress?.pincode || ''}
+            </div>
+          </div>
+        </div>
+        `,
+      width: '500px',
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: 'Approve',
+      denyButtonText: 'Reject',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#2e7d32',
+      denyButtonColor: '#d32f2f',
+    });
+
+    if (result.isConfirmed) {
+      const { value: commission } = await Swal.fire({
+        title: 'Approve KYC',
+        text: `Enter commission percentage for ${user.firstName}`,
+        input: 'number',
+        inputLabel: 'Commission %',
+        inputValue: user.sellerInfo.commissionPercentage || 10,
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value || value < 0 || value > 100) {
+            return 'Please enter a valid percentage (0-100)';
+          }
+        }
+      });
+
+      if (commission) {
+        handleApproveKyc('approve', commission);
+      }
+    } else if (result.isDenied) {
+      const { value: reason } = await Swal.fire({
+        title: 'Rejection Reason',
+        input: 'textarea',
+        inputLabel: 'Please provide a reason for KYC rejection',
+        inputPlaceholder: 'Type your reason here...',
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if (!value) {
+            return 'You need to write something!';
+          }
+        }
+      });
+
+      if (reason) {
+        handleRejectKyc(reason);
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -234,7 +332,7 @@ const UserDetail = () => {
           {user.sellerInfo && (
             <>
               <Grid size={12} sx={{ mt: 2, mb: 2 }}>
-                <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Shop Information</Typography>
+                <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Company Information</Typography>
               </Grid>
 
               {user.sellerInfo.shopLogo && (
@@ -250,7 +348,7 @@ const UserDetail = () => {
                       mb: 1
                     }}
                   >
-                    Shop Logo
+                    Company Logo
                   </Typography>
                   <Avatar 
                     src={user.sellerInfo.shopLogo.startsWith('http') ? user.sellerInfo.shopLogo : `${BASE_URL}${user.sellerInfo.shopLogo}`} 
@@ -261,7 +359,7 @@ const UserDetail = () => {
               )}
               
               <Grid size={{ xs: 12, md: 4 }}>
-                <DetailItem label="Shop Name" value={user.sellerInfo.shopName} />
+                <DetailItem label="Company Name" value={user.sellerInfo.shopName} />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <DetailItem label="GSTIN" value={user.sellerInfo.gstin || '-'} />
@@ -280,22 +378,12 @@ const UserDetail = () => {
                   } 
                 />
               </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <DetailItem 
-                  label="Live Status" 
-                  value={
-                    <Typography sx={{ fontWeight: 600, color: user.sellerInfo.isLive ? 'success.main' : 'text.secondary' }}>
-                      {user.sellerInfo.isLive ? 'Live' : 'Offline'}
-                    </Typography>
-                  } 
-                />
-              </Grid>
 
-              {/* Shop Address Section */}
+              {/* Business Address Section */}
               {user.sellerInfo.shopAddress && (
                 <>
                   <Grid size={12} sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Shop Address</Typography>
+                    <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Business Address</Typography>
                   </Grid>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <DetailItem label="Door No" value={user.sellerInfo.shopAddress.doorNo} />
@@ -344,6 +432,29 @@ const UserDetail = () => {
                   </Grid>
                 </>
               )}
+
+              {/* KYC Approval Actions */}
+              <Grid size={12} sx={{ mt: 4, pt: 3, borderTop: '1px dashed', borderColor: 'divider' }}>
+                <Typography variant="h4" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>KYC Actions</Typography>
+                
+                {!user.sellerInfo.kycApproved ? (
+                  <Stack direction="row" spacing={2} alignItems="center">
+                    <Button 
+                      variant="contained" 
+                      color="success"
+                      onClick={handleApproveClick}
+                    >
+                      Manage KYC Approval
+                    </Button>
+                  </Stack>
+                ) : (
+                  <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, color: 'primary.main' }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                      Seller KYC is Approved
+                    </Typography>
+                  </Box>
+                )}
+              </Grid>
             </>
           )}
         </Grid>

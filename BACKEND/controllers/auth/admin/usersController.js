@@ -9,16 +9,16 @@ async function getUsers(req, res) {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const filter = {};
+    const matchStage = {};
     if (req.query.role) {
-      filter.roles = parseInt(req.query.role);
+      matchStage.roles = parseInt(req.query.role);
     }
     if (req.query.status !== undefined) {
-      filter.status = req.query.status === 'true';
+      matchStage.status = req.query.status === 'true';
     }
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
-      filter.$or = [
+      matchStage.$or = [
         { firstName: searchRegex },
         { lastName: searchRegex },
         { email: searchRegex },
@@ -26,8 +26,57 @@ async function getUsers(req, res) {
       ];
     }
 
-    const users = await User.findAll(filter, { skip, limit });
-    const total = await User.count(filter);
+    const pipeline = [
+      { $match: matchStage },
+      {
+        $lookup: {
+          from: 'sellers',
+          localField: 'userId',
+          foreignField: 'userId',
+          as: 'sellerInfo'
+        }
+      },
+      { $unwind: { path: '$sellerInfo', preserveNullAndEmptyArrays: true } }
+    ];
+
+    if (req.query.kycStatus) {
+      if (req.query.kycStatus === 'pending') {
+        pipeline.push({
+          $match: {
+            roles: 2,
+            $or: [
+              { 'sellerInfo.kycApproved': false },
+              { 'sellerInfo.kycApproved': { $exists: false } }
+            ]
+          }
+        });
+      } else if (req.query.kycStatus === 'approved') {
+        pipeline.push({
+          $match: {
+            roles: 2,
+            'sellerInfo.kycApproved': true
+          }
+        });
+      } else if (req.query.kycStatus === 'rejected') {
+        pipeline.push({
+          $match: {
+            roles: 2,
+            'sellerInfo.kycApproved': false,
+            'sellerInfo.kycRejectionReason': { $exists: true, $ne: null }
+          }
+        });
+      }
+    }
+
+    const countPipeline = [...pipeline, { $count: 'total' }];
+    const countResult = await User.collection().aggregate(countPipeline).toArray();
+    const total = countResult.length > 0 ? countResult[0].total : 0;
+
+    pipeline.push({ $sort: { createdAt: -1 } });
+    pipeline.push({ $skip: skip });
+    pipeline.push({ $limit: limit });
+
+    const users = await User.collection().aggregate(pipeline).toArray();
 
     const usersWithRoleNames = await Promise.all(
       users.map(async (user) => {
@@ -38,16 +87,10 @@ async function getUsers(req, res) {
           })
         );
 
-        let sellerInfo = null;
-        if (user.roles && user.roles.includes(2)) {
-          sellerInfo = await Seller.findByUserId(user.userId);
-        }
-
         delete user.password;
         return {
           ...user,
-          roleNames: roleNames.filter(Boolean),
-          sellerInfo
+          roleNames: roleNames.filter(Boolean)
         };
       })
     );
@@ -182,7 +225,6 @@ async function addUser(req, res) {
         userId,
         shopName,
         onboardingCompleted: false,
-        isLive: false,
         kycApproved: false
       });
     }
@@ -284,16 +326,6 @@ async function updateUser(req, res) {
         sellerUpdateData.kycApprovedBy = req.userEmail || 'admin';
         sellerUpdateData.kycApprovedAt = new Date();
       }
-      
-      // If isLive is being changed to true, set goLiveApprovedBy and goLiveApprovedAt
-      if (finalSellerInfo.isLive === true || finalSellerInfo.isLive === 'true') {
-        sellerUpdateData.isLive = true;
-        sellerUpdateData.goLiveApprovedBy = req.userEmail || 'admin';
-        sellerUpdateData.goLiveApprovedAt = new Date();
-        if (sellerUpdateData.commissionPercentage === undefined) {
-            sellerUpdateData.commissionPercentage = 10;
-        }
-      }
 
       const result = await Seller.update(userId, sellerUpdateData);
       updatedSellerInfo = result.value;
@@ -324,7 +356,6 @@ async function updateUser(req, res) {
           userId,
           shopName,
           onboardingCompleted: false,
-          isLive: false,
           kycApproved: false
         });
         updatedSellerInfo = result;
