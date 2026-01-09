@@ -68,12 +68,15 @@ exports.createProduct = async (req, res) => {
         });
     }
 
-    // if (!req.files || req.files.length === 0) {
-    //   return res.status(400).json({ 
-    //     success: false, 
-    //     message: 'At least one product image is required' 
-    //   });
-    // }
+    for (let i = 0; i < variants.length; i++) {
+      const variantData = variants[i];
+      if (!variantData.imageIndices || !Array.isArray(variantData.imageIndices) || variantData.imageIndices.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: `Variant ${i + 1}: At least one image must be selected`
+        });
+      }
+    }
 
     const category = await SubCategory.findById(subCategoryId);
     if (!category) {

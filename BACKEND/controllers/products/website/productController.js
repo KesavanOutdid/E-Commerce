@@ -71,6 +71,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
           { $unwind: { path: "$seller", preserveNullAndEmptyArrays: true } },
           {
             $project: {
+              _id: 1,
               price: 1,
               salePrice: 1,
               stock: 1,
@@ -80,7 +81,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               productId: 1,
               attributes: 1,
               images: 1,
-              currentPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
+              currentPrice: { $cond: [{ $and: [{ $ne: ["$salePrice", null] }, { $gt: ["$salePrice", 0] }] }, "$salePrice", "$price"] },
               sellerName: {
                 $cond: [
                   { $or: [{ $eq: ["$user.roleId", 1] }, { $in: [1, { $ifNull: ["$user.roles", []] }] }] },
@@ -127,6 +128,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
         mainCategoryName: "$mainCategory.name",
         subCategoryName: "$subCategory.name",
         minPrice: { $min: "$variants.currentPrice" },
+        maxPrice: { $max: "$variants.currentPrice" },
+        totalStock: { $sum: "$variants.stock" },
         sellerCount: { $size: "$variants" }
       }
     },
@@ -210,8 +213,8 @@ exports.getProducts = async (req, res) => {
     if (userId) {
       const wishlist = await User.getWishlist(userId);
       products.forEach(p => {
-        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
-                               wishlist.includes(p.product._id?.toString());
+        p.isWishlisted = wishlist.includes(p.productId) || 
+                         wishlist.includes(p._id?.toString());
       });
     }
     
@@ -283,8 +286,8 @@ exports.getProductsBySubCategory = async (req, res) => {
     if (userId) {
       const wishlist = await User.getWishlist(userId);
       products.forEach(p => {
-        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
-                               wishlist.includes(p.product._id?.toString());
+        p.isWishlisted = wishlist.includes(p.productId) || 
+                         wishlist.includes(p._id?.toString());
       });
     }
     
@@ -317,8 +320,9 @@ exports.getProductsBySubCategory = async (req, res) => {
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
+    const { variantId } = req.query;
 
-    const cacheKey = `products:detail:website:${id}`;
+    const cacheKey = `products:detail:website:${id}:${variantId || 'default'}`;
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
@@ -326,10 +330,9 @@ exports.getProductById = async (req, res) => {
         success: true, 
         message: 'Product details fetched successfully (from cache)',
         data: cachedData 
-      });
+        });
     }
 
-    // Filter: Specific ID + Approval/Status filters
     // Support both productId (UUID) and _id (ObjectId)
     let matchQuery = { 
       $and: [
@@ -349,8 +352,6 @@ exports.getProductById = async (req, res) => {
       ]
     };
 
-    const adminId = await getAdminId();
-
     const aggregationResult = await Product.collection().aggregate(
       getProductAggregationPipeline(matchQuery, 0, 1, { minPrice: 1 })
     ).toArray();
@@ -359,13 +360,92 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const responseData = aggregationResult[0].data[0];
+    const productData = aggregationResult[0].data[0];
+    const allVariants = productData.variants || [];
+
+    // 1. Group variants by their "configuration" (attributes as unique string)
+    const configurations = {};
+    const attributeOptions = {}; // { Color: ["Red", "Blue"], Size: ["M", "L"] }
+
+    allVariants.forEach(v => {
+      // Build configuration key: "Color:Red|Size:M"
+      const configKey = v.attributes
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(a => `${a.name}:${a.value}`)
+        .join('|');
+
+      if (!configurations[configKey]) {
+        configurations[configKey] = {
+          configKey,
+          attributes: v.attributes,
+          offers: [],
+          bestOffer: null
+        };
+      }
+      
+      configurations[configKey].offers.push(v);
+
+      // Track unique attribute options
+      v.attributes.forEach(attr => {
+        if (!attributeOptions[attr.name]) attributeOptions[attr.name] = new Set();
+        attributeOptions[attr.name].add(attr.value);
+      });
+    });
+
+    // Convert Set to Array for attributeOptions
+    Object.keys(attributeOptions).forEach(key => {
+      attributeOptions[key] = Array.from(attributeOptions[key]);
+    });
+
+    // Find best offer for each configuration (lowest currentPrice)
+    Object.values(configurations).forEach(config => {
+      config.bestOffer = config.offers.reduce((best, current) => 
+        (!best || current.currentPrice < best.currentPrice) ? current : best
+      , null);
+    });
+
+    // 2. Determine Selected Variant
+    let selectedVariant = null;
+    if (variantId) {
+      selectedVariant = allVariants.find(v => v.variantId === variantId || v._id?.toString() === variantId);
+    }
+
+    // If no specific variantId or not found, pick the one with minPrice (best overall offer)
+    if (!selectedVariant) {
+      selectedVariant = productData.minPriceDetails;
+    }
+
+    // 3. Find other sellers for the selected configuration (Marketplace)
+    const selectedConfigKey = selectedVariant.attributes
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(a => `${a.name}:${a.value}`)
+      .join('|');
+    
+    const marketplaceOffers = configurations[selectedConfigKey]?.offers
+      .filter(o => o.variantId !== selectedVariant.variantId)
+      .sort((a, b) => a.currentPrice - b.currentPrice) || [];
+
+    const responseData = {
+      product: {
+        ...productData,
+        variants: undefined, // Remove raw variants array
+        minPriceDetails: undefined
+      },
+      selectedVariant,
+      marketplaceOffers,
+      configurations: Object.values(configurations).map(c => ({
+        configKey: c.configKey,
+        attributes: c.attributes,
+        bestOffer: c.bestOffer
+      })),
+      attributeOptions
+    };
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
     if (userId) {
       const wishlist = await User.getWishlist(userId);
-      responseData.product.isWishlisted = wishlist.includes(responseData.product.productId) || 
+      responseData.product.isWishlisted = wishlist.includes(productData.productId) || 
                                         wishlist.includes(id);
     }
 
