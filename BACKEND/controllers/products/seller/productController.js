@@ -1,5 +1,5 @@
 const Product = require('../../../models/Product');
-const SellerProduct = require('../../../models/SellerProduct');
+const ProductVariant = require('../../../models/ProductVariant');
 const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
@@ -15,8 +15,8 @@ exports.createProduct = async (req, res) => {
             });
         }
 
-        const { productName, mainCategoryId, subCategoryId, price, salePrice, stock, description, shortDescription, userId, createdby } = req.body;
-        let { attributes } = req.body;
+        const { productName, mainCategoryId, subCategoryId, description, shortDescription, userId, createdby, brand, highlights, specifications, warranty } = req.body;
+        let { variants, attributes } = req.body;
 
         if (typeof attributes === 'string') {
             try {
@@ -26,19 +26,52 @@ exports.createProduct = async (req, res) => {
             }
         }
 
-        if (!productName || !mainCategoryId || !subCategoryId || price === undefined || stock === undefined || !userId) {
+        if (typeof variants === 'string') {
+            try {
+                variants = JSON.parse(variants);
+            } catch (e) {
+                variants = [];
+            }
+        }
+
+        let parsedHighlights = highlights;
+        if (typeof highlights === 'string') {
+            try {
+                parsedHighlights = JSON.parse(highlights);
+            } catch (e) {
+                parsedHighlights = [highlights];
+            }
+        }
+
+        let parsedSpecifications = specifications;
+        if (typeof specifications === 'string') {
+            try {
+                parsedSpecifications = JSON.parse(specifications);
+            } catch (e) {
+                parsedSpecifications = [];
+            }
+        }
+
+        if (!productName || !mainCategoryId || !subCategoryId || !userId) {
             return res.status(400).json({
                 success: false,
-                message: 'productName, mainCategoryId, subCategoryId, price, stock, and userId are required fields'
+                message: 'productName, mainCategoryId, subCategoryId, and userId are required fields'
             });
         }
 
-        if (!req.files || req.files.length === 0) {
+        if (!variants || variants.length === 0) {
             return res.status(400).json({
                 success: false,
-                message: 'At least one product image is required'
+                message: 'At least one product variant is required'
             });
         }
+
+        // if (!req.files || req.files.length === 0) {
+        //     return res.status(400).json({
+        //         success: false,
+        //         message: 'Product images are required'
+        //     });
+        // }
 
         const category = await SubCategory.findById(subCategoryId);
         if (!category) {
@@ -87,50 +120,64 @@ exports.createProduct = async (req, res) => {
         });
         const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
 
-        const images = req.files.map(file => `/uploads/products/${file.filename}`);
+        const allImages = req.files.map(file => `/uploads/products/${file.filename}`);
 
-        const productData = {
-            ...req.body,
+        // 1. Create Master Product (The "Flipkart Catalog" entry)
+        const masterProductData = {
             productName,
             slug: normalizedSlug,
             description,
             shortDescription,
+            brand,
+            highlights: parsedHighlights,
+            specifications: parsedSpecifications,
+            warranty,
             mainCategoryId,
             subCategoryId,
-            masterProductId: masterProductId,
             userId,
-            images: images,
-            attributes: attributes || [],
-            price: 0,
-            salePrice: 0,
-            stock: 0,
             roleId: 2,
-            approvalStatus: 'pending',
-            status: true, createdby
+            status: true,
+            createdby
         };
 
-        const product = await Product.create(productData);
+        const masterProduct = await Product.create(masterProductData);
+        const variantsCreated = [];
 
-        // Automatically create a listing for the seller who created the product
-        await SellerProduct.create({
-            productId: product.productId,
-            sellerId: req.userId || userId,
-            price: price,
-            salePrice: req.body.salePrice || null,
-            stock: stock,
-            deliveryDays: req.body.deliveryDays || 3,
-            approvalStatus: 'pending',
-            commissionPercentage: category.commissionPercentage || 0
-        });
+        // 2. Create Variants (The "Specific Offers" entries)
+        for (let i = 0; i < variants.length; i++) {
+            const variantData = variants[i];
+            
+            let variantImages = allImages;
+            if (variantData.imageIndices && Array.isArray(variantData.imageIndices)) {
+                variantImages = variantData.imageIndices.map(idx => allImages[idx]).filter(img => img !== undefined);
+            } else if (variants.length > 1) {
+                variantImages = allImages;
+            }
+
+            const variant = await ProductVariant.create({
+                productId: masterProduct.productId,
+                sellerId: req.userId || userId,
+                attributes: [...(attributes || []), ...(variantData.attributes || [])],
+                price: parseFloat(variantData.price) || 0,
+                salePrice: variantData.salePrice ? parseFloat(variantData.salePrice) : null,
+                stock: parseInt(variantData.stock) || 0,
+                images: variantImages,
+                deliveryDays: variantData.deliveryDays || 3,
+                pickupAddress: variantData.pickupAddress || null,
+                approvalStatus: 'pending'
+            });
+            
+            variantsCreated.push(variant.variantId);
+        }
 
         await deleteCachePattern('products:list:*');
 
         res.status(201).json({
             success: true,
-            message: `Product created successfully. Note: A ${category.commissionPercentage || 0}% commission will be applied to this category.`,
+            message: `Product Master and ${variants.length} Variants created successfully.`,
             data: {
-                productId: product.productId,
-                commissionPercentage: category.commissionPercentage || 0
+                productId: masterProduct.productId,
+                variantIds: variantsCreated
             }
         });
     } catch (error) {
@@ -144,83 +191,51 @@ exports.getProducts = async (req, res) => {
         const limitNum = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limitNum;
 
-        // Show ALL products in the system to prevent duplication
-        let matchQuery = {};
+        const sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
+        let query = { userId: sellerId };
 
         if (req.query.search) {
             const searchRegex = new RegExp(req.query.search, 'i');
-            matchQuery.$or = [
-                { productName: searchRegex },
-                { productId: req.query.search }
+            query.$and = [
+                { userId: sellerId },
+                {
+                    $or: [
+                        { productName: searchRegex },
+                        { slug: searchRegex },
+                        { description: searchRegex }
+                    ]
+                }
             ];
+            delete query.userId;
         }
 
-        // Aggregate to group by slug to prevent duplication in the catalog view
-        const pipeline = [
-            { $match: matchQuery },
-            { $sort: { createdAt: -1 } },
-            {
-                $group: {
-                    _id: "$slug",
-                    product: { $first: "$$ROOT" },
-                    isMyProduct: {
-                        $max: {
-                            $cond: [
-                                { $eq: ["$userId", ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId] },
-                                true,
-                                false
-                            ]
-                        }
-                    }
-                }
-            },
-            {
-                $facet: {
-                    data: [{ $skip: skip }, { $limit: limitNum }],
-                    totalCount: [{ $count: "count" }]
-                }
-            }
-        ];
+        const [products, total] = await Promise.all([
+            Product.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray(),
+            Product.collection().countDocuments(query)
+        ]);
 
-        const result = await Product.collection().aggregate(pipeline).toArray();
-
-        const products = result[0].data.map(item => ({
-            ...item.product,
-            isMyProduct: item.isMyProduct
-        }));
-
-        const total = result[0].totalCount[0]?.count || 0;
-
-        // Map category names and seller-specific listing data
-        const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
-            const [mainCategory, subCategory, listing] = await Promise.all([
+        const productsWithDetails = await Promise.all(products.map(async (product) => {
+            const [mainCategory, subCategory, variants] = await Promise.all([
                 product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
                 product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-                SellerProduct.collection().findOne({
-                    productId: product.productId,
-                    sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
-                })
+                ProductVariant.collection().find({ productId: product.productId }).toArray()
             ]);
 
             return {
                 ...product,
-                hasListing: !!listing,
-                // Override master values with seller-specific listing data if it exists
-                price: listing ? listing.price : product.price,
-                salePrice: listing ? listing.salePrice : product.salePrice,
-                stock: listing ? listing.stock : product.stock,
-                deliveryDays: listing ? listing.deliveryDays : null,
                 mainCategoryName: mainCategory ? mainCategory.name : null,
                 subCategoryName: subCategory ? subCategory.name : null,
                 commissionPercentage: subCategory?.commissionPercentage || 0,
+                variantsCount: variants.length,
+                variants: variants
             };
         }));
 
         res.status(200).json({
             success: true,
-            message: 'Unique product catalog fetched successfully',
+            message: 'Seller products fetched successfully',
             data: {
-                products: productsWithCategoryNames,
+                products: productsWithDetails,
                 pagination: {
                     total,
                     page,
@@ -236,77 +251,57 @@ exports.getProducts = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
     try {
-        let { productName, price, stock, description, shortDescription, updatedby, attributes } = req.body;
+        const { id } = req.params; // Can be Master ID or Variant ID
+        let { productName, description, shortDescription, attributes, price, salePrice, stock, deliveryDays } = req.body;
 
-        if (typeof attributes === 'string') {
-            try {
-                attributes = JSON.parse(attributes);
-            } catch (e) {
-                attributes = [];
+        // 1. Check if it's a Master Product
+        const masterProduct = await Product.findById(id);
+        if (masterProduct) {
+            if (masterProduct.userId.toString() !== req.userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Not authorized to update this master product' });
             }
+
+            const updateData = { productName, description, shortDescription };
+            if (productName) updateData.slug = slugify(productName);
+            
+            await Product.update(id, updateData);
+            await deleteCachePattern('products:list:*');
+            return res.status(200).json({ success: true, message: 'Master product updated successfully' });
         }
 
-        if (Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
-            return res.status(400).json({
-                success: false,
-                message: 'At least one field is required to update'
-            });
+        // 2. Check if it's a Variant
+        const variant = await ProductVariant.findById(id);
+        if (variant) {
+            if (variant.sellerId.toString() !== req.userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Not authorized to update this variant' });
+            }
+
+            if (typeof attributes === 'string') {
+                try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
+            }
+
+            const variantUpdateData = {
+                attributes: attributes !== undefined ? attributes : undefined,
+                price: price !== undefined ? parseFloat(price) : undefined,
+                salePrice: salePrice !== undefined ? parseFloat(salePrice) : undefined,
+                stock: stock !== undefined ? parseInt(stock) : undefined,
+                deliveryDays: deliveryDays !== undefined ? parseInt(deliveryDays) : undefined
+            };
+
+            // Remove undefined keys
+            Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
+
+            if (req.files && req.files.length > 0) {
+                const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
+                variantUpdateData.images = [...(variant.images || []), ...newImages];
+            }
+
+            await ProductVariant.update(id, variantUpdateData);
+            await deleteCachePattern('products:list:*');
+            return res.status(200).json({ success: true, message: 'Variant updated successfully' });
         }
 
-        const existingProduct = await Product.findById(req.params.id);
-        if (!existingProduct) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
-        }
-
-        // Seller ownership check
-        if (existingProduct.userId.toString() !== req.userId.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'You can only update your own products'
-            });
-        }
-
-        // Prepare metadata update for Product collection
-        const productUpdateData = {
-            productName,
-            description,
-            shortDescription,
-            updatedby,
-            attributes: attributes !== undefined ? attributes : undefined,
-        };
-
-        if (productName) {
-            productUpdateData.slug = slugify(productName);
-        }
-
-        if (req.files && req.files.length > 0) {
-            const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
-            productUpdateData.images = [...(existingProduct.images || []), ...newImages];
-        }
-
-        // Prepare listing update for SellerProduct collection
-        const listingUpdateData = {};
-        if (price !== undefined) listingUpdateData.price = parseFloat(price);
-        if (req.body.salePrice !== undefined) listingUpdateData.salePrice = parseFloat(req.body.salePrice);
-        if (stock !== undefined) listingUpdateData.stock = parseInt(stock);
-        if (req.body.deliveryDays !== undefined) listingUpdateData.deliveryDays = parseInt(req.body.deliveryDays);
-
-        // Perform updates
-        const [updatedProduct] = await Promise.all([
-            Product.update(req.params.id, productUpdateData),
-            Object.keys(listingUpdateData).length > 0 ? SellerProduct.collection().updateOne(
-                { productId: existingProduct.productId, sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId },
-                { $set: listingUpdateData }
-            ) : Promise.resolve()
-        ]);
-
-        await deleteCachePattern('products:list:*');
-        await deleteCache(`products:detail:${req.params.id}`);
-
-        res.status(200).json({
-            success: true,
-            message: 'Product and listing updated successfully'
-        });
+        return res.status(404).json({ success: false, message: 'Product or Variant not found' });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
@@ -315,34 +310,65 @@ exports.updateProduct = async (req, res) => {
 exports.getProductById = async (req, res) => {
     try {
         const { id } = req.params;
+        const sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
 
-        const product = await Product.collection().findOne({ productId: id });
-
-        if (!product) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
-        }
-
-        const sellerListing = await SellerProduct.collection().findOne({
-            productId: product.productId,
-            sellerId: req.userId
+        // 1. Fetch Master Product (Ensure it belongs to THIS seller)
+        const product = await Product.collection().findOne({ 
+            productId: id,
+            userId: sellerId 
         });
 
-        const [mainCategory, subCategory] = await Promise.all([
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found or not authorized' });
+        }
+
+        // 2. Fetch only variants belonging to THIS seller for this product
+        const variants = await ProductVariant.collection().find({ 
+            productId: product.productId,
+            sellerId: sellerId
+        }).toArray();
+
+        // 3. Fetch Category details
+        const [mainCategory, subCategory, user] = await Promise.all([
             product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-            product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+            product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+            User.collection().findOne({ 
+                $or: [
+                    { userId: product.userId ? product.userId.toString() : null },
+                    { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
+                ].filter(q => q.userId !== null || q._id !== null)
+            })
         ]);
+
+        let sellerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
+        if (!sellerName) sellerName = user?.name || user?.email || 'Unknown';
+
+        const variantsWithDetails = variants.map(variant => ({
+            ...variant,
+            sellerName,
+            currentPrice: parseFloat(variant.salePrice) > 0 ? parseFloat(variant.salePrice) : parseFloat(variant.price)
+        }));
+
+        const minPriceVariant = variantsWithDetails.length > 0 
+            ? variantsWithDetails.reduce((prev, curr) => (prev.currentPrice < curr.currentPrice ? prev : curr))
+            : null;
 
         const responseData = {
             ...product,
-            // Flatten seller listing data into the top level for consistency
-            price: sellerListing ? sellerListing.price : product.price,
-            salePrice: sellerListing ? sellerListing.salePrice : product.salePrice,
-            stock: sellerListing ? sellerListing.stock : product.stock,
-            deliveryDays: sellerListing ? sellerListing.deliveryDays : null,
             mainCategoryName: mainCategory ? mainCategory.name : null,
             subCategoryName: subCategory ? subCategory.name : null,
-            sellerListing: sellerListing || null, // Keep for backward compatibility if needed
             commissionPercentage: subCategory?.commissionPercentage || 0,
+            sellerName,
+            startingPrice: minPriceVariant ? minPriceVariant.currentPrice : 0,
+            minPriceDetails: minPriceVariant ? {
+                variantId: minPriceVariant.variantId,
+                sellerName: minPriceVariant.sellerName,
+                price: minPriceVariant.price,
+                salePrice: minPriceVariant.salePrice,
+                currentPrice: minPriceVariant.currentPrice,
+                attributes: minPriceVariant.attributes
+            } : null,
+            variants: variantsWithDetails
         };
 
         res.status(200).json({
@@ -357,38 +383,93 @@ exports.getProductById = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
     try {
-        const product = await Product.findById(req.params.id);
-        if (!product) {
-            return res.status(404).json({ success: false, message: 'Product not found' });
+        const { id } = req.params;
+
+        // 1. Try deleting as Variant
+        const variant = await ProductVariant.findById(id);
+        if (variant) {
+            if (variant.sellerId.toString() !== req.userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Not authorized to delete this variant' });
+            }
+            await ProductVariant.delete(id);
+            await deleteCachePattern('products:list:*');
+            return res.status(200).json({ success: true, message: 'Variant deleted successfully' });
         }
 
-        if (product.userId.toString() !== req.userId.toString()) {
-            return res.status(403).json({
-                success: false,
-                message: 'You can only delete your own products'
-            });
+        // 2. Try deleting as Master Product
+        const masterProduct = await Product.findById(id);
+        if (masterProduct) {
+            if (masterProduct.userId.toString() !== req.userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Not authorized to delete this master product' });
+            }
+            
+            // Delete Master and all its Variants
+            await Promise.all([
+                Product.collection().deleteOne({ productId: masterProduct.productId }),
+                ProductVariant.collection().deleteMany({ productId: masterProduct.productId })
+            ]);
+
+            await deleteCachePattern('products:list:*');
+            return res.status(200).json({ success: true, message: 'Master product and all its variants deleted successfully' });
         }
 
-        // Delete both the master product and the seller's listing
-        await Promise.all([
-            Product.delete(req.params.id),
-            SellerProduct.collection().deleteOne({ 
-                productId: product.productId, 
-                sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
-            })
-        ]);
+        return res.status(404).json({ success: false, message: 'Product or Variant not found' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+exports.addVariant = async (req, res) => {
+    try {
+        const { masterProductId } = req.params;
+        const { price, salePrice, stock, attributes, deliveryDays, pickupAddress } = req.body;
+
+        const masterProduct = await Product.findById(masterProductId);
+
+        if (!masterProduct) {
+            return res.status(404).json({ success: false, message: 'Master product not found' });
+        }
+
+        let parsedAttributes = attributes;
+        if (typeof attributes === 'string') {
+            try {
+                parsedAttributes = JSON.parse(attributes);
+            } catch (e) {
+                parsedAttributes = [];
+            }
+        }
+
+        const images = req.files && req.files.length > 0 
+            ? req.files.map(file => `/uploads/products/${file.filename}`)
+            : []; // If no images uploaded, variant might have no images (or we could default to master images if master had any)
+
+        const variant = await ProductVariant.create({
+            productId: masterProduct.productId,
+            sellerId: req.userId,
+            attributes: parsedAttributes || [],
+            price: parseFloat(price) || 0,
+            salePrice: salePrice ? parseFloat(salePrice) : null,
+            stock: parseInt(stock) || 0,
+            images: images,
+            deliveryDays: deliveryDays || 3,
+            pickupAddress: pickupAddress || null,
+            approvalStatus: 'pending'
+        });
 
         await deleteCachePattern('products:list:*');
-        await deleteCache(`products:detail:${req.params.id}`);
 
-        res.status(200).json({
+        res.status(201).json({
             success: true,
-            message: 'Product deleted successfully'
+            message: 'Variant added successfully to the master product',
+            data: { variantId: variant.variantId }
         });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 };
+
+exports.updateVariant = exports.updateProduct;
+exports.deleteVariant = exports.deleteProduct;
 
 exports.checkProductBySlug = async (req, res) => {
     try {
@@ -415,7 +496,7 @@ exports.checkProductBySlug = async (req, res) => {
             });
         }
 
-        const alreadyListed = await SellerProduct.collection().findOne({
+        const alreadyListed = await ProductVariant.collection().findOne({
             productId: existingProduct.productId,
             sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
         });

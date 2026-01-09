@@ -1,0 +1,322 @@
+{
+	"info": {
+		"_postman_id": "c7f8a9b2-3e4d-5f6a-7b8c-9d0e1f2a3b4c",
+		"name": "Master-Variant E-Commerce APIs",
+		"description": "Postman collection for managing Master Products and Variants (Offers) in a marketplace system.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Seller APIs",
+			"item": [
+				{
+					"name": "Check Product by Slug",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productName\": \"iPhone 15 Pro\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/check-slug",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"seller",
+								"check-slug"
+							]
+						},
+						"description": "Checks if a product exists in the global catalog. Use this before creating a new product."
+					}
+				},
+				{
+					"name": "Create Product (Master + Initial Variant)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "productName", "value": "Samsung Galaxy S24 Ultra", "type": "text" },
+								{ "key": "mainCategoryId", "value": "MAIN_CAT_ID", "type": "text" },
+								{ "key": "subCategoryId", "value": "SUB_CAT_ID", "type": "text" },
+								{ "key": "userId", "value": "SELLER_ID", "type": "text" },
+								{ "key": "brand", "value": "Samsung", "type": "text" },
+								{ "key": "highlights", "value": "[\"200MP Camera\", \"S-Pen Support\", \"Snapdragon 8 Gen 3\"]", "type": "text" },
+								{ "key": "specifications", "value": "[{\"key\": \"Model\", \"value\": \"S24 Ultra\"}]", "type": "text" },
+								{ "key": "variants", "value": "[{\"price\": 129999, \"salePrice\": 124999, \"stock\": 50, \"deliveryDays\": 2, \"pickupAddress\": \"Warehouse A\", \"attributes\": [{\"name\": \"Color\", \"value\": \"Titanium Gray\"}, {\"name\": \"Storage\", \"value\": \"256GB\"}]}]", "type": "text" },
+								{ "key": "images", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"seller"
+							]
+						}
+					}
+				},
+				{
+					"name": "Add Variant to Existing Master",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{seller_token}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "price", "value": "139999", "type": "text" },
+								{ "key": "salePrice", "value": "135999", "type": "text" },
+								{ "key": "stock", "value": "20", "type": "text" },
+								{ "key": "deliveryDays", "value": "3", "type": "text" },
+								{ "key": "attributes", "value": "[{\"name\": \"Color\", \"value\": \"Titanium Black\"}, {\"name\": \"Storage\", \"value\": \"512GB\"}]", "type": "text" },
+								{ "key": "images", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/add-variant/:masterProductId",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"products",
+								"seller",
+								"add-variant",
+								":masterProductId"
+							],
+							"variable": [
+								{ "key": "masterProductId", "value": "MASTER_ID" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Seller Catalog (Grouped by Slug)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{seller_token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/getproducts?page=1&limit=10",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "seller", "getproducts" ],
+							"query": [
+								{ "key": "page", "value": "1" },
+								{ "key": "limit", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Product Details (Master + Variants)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{seller_token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "seller", ":id" ],
+							"variable": [
+								{ "key": "id", "value": "MASTER_ID" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Product/Variant",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{seller_token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "price", "value": "125000", "type": "text" },
+								{ "key": "stock", "value": "100", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "seller", ":id" ],
+							"variable": [
+								{ "key": "id", "value": "ID_TO_UPDATE" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Delete Product/Variant",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{seller_token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/seller/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "seller", ":id" ],
+							"variable": [
+								{ "key": "id", "value": "ID_TO_DELETE" }
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Admin APIs",
+			"item": [
+				{
+					"name": "Create Master Product (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "productName", "value": "Sony PlayStation 5", "type": "text" },
+								{ "key": "brand", "value": "Sony", "type": "text" },
+								{ "key": "mainCategoryId", "value": "MAIN_CAT_ID", "type": "text" },
+								{ "key": "subCategoryId", "value": "SUB_CAT_ID", "type": "text" },
+								{ "key": "highlights", "value": "[\"4K Gaming\", \"Ray Tracing\", \"DualSense Controller\"]", "type": "text" },
+								{ "key": "variants", "value": "[]", "type": "text" },
+								{ "key": "images", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "admin" ]
+						}
+					}
+				},
+				{
+					"name": "Get All Products (Admin Catalog)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/getproducts",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "admin", "getproducts" ]
+						}
+					}
+				},
+				{
+					"name": "Get All Seller Variants (Offers List)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}", "type": "text" }
+						],
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/seller-products",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "admin", "seller-products" ]
+						}
+					}
+				},
+				{
+					"name": "Update Product Approval Status",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"approvalStatus\": \"approved\",\n    \"rejectionReason\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/update-approval/:id",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "admin", "update-approval", ":id" ],
+							"variable": [
+								{ "key": "id", "value": "MASTER_ID" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Add Variant (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Authorization", "value": "Bearer {{admin_token}}", "type": "text" }
+						],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "price", "value": "139999", "type": "text" },
+								{ "key": "salePrice", "value": "135999", "type": "text" },
+								{ "key": "stock", "value": "20", "type": "text" },
+								{ "key": "deliveryDays", "value": "3", "type": "text" },
+								{ "key": "attributes", "value": "[{\"name\": \"Color\", \"value\": \"Gold\"}]", "type": "text" },
+								{ "key": "images", "type": "file", "src": [] }
+							]
+						},
+						"url": {
+							"raw": "{{base_url}}/api/products/admin/add-variant/:masterProductId",
+							"host": [ "{{base_url}}" ],
+							"path": [ "api", "products", "admin", "add-variant", ":masterProductId" ],
+							"variable": [
+								{ "key": "masterProductId", "value": "MASTER_ID" }
+							]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{ "key": "base_url", "value": "http://localhost:5000" },
+		{ "key": "seller_token", "value": "PASTE_SELLER_JWT_HERE" },
+		{ "key": "admin_token", "value": "PASTE_ADMIN_JWT_HERE" }
+	]
+}

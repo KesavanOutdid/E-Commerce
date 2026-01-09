@@ -1,5 +1,5 @@
 const Product = require('../../../models/Product');
-const SellerProduct = require('../../../models/SellerProduct');
+const ProductVariant = require('../../../models/ProductVariant');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const Order = require('../../../models/Order');
@@ -17,7 +17,9 @@ const getAdminId = async () => {
 
 // Helper to get logged in user ID from token without full middleware
 const getUserIdFromRequest = (req) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return null;
+  const token = authHeader.split(' ')[1];
   if (!token) return null;
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
@@ -27,23 +29,33 @@ const getUserIdFromRequest = (req) => {
   }
 };
 
-
 // Helper for aggregation pipeline to avoid duplication and include marketplace offers
-const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }, adminId = null) => {
+const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }) => {
   return [
     { $match: matchQuery },
-    // Join with marketplace listings and their seller details
+    // Join with product variants and their seller details
     {
       $lookup: {
-        from: "seller_products",
+        from: "product_variants",
         let: { pid: "$productId" },
         pipeline: [
-          { $match: { $expr: { $eq: ["$productId", "$$pid"] }, approvalStatus: "approved" } },
+          { $match: { $expr: { $eq: ["$productId", "$$pid"] }, approvalStatus: "approved", status: true } },
           {
             $lookup: {
               from: "users",
-              localField: "sellerId",
-              foreignField: "userId",
+              let: { sid: "$sellerId" },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $or: [
+                        { $eq: ["$userId", "$$sid"] },
+                        { $eq: ["$_id", { $cond: [{ $eq: [{ $type: "$$sid" }, "objectId"] }, "$$sid", null] }] }
+                      ]
+                    }
+                  }
+                }
+              ],
               as: "user"
             }
           },
@@ -64,36 +76,33 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               stock: 1,
               deliveryDays: 1,
               sellerId: 1,
-              sellerProductId: 1,
+              variantId: 1,
               productId: 1,
+              attributes: 1,
+              images: 1,
               currentPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
-              sellerName: { $concat: [{ $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] }] },
-              shopName: "$seller.shopName"
+              sellerName: {
+                $cond: [
+                  { $or: [{ $eq: ["$user.roleId", 1] }, { $in: [1, { $ifNull: ["$user.roles", []] }] }] },
+                  "Admin",
+                  { $trim: { input: { $concat: [{ $ifNull: ["$user.firstName", ""] }, " ", { $ifNull: ["$user.lastName", ""] }] } } }
+                ]
+              },
+              shopName: {
+                $cond: [
+                  { $or: [{ $eq: ["$user.roleId", 1] }, { $in: [1, { $ifNull: ["$user.roles", []] }] }] },
+                  "Outdid",
+                  "$seller.shopName"
+                ]
+              }
             }
           }
         ],
-        as: "marketplaceListings"
+        as: "variants"
       }
     },
-    // Join main product seller details
-    {
-      $lookup: {
-        from: "users",
-        localField: "userId",
-        foreignField: "userId",
-        as: "mainUser"
-      }
-    },
-    { $unwind: { path: "$mainUser", preserveNullAndEmptyArrays: true } },
-    {
-      $lookup: {
-        from: "sellers",
-        localField: "userId",
-        foreignField: "userId",
-        as: "mainSeller"
-      }
-    },
-    { $unwind: { path: "$mainSeller", preserveNullAndEmptyArrays: true } },
+    // Filter out products with no approved variants
+    { $match: { "variants.0": { $exists: true } } },
     // Join with categories
     {
       $lookup: {
@@ -117,76 +126,15 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
       $addFields: {
         mainCategoryName: "$mainCategory.name",
         subCategoryName: "$subCategory.name",
-        mainPrice: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
-        // Prepare list of all offers to identify min price and seller count
-        allOffers: {
-          $filter: {
-            input: {
-              $concatArrays: [
-                [{
-                  price: { $cond: [{ $gt: ["$salePrice", 0] }, "$salePrice", "$price"] },
-                  sellerId: adminId ? adminId : "$userId",
-                  sellerProductId: null,
-                  productId: "$productId",
-                  sellerName: "Admin",
-                  shopName: "Outdid",
-                  stock: "$stock",
-                  deliveryDays: { 
-                    $cond: [
-                      { $eq: ["$roleId", 1] }, 
-                      { $ifNull: ["$deliveryDays", 7] }, 
-                      { $ifNull: ["$deliveryDays", 5] }
-                    ] 
-                  }, 
-                  isSeller: false
-                }],
-                { $map: {
-                  input: "$marketplaceListings",
-                  as: "m",
-                  in: {
-                    price: "$$m.currentPrice",
-                    sellerId: "$$m.sellerId",
-                    sellerProductId: "$$m.sellerProductId",
-                    productId: "$$m.productId",
-                    sellerName: "$$m.sellerName",
-                    shopName: "$$m.shopName",
-                    stock: "$$m.stock",
-                    deliveryDays: "$$m.deliveryDays",
-                    isSeller: true
-                  }
-                }}
-              ]
-            },
-            as: "offer",
-            cond: {
-              $and: [
-                { $gt: ["$$offer.price", 0] },
-                { $gt: [{ $toInt: "$$offer.stock" }, 0] }
-              ]
-            }
-          }
-        }
-      }
-    },
-    {
-      $addFields: {
-        minPrice: { $min: "$allOffers.price" },
-        sellerCount: {
-          $size: {
-            $filter: {
-              input: "$allOffers",
-              as: "o",
-              cond: { $eq: ["$$o.isSeller", true] }
-            }
-          }
-        }
+        minPrice: { $min: "$variants.currentPrice" },
+        sellerCount: { $size: "$variants" }
       }
     },
     {
       $addFields: {
         minPriceDetails: {
           $arrayElemAt: [
-            { $filter: { input: "$allOffers", as: "o", cond: { $eq: ["$$o.price", "$minPrice"] } } },
+            { $filter: { input: "$variants", as: "v", cond: { $eq: ["$$v.currentPrice", "$minPrice"] } } },
             0
           ]
         }
@@ -194,33 +142,14 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
     },
     { $sort: sortOptions },
     {
-      $group: {
-        _id: "$slug",
-        cheapestListing: { $first: "$$ROOT" }
-      }
-    },
-    {
       $facet: {
         data: [
           { $skip: skip },
           { $limit: limitNum },
           {
             $project: {
-              _id: 0,
-              product: {
-                $arrayToObject: {
-                  $filter: {
-                    input: { $objectToArray: "$cheapestListing" },
-                    as: "kv",
-                    cond: { 
-                      $not: { 
-                        $in: ["$$kv.k", ["mainUser", "mainSeller", "mainPrice", "mainCategory", "subCategory"]] 
-                      } 
-                    }
-                  }
-                }
-              },
-              sellerCount: "$cheapestListing.sellerCount"
+              mainCategory: 0,
+              subCategory: 0
             }
           }
         ],
@@ -270,7 +199,7 @@ exports.getProducts = async (req, res) => {
     const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
     ).toArray();
 
     const products = aggregationResult[0].data;
@@ -343,7 +272,7 @@ exports.getProductsBySubCategory = async (req, res) => {
     const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
     ).toArray();
 
     const products = aggregationResult[0].data;
@@ -423,7 +352,7 @@ exports.getProductById = async (req, res) => {
     const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, 0, 1, { minPrice: 1 }, adminId)
+      getProductAggregationPipeline(matchQuery, 0, 1, { minPrice: 1 })
     ).toArray();
 
     if (!aggregationResult || !aggregationResult[0].data.length) {
@@ -513,7 +442,7 @@ exports.getBestSellers = async (req, res) => {
     const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions, adminId)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions)
     ).toArray();
 
     let products = aggregationResult[0].data;
@@ -635,7 +564,7 @@ exports.searchProducts = async (req, res) => {
     const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, adminId)
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
     ).toArray();
 
     responseData.products = aggregationResult[0]?.data || [];

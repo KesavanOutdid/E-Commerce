@@ -1,5 +1,5 @@
 const Product = require('../../../models/Product');
-const SellerProduct = require('../../../models/SellerProduct');
+const ProductVariant = require('../../../models/ProductVariant');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const MainCategory = require('../../../models/MainCategory');
@@ -17,8 +17,8 @@ exports.createProduct = async (req, res) => {
       });
     }
 
-    const { productName, mainCategoryId, subCategoryId, price, salePrice, stock, description, shortDescription,createdBy } = req.body;
-    let { attributes } = req.body;
+    const { productName, mainCategoryId, subCategoryId, description, shortDescription, createdBy, brand, highlights, specifications, warranty } = req.body;
+    let { variants, attributes } = req.body;
 
     if (typeof attributes === 'string') {
       try {
@@ -28,11 +28,44 @@ exports.createProduct = async (req, res) => {
       }
     }
 
+    if (typeof variants === 'string') {
+      try {
+        variants = JSON.parse(variants);
+      } catch (e) {
+        variants = [];
+      }
+    }
+
+    let parsedHighlights = highlights;
+    if (typeof highlights === 'string') {
+      try {
+        parsedHighlights = JSON.parse(highlights);
+      } catch (e) {
+        parsedHighlights = [highlights];
+      }
+    }
+
+    let parsedSpecifications = specifications;
+    if (typeof specifications === 'string') {
+      try {
+        parsedSpecifications = JSON.parse(specifications);
+      } catch (e) {
+        parsedSpecifications = [];
+      }
+    }
+
     if (!productName || !mainCategoryId || !subCategoryId) {
       return res.status(400).json({ 
         success: false, 
         message: 'productName, mainCategoryId, and subCategoryId are required fields' 
       });
+    }
+
+    if (!variants || variants.length === 0) {
+        return res.status(400).json({
+            success: false,
+            message: 'At least one product variant is required'
+        });
     }
 
     // if (!req.files || req.files.length === 0) {
@@ -86,46 +119,65 @@ exports.createProduct = async (req, res) => {
     });
     const masterProductId = existingMaster ? (existingMaster.masterProductId || existingMaster.productId) : null;
 
-    const images = req.files.map(file => `/uploads/products/${file.filename}`);
+    const allImages = req.files.map(file => `/uploads/products/${file.filename}`);
 
-    const productData = {
-      ...req.body,
+    // 1. Create Master Product
+    const masterProductData = {
       productName,
       slug: normalizedSlug,
       description,
       shortDescription,
+      brand,
+      highlights: parsedHighlights,
+      specifications: parsedSpecifications,
+      warranty,
       mainCategoryId,
       subCategoryId,
-      masterProductId: masterProductId,
       userId: req.userId,
-      images: images,
-      attributes: attributes || [],
       roleId: 1,
       status: true,
       createdby: createdBy
     };
-    
-    const product = await Product.create(productData);
 
-    // Automatically create a listing for the admin who created the product
-    await SellerProduct.create({
-      productId: product.productId,
-      sellerId: req.userId,
-      price: price ? parseFloat(price) : 0,
-      salePrice: salePrice ? parseFloat(salePrice) : null,
-      stock: stock ? parseInt(stock) : 0,
-      deliveryDays: req.body.deliveryDays || 3,
-      approvalStatus: 'approved'
-    });
+    const masterProduct = await Product.create(masterProductData);
+    const variantsCreated = [];
+
+    // 2. Create Variants
+    for (let i = 0; i < variants.length; i++) {
+        const variantData = variants[i];
+        
+        let variantImages = allImages;
+        if (variantData.imageIndices && Array.isArray(variantData.imageIndices)) {
+            variantImages = variantData.imageIndices.map(idx => allImages[idx]).filter(img => img !== undefined);
+        } else if (variants.length > 1) {
+            variantImages = allImages;
+        }
+
+        const variant = await ProductVariant.create({
+            productId: masterProduct.productId,
+            sellerId: req.userId,
+            attributes: [...(attributes || []), ...(variantData.attributes || [])],
+            price: parseFloat(variantData.price) || 0,
+            salePrice: variantData.salePrice ? parseFloat(variantData.salePrice) : null,
+            stock: parseInt(variantData.stock) || 0,
+            images: variantImages,
+            deliveryDays: variantData.deliveryDays || 3,
+            pickupAddress: variantData.pickupAddress || null,
+            approvalStatus: 'approved'
+        });
+        
+        variantsCreated.push(variant.variantId);
+    }
 
     await deleteCachePattern('products:list:*');
 
-    // Return only necessary fields
-    const { _id, ...responseData } = product;
-
     res.status(201).json({ 
       success: true, 
-      message: 'Product created successfully by admin',
+      message: `Product Master and ${variants.length} Variants created successfully by admin`,
+      data: {
+        productId: masterProduct.productId,
+        variantIds: variantsCreated
+      }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -134,24 +186,12 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    // Get all productIds that the admin has listed in SellerProduct
-    const adminListings = await SellerProduct.collection().find({ 
-      sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
-    }).project({ productId: 1 }).toArray();
-    
-    const adminListedProductIds = adminListings.map(l => l.productId);
-
-    // Query products that were either created by admin OR listed by admin
-    let query = { 
-      $or: [
-        { roleId: 1 },
-        { productId: { $in: adminListedProductIds } }
-      ]
-    };
+    let query = { roleId: 1 };
 
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
       query.$and = [
+        { roleId: 1 },
         {
           $or: [
             { productName: searchRegex },
@@ -160,51 +200,45 @@ exports.getProducts = async (req, res) => {
           ]
         }
       ];
+      // Clean up the initial query property if using $and
+      delete query.roleId;
     }
     
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const limitNum = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limitNum;
 
     const [products, total] = await Promise.all([
-      Product.find(query, { skip, limit }),
-      Product.count(query)
+      Product.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray(),
+      Product.collection().countDocuments(query)
     ]);
 
-    // Map category names and listing data
     const productsWithCategoryNames = await Promise.all(products.map(async (product) => {
-      const [mainCategory, subCategory, listing] = await Promise.all([
+      const [mainCategory, subCategory, variants] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
         product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-        SellerProduct.collection().findOne({ 
-          productId: product.productId, 
-          sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
-        })
+        ProductVariant.collection().find({ productId: product.productId }).toArray()
       ]);
 
       return {
         ...product,
-        // Override master price/stock with the admin's listing data
-        price: listing ? listing.price : product.price,
-        salePrice: listing ? listing.salePrice : product.salePrice,
-        stock: listing ? listing.stock : product.stock,
-        deliveryDays: listing ? listing.deliveryDays : null,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
-        marketplaceListings: [] 
+        variantsCount: variants.length,
+        variants: variants
       };
     }));
 
     res.status(200).json({ 
       success: true, 
-      message: 'Admin products fetched successfully',
+      message: 'Admin product catalog fetched successfully',
       data: {
         products: productsWithCategoryNames,
         pagination: {
           total,
           page,
-          limit,
-          pages: Math.ceil(total / limit)
+          limit: limitNum,
+          pages: Math.ceil(total / limitNum)
         }
       }
     });
@@ -215,116 +249,63 @@ exports.getProducts = async (req, res) => {
 
 exports.getAllSellerProducts = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-    const { sellerId } = req.query;
-
-    let query = {};
-    if (sellerId) {
-      query = { sellerId };
-    } else {
-      // Search for users where 'roles' array contains 2 (Seller) and NOT 1 (Admin)
-      const sellerUsers = await User.collection().find({
-        roles: { $in: [2], $nin: [1] }
-      }).project({ userId: 1 }).toArray();
-      
-      const sellerIds = sellerUsers.map(u => u.userId);
-
-      if (sellerIds.length === 0) {
-        return res.status(200).json({ 
-          success: true, 
-          message: 'No sellers found',
-          data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
-        });
-      }
-      query = { sellerId: { $in: sellerIds } };
-    }
+    let query = { roleId: 2 };
 
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
-      const matchingProducts = await Product.collection().find({
-        $or: [
-          { productName: searchRegex },
-          { slug: searchRegex },
-          { description: searchRegex }
-        ]
-      }).project({ productId: 1 }).toArray();
-      
-      const matchingProductIds = matchingProducts.map(p => p.productId);
-      query.productId = { $in: matchingProductIds };
+      query.$and = [
+        { roleId: 2 },
+        {
+          $or: [
+            { productName: searchRegex },
+            { slug: searchRegex },
+            { description: searchRegex }
+          ]
+        }
+      ];
+      delete query.roleId;
     }
 
-    const [listings, total] = await Promise.all([
-      SellerProduct.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
-      SellerProduct.collection().countDocuments(query)
+    const page = parseInt(req.query.page) || 1;
+    const limitNum = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limitNum;
+
+    const [products, total] = await Promise.all([
+      Product.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).toArray(),
+      Product.collection().countDocuments(query)
     ]);
 
-    if (listings.length === 0) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'No seller products found',
-        data: { products: [], pagination: { total, page, limit, pages: Math.ceil(total / limit) } }
-      });
-    }
+    const productsWithDetails = await Promise.all(products.map(async (product) => {
+      const userQuery = {};
+      if (ObjectId.isValid(product.userId)) {
+        userQuery.$or = [
+          { _id: new ObjectId(product.userId) },
+          { userId: product.userId.toString() }
+        ];
+      } else {
+        userQuery.userId = product.userId;
+      }
 
-    // Fetch product details, seller details, and shop names
-    const productIds = [...new Set(listings.map(l => l.productId))];
-    const uniqueSellerIds = [...new Set(listings.map(l => l.sellerId))];
-    
-    const [products, users, sellers] = await Promise.all([
-      Product.collection().find({ productId: { $in: productIds } }).toArray(),
-      User.collection().find({
-        $or: [
-          { userId: { $in: uniqueSellerIds } },
-          { _id: { $in: uniqueSellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-        ]
-      }).toArray(),
-      Seller.collection().find({
-        userId: { $in: uniqueSellerIds }
-      }).toArray()
-    ]);
-
-    const productMap = new Map();
-    products.forEach(p => productMap.set(p.productId, p));
-
-    const userMap = new Map();
-    users.forEach(u => {
-      const id = u.userId || u._id.toString();
-      userMap.set(id.toString(), u);
-    });
-
-    const shopMap = new Map();
-    sellers.forEach(s => {
-      if (s.userId) shopMap.set(s.userId.toString(), s.shopName);
-    });
-
-    // Map everything together
-    const productsWithDetails = await Promise.all(listings.map(async (listing) => {
-      const product = productMap.get(listing.productId);
-      if (!product) return null;
-
-      const [mainCategory, subCategory] = await Promise.all([
+      const [mainCategory, subCategory, variants, user] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
+        product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
+        ProductVariant.collection().find({ productId: product.productId }).toArray(),
+        User.collection().findOne(userQuery)
       ]);
 
-      const user = listing.sellerId ? userMap.get(listing.sellerId.toString()) : null;
-      const sellerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
-      const shopName = listing.sellerId ? shopMap.get(listing.sellerId.toString()) : null;
+      let sellerName = 'Unknown';
+      if (user) {
+        sellerName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        if (!sellerName) sellerName = user.name || user.email || 'Unknown';
+      }
 
       return {
         ...product,
-        // Override master price/stock with listing data
-        price: listing.price,
-        salePrice: listing.salePrice,
-        stock: listing.stock,
-        deliveryDays: listing.deliveryDays,
-        approvalStatus: listing.approvalStatus,
         mainCategoryName: mainCategory ? mainCategory.name : null,
         subCategoryName: subCategory ? subCategory.name : null,
         sellerName,
-        shopName
+        variantsCount: variants.length,
+        variants: variants
       };
     }));
 
@@ -332,168 +313,18 @@ exports.getAllSellerProducts = async (req, res) => {
       success: true, 
       message: 'All seller products fetched successfully',
       data: {
-        products: productsWithDetails.filter(p => p !== null),
+        products: productsWithDetails,
         pagination: {
           total,
           page,
-          limit,
-          pages: Math.ceil(total / limit)
+          limit: limitNum,
+          pages: Math.ceil(total / limitNum)
         }
       }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
-};
-
-exports.getProductsBySellerId = async (req, res) => {
-    try {
-        const { sellerId } = req.params;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-
-        if (!sellerId) {
-            return res.status(400).json({ success: false, message: "Seller ID is required" });
-        }
-
-        const query = { sellerId };
-
-        const [listings, total] = await Promise.all([
-            SellerProduct.collection().find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
-            SellerProduct.collection().countDocuments(query)
-        ]);
-
-        if (listings.length === 0) {
-            return res.status(200).json({
-                success: true,
-                message: 'No products found for this seller',
-                data: { products: [], pagination: { total: 0, page, limit, pages: 0 } }
-            });
-        }
-
-        const productIds = [...new Set(listings.map(l => l.productId))];
-
-        const [products, user, seller] = await Promise.all([
-            Product.collection().find({ productId: { $in: productIds } }).toArray(),
-            User.collection().findOne({
-                $or: [
-                    { userId: sellerId },
-                    { _id: ObjectId.isValid(sellerId) ? new ObjectId(sellerId) : null }
-                ].filter(condition => condition.userId || condition._id)
-            }),
-            Seller.collection().findOne({ userId: sellerId })
-        ]);
-
-        const productMap = new Map();
-        products.forEach(p => productMap.set(p.productId, p));
-
-        const sellerName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
-        const shopName = seller ? seller.shopName : null;
-
-        const productsWithDetails = await Promise.all(listings.map(async (listing) => {
-            const product = productMap.get(listing.productId);
-            if (!product) return null;
-
-            const [mainCategory, subCategory] = await Promise.all([
-                product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
-                product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null
-            ]);
-
-            return {
-                ...product,
-                price: listing.price,
-                salePrice: listing.salePrice,
-                stock: listing.stock,
-                deliveryDays: listing.deliveryDays,
-                approvalStatus: listing.approvalStatus,
-                mainCategoryName: mainCategory ? mainCategory.name : null,
-                subCategoryName: subCategory ? subCategory.name : null,
-                sellerName,
-                shopName
-            };
-        }));
-
-        res.status(200).json({
-            success: true,
-            message: `Products for seller fetched successfully`,
-            data: {
-                products: productsWithDetails.filter(p => p !== null),
-                pagination: {
-                    total,
-                    page,
-                    limit,
-                    pages: Math.ceil(total / limit)
-                }
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-exports.listProduct = async (req, res) => {
-    try {
-        if (req.roleId !== 1) {
-            return res.status(403).json({
-                success: false,
-                message: 'Only admins can list products via this endpoint'
-            });
-        }
-
-        const { productId, price, salePrice, stock, deliveryDays } = req.body;
-
-        if (!productId || price === undefined || stock === undefined) {
-            return res.status(400).json({
-                success: false,
-                message: 'productId, price, and stock are required'
-            });
-        }
-
-        // Check if product exists in catalog
-        const product = await Product.findById(productId);
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: 'Product not found in catalog'
-            });
-        }
-
-        // Check if this admin already listed this product
-        const existingListing = await SellerProduct.collection().findOne({
-            productId,
-            sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId
-        });
-
-        if (existingListing) {
-            return res.status(409).json({
-                success: false,
-                message: 'You have already listed this product. Update the existing listing instead.'
-            });
-        }
-
-        const sellerProductData = {
-            productId,
-            sellerId: req.userId,
-            price,
-            salePrice,
-            stock,
-            deliveryDays,
-            approvalStatus: 'approved'
-        };
-
-        const sellerProduct = await SellerProduct.create(sellerProductData);
-
-        await deleteCachePattern('products:list:*');
-
-        res.status(201).json({
-            success: true,
-            message: 'Product listed successfully by admin',
-            data: sellerProduct
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
 };
 
 exports.getProductById = async (req, res) => {
@@ -503,17 +334,15 @@ exports.getProductById = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    const [mainCategory, subCategory, rawMarketplaceListings] = await Promise.all([
+    const [mainCategory, subCategory, variants] = await Promise.all([
       product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
       product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-      SellerProduct.collection().find({ productId: product.productId }).toArray()
+      ProductVariant.collection().find({ productId: product.productId }).toArray()
     ]);
 
-    // Collect all seller IDs to fetch their details in bulk
-    const sellerIds = [...new Set([
-      ...(product.userId ? [product.userId] : []),
-      ...rawMarketplaceListings.map(listing => listing.sellerId)
-    ])];
+    // Collect all unique seller IDs from variants
+    const sellerIds = [...new Set(variants.map(v => v.sellerId))];
+    if (product.userId) sellerIds.push(product.userId);
 
     const [users, sellers] = await Promise.all([
       User.collection().find({
@@ -543,7 +372,6 @@ exports.getProductById = async (req, res) => {
       const user = userMap.get(userId.toString());
       if (!user) return { sellerName: null, shopName: null };
 
-      // If the user is an admin, return Admin branding
       if (user.roleId === 1 || (user.roles && (user.roles === 1 || user.roles.includes?.(1)))) {
         return { sellerName: "Admin", shopName: "Outdid" };
       }
@@ -555,66 +383,45 @@ exports.getProductById = async (req, res) => {
       return { sellerName, shopName };
     };
 
-    const mainSeller = getSellerDetails(product.userId);
-    
-    const marketplaceListings = rawMarketplaceListings.map(listing => {
-      const details = getSellerDetails(listing.sellerId);
+    const variantsWithSellerDetails = variants.map(variant => {
+      const sellerDetails = getSellerDetails(variant.sellerId);
       return {
-        ...listing,
-        ...details,
-        currentPrice: parseFloat(listing.salePrice) > 0 ? parseFloat(listing.salePrice) : parseFloat(listing.price)
+        ...variant,
+        ...sellerDetails,
+        currentPrice: parseFloat(variant.salePrice) > 0 ? parseFloat(variant.salePrice) : parseFloat(variant.price)
       };
     });
 
-    const allOffers = marketplaceListings
-      .filter(m => m.currentPrice > 0 && parseInt(m.stock) > 0)
-      .map(m => ({
-        price: m.currentPrice,
-        sellerId: m.sellerId,
-        sellerProductId: m.sellerProductId,
-        productId: m.productId,
-        sellerName: m.sellerName || "Seller",
-        shopName: m.shopName || "Marketplace",
-        stock: parseInt(m.stock),
-        deliveryDays: m.deliveryDays,
-        isSeller: true 
-      }));
+    const masterSeller = getSellerDetails(product.userId);
 
-    const minPrice = allOffers.length > 0 ? Math.min(...allOffers.map(o => o.price)) : 0;
-    const sellerCount = allOffers.length;
-    const minPriceDetails = allOffers.find(o => o.price === minPrice) || null;
+    const minPriceVariant = variantsWithSellerDetails.length > 0 
+      ? variantsWithSellerDetails.reduce((prev, curr) => (prev.currentPrice < curr.currentPrice ? prev : curr))
+      : null;
 
-    // Find if the current requesting admin has a listing for this product
-    const adminListing = rawMarketplaceListings.find(l => 
-      l.sellerId && req.userId && l.sellerId.toString() === req.userId.toString()
-    );
-
-    const productWithCategoryNames = {
+    const productResponse = {
       ...product.toObject ? product.toObject() : product,
-      masterPrice: product.price,
-      masterSalePrice: product.salePrice,
-      // Priority: 1. Admin's own listing, 2. Cheapest marketplace offer, 3. Master product price
-      price: adminListing ? adminListing.price : (minPriceDetails ? minPriceDetails.price : product.price),
-      salePrice: adminListing ? adminListing.salePrice : (minPriceDetails ? minPriceDetails.price : product.salePrice),
-      stock: adminListing ? adminListing.stock : (minPriceDetails ? minPriceDetails.stock : product.stock),
-      deliveryDays: adminListing ? adminListing.deliveryDays : (minPriceDetails ? minPriceDetails.deliveryDays : null),
       mainCategoryName: mainCategory ? mainCategory.name : null,
       subCategoryName: subCategory ? subCategory.name : null,
-      marketplaceListings: marketplaceListings,
-      allOffers: allOffers,
-      minPrice: minPrice,
-      sellerCount: sellerCount,
-      minPriceDetails: minPriceDetails,
-      ...(mainSeller.sellerName && { sellerName: mainSeller.sellerName }),
-      ...(mainSeller.shopName && { shopName: mainSeller.shopName })
+      sellerName: masterSeller.sellerName,
+      shopName: masterSeller.shopName,
+      minPriceDetails: minPriceVariant ? {
+        variantId: minPriceVariant.variantId,
+        sellerName: minPriceVariant.sellerName,
+        shopName: minPriceVariant.shopName,
+        price: minPriceVariant.price,
+        salePrice: minPriceVariant.salePrice,
+        currentPrice: minPriceVariant.currentPrice,
+        attributes: minPriceVariant.attributes
+      } : null,
+      variants: variantsWithSellerDetails
     };
 
     res.status(200).json({
       success: true,
       message: 'Product details fetched successfully',
       data: {
-        product: productWithCategoryNames,
-        sellerCount: sellerCount
+        product: productResponse,
+        variantsCount: variants.length
       }
     });
   } catch (error) {
@@ -624,78 +431,79 @@ exports.getProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    let { productName, description, shortDescription, updatedby, attributes } = req.body;
+    const { id } = req.params;
+    let { productName, description, shortDescription, updatedby, attributes, price, salePrice, stock, deliveryDays, pickupAddress } = req.body;
 
-    if (typeof attributes === 'string') {
-      try {
-        attributes = JSON.parse(attributes);
-      } catch (e) {
-        attributes = [];
+    // 1. Check if it's a Master Product
+    const existingProduct = await Product.findById(id);
+    if (existingProduct) {
+      if (typeof attributes === 'string') {
+        try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
       }
-    }
 
-    if (Object.keys(req.body).length === 0 && (!req.files || req.files.length === 0)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'At least one field is required to update' 
+      const updateData = { 
+        productName, 
+        description, 
+        shortDescription, 
+        updatedby,
+        attributes: attributes !== undefined ? attributes : undefined
+      };
+
+      if (productName) updateData.slug = slugify(productName);
+      
+      if (req.files && req.files.length > 0) {
+        const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
+        updateData.images = [...(existingProduct.images || []), ...newImages];
+      }
+
+      // Remove undefined keys
+      Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+      await Product.update(id, updateData);
+      await deleteCachePattern('products:list:*');
+      await deleteCache(`products:detail:${id}`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Product Master updated successfully',
       });
     }
 
-    const existingProduct = await Product.findById(req.params.id);
-    if (!existingProduct) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    // 2. Check if it's a Variant
+    const variant = await ProductVariant.findById(id);
+    if (variant) {
+      if (typeof attributes === 'string') {
+        try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
+      }
+
+      const variantUpdateData = {
+        attributes: attributes !== undefined ? attributes : undefined,
+        price: price !== undefined ? parseFloat(price) : undefined,
+        salePrice: salePrice !== undefined ? parseFloat(salePrice) : undefined,
+        stock: stock !== undefined ? parseInt(stock) : undefined,
+        deliveryDays: deliveryDays !== undefined ? parseInt(deliveryDays) : undefined,
+        pickupAddress: pickupAddress !== undefined ? pickupAddress : undefined
+      };
+
+      // Remove undefined keys
+      Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
+
+      if (req.files && req.files.length > 0) {
+        const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
+        variantUpdateData.images = [...(variant.images || []), ...newImages];
+      }
+
+      await ProductVariant.update(id, variantUpdateData);
+      await deleteCachePattern('products:list:*');
+      await deleteCache(`products:detail:${variant.productId}`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Variant updated successfully',
+      });
     }
 
-    // Separate master product data from listing data
-    const { price, salePrice, stock, deliveryDays, ...masterData } = req.body;
-
-    const updateData = { 
-      ...masterData, 
-      updatedby
-    };
-
-    if (attributes !== undefined) {
-      updateData.attributes = attributes;
-    }
-    if (productName) {
-      updateData.slug = slugify(productName);
-    }
-    if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => `/uploads/products/${file.filename}`);
-      updateData.images = [...(existingProduct.images || []), ...newImages];
-    }
-
-    const product = await Product.update(req.params.id, updateData);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-
-    // UPDATE LISTING DATA (Price, Stock, DeliveryDays) in SellerProduct table
-    if (price !== undefined || salePrice !== undefined || stock !== undefined || deliveryDays !== undefined) {
-      await SellerProduct.collection().findOneAndUpdate(
-        { 
-          productId: product.productId, 
-          sellerId: ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId 
-        },
-        { 
-          $set: { 
-            ...(price !== undefined && { price: parseFloat(price) }),
-            ...(salePrice !== undefined && { salePrice: parseFloat(salePrice) }),
-            ...(stock !== undefined && { stock: parseInt(stock) }),
-            ...(deliveryDays !== undefined && { deliveryDays: parseInt(deliveryDays) }),
-            updatedAt: new Date()
-          }
-        }
-      );
-    }
-
-    await deleteCachePattern('products:list:*');
-    await deleteCache(`products:detail:${req.params.id}`);
-
-    res.status(200).json({ 
-      success: true, 
-      message: 'Product updated successfully',
-    });
+    return res.status(404).json({ success: false, message: 'Product or Variant not found' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -777,8 +585,8 @@ exports.updateApprovalStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
-    // Also update all seller product listings for this product
-    await SellerProduct.collection().updateMany(
+    // Also update all product variants for this master product
+    await ProductVariant.collection().updateMany(
       { productId: product.productId },
       { 
         $set: { 
@@ -801,41 +609,56 @@ exports.updateApprovalStatus = async (req, res) => {
   }
 };
 
-exports.getSellersList = async (req, res) => {
+exports.addVariant = async (req, res) => {
   try {
-    // Get all users with seller role (2) and not admin (1)
-    const sellers = await User.collection().find({
-      roles: { $in: [2], $nin: [1] }
-    }).project({ 
-      userId: 1, 
-      firstName: 1, 
-      lastName: 1, 
-      email: 1 
-    }).toArray();
+    if (req.roleId !== 1) {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Only admins can perform this action' 
+      });
+    }
 
-    const sellerIds = sellers.map(s => s.userId);
+    const { masterProductId } = req.params;
+    const { price, salePrice, stock, attributes, deliveryDays, pickupAddress } = req.body;
 
-    // Get shop details from Seller model
-    const sellerDetails = await Seller.collection().find({
-      userId: { $in: sellerIds }
-    }).project({ 
-      userId: 1, 
-      shopName: 1 
-    }).toArray();
+    const masterProduct = await Product.findById(masterProductId);
 
-    const shopMap = new Map();
-    sellerDetails.forEach(s => shopMap.set(s.userId, s.shopName));
+    if (!masterProduct) {
+      return res.status(404).json({ success: false, message: 'Master product not found' });
+    }
 
-    const sellersWithShops = sellers.map(s => ({
-      userId: s.userId,
-      name: `${s.firstName || ''} ${s.lastName || ''}`.trim(),
-      email: s.email,
-      shopName: shopMap.get(s.userId) || 'N/A'
-    }));
+    let parsedAttributes = attributes;
+    if (typeof attributes === 'string') {
+      try {
+        parsedAttributes = JSON.parse(attributes);
+      } catch (e) {
+        parsedAttributes = [];
+      }
+    }
 
-    res.status(200).json({
+    const images = req.files && req.files.length > 0 
+      ? req.files.map(file => `/uploads/products/${file.filename}`)
+      : [];
+
+    const variant = await ProductVariant.create({
+      productId: masterProduct.productId,
+      sellerId: req.userId,
+      attributes: parsedAttributes || [],
+      price: parseFloat(price) || 0,
+      salePrice: salePrice ? parseFloat(salePrice) : null,
+      stock: parseInt(stock) || 0,
+      images: images,
+      deliveryDays: deliveryDays || 3,
+      pickupAddress: pickupAddress || null,
+      approvalStatus: 'approved'
+    });
+
+    await deleteCachePattern('products:list:*');
+
+    res.status(201).json({
       success: true,
-      data: sellersWithShops
+      message: 'Variant added successfully by admin',
+      data: { variantId: variant.variantId }
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
