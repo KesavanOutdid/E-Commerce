@@ -15,6 +15,7 @@ interface SellerInfo {
     onboardingCompleted: boolean
     commissionPercentage: number | null
     bankDetails: any
+    isLive?: boolean
     createdAt: string
     updatedAt: string
 }

@@ -2,6 +2,7 @@ const Product = require('../../../models/Product');
 const ProductVariant = require('../../../models/ProductVariant');
 const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
+const User = require('../../../models/User');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 const { slugify } = require('../../../utils/help');
 const { ObjectId } = require('mongodb');

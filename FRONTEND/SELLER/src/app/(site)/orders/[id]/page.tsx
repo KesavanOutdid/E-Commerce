@@ -19,7 +19,7 @@ export default function OrderDetailPage() {
 
     useEffect(() => {
         if (authLoading) return
-        
+
         if (!isAuthenticated) {
             router.push('/')
             return
@@ -217,6 +217,12 @@ export default function OrderDetailPage() {
                                     Payment Details
                                 </h2>
                                 <div className="space-y-3">
+                                    {order.razorpayPaymentId && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Payment ID</span>
+                                            <span className="text-sm font-semibold text-gray-900 capitalize">{order.razorpayPaymentId}</span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm text-gray-600">Payment Method</span>
                                         <span className="text-sm font-semibold text-gray-900 capitalize">{order.paymentType}</span>
@@ -227,12 +233,31 @@ export default function OrderDetailPage() {
                                             {order.paymentStatus}
                                         </span>
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Icon icon="mdi:truck" width={20} height={20} className="text-primary" />
+                                    Delivery Status
+                                </h2>
+                                <div className="space-y-3">
                                     {order.razorpayPaymentId && (
-                                        <div className="pt-3 border-t border-gray-200">
-                                            <p className="text-xs text-gray-500 mb-1">Payment ID</p>
-                                            <p className="text-xs font-mono text-gray-700">{order.razorpayPaymentId}</p>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Payment ID</span>
+                                            <span className="text-sm font-semibold text-gray-900 capitalize">{order.razorpayPaymentId}</span>
                                         </div>
                                     )}
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Payment Method</span>
+                                        <span className="text-sm font-semibold text-gray-900 capitalize">{order.paymentType}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Payment Status</span>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold border ${getPaymentStatusColor(order.paymentStatus)}`}>
+                                            {order.paymentStatus}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
 

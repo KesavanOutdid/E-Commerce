@@ -169,6 +169,17 @@ const Header: React.FC = () => {
                                             <Icon icon='mdi:file-document-check' width={20} height={20} />
                                             KYC
                                         </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsAccountDropdownOpen(false)
+                                                router.push('/pickup-addresses')
+                                            }}
+                                            className={`w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center gap-2 ${
+                                                pathname === '/pickup-addresses' ? 'bg-primary/10 text-primary font-semibold' : 'text-black'
+                                            }`}>
+                                            <Icon icon='mdi:map-marker-multiple' width={20} height={20} />
+                                            Pickup Address
+                                        </button>
                                         <hr className='my-2' />
                                         <button
                                             onClick={handleLogout}
@@ -323,6 +334,19 @@ const Header: React.FC = () => {
                                         }}>
                                         <Icon icon='mdi:file-document-check' width={20} height={20} />
                                         KYC
+                                    </button>
+                                    <button
+                                        className={`px-4 py-2 rounded-lg border hover:bg-gray-100 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2 ${
+                                            pathname === '/pickup-addresses' 
+                                                ? 'bg-primary/10 border-primary text-primary font-semibold' 
+                                                : 'bg-transparent text-black border-gray-300'
+                                        }`}
+                                        onClick={() => {
+                                            router.push('/pickup-addresses')
+                                            setNavbarOpen(false)
+                                        }}>
+                                        <Icon icon='mdi:map-marker-multiple' width={20} height={20} />
+                                        Pickup Address
                                     </button>
                                     <button
                                         className='bg-red-600 text-white px-4 py-2 rounded-lg border border-red-600 hover:bg-red-700 hover:cursor-pointer transition duration-300 ease-in-out flex items-center gap-2'

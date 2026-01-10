@@ -13,6 +13,22 @@ exports.addPickupAddress = async (req, res) => {
       });
     }
 
+    // Validate pincode (6 digits)
+    if (!/^\d{6}$/.test(addressData.pincode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pincode must be exactly 6 digits'
+      });
+    }
+
+    // Validate phone (10 digits)
+    if (!/^\d{10}$/.test(addressData.phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must be exactly 10 digits'
+      });
+    }
+
     const updatedUser = await User.addPickupAddress(userId, addressData);
 
     if (!updatedUser) {
@@ -72,6 +88,22 @@ exports.updatePickupAddress = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please provide all required address fields'
+      });
+    }
+
+    // Validate pincode (6 digits)
+    if (!/^\d{6}$/.test(addressData.pincode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pincode must be exactly 6 digits'
+      });
+    }
+
+    // Validate phone (10 digits)
+    if (!/^\d{10}$/.test(addressData.phone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Phone number must be exactly 10 digits'
       });
     }
 

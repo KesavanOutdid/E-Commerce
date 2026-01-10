@@ -289,48 +289,48 @@ export default function ProfilePage() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-lg p-6">
+                                <div className="rounded-lg p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">
-                                            First Name {isEditing && <span className="text-red-500">*</span>}
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={formData.firstName}
-                                                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
-                                        ) : (
-                                            <p className="text-sm text-black font-semibold">{formData.firstName || '-'}</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">
-                                            Last Name {isEditing && <span className="text-red-500">*</span>}
-                                        </label>
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                value={formData.lastName}
-                                                onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
-                                        ) : (
-                                            <p className="text-sm text-black font-semibold">{formData.lastName || '-'}</p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Email</label>
-                                        <p className="text-sm text-black font-semibold">{formData.email || '-'}</p>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs text-gray-500 mb-1">Phone</label>
-                                        <p className="text-sm text-black font-semibold">{formData.phone || '-'}</p>
-                                    </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">
+                                                First Name {isEditing && <span className="text-red-500">*</span>}
+                                            </label>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    value={formData.firstName}
+                                                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                    required
+                                                />
+                                            ) : (
+                                                <p className="text-sm text-black font-semibold">{formData.firstName || '-'}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">
+                                                Last Name {isEditing && <span className="text-red-500">*</span>}
+                                            </label>
+                                            {isEditing ? (
+                                                <input
+                                                    type="text"
+                                                    value={formData.lastName}
+                                                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                    required
+                                                />
+                                            ) : (
+                                                <p className="text-sm text-black font-semibold">{formData.lastName || '-'}</p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Email</label>
+                                            <p className="text-sm text-black font-semibold">{formData.email || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-500 mb-1">Phone</label>
+                                            <p className="text-sm text-black font-semibold">{formData.phone || '-'}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -352,7 +352,7 @@ export default function ProfilePage() {
                                     )}
                                 </div>
 
-                                <div className="bg-gradient-to-br from-green-50 to-green-100/50 rounded-lg p-6">
+                                <div className="rounded-lg p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     {formData.addresses.length === 0 ? (
                                         <div className="bg-white/70 p-6 rounded-lg text-center text-gray-500 border border-green-200">
                                             <Icon icon="mdi:map-marker-off" width={32} height={32} className="mx-auto mb-2 opacity-50" />
@@ -373,113 +373,113 @@ export default function ProfilePage() {
                                                                 <Icon icon="mdi:delete" width={18} height={18} />
                                                             </button>
                                                         )}
-                                                </div>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Door No</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.doorNo || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'doorNo', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.doorNo || '-'}</p>
-                                                        )}
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Street</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.street || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'street', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.street || '-'}</p>
-                                                        )}
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">Door No</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.doorNo || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'doorNo', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.doorNo || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">Street</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.street || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'street', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.street || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">Landmark</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.landmark || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'landmark', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.landmark || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">City</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.city || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'city', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.city || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">District</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.district || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'district', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.district || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">State</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.state || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'state', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.state || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">Country</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.country || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'country', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.country || '-'}</p>
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs text-gray-500 mb-1">Pincode</label>
+                                                            {isEditing ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={address.pincode || ''}
+                                                                    onChange={(e) => handleAddressChange(index, 'pincode', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            ) : (
+                                                                <p className="text-sm text-black font-semibold">{address.pincode || '-'}</p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Landmark</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.landmark || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'landmark', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.landmark || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">City</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.city || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'city', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.city || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">District</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.district || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'district', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.district || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">State</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.state || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'state', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.state || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Country</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.country || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'country', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.country || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs text-gray-500 mb-1">Pincode</label>
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={address.pincode || ''}
-                                                                onChange={(e) => handleAddressChange(index, 'pincode', e.target.value)}
-                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            />
-                                                        ) : (
-                                                            <p className="text-sm text-black font-semibold">{address.pincode || '-'}</p>
-                                                        )}
-                                                    </div>
-                                                </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -487,7 +487,7 @@ export default function ProfilePage() {
                                 </div>
 
                                 {isEditing && (
-                                    <div className="flex justify-end gap-3" style={{paddingTop:'10px'}}>
+                                    <div className="flex justify-end gap-3" style={{ paddingTop: '10px' }}>
                                         <button
                                             type="button"
                                             onClick={handleCancel}
@@ -517,8 +517,8 @@ export default function ProfilePage() {
                                         <Icon icon="mdi:store" className="text-purple-600" width={24} height={24} />
                                         Seller Information
                                     </h2>
-                                    
-                                    <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-6 mb-4">
+
+                                    <div className="rounded-lg p-6 mb-4 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                         {user.sellerInfo.shopLogo && (
                                             <div className="mb-6 flex items-center gap-4 pb-4 border-b border-purple-200">
                                                 <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-purple-600 shadow-lg flex-shrink-0 bg-white">
@@ -535,59 +535,75 @@ export default function ProfilePage() {
                                             </div>
                                         )}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Shop Name</label>
-                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.shopName || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">GSTIN</label>
-                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.gstin || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">PAN Number</label>
-                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.panNumber || '-'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Commission Percentage</label>
-                                            <p className="text-sm text-black font-semibold">{user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'}</p>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">KYC Status</label>
-                                            <div className="flex items-center gap-1.5">
-                                                {user.sellerInfo.kycApproved ? (
-                                                    <>
-                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
-                                                        <span className="text-green-600 font-semibold text-sm">Approved</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Icon icon="mdi:clock-outline" className="text-orange-500" width={16} height={16} />
-                                                        <span className="text-orange-600 font-semibold text-sm">Pending</span>
-                                                    </>
-                                                )}
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Shop Name</label>
+                                                <p className="text-sm text-black font-semibold">{user.sellerInfo.shopName || '-'}</p>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-500 mb-1">Onboarding Completed</label>
-                                            <div className="flex items-center gap-1.5">
-                                                {user.sellerInfo.onboardingCompleted ? (
-                                                    <>
-                                                        <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
-                                                        <span className="text-green-600 font-semibold text-sm">Yes</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
-                                                        <span className="text-red-600 font-semibold text-sm">No</span>
-                                                    </>
-                                                )}
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">GSTIN</label>
+                                                <p className="text-sm text-black font-semibold">{user.sellerInfo.gstin || '-'}</p>
                                             </div>
-                                        </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">PAN Number</label>
+                                                <p className="text-sm text-black font-semibold">{user.sellerInfo.panNumber || '-'}</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Commission Percentage</label>
+                                                <p className="text-sm text-black font-semibold">{user.sellerInfo.commissionPercentage ? `${user.sellerInfo.commissionPercentage}%` : '-'}</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">KYC Status</label>
+                                                <div className="flex items-center gap-1.5">
+                                                    {user.sellerInfo.kycApproved ? (
+                                                        <>
+                                                            <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                            <span className="text-green-600 font-semibold text-sm">Approved</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Icon icon="mdi:clock-outline" className="text-orange-500" width={16} height={16} />
+                                                            <span className="text-orange-600 font-semibold text-sm">Pending</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Store Status</label>
+                                                <div className="flex items-center gap-1.5">
+                                                    {user.sellerInfo.isLive ? (
+                                                        <>
+                                                            <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                            <span className="text-green-600 font-semibold text-sm">Live</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
+                                                            <span className="text-red-600 font-semibold text-sm">Not Live</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs text-gray-500 mb-1">Onboarding Completed</label>
+                                                <div className="flex items-center gap-1.5">
+                                                    {user.sellerInfo.onboardingCompleted ? (
+                                                        <>
+                                                            <Icon icon="mdi:check-circle" className="text-green-500" width={16} height={16} />
+                                                            <span className="text-green-600 font-semibold text-sm">Yes</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Icon icon="mdi:close-circle" className="text-red-500" width={16} height={16} />
+                                                            <span className="text-red-600 font-semibold text-sm">No</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
                                     {user.sellerInfo.bankDetails && (
-                                        <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg p-6 mb-4">
+                                        <div className="rounded-lg p-6 mb-4 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                             <h3 className="text-base font-semibold text-black mb-4 flex items-center gap-2">
                                                 <Icon icon="mdi:bank" className="text-orange-600" width={20} height={20} />
                                                 Bank Details
@@ -614,7 +630,7 @@ export default function ProfilePage() {
                                     )}
 
                                     {user.sellerInfo.shopAddress && (
-                                        <div className="bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-lg p-6">
+                                        <div className="rounded-lg p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                             <h3 className="text-base font-semibold text-black mb-4 flex items-center gap-2">
                                                 <Icon icon="mdi:map-marker-radius" className="text-teal-600" width={20} height={20} />
                                                 Shop Address

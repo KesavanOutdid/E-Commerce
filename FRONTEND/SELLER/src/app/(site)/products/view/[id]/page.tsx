@@ -30,7 +30,10 @@ export default function ProductViewPage() {
     const { user, isAuthenticated, isLoading } = useAuth()
     const { loading, fetchProductById } = useProducts()
     const [product, setProduct] = useState<any>(null)
-    const [selectedImage, setSelectedImage] = useState(0)
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0)
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+    const [showFullShortDesc, setShowFullShortDesc] = useState(false)
+    const [showFullDesc, setShowFullDesc] = useState(false)
 
     useEffect(() => {
         if (isLoading) return
@@ -56,8 +59,8 @@ export default function ProductViewPage() {
         return (
             <>
                 <Breadcrumb pageName="Product Details" />
-                <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
-                    <div className="container mx-auto max-w-7xl px-4">
+                <section style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="pb-10">
+                    <div className="container mx-auto max-w-6xl px-4">
                         <ProductViewSkeleton />
                     </div>
                 </section>
@@ -69,281 +72,406 @@ export default function ProductViewPage() {
         return null
     }
 
+    const selectedVariant = product.variants && product.variants.length > 0 ? product.variants[selectedVariantIndex] : null
+    const variantImages = selectedVariant?.images || []
+
+    const truncateText = (text: string, lines: number = 7) => {
+        if (!text) return ''
+        const textLines = text.split('\n')
+        if (textLines.length <= lines) return text
+        return textLines.slice(0, lines).join('\n')
+    }
+
+    const needsTruncation = (text: string, lines: number = 7) => {
+        if (!text) return false
+        return text.split('\n').length > lines
+    }
+
     return (
         <>
             <Breadcrumb pageName="Product Details" />
-            <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
-                <div className="container mx-auto max-w-7xl px-4">
-                    <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                        <div className="flex justify-between items-center mb-8">
-                            <h1 className="text-3xl font-bold text-black">Product Details</h1>
-                            <div className="flex gap-4">
-                                {product.sellerListing && (
-                                    <Link
-                                        href={`/products/edit/${product.productId}`}
-                                        className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition">
-                                        <Icon icon="mdi:pencil" width={20} height={20} />
-                                        Edit Product
-                                    </Link>
-                                )}
+            <section style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="pb-10">
+                <div className="container mx-auto max-w-6xl px-4">
+                    <div className="bg-white rounded-xl shadow p-6 border border-gray-200">
+                        {/* Header */}
+                        <div className="mb-6 flex items-start justify-between">
+                            <div>
+                                <h1 className="text-2xl font-bold text-black mb-2">Product Details</h1>
+                                <p className="text-sm text-gray-600">View complete product and variant information</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Link
+                                    href={`/products/edit/${product.productId}`}
+                                    className="px-4 py-2 bg-primary text-white rounded-lg text-sm hover:bg-primary/90 transition flex items-center gap-2">
+                                    <Icon icon="mdi:pencil" width={18} height={18} />
+                                    Edit Product
+                                </Link>
                                 <Link
                                     href="/products"
-                                    className="flex items-center gap-2 border border-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-50 transition">
-                                    <Icon icon="mdi:arrow-left" width={20} height={20} />
+                                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition flex items-center gap-2">
+                                    <Icon icon="mdi:arrow-left" width={18} height={18} />
                                     Back to Products
                                 </Link>
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                            <div>
-                                <div className="mb-4 relative">
-                                    <img
-                                        src={product.images[selectedImage] ? `${process.env.NEXT_PUBLIC_API_URL}${product.images[selectedImage]}` : '/images/placeholder.png'}
-                                        alt={product.productName}
-                                        className="w-full h-96 object-contain bg-gray-50 rounded-xl border-2 border-gray-200"
-                                    />
-                                    {product.images && product.images.length > 0 && (
-                                        <div className="absolute top-4 right-4 bg-black/70 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                                            <Icon icon="mdi:image-multiple" width={16} height={16} />
-                                            {selectedImage + 1} / {product.images.length}
-                                        </div>
-                                    )}
+                        {/* Basic Information */}
+                        <div className="mb-6">
+                            <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                                <Icon icon="mdi:information" width={20} height={20} className="text-primary" />
+                                Basic Information
+                            </h2>
+                            <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg space-y-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Name</label>
+                                    <p className="text-base text-gray-900 font-semibold">{product.productName}</p>
                                 </div>
-                                {product.images.length > 1 && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                            <p className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                                                <Icon icon="mdi:view-gallery" width={18} height={18} />
-                                                Product Images ({product.images.length})
-                                            </p>
-                                        </div>
-                                        <div className="grid grid-cols-5 gap-2">
-                                            {product.images.map((image: string, index: number) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => setSelectedImage(index)}
-                                                    className={`h-20 rounded-lg border-2 overflow-hidden relative ${selectedImage === index
-                                                        ? 'border-primary ring-2 ring-primary/50'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                        }`}>
-                                                    <img
-                                                        src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
-                                                        alt={`${product.productName} ${index + 1}`}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                    {selectedImage === index && (
-                                                        <div className="absolute inset-0 bg-primary/10 flex items-center justify-center">
-                                                            <Icon icon="mdi:check-circle" className="text-primary" width={24} height={24} />
-                                                        </div>
-                                                    )}
-                                                </button>
-                                            ))}
-                                        </div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Main Category</label>
+                                        <p className="text-sm text-gray-900">{product.mainCategoryName || 'N/A'}</p>
                                     </div>
-                                )}
-                            </div>
-
-                            <div>
-                                <h2 className="text-2xl font-bold text-black mb-4">{product.productName}</h2>
-                                <div className="mb-6">
-                                    <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${product.status
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-red-100 text-red-700'
-                                        }`}>
-                                        <Icon
-                                            icon={product.status ? 'mdi:check-circle' : 'mdi:close-circle'}
-                                            width={16}
-                                            height={16}
-                                        />
-                                        {product.status ? 'Active' : 'Inactive'}
-                                    </span>
-                                    {product.sellerListing && (
-                                        <span className={`ml-2 inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium ${product.sellerListing.approvalStatus === 'approved'
-                                            ? 'bg-green-100 text-green-700'
-                                            : 'bg-yellow-100 text-yellow-700'
-                                            }`}>
-                                            <Icon
-                                                icon={product.sellerListing.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'}
-                                                width={16}
-                                                height={16}
-                                            />
-                                            {product.sellerListing.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
-                                        </span>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Sub Category</label>
+                                        <p className="text-sm text-gray-900">{product.subCategoryName || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Brand</label>
+                                        <p className="text-sm text-gray-900">{product.brand || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Warranty</label>
+                                        <p className="text-sm text-gray-900">{product.warranty || 'N/A'}</p>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Short Description</label>
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                        {showFullShortDesc || !needsTruncation(product.shortDescription || '', 7)
+                                            ? product.shortDescription || 'N/A'
+                                            : truncateText(product.shortDescription || '', 7)}
+                                    </p>
+                                    {needsTruncation(product.shortDescription || '', 7) && (
+                                        <button
+                                            onClick={() => setShowFullShortDesc(!showFullShortDesc)}
+                                            className="mt-2 text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+                                            {showFullShortDesc ? (
+                                                <>
+                                                    <Icon icon="mdi:chevron-up" width={16} height={16} />
+                                                    Read Less
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="mdi:chevron-down" width={16} height={16} />
+                                                    Read More
+                                                </>
+                                            )}
+                                        </button>
                                     )}
                                 </div>
-                                {product.sellerListing ? (
-                                    <>
-                                        <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border-2 border-primary/20">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <Icon icon="mdi:storefront" className="text-primary" width={24} height={24} />
-                                                <h3 className="text-lg font-semibold text-gray-900">Your Listing Price</h3>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="bg-white rounded-lg p-4">
-                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                        <Icon icon="mdi:currency-inr" width={16} height={16} />
-                                                        Price
-                                                    </p>
-                                                    <p className="text-2xl font-bold text-primary">₹{Number(product.sellerListing.price).toLocaleString('en-IN')}</p>
-                                                </div>
-                                                {product.sellerListing.salePrice && (
-                                                    <div className="bg-white rounded-lg p-4">
-                                                        <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                            <Icon icon="mdi:tag" width={16} height={16} />
-                                                            Sale Price
-                                                        </p>
-                                                        <p className="text-2xl font-bold text-green-600">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</p>
-                                                    </div>
-                                                )}
-                                                <div className="bg-white rounded-lg p-4">
-                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                        <Icon icon="mdi:package-variant" width={16} height={16} />
-                                                        Stock
-                                                    </p>
-                                                    <p className="text-xl font-bold text-gray-900">{product.sellerListing.stock} units</p>
-                                                </div>
-                                                <div className="bg-white rounded-lg p-4">
-                                                    <p className="text-sm text-gray-600 mb-1 flex items-center gap-1">
-                                                        <Icon icon="mdi:truck-delivery" width={16} height={16} />
-                                                        Delivery
-                                                    </p>
-                                                    <p className="text-xl font-bold text-gray-900">{product.sellerListing.deliveryDays} days</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {product.commissionPercentage > 0 && product.sellerListing.price > 0 && (
-                                            <div className="mb-6 p-5 bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl">
-                                                <div className="flex items-start gap-3">
-                                                    <Icon icon="mdi:calculator" className="text-amber-600 mt-1" width={28} height={28} />
-                                                    <div className="flex-1">
-                                                        <h4 className="font-bold text-amber-900 mb-3 text-lg flex items-center gap-2">
-                                                            Platform Fees Breakdown
-                                                            <Icon icon="mdi:information" className="text-amber-600" width={18} height={18} />
-                                                        </h4>
-                                                        <div className="space-y-3">
-                                                            <div className="flex justify-between items-center bg-white/90 rounded-lg p-4 shadow-sm">
-                                                                <span className="text-gray-700 font-medium">Your Sale Price:</span>
-                                                                <span className="font-bold text-gray-900 text-xl">₹{Number(product.sellerListing.salePrice).toLocaleString('en-IN')}</span>
-                                                            </div>
-                                                            <div className="flex justify-between items-center bg-white/90 rounded-lg p-4 shadow-sm">
-                                                                <span className="text-gray-700 font-medium">Platform Fees ({product.commissionPercentage}%):</span>
-                                                                <span className="font-bold text-red-600 text-xl">-₹{(product.sellerListing.salePrice * product.commissionPercentage / 100).toFixed(2)}</span>
-                                                            </div>
-                                                            <div className="border-t-2 border-amber-300 my-2"></div>
-                                                            <div className="flex justify-between items-center bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-2 border-green-400 shadow-md">
-                                                                <span className="font-bold text-green-900 text-lg">You will receive:</span>
-                                                                <span className="font-bold text-green-700 text-2xl">₹{(product.sellerListing.salePrice * (100 - product.commissionPercentage) / 100).toFixed(2)}</span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="mb-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 border-2 border-gray-200">
-                                            <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                                                <Icon icon="mdi:text-box" width={20} height={20} />
-                                                Short Description
-                                            </h3>
-                                            <p className="text-gray-600">{product.shortDescription}</p>
-                                        </div>
-
-                                        {product.attributes && product.attributes.length > 0 && (
-                                            <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
-                                                <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                                    <Icon icon="mdi:format-list-bulleted" width={20} height={20} />
-                                                    Attributes
-                                                </h3>
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    {product.attributes.map((attr: any, index: number) => (
-                                                        <div key={index} className="bg-white rounded-lg p-3 border border-purple-100">
-                                                            <p className="text-sm text-gray-600">{attr.name}</p>
-                                                            <p className="font-semibold text-black">{attr.value}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-                                    </>
-                                )}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Description</label>
+                                    <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                        {showFullDesc || !needsTruncation(product.description || '', 7)
+                                            ? product.description || 'N/A'
+                                            : truncateText(product.description || '', 7)}
+                                    </p>
+                                    {needsTruncation(product.description || '', 7) && (
+                                        <button
+                                            onClick={() => setShowFullDesc(!showFullDesc)}
+                                            className="mt-2 text-xs text-primary hover:text-primary/80 font-medium flex items-center gap-1">
+                                            {showFullDesc ? (
+                                                <>
+                                                    <Icon icon="mdi:chevron-up" width={16} height={16} />
+                                                    Read Less
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Icon icon="mdi:chevron-down" width={16} height={16} />
+                                                    Read More
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Status</label>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${product.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            <Icon icon={product.status ? 'mdi:check-circle' : 'mdi:close-circle'} width={14} height={14} />
+                                            {product.status ? 'Active' : 'Inactive'}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Approval Status</label>
+                                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${product.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                            <Icon icon={product.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} width={14} height={14} />
+                                            {product.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        {product.sellerListing && (
-                            <>
-                                <div className="mb-6 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-6 border-2 border-gray-200">
-                                    <h3 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                                        <Icon icon="mdi:text-box" width={20} height={20} />
-                                        Short Description
-                                    </h3>
-                                    <p className="text-gray-600">{product.shortDescription}</p>
-                                </div>
-
-                                {product.attributes && product.attributes.length > 0 && (
-                                    <div className="mb-6 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border-2 border-purple-200">
-                                        <h3 className="text-lg font-semibold text-black mb-4 flex items-center gap-2">
-                                            <Icon icon="mdi:format-list-bulleted" width={20} height={20} />
-                                            Attributes
-                                        </h3>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {product.attributes.map((attr: any, index: number) => (
-                                                <div key={index} className="bg-white rounded-lg p-3 border border-purple-100">
-                                                    <p className="text-sm text-gray-600">{attr.name}</p>
-                                                    <p className="font-semibold text-black">{attr.value}</p>
-                                                </div>
-                                            ))}
+                        {/* Highlights & Specifications */}
+                        {(product.highlights?.length > 0 || product.specifications?.length > 0) && (
+                            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {product.highlights && product.highlights.length > 0 && (
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                                            <Icon icon="mdi:star" width={20} height={20} className="text-primary" />
+                                            Highlights
+                                        </h2>
+                                        <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg">
+                                            <ul className="space-y-2">
+                                                {product.highlights.map((highlight: string, index: number) => (
+                                                    <li key={index} className="text-sm text-black flex items-start gap-2">
+                                                        <Icon icon="mdi:check" className="text-green-600 mt-0.5 flex-shrink-0" width={16} height={16} />
+                                                        <span>{highlight}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
                                         </div>
                                     </div>
                                 )}
-                            </>
+
+                                {product.specifications && product.specifications.length > 0 && (
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                                            <Icon icon="mdi:format-list-bulleted" width={20} height={20} className="text-primary" />
+                                            Specifications
+                                        </h2>
+                                        <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg">
+                                            <div className="space-y-2">
+                                                {product.specifications.map((spec: any, index: number) => (
+                                                    <div key={index} className="flex justify-between text-sm">
+                                                        <span className="text-gray-700 font-medium">{spec.name}:</span>
+                                                        <span className="text-black">{spec.value}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         )}
 
-                        <div className="mb-6 bg-gradient-to-br from-green-50 to-teal-50 rounded-xl p-6 border-2 border-green-200">
-                            <h3 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                <Icon icon="mdi:file-document" width={24} height={24} />
-                                Full Description
-                            </h3>
-                            <p className="text-gray-600 whitespace-pre-wrap">{product.description}</p>
-                        </div>
+                        {/* Variants Section */}
+                        {product.variants && product.variants.length > 0 && (
+                            <div className="mb-6">
+                                <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                                    <Icon icon="mdi:package-variant" width={20} height={20} className="text-primary" />
+                                    Product Variants ({product.variants.length})
+                                </h2>
 
-                        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 rounded-xl p-6 border-2 border-orange-200">
-                            <h3 className="text-xl font-semibold text-black mb-4 flex items-center gap-2">
-                                <Icon icon="mdi:information" width={24} height={24} />
-                                Product Information
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-white rounded-lg p-4 border border-orange-100">
-                                    <p className="text-sm text-gray-600 mb-1">Product ID</p>
-                                    <p className="font-medium text-black">{product.productId}</p>
-                                </div>
-                                <div className="bg-white rounded-lg p-4 border border-orange-100">
-                                    <p className="text-sm text-gray-600 mb-1">SKU/Slug</p>
-                                    <p className="font-medium text-black">{product.slug}</p>
-                                </div>
-                                <div className="bg-white rounded-lg p-4 border border-orange-100">
-                                    <p className="text-sm text-gray-600 mb-1">Average Rating</p>
-                                    <p className="font-medium text-black flex items-center gap-1">
-                                        <Icon icon="mdi:star" className="text-yellow-500" width={20} height={20} />
-                                        {product.avgRating || 0} ({product.totalReviews || 0} reviews)
-                                    </p>
-                                </div>
-                                {/* <div className="bg-gray-50 rounded-lg p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Created By</p>
-                                    <p className="font-medium text-black">{product.createdby}</p>
-                                </div> */}
-                                {/* <div className="bg-gray-50 rounded-lg p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Created At</p>
-                                    <p className="font-medium text-black">{formatIndiaTime(product.createdAt)}</p>
-                                </div> */}
-                                {/* {product.updatedAt && (
-                                    <div className="bg-gray-50 rounded-lg p-4">
-                                        <p className="text-sm text-gray-600 mb-1">Last Updated</p>
-                                        <p className="font-medium text-black">{formatIndiaTime(product.updatedAt)}</p>
+                                {/* Variant Tabs */}
+                                {product.variants.length > 1 && (
+                                    <div className="mb-4 flex gap-2 overflow-x-auto pb-2">
+                                        {product.variants.map((variant: any, index: number) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => {
+                                                    setSelectedVariantIndex(index)
+                                                    setSelectedImageIndex(0)
+                                                }}
+                                                className={`px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${selectedVariantIndex === index
+                                                    ? 'bg-primary text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}>
+                                                Variant {index + 1}
+                                                {variant.attributes && variant.attributes.length > 0 && (
+                                                    <span className="ml-2 text-xs opacity-80">
+                                                        ({variant.attributes.map((a: any) => a.value).join(', ')})
+                                                    </span>
+                                                )}
+                                            </button>
+                                        ))}
                                     </div>
-                                )} */}
+                                )}
+
+                                {selectedVariant && (
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+                                        <div className="p-4 bg-gray-50 border-b border-gray-200">
+                                            <h3 className="text-base font-semibold text-black">Variant {selectedVariantIndex + 1} Details</h3>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
+                                            {/* Left Side - Images Only */}
+                                            <div className="p-5 bg-white border-r border-gray-200">
+                                                {variantImages.length > 0 ? (
+                                                    <div className="sticky top-4">
+                                                        <label className="block text-xs font-semibold text-gray-800 mb-3">Variant Images ({variantImages.length})</label>
+                                                        <div className="mb-4">
+                                                            <img
+                                                                src={`${process.env.NEXT_PUBLIC_API_URL}${variantImages[selectedImageIndex]}`}
+                                                                alt={`Variant ${selectedVariantIndex + 1} Image ${selectedImageIndex + 1}`}
+                                                                className="w-full h-96 object-contain bg-gray-50 rounded-lg border border-gray-200"
+                                                            />
+                                                        </div>
+                                                        {variantImages.length > 1 && (
+                                                            <div className="grid grid-cols-5 gap-2">
+                                                                {variantImages.map((image: string, imgIndex: number) => (
+                                                                    <button
+                                                                        key={imgIndex}
+                                                                        onClick={() => setSelectedImageIndex(imgIndex)}
+                                                                        className={`h-16 rounded-lg border-2 overflow-hidden transition ${selectedImageIndex === imgIndex
+                                                                            ? 'border-primary ring-2 ring-primary/50'
+                                                                            : 'border-gray-200 hover:border-gray-300'
+                                                                            }`}>
+                                                                        <img
+                                                                            src={`${process.env.NEXT_PUBLIC_API_URL}${image}`}
+                                                                            alt={`Thumbnail ${imgIndex + 1}`}
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex items-center justify-center h-96 bg-gray-50 rounded-lg border border-gray-200">
+                                                        <p className="text-sm text-gray-500">No images available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Right Side - All Details Scrollable */}
+                                            <div className="p-5 bg-white max-h-[700px] overflow-y-auto">
+                                                <div className="space-y-4">
+
+                                                    {/* Row 1: Price, Sale Price, Stock */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                        {/* Price */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Price</label>
+                                                            <p className="text-xl font-bold line-through text-gray-500">₹{selectedVariant.price?.toLocaleString('en-IN')}</p>
+                                                        </div>
+
+                                                        {/* Sale Price */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Sale Price</label>
+                                                            <p className="text-xl font-bold text-green-600">₹{selectedVariant.salePrice > 0 ? selectedVariant.salePrice?.toLocaleString('en-IN') : selectedVariant.price?.toLocaleString('en-IN')}</p>
+                                                        </div>
+
+                                                        {/* Stock */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Stock</label>
+                                                            <p className="text-lg font-bold text-gray-900">{selectedVariant.stock} units</p>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Commission Breakdown */}
+                                                    {selectedVariant.salePrice > 0 && product.commissionPercentage > 0 && (
+                                                        <div className="pt-3 border-t border-gray-100 space-y-3">
+                                                            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                                                <div className="flex items-start gap-2">
+                                                                    <Icon icon="mdi:information-outline" className="text-blue-600 mt-0.5" width={16} height={16} />
+                                                                    <div className="flex-1">
+                                                                        <p className="text-xs text-blue-900 font-medium mb-1">
+                                                                            Platform Commission: <strong>{product.commissionPercentage}%</strong>
+                                                                        </p>
+                                                                        <p className="text-xs text-blue-700">
+                                                                            The platform deducts {product.commissionPercentage}% from each sale.
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                                                <div className="flex items-start gap-2">
+                                                                    <Icon icon="mdi:calculator" className="text-green-600 mt-0.5" width={16} height={16} />
+                                                                    <div className="flex-1 text-xs space-y-1">
+                                                                        <div className="flex justify-between">
+                                                                            <span className="text-gray-700">Sale Price:</span>
+                                                                            <span className="font-semibold text-gray-900">₹{selectedVariant.salePrice.toFixed(2)}</span>
+                                                                        </div>
+                                                                        <div className="flex justify-between">
+                                                                            <span className="text-gray-700">Platform Fee ({product.commissionPercentage}%):</span>
+                                                                            <span className="font-semibold text-red-600">-₹{(selectedVariant.salePrice * product.commissionPercentage / 100).toFixed(2)}</span>
+                                                                        </div>
+                                                                        <div className="flex justify-between pt-1 border-t border-green-300">
+                                                                            <span className="text-green-800 font-semibold">You Receive:</span>
+                                                                            <span className="font-bold text-green-800">₹{(selectedVariant.salePrice * (1 - product.commissionPercentage / 100)).toFixed(2)}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Row 2: Delivery Days, Status, Approval */}
+                                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
+                                                        {/* Delivery Days */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Delivery Days</label>
+                                                            <p className="text-sm font-bold text-gray-900">{selectedVariant.deliveryDays || 'N/A'} days</p>
+                                                        </div>
+
+                                                        {/* Status */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Status</label>
+                                                            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${selectedVariant.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                <Icon icon={selectedVariant.status ? 'mdi:check-circle' : 'mdi:close-circle'} width={14} height={14} />
+                                                                {selectedVariant.status ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Approval */}
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Approval</label>
+                                                            <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${selectedVariant.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                                <Icon icon={selectedVariant.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} width={14} height={14} />
+                                                                {selectedVariant.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Variant Attributes */}
+                                                    {selectedVariant.attributes && selectedVariant.attributes.length > 0 && (
+                                                        <div className="pt-3 border-t border-gray-100">
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-3">Variant Attributes</label>
+                                                            <div className="space-y-2">
+                                                                {selectedVariant.attributes.map((attr: any, attrIndex: number) => (
+                                                                    <div key={attrIndex} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                                        <p className="text-xs font-semibold text-gray-700 mb-1">{attr.name}</p>
+                                                                        <p className="text-sm font-medium text-gray-900">{attr.value}</p>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Timestamps */}
+                                                    <div className="pt-3 border-t border-gray-100 space-y-3">
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Created At</label>
+                                                            <p className="text-xs text-gray-600">{formatIndiaTime(selectedVariant.createdAt)}</p>
+                                                        </div>
+                                                        <div>
+                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Updated At</label>
+                                                            <p className="text-xs text-gray-600">{formatIndiaTime(selectedVariant.updatedAt)}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Product Timestamps */}
+                        <div className="pt-6 border-t border-gray-200">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Created At</label>
+                                    <p className="text-xs text-gray-600">{formatIndiaTime(product.createdAt)}</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Updated At</label>
+                                    <p className="text-xs text-gray-600">{formatIndiaTime(product.updatedAt)}</p>
+                                </div>
                             </div>
                         </div>
                     </div>

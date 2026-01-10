@@ -244,7 +244,7 @@ export default function OrdersPage() {
                                             {orders.map((order: any) => (
                                                 <tr key={order._id} className="hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-purple-50/30 transition-all duration-200">
                                                     <td className="px-4 py-2.5">
-                                                        <div className="flex items-center gap-3">
+                                                        <Link href={`/orders/${order.orderId}`} className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                                                             {order.items && order.items.length > 0 && order.items[0].images && order.items[0].images.length > 0 ? (
                                                                 <div className="relative flex-shrink-0">
                                                                     <img
@@ -268,7 +268,7 @@ export default function OrdersPage() {
                                                                     {order.items && order.items.length > 0 ? order.items[0].productName : 'N/A'}
                                                                 </p>
                                                             </div>
-                                                        </div>
+                                                        </Link>
                                                     </td>
                                                     {/* <td className="px-4 py-2.5">
                                                         <span className="font-semibold text-primary text-sm">{order.orderId}</span>
@@ -380,3 +380,4 @@ export default function OrdersPage() {
         </>
     )
 }
+

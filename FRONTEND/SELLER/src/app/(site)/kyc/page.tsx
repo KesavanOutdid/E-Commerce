@@ -287,7 +287,7 @@ export default function KYCPage() {
                                     )}
                                 </div>
                                 
-                                <div className="bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-lg p-6 mb-4">
+                                <div className="rounded-lg p-6 mb-4 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     {(!isKYCApproved || isEditing || logoPreview) && (
                                         <div className="mb-6 pb-6 border-b border-purple-200">
                                             {logoPreview && (
@@ -392,7 +392,7 @@ export default function KYCPage() {
                                     <Icon icon="mdi:map-marker-radius" className="text-teal-600" width={24} height={24} />
                                     Shop Address
                                 </h2>
-                                <div className="bg-gradient-to-br from-teal-50 to-teal-100/50 rounded-lg p-6">
+                                <div className="rounded-lg p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                                     <div>
                                         <label className="block text-xs text-gray-500 mb-1">
@@ -533,7 +533,7 @@ export default function KYCPage() {
                                     <Icon icon="mdi:bank" className="text-orange-600" width={24} height={24} />
                                     Bank Details
                                 </h2>
-                                <div className="bg-gradient-to-br from-orange-50 to-orange-100/50 rounded-lg p-6">
+                                <div className="rounded-lg p-6 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
                                     <div>
                                         <label className="block text-xs text-gray-500 mb-1">

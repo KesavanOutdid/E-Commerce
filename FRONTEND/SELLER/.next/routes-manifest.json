@@ -90,6 +90,12 @@
       "namedRegex": "^/orders(?:/)?$"
     },
     {
+      "page": "/pickup-addresses",
+      "regex": "^/pickup\\-addresses(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/pickup\\-addresses(?:/)?$"
+    },
+    {
       "page": "/products",
       "regex": "^/products(?:/)?$",
       "routeKeys": {},

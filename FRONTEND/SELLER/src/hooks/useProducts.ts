@@ -5,37 +5,57 @@ import toast from 'react-hot-toast'
 
 export const useProducts = () => {
     const [loading, setLoading] = useState(false)
-    const [listingsLoading, setListingsLoading] = useState(false)
-    const [adminProductsLoading, setAdminProductsLoading] = useState(false)
-    const [listings, setListings] = useState<any[]>([])
-    const [adminProducts, setAdminProducts] = useState<any[]>([])
+    const [products, setProducts] = useState<any[]>([])
     const [totalPages, setTotalPages] = useState(0)
-    const [totalListings, setTotalListings] = useState(0)
-    const [adminTotalPages, setAdminTotalPages] = useState(0)
-    const [adminTotalProducts, setAdminTotalProducts] = useState(0)
+    const [totalProducts, setTotalProducts] = useState(0)
 
-    const fetchSellerListings = async (page: number = 1, limit: number = 10) => {
-        setListingsLoading(true)
+    const fetchProducts = async (page: number = 1, limit: number = 10) => {
+        setLoading(true)
         try {
-            const response = await productService.getSellerListings(page, limit)
+            const response = await productService.getProducts(page, limit)
             if (response.success) {
-                const listingsList = response.data.listings || []
+                const productsList = response.data.products || []
                 const pagination = response.data.pagination || {}
                 
-                setListings(listingsList)
+                setProducts(productsList)
                 setTotalPages(pagination.pages || 1)
-                setTotalListings(pagination.total || listingsList.length)
+                setTotalProducts(pagination.total || productsList.length)
                 return response.data
             } else {
-                toast.error(response.message || 'Failed to fetch listings')
+                toast.error(response.message || 'Failed to fetch products')
                 return null
             }
         } catch (error: any) {
-            console.error('Fetch listings error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to fetch listings')
+            console.error('Fetch products error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to fetch products')
             return null
         } finally {
-            setListingsLoading(false)
+            setLoading(false)
+        }
+    }
+
+    const searchProducts = async (search: string, page: number = 1, limit: number = 10) => {
+        setLoading(true)
+        try {
+            const response = await productService.searchProducts(search, page, limit)
+            if (response.success) {
+                const productsList = response.data.products || []
+                const pagination = response.data.pagination || {}
+                
+                setProducts(productsList)
+                setTotalPages(pagination.pages || 1)
+                setTotalProducts(pagination.total || productsList.length)
+                return response.data
+            } else {
+                toast.error(response.message || 'Failed to search products')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Search products error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to search products')
+            return null
+        } finally {
+            setLoading(false)
         }
     }
 
@@ -78,13 +98,33 @@ export const useProducts = () => {
         }
     }
 
+    const addVariant = async (masterProductId: string, formData: FormData) => {
+        setLoading(true)
+        try {
+            const response = await productService.addVariant(masterProductId, formData)
+            if (response.success) {
+                toast.success(response.message || 'Variant added successfully')
+                return response.data || true
+            } else {
+                toast.error(response.message || 'Failed to add variant')
+                return null
+            }
+        } catch (error: any) {
+            console.error('Add variant error:', error)
+            toast.error(error.response?.data?.message || error.message || 'Failed to add variant')
+            return null
+        } finally {
+            setLoading(false)
+        }
+    }
+
     const updateProduct = async (id: string, formData: FormData) => {
         setLoading(true)
         try {
             const response = await productService.updateProduct(id, formData)
             if (response.success) {
-                toast.success('Product updated successfully')
-                return response.data
+                toast.success(response.message || 'Product updated successfully')
+                return response.data || true
             } else {
                 toast.error(response.message || 'Failed to update product')
                 return null
@@ -103,7 +143,7 @@ export const useProducts = () => {
         try {
             const response = await productService.deleteProduct(id)
             if (response.success) {
-                toast.success('Product deleted successfully')
+                toast.success(response.message || 'Product deleted successfully')
                 return true
             } else {
                 toast.error(response.message || 'Failed to delete product')
@@ -118,173 +158,28 @@ export const useProducts = () => {
         }
     }
 
-    const fetchAdminProducts = async (userId: string, page: number = 1, limit: number = 10) => {
-        setAdminProductsLoading(true)
-        try {
-            const response = await productService.getAdminProducts(userId, page, limit)
-            if (response.success) {
-                const productsList = response.data.products || []
-                const pagination = response.data.pagination || {}
-                
-                setAdminProducts(productsList)
-                setAdminTotalPages(pagination.pages || 1)
-                setAdminTotalProducts(pagination.total || productsList.length)
-                return response.data
-            } else {
-                toast.error(response.message || 'Failed to fetch admin products')
-                return null
-            }
-        } catch (error: any) {
-            console.error('Fetch admin products error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to fetch admin products')
-            return null
-        } finally {
-            setAdminProductsLoading(false)
-        }
-    }
-
-    const createListing = async (data: { productId: string; price: number; salePrice?: number; stock: number; deliveryDays: number }) => {
-        setLoading(true)
-        try {
-            const response = await productService.createListing(data)
-            if (response.success) {
-                toast.success('Listing created successfully')
-                return response.data
-            } else {
-                toast.error(response.message || 'Failed to create listing')
-                return null
-            }
-        } catch (error: any) {
-            console.error('Create listing error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to create listing')
-            return null
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const updateListing = async (listingId: string, data: { price?: number; salePrice?: number; stock?: number; deliveryDays?: number; sellerStatus?: string }) => {
-        setLoading(true)
-        try {
-            const response = await productService.updateListing(listingId, data)
-            if (response.success) {
-                toast.success('Listing updated successfully')
-                return response.data
-            } else {
-                toast.error(response.message || 'Failed to update listing')
-                return null
-            }
-        } catch (error: any) {
-            console.error('Update listing error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to update listing')
-            return null
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const deleteListing = async (listingId: string) => {
-        setLoading(true)
-        try {
-            const response = await productService.deleteListing(listingId)
-            if (response.success) {
-                toast.success('Listing deleted successfully')
-                return true
-            } else {
-                toast.error(response.message || 'Failed to delete listing')
-                return false
-            }
-        } catch (error: any) {
-            console.error('Delete listing error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to delete listing')
-            return false
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const searchListings = async (search: string, page: number = 1, limit: number = 10) => {
-        setListingsLoading(true)
-        try {
-            const response = await productService.searchListings(search, page, limit)
-            if (response.success) {
-                const listingsList = response.data.listings || []
-                const pagination = response.data.pagination || {}
-                
-                setListings(listingsList)
-                setTotalPages(pagination.pages || 1)
-                setTotalListings(pagination.total || listingsList.length)
-                return response.data
-            } else {
-                toast.error(response.message || 'Failed to search listings')
-                return null
-            }
-        } catch (error: any) {
-            console.error('Search listings error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to search listings')
-            return null
-        } finally {
-            setListingsLoading(false)
-        }
-    }
-
-    const searchAdminProducts = async (userId: string, search: string, page: number = 1, limit: number = 10) => {
-        setAdminProductsLoading(true)
-        try {
-            const response = await productService.searchAdminProducts(userId, search, page, limit)
-            if (response.success) {
-                const productsList = response.data.products || []
-                const pagination = response.data.pagination || {}
-                
-                setAdminProducts(productsList)
-                setAdminTotalPages(pagination.pages || 1)
-                setAdminTotalProducts(pagination.total || productsList.length)
-                return response.data
-            } else {
-                toast.error(response.message || 'Failed to search products')
-                return null
-            }
-        } catch (error: any) {
-            console.error('Search admin products error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to search products')
-            return null
-        } finally {
-            setAdminProductsLoading(false)
-        }
-    }
-
     const checkProductBySlug = async (productName: string) => {
         try {
             const response = await productService.checkProductBySlug(productName)
             return response
         } catch (error: any) {
             console.error('Check product slug error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to check product')
             return null
         }
     }
 
     return {
         loading,
-        listingsLoading,
-        adminProductsLoading,
-        listings,
-        adminProducts,
+        products,
         totalPages,
-        totalListings,
-        adminTotalPages,
-        adminTotalProducts,
-        fetchSellerListings,
-        fetchAdminProducts,
+        totalProducts,
+        fetchProducts,
+        searchProducts,
         fetchProductById,
         createProduct,
+        addVariant,
         updateProduct,
         deleteProduct,
-        createListing,
-        updateListing,
-        deleteListing,
-        searchListings,
-        searchAdminProducts,
         checkProductBySlug,
     }
 }

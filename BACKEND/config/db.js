@@ -1,7 +1,8 @@
 const { MongoClient } = require('mongodb');
+require('dotenv').config();
 
-const url = 'mongodb+srv://zdart2026:ibzPcNPmJ71uFhnw@cluster0.dryjxuy.mongodb.net/';
-const dbName = 'e-Commerce'; //For Testing
+const url = process.env.MONGODB_URI || 'mongodb+srv://zdart2026:ibzPcNPmJ71uFhnw@cluster0.dryjxuy.mongodb.net/';
+const dbName = process.env.DB_NAME || 'e-Commerce';
 
 let client;
 let db;
@@ -9,7 +10,12 @@ let db;
 //database connection
 async function connectToDatabase() {
     if (!client) {
-        client = new MongoClient(url);
+        client = new MongoClient(url, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+        });
         try {
             await client.connect();
             console.log('Connected to the database');

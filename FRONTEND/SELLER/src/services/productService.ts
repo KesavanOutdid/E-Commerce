@@ -10,13 +10,22 @@ export const productService = {
         return response.data
     },
 
-    getSellerListings: async (page: number = 1, limit: number = 10) => {
-        const response = await axios.get(`/api/products/seller/listings?page=${page}&limit=${limit}`)
+    addVariant: async (masterProductId: string, formData: FormData) => {
+        const response = await axios.post(`/api/products/seller/add-variant/${masterProductId}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
         return response.data
     },
 
-    getAdminProducts: async (userId: string, page: number = 1, limit: number = 10) => {
-        const response = await axios.get(`/api/products/seller/getproducts?userId=${userId}&page=${page}&limit=${limit}`)
+    getProducts: async (page: number = 1, limit: number = 10) => {
+        const response = await axios.get(`/api/products/seller/getproducts?page=${page}&limit=${limit}`)
+        return response.data
+    },
+
+    searchProducts: async (search: string, page: number = 1, limit: number = 10) => {
+        const response = await axios.get(`/api/products/seller/getproducts?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
         return response.data
     },
 
@@ -36,31 +45,6 @@ export const productService = {
 
     deleteProduct: async (id: string) => {
         const response = await axios.delete(`/api/products/seller/${id}`)
-        return response.data
-    },
-
-    createListing: async (data: { productId: string; price: number; salePrice?: number; stock: number; deliveryDays: number }) => {
-        const response = await axios.post('/api/products/seller/list', data)
-        return response.data
-    },
-
-    updateListing: async (listingId: string, data: { price?: number; salePrice?: number; stock?: number; deliveryDays?: number; sellerStatus?: string }) => {
-        const response = await axios.put(`/api/products/seller/listing/${listingId}`, data)
-        return response.data
-    },
-
-    deleteListing: async (listingId: string) => {
-        const response = await axios.delete(`/api/products/seller/listing/${listingId}`)
-        return response.data
-    },
-
-    searchListings: async (search: string, page: number = 1, limit: number = 10) => {
-        const response = await axios.get(`/api/products/seller/listings/search?search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
-        return response.data
-    },
-
-    searchAdminProducts: async (userId: string, search: string, page: number = 1, limit: number = 10) => {
-        const response = await axios.get(`/api/products/seller/getproducts?userId=${userId}&search=${encodeURIComponent(search)}&page=${page}&limit=${limit}`)
         return response.data
     },
 
