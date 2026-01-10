@@ -367,6 +367,26 @@ exports.getProductById = async (req, res) => {
     const productData = aggregationResult[0].data[0];
     const allVariants = productData.variants || [];
 
+    // 1. Extract unique attribute options across all variants (Only required ones)
+    const attributeOptions = {};
+    allVariants.forEach(v => {
+      if (v.attributes && Array.isArray(v.attributes)) {
+        v.attributes.forEach(attr => {
+          if (attr.required === true) {
+            if (!attributeOptions[attr.name]) {
+              attributeOptions[attr.name] = new Set();
+            }
+            attributeOptions[attr.name].add(attr.value);
+          }
+        });
+      }
+    });
+
+    // Convert Sets to Arrays for the response
+    Object.keys(attributeOptions).forEach(key => {
+      attributeOptions[key] = Array.from(attributeOptions[key]);
+    });
+
     let selectedVariant = null;
     if (variantId) {
       selectedVariant = allVariants.find(v => v.variantId === variantId || v._id?.toString() === variantId);
@@ -376,11 +396,20 @@ exports.getProductById = async (req, res) => {
       selectedVariant = productData.minPriceDetails;
     }
 
+    // Add attributeSummary to the selected variant (Only required ones)
+    if (selectedVariant && selectedVariant.attributes) {
+      selectedVariant.attributeSummary = selectedVariant.attributes
+        .filter(a => a.required === true)
+        .map(a => `${a.value}${a.name === 'RAM' || a.name === 'Storage' ? 'GB' : ''} ${a.name}`)
+        .join(", ");
+    }
+
     const allOffers = allVariants.sort((a, b) => a.currentPrice - b.currentPrice);
 
     const responseData = {
       product: {
         ...productData,
+        attributeOptions, // Add attributeOptions here
         variants: undefined,
         minPriceDetails: undefined
       },

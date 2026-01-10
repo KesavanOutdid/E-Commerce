@@ -25,16 +25,31 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [attributeOptions, setAttributeOptions] = useState<any>({});
+  const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [allOffers, setAllOffers] = useState<any[]>([]);
+  const [selectedAttributes, setSelectedAttributes] = useState<any>({});
 
   const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.authReducer);
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
   
   const isWishlisted = product ? wishlistItems.some((item) => item.id === product.id) : false;
 
-  const [storage, setStorage] = useState("gb128");
-  const [type, setType] = useState("active");
-  const [sim, setSim] = useState("dual");
   const [quantity, setQuantity] = useState(1);
+
+  const colorImages = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    allOffers.forEach((variant) => {
+      const colorAttr = variant.attributes.find((a: any) => a.name.toLowerCase() === "color");
+      if (colorAttr) {
+        const colorKey = colorAttr.value.toString().toLowerCase();
+        if (!map[colorKey] && variant.images && variant.images.length > 0) {
+          map[colorKey] = `${API_BASE_URL}${variant.images[0]}`;
+        }
+      }
+    });
+    return map;
+  }, [allOffers]);
 
   const [activeTab, setActiveTab] = useState("tabOne");
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -287,14 +302,26 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
         const response = await fetch(API_ENDPOINTS.PRODUCT_DETAILS(productId));
         const data = await response.json();
         if (data.success) {
-          const { product: p, selectedVariant, allOffers } = data.data;
-          const images = selectedVariant?.images || [];
+          const { product: p, selectedVariant: sv, allOffers: ao } = data.data;
+          
+          setAttributeOptions(p.attributeOptions || {});
+          setSelectedVariant(sv);
+          setAllOffers(ao || []);
+          
+          // Set initial selected attributes from the selected variant
+          const initialAttrs: any = {};
+          sv.attributes.forEach((attr: any) => {
+            initialAttrs[attr.name] = attr.value;
+          });
+          setSelectedAttributes(initialAttrs);
+
+          const images = sv?.images || [];
           const transformedProduct = {
             id: p.productId,
             title: p.productName,
             reviews: p.totalReviews || 0,
-            price: selectedVariant?.price || 0,
-            discountedPrice: selectedVariant?.salePrice || selectedVariant?.price || 0,
+            price: sv?.price || 0,
+            discountedPrice: sv?.currentPrice || sv?.salePrice || sv?.price || 0,
             imgs: {
               thumbnails: images.length > 0 
                 ? images.map((img: string) => `${API_BASE_URL}${img}`) 
@@ -308,13 +335,13 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
             shortDescription: p.shortDescription,
             brand: p.brand || "",
             highlights: p.highlights || [],
-            attributes: selectedVariant?.attributes || [],
-            stock: selectedVariant?.stock || 0,
+            attributes: sv?.attributes || [],
+            stock: sv?.stock || 0,
             avgRating: p.avgRating || 0,
-            sellerName: selectedVariant?.sellerName || "Admin",
-            shopName: selectedVariant?.shopName || "Outdid",
-            allOffers: allOffers || [],
-            minPriceDetails: selectedVariant
+            sellerName: sv?.sellerName || "Admin",
+            shopName: sv?.shopName || "Outdid",
+            allOffers: ao || [],
+            minPriceDetails: sv
           };
           setProduct(transformedProduct);
         }
@@ -327,6 +354,91 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
     fetchProduct();
   }, [productId]);
+
+  const handleAttributeChange = (name: string, value: string) => {
+    // Determine the next set of attributes
+    const newAttributes = { ...selectedAttributes, [name]: value };
+    
+    // Find the best matching variant
+    // 1. Try to find a variant that matches ALL current selections plus the NEW one (case-insensitive)
+    let matchingVariant = allOffers.find((variant: any) => {
+      return Object.entries(newAttributes).every(([key, val]) => {
+        const attr = variant.attributes.find((a: any) => a.name.toLowerCase() === key.toLowerCase());
+        return attr && attr.value.toString().toLowerCase() === val.toString().toLowerCase();
+      });
+    });
+
+    // 2. If no exact match, find variant with the new selection + most other matches (case-insensitive)
+    if (!matchingVariant) {
+      const sortedOffers = [...allOffers].sort((a, b) => {
+        // Prioritize variants that match the newly selected attribute
+        const aPrimaryMatch = a.attributes.some(attr => 
+          attr.name.toLowerCase() === name.toLowerCase() && 
+          attr.value.toString().toLowerCase() === value.toString().toLowerCase()
+        );
+        const bPrimaryMatch = b.attributes.some(attr => 
+          attr.name.toLowerCase() === name.toLowerCase() && 
+          attr.value.toString().toLowerCase() === value.toString().toLowerCase()
+        );
+
+        if (aPrimaryMatch && !bPrimaryMatch) return -1;
+        if (!aPrimaryMatch && bPrimaryMatch) return 1;
+
+        // Then prioritize by the number of other attributes that match the current selection
+        const aMatches = a.attributes.filter((attr: any) => {
+          const matchingKey = Object.keys(newAttributes).find(k => k.toLowerCase() === attr.name.toLowerCase());
+          return matchingKey && attr.value.toString().toLowerCase() === newAttributes[matchingKey].toString().toLowerCase();
+        }).length;
+        const bMatches = b.attributes.filter((attr: any) => {
+          const matchingKey = Object.keys(newAttributes).find(k => k.toLowerCase() === attr.name.toLowerCase());
+          return matchingKey && attr.value.toString().toLowerCase() === newAttributes[matchingKey].toString().toLowerCase();
+        }).length;
+        
+        return bMatches - aMatches;
+      });
+      matchingVariant = sortedOffers[0];
+    }
+
+    if (matchingVariant) {
+      setSelectedVariant(matchingVariant);
+      
+      // Update selected attributes based on the actual variant found
+      const updatedAttrs: any = {};
+      matchingVariant.attributes.forEach((attr: any) => {
+        // Find the matching key in attributeOptions (case-insensitive)
+        const optionKey = Object.keys(attributeOptions).find(
+          key => key.toLowerCase() === attr.name.toLowerCase()
+        );
+        if (optionKey) {
+          updatedAttrs[optionKey] = attr.value;
+        }
+      });
+      setSelectedAttributes(updatedAttrs);
+
+      const images = matchingVariant.images || [];
+      
+      // Update the product state for UI rendering
+      setProduct((prev: any) => ({
+        ...prev,
+        price: matchingVariant.price,
+        discountedPrice: matchingVariant.currentPrice || matchingVariant.salePrice || matchingVariant.price,
+        imgs: {
+          thumbnails: images.length > 0 
+            ? images.map((img: string) => `${API_BASE_URL}${img}`) 
+            : ["/images/products/product-1-bg-1.png"],
+          previews: images.length > 0 
+            ? images.map((img: string) => `${API_BASE_URL}${img}`) 
+            : ["/images/products/product-1-bg-1.png"],
+        },
+        attributes: matchingVariant.attributes,
+        stock: matchingVariant.stock,
+        sellerName: matchingVariant.sellerName,
+        shopName: matchingVariant.shopName,
+        minPriceDetails: matchingVariant
+      }));
+      setPreviewImg(0);
+    }
+  };
 
   // pass the product here when you get the real data.
   const handlePreviewSlider = () => {
@@ -698,11 +810,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
         <div className="text-center py-20">Product not found</div>
       ) : (
         <>
-          <section className="overflow-hidden relative pb-4 pt-6 lg:pt-10">
+          <section className="relative pb-4 pt-6 lg:pt-10">
             <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
               <div className="flex flex-col lg:flex-row gap-8 xl:gap-16 items-center lg:items-start">
-                <div className="lg:basis-[42%] w-full lg:sticky lg:top-28 flex-shrink-0">
-                  <div className="flex gap-4 sm:gap-6 items-center lg:items-start">
+                <div className="lg:basis-[42%] w-full lg:sticky lg:top-24 flex-shrink-0 self-start">
+                  <div className="flex flex-col pt-4">
+                    <div className="flex gap-4 sm:gap-6 items-center lg:items-start">
                     {/* Thumbnails Left Side */}
                     {product.imgs?.thumbnails?.length > 0 && (
                       <div className="hidden sm:flex flex-col gap-3 sm:gap-4">
@@ -816,7 +929,50 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                       )}
                     </div>
                   </div>
+
+                  {/* Flipkart Style Buttons for Desktop */}
+                  <div className="hidden lg:flex flex-row gap-2.5 mt-6">
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
+                      className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-sm ${
+                        parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                          ? "bg-blue hover:bg-blue-dark" 
+                          : "bg-gray-4 cursor-not-allowed opacity-70"
+                      }`}
+                    >
+                      <svg
+                        className="fill-current"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 20 20"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path
+                          d="M16.9231 4.30769H4.61538L3.69231 1.23077H0.615385V2.76923H2.61538L5.38462 12.3077H16.9231V10.7692H7.23077L6.61538 8.61538H16.9231L18.4615 4.30769ZM16.0385 7.07692H6.18462L5.69231 5.38462H17.4154L16.0385 7.07692ZM6.15385 13.8462C5.30769 13.8462 4.61538 14.5385 4.61538 15.3846C4.61538 16.2308 5.30769 16.9231 6.15385 16.9231C7 16.9231 7.69231 16.2308 7.69231 15.3846C7.69231 14.5385 7 13.8462 6.15385 13.8462ZM15.3846 13.8462C14.5385 13.8462 13.8462 14.5385 13.8462 15.3846C13.8462 16.2308 14.5385 16.9231 15.3846 16.9231C16.2308 16.9231 16.9231 16.2308 16.9231 15.3846C16.9231 14.5385 16.2308 13.8462 15.3846 13.8462Z"
+                          fill=""
+                        />
+                      </svg>
+                      ADD TO CART
+                    </button>
+                    <button
+                      onClick={handleBuyNow}
+                      disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
+                      className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-sm ${
+                        parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                          ? "bg-[#fb641b] hover:bg-[#e65a17]" 
+                          : "bg-gray-4 cursor-not-allowed opacity-70"
+                      }`}
+                    >
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                      </svg>
+                      BUY NOW
+                    </button>
+                  </div>
                 </div>
+              </div>
 
                 {/* <!-- product content --> */}
                 <div className="flex-1 min-w-0 lg:pt-4">
@@ -925,11 +1081,78 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         <span className="line-through text-gray-400 text-base">
                           ₹{product.price}
                         </span>
-                        <span className="text-green-600 text-sm font-bold">
+                        <span className="text-green-600 text-sm font-normal">
                           {Math.round(((product.price - product.discountedPrice) / product.price) * 100)}% off
                         </span>
                       </div>
                     )}
+                  </div>
+
+                  {product.shortDescription && (
+                    <p className="text-sm text-gray-500 mb-4 leading-relaxed max-w-2xl line-clamp-3 ">
+                      {product.shortDescription}
+                    </p>
+                  )}
+
+                  {/* Variant Selection UI */}
+                  <div className="flex flex-col gap-3 mb-2 mt-2 ">
+                    <h3 className="font-medium text-md text-dark mb-1 tracking-tight">Product Variants</h3>
+                    {Object.entries(attributeOptions).map(([name, values]: [string, any]) => {
+                      return (
+                        <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                          <span className="text-gray-500 text-[13px] w-20 flex-shrink-0">{name}</span>
+                          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+                            {values.map((val: string) => {
+                              const isSelected = selectedAttributes[name]?.toString().toLowerCase() === val.toString().toLowerCase();
+                              
+                              // Check if this option is available in ANY variant
+                              const isAvailable = allOffers.some(v => 
+                                v.attributes.some((a: any) => a.name.toLowerCase() === name.toLowerCase() && a.value.toString().toLowerCase() === val.toString().toLowerCase())
+                              );
+
+                              const isColor = name.toLowerCase() === "color";
+                              const colorImg = isColor ? colorImages[val.toLowerCase()] : null;
+
+                              return (
+                                <button
+                                  key={val}
+                                  disabled={!isAvailable}
+                                  onClick={() => handleAttributeChange(name, val)}
+                                  className={`relative rounded border transition-all flex items-center justify-center overflow-hidden w-16 h-7 ${
+                                    !isAvailable ? "border-gray-50 text-gray-200 cursor-not-allowed" :
+                                    isSelected
+                                      ? "border-blue text-blue font-normal shadow-sm bg-blue/5"
+                                      : "border-gray-100 text-gray-500 font-normal hover:border-gray-300"
+                                  } text-[10px]`}
+                                  title={val}
+                                >
+                                  {isColor && colorImg ? (
+                                    <div className={`w-full h-full p-0.5 bg-white ${!isSelected && "opacity-80"}`}>
+                                      <Image 
+                                        src={colorImg} 
+                                        alt={val} 
+                                        width={64} 
+                                        height={28} 
+                                        className="w-full h-full object-contain"
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span className="text-center px-1 break-words leading-tight whitespace-nowrap">
+                                      {val} {(name.toUpperCase() === "RAM" || name.toUpperCase() === "STORAGE") && "GB"}
+                                    </span>
+                                  )}
+                                  {isSelected && isColor && (
+                                    <div className="absolute top-0 right-0 bg-blue text-white w-2.5 h-2.5 flex items-center justify-center rounded-bl-sm">
+                                      <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Delivery & Stock Info */}
@@ -994,7 +1217,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
                   {product.highlights && product.highlights.length > 0 && (
                     <div className="mt-8 mb-9 border-t border-gray-3 pt-8">
-                      <h3 className="font-medium text-xl text-dark mb-4 tracking-tight">Key Highlights</h3>
+                      <h3 className="font-medium text-md text-dark mb-4 tracking-tight">Key Highlights</h3>
                       <ul className="list-disc list-inside space-y-2 text-gray-600">
                         {product.highlights.map((highlight: string, index: number) => (
                           <li key={index} className="text-sm">
@@ -1006,7 +1229,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   )}
 
                   <div className="mt-8 mb-9 border-t border-gray-3 pt-8">
-                    <h3 className="font-medium text-xl text-dark mb-7 tracking-tight">High Specifications</h3>
+                    <h3 className="font-medium text-md text-dark mb-7 tracking-tight">High Specifications</h3>
                     <div className="space-y-5">
                       {(showFullSpecs 
                         ? product.attributes 
@@ -1039,12 +1262,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     )}
                   </div>
 
-                  <form onSubmit={(e) => e.preventDefault()}>
-                    <div className="flex flex-wrap items-center gap-4.5 mt-8">
+                  <form onSubmit={(e) => e.preventDefault()} className="lg:hidden">
+                    <div className="flex flex-wrap items-center gap-2 mt-8">
                       <button
                         onClick={handleAddToCart}
                         disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
-                        className={`inline-flex items-center justify-center gap-2.5 font-medium text-white py-3 px-6 rounded-md ease-out duration-200 uppercase tracking-wide shadow-md text-xs sm:text-sm min-w-[160px] ${
+                        className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-xs min-w-[140px] ${
                           parseInt(product.minPriceDetails?.stock || product.stock) > 0 
                             ? "bg-blue hover:bg-blue-dark" 
                             : "bg-gray-4 cursor-not-allowed opacity-70"
@@ -1065,32 +1288,52 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         </svg>
                         ADD TO CART
                       </button>
-
-                      {/* <button
+                      <button
                         onClick={handleBuyNow}
-                        className="inline-flex items-center justify-center gap-2.5 font-medium text-white bg-orange py-3 px-6 rounded-md ease-out duration-200 hover:bg-orange-dark uppercase tracking-wide shadow-md text-xs sm:text-sm min-w-[160px]"
+                        disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
+                        className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-xs min-w-[140px] ${
+                          parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                            ? "bg-[#fb641b] hover:bg-[#e65a17]" 
+                            : "bg-gray-4 cursor-not-allowed opacity-70"
+                        }`}
                       >
-                        <svg
-                          className="fill-current"
-                          width="16"
-                          height="16"
-                          viewBox="0 0 20 20"
-                          fill="none"
-                          xmlns="http://www.w3.org/2000/svg"
-                        >
-                          <path
-                            d="M12.3077 1.23077L3.07692 10.4615L8.46154 11.2308L7.69231 18.7692L16.9231 9.53846L11.5385 8.76923L12.3077 1.23077Z"
-                            fill=""
-                          />
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                         </svg>
                         BUY NOW
-                      </button> */}
+                      </button>
                     </div>
                   </form>
                 </div>
               </div>
             </div>
           </section>
+
+          {/* Mobile Sticky Footer */}
+          <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white flex items-center border-t border-gray-200 z-[999] p-2 gap-2 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            <button
+              onClick={handleAddToCart}
+              disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
+              className={`w-full font-bold text-white py-3.5 text-sm rounded-sm uppercase ${
+                parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                  ? "bg-blue hover:bg-blue-dark shadow-sm" 
+                  : "bg-gray-4 cursor-not-allowed"
+              }`}
+            >
+              Add to Cart
+            </button>
+            <button
+              onClick={handleBuyNow}
+              disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
+              className={`w-full font-bold text-white py-3.5 text-sm rounded-sm uppercase ${
+                parseInt(product.minPriceDetails?.stock || product.stock) > 0 
+                  ? "bg-[#fb641b] hover:bg-[#e65a17] shadow-sm" 
+                  : "bg-gray-4 cursor-not-allowed"
+              }`}
+            >
+              Buy Now
+            </button>
+          </div>
 
           <section className="overflow-hidden bg-gray-2 pt-4 pb-20">
             <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">

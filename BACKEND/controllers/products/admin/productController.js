@@ -402,6 +402,26 @@ exports.getProductById = async (req, res) => {
 
     const masterSeller = getSellerDetails(product.userId);
 
+    // 1. Extract unique attribute options across all variants (Only required ones)
+    const attributeOptions = {};
+    variants.forEach(v => {
+      if (v.attributes && Array.isArray(v.attributes)) {
+        v.attributes.forEach(attr => {
+          if (attr.required === true) {
+            if (!attributeOptions[attr.name]) {
+              attributeOptions[attr.name] = new Set();
+            }
+            attributeOptions[attr.name].add(attr.value);
+          }
+        });
+      }
+    });
+
+    // Convert Sets to Arrays for the response
+    Object.keys(attributeOptions).forEach(key => {
+      attributeOptions[key] = Array.from(attributeOptions[key]);
+    });
+
     const minPriceVariant = variantsWithSellerDetails.length > 0 
       ? variantsWithSellerDetails.reduce((prev, curr) => (prev.currentPrice < curr.currentPrice ? prev : curr))
       : null;
@@ -412,6 +432,7 @@ exports.getProductById = async (req, res) => {
       subCategoryName: subCategory ? subCategory.name : null,
       sellerName: masterSeller.sellerName,
       shopName: masterSeller.shopName,
+      attributeOptions, // Only shows required options (e.g. RAM, Storage)
       minPriceDetails: minPriceVariant ? {
         variantId: minPriceVariant.variantId,
         sellerName: minPriceVariant.sellerName,
@@ -419,7 +440,13 @@ exports.getProductById = async (req, res) => {
         price: minPriceVariant.price,
         salePrice: minPriceVariant.salePrice,
         currentPrice: minPriceVariant.currentPrice,
-        attributes: minPriceVariant.attributes
+        // Create a summary of the REQUIRED attributes only
+        attributeSummary: minPriceVariant.attributes
+          .filter(a => a.required === true)
+          .map(a => `${a.value}${a.name === 'RAM' || a.name === 'Storage' ? 'GB' : ''} ${a.name}`)
+          .join(", "),
+        attributes: minPriceVariant.attributes,
+        images: minPriceVariant.images
       } : null,
       variants: variantsWithSellerDetails
     };
