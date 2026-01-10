@@ -44,11 +44,13 @@ const ProductAdd = () => {
         name: '',
         addressLine1: '',
         addressLine2: '',
+        landmark: '',
         city: '',
         district: '',
         state: '',
         pincode: '',
         phone: '',
+        country: 'India',
         isDefault: false
     });
 
@@ -63,7 +65,6 @@ const ProductAdd = () => {
         roleId: 1,
         brand: '',
         highlights: [],
-        specifications: [],
         warranty: '',
         // Master attributes (shared across all variants)
         attributes: [],
@@ -74,7 +75,7 @@ const ProductAdd = () => {
                 salePrice: '',
                 stock: '',
                 deliveryDays: '3',
-                pickupAddress: '',
+                pickupAddress: null,
                 attributes: [], // Variant specific attributes (e.g., Color, Size)
                 images: [],
                 previewImages: [],
@@ -124,8 +125,8 @@ const ProductAdd = () => {
                 try {
                     const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
                     if (response.data.success) {
-                        const product = response.data.data.product || response.data.data || response.data;
-                        const variants = response.data.data.variants || (product.variants ? product.variants : []);
+                        const product = response.data.data.product;
+                        const variants = product.variants || [];
                         
                         setFormData({
                             productName: product.productName,
@@ -138,7 +139,6 @@ const ProductAdd = () => {
                             roleId: product.roleId || 1,
                             brand: product.brand || '',
                             highlights: product.highlights || [],
-                            specifications: product.specifications || [],
                             warranty: product.warranty || '',
                             attributes: product.attributes || [],
                             variants: variants.length > 0 ? variants.map(v => ({
@@ -147,6 +147,7 @@ const ProductAdd = () => {
                                 salePrice: v.salePrice || '',
                                 stock: v.stock,
                                 deliveryDays: v.deliveryDays || '3',
+                                pickupAddress: v.pickupAddress || null,
                                 attributes: v.attributes || [],
                                 images: [],
                                 previewImages: [],
@@ -209,41 +210,6 @@ const ProductAdd = () => {
         }
     }, [subCategories, formData.subCategoryId, isEdit]);
 
-    // Merge subcategory attributes with product attributes in edit mode
-    useEffect(() => {
-        if (isEdit && subCategories.length > 0 && formData.subCategoryId && formData.attributes) {
-            const selectedSub = subCategories.find(s => 
-                String(s.subCategoryId) === String(formData.subCategoryId) || 
-                String(s._id) === String(formData.subCategoryId) ||
-                String(s.id) === String(formData.subCategoryId)
-            );
-
-            if (selectedSub && selectedSub.attributes) {
-                const subAttrs = selectedSub.attributes;
-                const currentAttrs = formData.attributes || [];
-                
-                // Check if there are any attributes in the subcategory that are not in the form
-                const hasMissing = subAttrs.some(sa => !currentAttrs.find(ca => ca.name === sa.name));
-                
-                if (hasMissing) {
-                    const mergedAttributes = subAttrs.map(sa => {
-                        const existing = currentAttrs.find(ca => ca.name === sa.name);
-                        return {
-                            attributeId: sa._id || sa.id || sa.attributeId,
-                            name: sa.name,
-                            type: sa.type,
-                            required: sa.required,
-                            value: existing ? existing.value : ''
-                        };
-                    });
-                    
-                    // Only update if actually different to prevent loops
-                    setFormData(prev => ({ ...prev, attributes: mergedAttributes }));
-                }
-            }
-        }
-    }, [subCategories, formData.subCategoryId, formData.attributes, isEdit]);
-
     const fetchSubCategories = async (parentId) => {
         try {
             // Need an endpoint to get subs by parent. 
@@ -287,7 +253,7 @@ const ProductAdd = () => {
 
     const handleMainCategoryChange = (e) => {
         const value = e.target.value;
-        setFormData(prev => ({ ...prev, mainCategoryId: value, subCategoryId: '', attributes: [] }));
+        setFormData(prev => ({ ...prev, mainCategoryId: value, subCategoryId: '' }));
         setSubCategories([]);
         if (value) {
             fetchSubCategories(value);
@@ -309,7 +275,6 @@ const ProductAdd = () => {
         setFormData(prev => ({
             ...prev,
             subCategoryId: value,
-            attributes: [], // Reset master attributes
             variants: prev.variants.map(v => ({
                 ...v,
                 attributes: newAttributes // Assign category attributes to variants by default
@@ -323,26 +288,6 @@ const ProductAdd = () => {
             newAttrs[index] = { ...newAttrs[index], value };
             return { ...prev, attributes: newAttrs };
         });
-    };
-
-    const handleAddSpecification = () => {
-        setFormData(prev => ({
-            ...prev,
-            specifications: [...(prev.specifications || []), { key: '', value: '' }]
-        }));
-    };
-
-    const handleRemoveSpecification = (index) => {
-        setFormData(prev => ({
-            ...prev,
-            specifications: prev.specifications.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleSpecificationChange = (index, field, value) => {
-        const newSpecs = [...formData.specifications];
-        newSpecs[index][field] = value;
-        setFormData(prev => ({ ...prev, specifications: newSpecs }));
     };
 
     const handleSubmitPickupAddress = async () => {
@@ -366,8 +311,8 @@ const ProductAdd = () => {
                 setPickupAddresses(response.data.data || []);
                 setAddressDialogOpen(false);
                 setAddressForm({
-                    name: '', addressLine1: '', addressLine2: '', city: '',
-                    district: '', state: '', pincode: '', phone: '', isDefault: false
+                    name: '', addressLine1: '', addressLine2: '', landmark: '', city: '',
+                    district: '', state: '', pincode: '', phone: '', country: 'India', isDefault: false
                 });
                 setEditingAddressId(null);
                 Swal.fire('Success', `Address ${editingAddressId ? 'updated' : 'added'} successfully`, 'success');
@@ -384,11 +329,13 @@ const ProductAdd = () => {
                 name: address.name || '',
                 addressLine1: address.addressLine1 || '',
                 addressLine2: address.addressLine2 || '',
+                landmark: address.landmark || '',
                 city: address.city || '',
                 district: address.district || '',
                 state: address.state || '',
                 pincode: address.pincode || '',
                 phone: address.phone || '',
+                country: address.country || 'India',
                 isDefault: address.isDefault || false
             });
             setEditingAddressId(address._id || address.id);
@@ -692,6 +639,7 @@ const ProductAdd = () => {
                                     ))}
                                 </TextField>
                             </Grid>
+                            {/* Sub Category */}
                             <Grid item xs={12} md={6}>
                                 <TextField
                                     select
@@ -708,75 +656,6 @@ const ProductAdd = () => {
                                         </MenuItem>
                                     ))}
                                 </TextField>
-                            </Grid>
-
-                            {/* Dynamic Attributes */}
-                            {formData.attributes.length > 0 && (
-                                <Grid item xs={12}>
-                                    <Paper variant="outlined" sx={{ p: 2, mt: 1 }}>
-                                        <Typography variant="subtitle1" sx={{ mb: 2 }}>Category Specifications</Typography>
-                                        <Grid container spacing={2}>
-                                            {formData.attributes.map((attr, index) => (
-                                                <Grid item xs={12} md={6} key={index}>
-                                                    <TextField
-                                                        fullWidth
-                                                        label={`${attr.name} ${attr.required ? '*' : ''}`}
-                                                        placeholder={`Enter ${attr.name}`}
-                                                        value={attr.value}
-                                                        onChange={(e) => handleAttributeChange(index, e.target.value)}
-                                                        required={attr.required}
-                                                        type={attr.type === 'number' ? 'number' : 'text'}
-                                                        helperText={attr.type === 'boolean' ? 'Enter true/false' : ''}
-                                                    />
-                                                </Grid>
-                                            ))}
-                                        </Grid>
-                                    </Paper>
-                                </Grid>
-                            )}
-
-                            {/* Custom Specifications */}
-                            <Grid item xs={12}>
-                                <Paper variant="outlined" sx={{ p: 2, mt: 1 }}>
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                        <Typography variant="subtitle1">Other Specifications</Typography>
-                                        <Button startIcon={<IconPlus size={18} />} onClick={handleAddSpecification} size="small">
-                                            Add Spec
-                                        </Button>
-                                    </Stack>
-                                    <Grid container spacing={2}>
-                                        {(formData.specifications || []).map((spec, index) => (
-                                            <Grid item xs={12} key={index}>
-                                                <Stack direction="row" spacing={2} alignItems="flex-start">
-                                                    <TextField
-                                                        label="Label"
-                                                        value={spec.key}
-                                                        onChange={(e) => handleSpecificationChange(index, 'key', e.target.value)}
-                                                        size="small"
-                                                        sx={{ flex: 1 }}
-                                                    />
-                                                    <TextField
-                                                        label="Value"
-                                                        value={spec.value}
-                                                        onChange={(e) => handleSpecificationChange(index, 'value', e.target.value)}
-                                                        size="small"
-                                                        sx={{ flex: 2 }}
-                                                    />
-                                                    <IconButton color="error" onClick={() => handleRemoveSpecification(index)}>
-                                                        <IconX size={18} />
-                                                    </IconButton>
-                                                </Stack>
-                                            </Grid>
-                                        ))}
-                                        {(!formData.specifications || formData.specifications.length === 0) && (
-                                            <Grid item xs={12}>
-                                                <Typography variant="body2" color="textSecondary" align="center">
-                                                    No additional specifications added.
-                                                </Typography>
-                                            </Grid>
-                                        )}
-                                    </Grid>
-                                </Paper>
                             </Grid>
                         </Grid>
                     </Grid>
@@ -849,30 +728,33 @@ const ProductAdd = () => {
                                     </Grid>
                                     <Grid item xs={12}>
                                         <Autocomplete
-                                            freeSolo
                                             options={pickupAddresses}
                                             getOptionLabel={(option) => {
                                                 if (typeof option === 'string') return option;
-                                                return `${option.name} (${option.city}, ${option.pincode})`;
+                                                const parts = [
+                                                    option.name,
+                                                    option.addressLine1,
+                                                    option.addressLine2,
+                                                    option.landmark,
+                                                    option.city,
+                                                    option.state
+                                                ].filter(Boolean);
+                                                return `${parts.join(', ')} - ${option.pincode}, ${option.country || 'India'}`;
                                             }}
-                                            value={pickupAddresses.find(a => 
-                                                (a.name === variant.pickupAddress) || 
-                                                (`${a.name} (${a.city}, ${a.pincode})` === variant.pickupAddress)
-                                            ) || variant.pickupAddress || ''}
-                                            onInputChange={(event, newValue) => {
-                                                handleVariantChange(vIndex, 'pickupAddress', newValue);
+                                            isOptionEqualToValue={(option, value) => {
+                                                if (!value) return false;
+                                                return (option.id === value.id) || (option._id === value._id) || (option.name === value.name);
                                             }}
+                                            value={variant.pickupAddress}
                                             onChange={(event, newValue) => {
-                                                const val = typeof newValue === 'string' ? newValue : 
-                                                            newValue ? `${newValue.name} (${newValue.city}, ${newValue.pincode})` : '';
-                                                handleVariantChange(vIndex, 'pickupAddress', val);
+                                                handleVariantChange(vIndex, 'pickupAddress', newValue);
                                             }}
                                             renderInput={(params) => (
                                                 <TextField
                                                     {...params}
                                                     fullWidth
                                                     label="Pickup Address / Warehouse *"
-                                                    placeholder="Search or enter warehouse"
+                                                    placeholder="Search or select warehouse"
                                                     size="small"
                                                     required={!variant.pickupAddress}
                                                     InputProps={{
@@ -1035,6 +917,14 @@ const ProductAdd = () => {
                                 onChange={(e) => setAddressForm({ ...addressForm, addressLine2: e.target.value })}
                             />
                         </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Landmark (Optional)"
+                                value={addressForm.landmark}
+                                onChange={(e) => setAddressForm({ ...addressForm, landmark: e.target.value })}
+                            />
+                        </Grid>
                         <Grid item xs={12} md={6}>
                             <TextField
                                 fullWidth
@@ -1077,6 +967,15 @@ const ProductAdd = () => {
                                 label="Contact Phone"
                                 value={addressForm.phone}
                                 onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                                required
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
+                                fullWidth
+                                label="Country"
+                                value={addressForm.country}
+                                onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
                                 required
                             />
                         </Grid>

@@ -401,28 +401,29 @@ const ProductList = () => {
                                         </TableCell>
                                         <TableCell align="right">
                                             {(() => {
-                                                const displayPrice = product.price || (product.variants?.[0]?.price);
-                                                const displaySalePrice = product.salePrice || (product.variants?.[0]?.salePrice);
+                                                const minPrice = product.minPriceDetails;
+                                                const displayPrice = minPrice?.price || product.price || (product.variants?.[0]?.price);
+                                                const displaySalePrice = minPrice?.salePrice || product.salePrice || (product.variants?.[0]?.salePrice);
                                                 
                                                 if (displaySalePrice && Number(displaySalePrice) > 0) {
                                                     return (
                                                         <Stack alignItems="flex-end">
                                                             <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.75rem' }}>
-                                                                ₹{displayPrice}
+                                                                ₹{displayPrice?.toLocaleString('en-IN')}
                                                             </Typography>
                                                             <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
-                                                                ₹{displaySalePrice}
+                                                                ₹{displaySalePrice?.toLocaleString('en-IN')}
                                                             </Typography>
                                                         </Stack>
                                                     );
                                                 }
-                                                return `₹${displayPrice || '-'}`;
+                                                return `₹${displayPrice?.toLocaleString('en-IN') || '-'}`;
                                             })()}
                                         </TableCell>
-                                        <TableCell align="right">{product.stock ?? (product.variants?.[0]?.stock ?? '-')}</TableCell>
+                                        <TableCell align="right">{product.minPriceDetails?.stock ?? (product.stock ?? (product.variants?.[0]?.stock ?? '-'))}</TableCell>
                                         <TableCell align="center">
                                             {(() => {
-                                                const days = product.deliveryDays || (product.variants?.[0]?.deliveryDays);
+                                                const days = product.minPriceDetails?.deliveryDays || (product.deliveryDays || (product.variants?.[0]?.deliveryDays));
                                                 return days ? `${days} Days` : '-';
                                             })()}
                                         </TableCell>

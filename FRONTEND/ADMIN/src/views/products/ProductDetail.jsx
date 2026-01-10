@@ -62,7 +62,7 @@ const ProductDetail = () => {
             const response = await axios.get(API_ENDPOINTS.PRODUCTS.GET_BY_ID(id));
             if (response.data.success) {
                 const productData = response.data.data.product;
-                const variantData = response.data.data.variants || [];
+                const variantData = productData.variants || [];
                 
                 // If product has no images, collect from variants
                 if (!productData.images || productData.images.length === 0) {
@@ -313,7 +313,7 @@ const ProductDetail = () => {
                             letterSpacing: '0.05rem'
                         }}
                     />
-                    {(product.roleId === 1 || (product.marketplaceListings && product.marketplaceListings.some(o => o.sellerName === 'Admin'))) ? (
+                    {(product.roleId === 1 || (product.variants && product.variants.some(v => v.sellerName === 'Admin'))) ? (
                         <Button
                             variant="contained"
                             startIcon={<IconEdit />}
@@ -582,7 +582,7 @@ const ProductDetail = () => {
                     <Grid size={12}>
                         <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #bbdefb', mb: 1 }}>
                             <Grid container spacing={2} alignItems="center">
-                                <Grid size={{ xs: 12, sm: 6 }}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
                                     <Stack direction="row" spacing={2} alignItems="center">
                                         <Box sx={{ 
                                             p: 1, 
@@ -599,18 +599,28 @@ const ProductDetail = () => {
                                                 Best Price Offer
                                             </Typography>
                                             <Typography variant="h3" color="primary.main" sx={{ mt: -0.5 }}>
-                                                ₹{product.minPriceDetails?.currentPrice?.toLocaleString('en-IN') || product.minPrice?.toLocaleString('en-IN')}
+                                                ₹{product.minPriceDetails?.currentPrice?.toLocaleString('en-IN')}
                                             </Typography>
                                         </Box>
                                     </Stack>
                                 </Grid>
-                                <Grid size={{ xs: 12, sm: 6 }}>
-                                    <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                                <Grid size={{ xs: 12, sm: 4 }}>
+                                    <Box sx={{ textAlign: 'center' }}>
                                         <Typography variant="caption" display="block" color="textSecondary">
                                             Seller: <strong>{product.minPriceDetails.shopName || product.minPriceDetails.sellerName}</strong>
                                         </Typography>
                                         <Typography variant="caption" display="block" color="textSecondary">
-                                            Stock: {product.minPriceDetails.stock} | Delivery: {product.minPriceDetails.deliveryDays} Days
+                                            Stock: {product.minPriceDetails.stock ?? variants.find(v => v.variantId === product.minPriceDetails.variantId)?.stock ?? '-'}
+                                        </Typography>
+                                    </Box>
+                                </Grid>
+                                <Grid size={{ xs: 12, sm: 4 }}>
+                                    <Box sx={{ textAlign: 'right' }}>
+                                        <Typography variant="caption" display="block" color="textSecondary">
+                                            Delivery: <strong>{product.minPriceDetails.deliveryDays ?? variants.find(v => v.variantId === product.minPriceDetails.variantId)?.deliveryDays ?? '-'} Days</strong>
+                                        </Typography>
+                                        <Typography variant="caption" display="block" color="primary.main" sx={{ fontWeight: 600 }}>
+                                            Variant ID: {product.minPriceDetails.variantId?.split('-')[0]}...
                                         </Typography>
                                     </Box>
                                 </Grid>
@@ -618,50 +628,6 @@ const ProductDetail = () => {
                         </Paper>
                     </Grid>
                 )}
-
-                {/* Full Width: Specifications / Attributes */}
-                <Grid size={12}>
-                    <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee' }}>
-                        <AccordionSummary expandIcon={<IconChevronDown />}>
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                                <IconRuler size={20} />
-                                <Typography variant="h4">Specifications</Typography>
-                            </Stack>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            {(product.attributes && product.attributes.length > 0) || (product.specifications && product.specifications.length > 0) ? (
-                                <TableContainer>
-                                    <Table size="small">
-                                        <TableBody>
-                                            {product.attributes && product.attributes.map((attr, idx) => (
-                                                <TableRow key={`attr-${idx}`}>
-                                                    <TableCell sx={{ fontWeight: 'bold', width: '30%', color: 'text.secondary' }}>
-                                                        {attr.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {attr.value}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                            {product.specifications && product.specifications.map((spec, idx) => (
-                                                <TableRow key={`spec-${idx}`}>
-                                                    <TableCell sx={{ fontWeight: 'bold', width: '30%', color: 'text.secondary' }}>
-                                                        {spec.key || spec.name}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        {spec.value}
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </TableContainer>
-                            ) : (
-                                <Typography color="textSecondary">No specific attributes defined.</Typography>
-                            )}
-                        </AccordionDetails>
-                    </Accordion>
-                </Grid>
 
                 {/* Marketplace Offers Section */}
                 {variants && variants.length > 0 && (
@@ -699,36 +665,80 @@ const ProductDetail = () => {
                                                             </Typography>
                                                             {offer.pickupAddress && (
                                                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontStyle: 'italic', mt: 0.5, display: 'block' }}>
-                                                                    Pickup: {offer.pickupAddress}
+                                                                    Pickup: {typeof offer.pickupAddress === 'object' ? 
+                                                                        (() => {
+                                                                            const addr = offer.pickupAddress;
+                                                                            const parts = [
+                                                                                addr.name,
+                                                                                addr.addressLine1,
+                                                                                addr.addressLine2,
+                                                                                addr.landmark,
+                                                                                addr.city,
+                                                                                addr.state
+                                                                            ].filter(Boolean);
+                                                                            return `${parts.join(', ')} - ${addr.pincode}, ${addr.country || 'India'}`;
+                                                                        })() : 
+                                                                        offer.pickupAddress}
                                                                 </Typography>
                                                             )}
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                                                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: 400 }}>
                                                             {offer.attributes?.map((attr, ai) => (
-                                                                <Chip 
+                                                                <Box 
                                                                     key={ai} 
-                                                                    label={`${attr.name}: ${attr.value}`} 
-                                                                    size="small" 
-                                                                    variant="outlined" 
-                                                                    sx={{ fontSize: '0.65rem', height: 20 }}
-                                                                />
+                                                                    sx={{ 
+                                                                        display: 'inline-flex', 
+                                                                        alignItems: 'center',
+                                                                        bgcolor: '#f8f9fa',
+                                                                        border: '1px solid #e9ecef',
+                                                                        borderRadius: '4px',
+                                                                        px: 0.75,
+                                                                        py: 0.25
+                                                                    }}
+                                                                >
+                                                                    <Typography 
+                                                                        variant="caption" 
+                                                                        sx={{ 
+                                                                            fontWeight: 700, 
+                                                                            color: 'text.secondary', 
+                                                                            textTransform: 'uppercase', 
+                                                                            fontSize: '0.6rem',
+                                                                            mr: 0.5
+                                                                        }}
+                                                                    >
+                                                                        {attr.name}:
+                                                                    </Typography>
+                                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.65rem' }}>
+                                                                        {attr.value}
+                                                                    </Typography>
+                                                                </Box>
                                                             ))}
                                                             {!offer.attributes?.length && <Typography variant="caption" color="textSecondary">Standard</Typography>}
-                                                        </Stack>
+                                                        </Box>
                                                     </TableCell>
                                                     <TableCell align="right">
-                                                        <Box>
-                                                            <Typography variant="body2" fontWeight={700} color="primary.main">
+                                                        <Stack alignItems="flex-end" spacing={0.25}>
+                                                            <Typography variant="subtitle2" fontWeight={700} color="primary.main">
                                                                 ₹{offer.price?.toLocaleString('en-IN')}
                                                             </Typography>
-                                                            {offer.price === product.minPrice && (
-                                                                <Typography variant="caption" color="success.main" sx={{ fontWeight: 800, fontSize: '0.6rem' }}>
-                                                                    BEST PRICE
-                                                                </Typography>
+                                                            {offer.currentPrice === minPriceVariant?.currentPrice && (
+                                                                <Chip 
+                                                                    label="BEST PRICE" 
+                                                                    size="small" 
+                                                                    sx={{ 
+                                                                        height: 16, 
+                                                                        fontSize: '0.55rem', 
+                                                                        bgcolor: '#e8f5e9', 
+                                                                        color: '#2e7d32', 
+                                                                        fontWeight: 900,
+                                                                        borderRadius: '4px',
+                                                                        '& .MuiChip-label': { px: 0.5 }
+                                                                    }} 
+                                                                />
                                                             )}
-                                                        </Box>
+                                                        </Stack>
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         <Typography variant="body2" color={offer.stock < 10 ? 'error.main' : 'textPrimary'}>
@@ -759,21 +769,25 @@ const ProductDetail = () => {
                 <Grid size={12}>
                     <Paper sx={{ p: 2, bgcolor: '#f9f9f9', borderRadius: 2 }}>
                         <Grid container spacing={3}>
-                            {product.roleId === 2 && (
+                            {product.sellerName && (
                                 <>
                                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                         <Typography variant="caption" display="block">Seller Name</Typography>
                                         <Typography variant="body2" fontWeight={500}>{product.sellerName || '-'}</Typography>
                                     </Grid>
                                     <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                                        <Typography variant="caption" display="block">Company Name</Typography>
+                                        <Typography variant="caption" display="block">Shop Name</Typography>
                                         <Typography variant="body2" fontWeight={500}>{product.shopName || '-'}</Typography>
                                     </Grid>
                                 </>
                             )}
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                                <Typography variant="caption" display="block">Created By</Typography>
-                                <Typography variant="body2" fontWeight={500}>{product.createdby || '-'}</Typography>
+                                <Typography variant="caption" display="block">Main Category</Typography>
+                                <Typography variant="body2" fontWeight={500}>{product.mainCategoryName || '-'}</Typography>
+                            </Grid>
+                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                                <Typography variant="caption" display="block">Sub Category</Typography>
+                                <Typography variant="body2" fontWeight={500}>{product.subCategoryName || '-'}</Typography>
                             </Grid>
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Created At</Typography>
@@ -786,10 +800,6 @@ const ProductDetail = () => {
                                         minute: '2-digit'
                                     }) : '-'}
                                 </Typography>
-                            </Grid>
-                            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                                <Typography variant="caption" display="block">Updated By</Typography>
-                                <Typography variant="body2" fontWeight={500}>{product.updatedby || '-'}</Typography>
                             </Grid>
                             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                                 <Typography variant="caption" display="block">Updated At</Typography>
