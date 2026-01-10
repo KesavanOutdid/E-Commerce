@@ -240,7 +240,10 @@ exports.getProducts = async (req, res) => {
             const [mainCategory, subCategory, variants] = await Promise.all([
                 product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
                 product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-                ProductVariant.collection().find({ productId: product.productId }).toArray()
+                ProductVariant.collection().find({ 
+                    productId: product.productId,
+                    sellerId: sellerId
+                }).toArray()
             ]);
 
             return {
@@ -275,6 +278,14 @@ exports.updateProduct = async (req, res) => {
     try {
         const { id } = req.params; // Can be Master ID or Variant ID
         let { productName, description, shortDescription, attributes, price, salePrice, stock, deliveryDays, pickupAddress } = req.body;
+
+        if (typeof pickupAddress === 'string') {
+            try {
+                pickupAddress = JSON.parse(pickupAddress);
+            } catch (e) {
+                // Keep as string if not JSON
+            }
+        }
 
         // 1. Check if it's a Master Product
         const masterProduct = await Product.findById(id);

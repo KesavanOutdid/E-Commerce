@@ -30,8 +30,8 @@ const getUserIdFromRequest = (req) => {
 };
 
 // Helper for aggregation pipeline to avoid duplication and include marketplace offers
-const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }) => {
-  return [
+const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions = { minPrice: 1 }, filters = {}) => {
+  const pipeline = [
     { $match: matchQuery },
     // Join with product variants and their seller details
     {
@@ -40,6 +40,19 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
         let: { pid: "$productId" },
         pipeline: [
           { $match: { $expr: { $eq: ["$productId", "$$pid"] }, approvalStatus: "approved", status: true } },
+          
+          // Attribute filtering inside the variant lookup
+          ...(filters.attributes ? Object.keys(filters.attributes).map(attrName => ({
+            $match: {
+              attributes: {
+                $elemMatch: {
+                  name: attrName,
+                  value: { $in: Array.isArray(filters.attributes[attrName]) ? filters.attributes[attrName] : [filters.attributes[attrName]] }
+                }
+              }
+            }
+          })) : []),
+
           {
             $lookup: {
               from: "users",
@@ -104,6 +117,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
     },
     // Filter out products with no approved variants
     { $match: { "variants.0": { $exists: true } } },
+    
     // Join with categories
     {
       $lookup: {
@@ -133,6 +147,24 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
         sellerCount: { $size: "$variants" }
       }
     },
+    
+    // Price Range Filter
+    ...(filters.minPrice || filters.maxPrice ? [{
+      $match: {
+        minPrice: {
+          ...(filters.minPrice ? { $gte: parseFloat(filters.minPrice) } : {}),
+          ...(filters.maxPrice ? { $lte: parseFloat(filters.maxPrice) } : {})
+        }
+      }
+    }] : []),
+
+    // Rating Filter
+    ...(filters.rating ? [{
+      $match: {
+        avgRating: { $gte: parseFloat(filters.rating) }
+      }
+    }] : []),
+
     {
       $addFields: {
         minPriceDetails: {
@@ -164,11 +196,14 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
       }
     }
   ];
+  return pipeline;
 };
 
 // Fetch all approved products for website
 exports.getProducts = async (req, res) => {
   try {
+    const { categoryId, search, page = 1, limit = 12, brands, minPrice, maxPrice, rating, ...otherFilters } = req.query;
+    
     const cacheKey = `products:list:website:all:${JSON.stringify(req.query)}`;
     const cachedData = await getCache(cacheKey);
 
@@ -180,37 +215,61 @@ exports.getProducts = async (req, res) => {
       });
     }
 
-    const { categoryId, search, page = 1, limit = 10 } = req.query;
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
     // Filter: Admin products (roleId 1) OR Approved Seller products (roleId 2)
     let matchQuery = { 
-      $or: [
-        { roleId: 1 },
-        { roleId: 2, approvalStatus: 'approved' }
-      ],
-      status: { $in: [true, "true"] }
+      $and: [
+        {
+          $or: [
+            { roleId: 1 },
+            { roleId: 2, approvalStatus: 'approved' }
+          ]
+        },
+        { status: { $in: [true, "true"] } }
+      ]
     };
     
-    if (categoryId) matchQuery.mainCategoryId = categoryId;
+    if (categoryId) matchQuery.$and.push({ mainCategoryId: categoryId });
     if (search) {
-      matchQuery.$or = [
-        { productName: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { shortDescription: { $regex: search, $options: 'i' } }
-      ];
+      matchQuery.$and.push({
+        $or: [
+          { productName: { $regex: search, $options: 'i' } },
+          { description: { $regex: search, $options: 'i' } },
+          { shortDescription: { $regex: search, $options: 'i' } },
+          { brand: { $regex: search, $options: 'i' } }
+        ]
+      });
     }
 
-    const adminId = await getAdminId();
+    if (brands) {
+      const brandList = Array.isArray(brands) ? brands : brands.split(',');
+      matchQuery.$and.push({ brand: { $in: brandList } });
+    }
+
+    // Extract attributes from otherFilters
+    const attributes = {};
+    Object.keys(otherFilters).forEach(key => {
+      if (!['page', 'limit', 'sort'].includes(key)) {
+        attributes[key] = Array.isArray(otherFilters[key]) ? otherFilters[key] : otherFilters[key].split(',');
+      }
+    });
+
+    const filters = {
+      minPrice,
+      maxPrice,
+      rating,
+      attributes: Object.keys(attributes).length > 0 ? attributes : null
+    };
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, filters)
     ).toArray();
 
-    const products = aggregationResult[0].data;
-    const total = aggregationResult[0].totalCount[0]?.count || 0;
+    const products = aggregationResult[0]?.data || [];
+    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
@@ -250,9 +309,9 @@ exports.getProducts = async (req, res) => {
 exports.getProductsBySubCategory = async (req, res) => {
   try {
     const { subCategoryId } = req.params;
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 12, brands, minPrice, maxPrice, rating, ...otherFilters } = req.query;
     
-    const cacheKey = `products:list:website:subcategory:${subCategoryId}:${page}:${limit}`;
+    const cacheKey = `products:list:website:subcategory:${subCategoryId}:${JSON.stringify(req.query)}`;
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
@@ -276,14 +335,32 @@ exports.getProductsBySubCategory = async (req, res) => {
       status: { $in: [true, "true"] }
     };
 
-    const adminId = await getAdminId();
+    if (brands) {
+      const brandList = Array.isArray(brands) ? brands : brands.split(',');
+      matchQuery.brand = { $in: brandList };
+    }
+
+    // Extract attributes
+    const attributes = {};
+    Object.keys(otherFilters).forEach(key => {
+      if (!['page', 'limit', 'sort'].includes(key)) {
+        attributes[key] = Array.isArray(otherFilters[key]) ? otherFilters[key] : otherFilters[key].split(',');
+      }
+    });
+
+    const filters = {
+      minPrice,
+      maxPrice,
+      rating,
+      attributes: Object.keys(attributes).length > 0 ? attributes : null
+    };
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, filters)
     ).toArray();
 
-    const products = aggregationResult[0].data;
-    const total = aggregationResult[0].totalCount[0]?.count || 0;
+    const products = aggregationResult[0]?.data || [];
+    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
@@ -551,7 +628,7 @@ exports.getBestSellers = async (req, res) => {
 
 exports.searchProducts = async (req, res) => {
   try {
-    const { query, page = 1, limit = 10 } = req.query;
+    const { query, page = 1, limit = 10, brands, minPrice, maxPrice, rating, ...otherFilters } = req.query;
 
     if (!query || query.trim() === '') {
       return res.status(400).json({ 
@@ -565,7 +642,7 @@ exports.searchProducts = async (req, res) => {
     const limitNum = parseInt(limit);
     const skip = (pageNum - 1) * limitNum;
 
-    const cacheKey = `products:search:${searchQuery}:${pageNum}:${limitNum}`;
+    const cacheKey = `products:search:${JSON.stringify(req.query)}`;
     const cachedData = await getCache(cacheKey);
 
     if (cachedData) {
@@ -577,11 +654,7 @@ exports.searchProducts = async (req, res) => {
     }
 
     const searchRegex = { $regex: searchQuery, $options: 'i' };
-    const responseData = {
-      products: [],
-      pagination: {}
-    };
-
+    
     // Search in Main and Sub Categories to get their product IDs
     const matchingCategories = await getDB().collection('main_categories').find({
       name: searchRegex
@@ -594,7 +667,7 @@ exports.searchProducts = async (req, res) => {
     const categoryIds = matchingCategories.map(cat => cat.categoryId);
     const subCategoryIds = matchingSubCategories.map(subCat => subCat.subCategoryId);
 
-    // Build product search query - search by product name, description, or matching category/subcategory
+    // Build product search query
     let matchQuery = {
       $and: [
         {
@@ -602,7 +675,7 @@ exports.searchProducts = async (req, res) => {
             { productName: searchRegex },
             { description: searchRegex },
             { shortDescription: searchRegex },
-            { sku: searchRegex },
+            { brand: searchRegex },
             ...(categoryIds.length > 0 ? [{ mainCategoryId: { $in: categoryIds } }] : []),
             ...(subCategoryIds.length > 0 ? [{ subCategoryId: { $in: subCategoryIds } }] : [])
           ]
@@ -617,29 +690,50 @@ exports.searchProducts = async (req, res) => {
       ]
     };
 
-    const adminId = await getAdminId();
+    if (brands) {
+      const brandList = Array.isArray(brands) ? brands : brands.split(',');
+      matchQuery.$and.push({ brand: { $in: brandList } });
+    }
+
+    // Extract attributes
+    const attributes = {};
+    Object.keys(otherFilters).forEach(key => {
+      if (!['page', 'limit', 'sort'].includes(key)) {
+        attributes[key] = Array.isArray(otherFilters[key]) ? otherFilters[key] : otherFilters[key].split(',');
+      }
+    });
+
+    const filters = {
+      minPrice,
+      maxPrice,
+      rating,
+      attributes: Object.keys(attributes).length > 0 ? attributes : null
+    };
 
     const aggregationResult = await Product.collection().aggregate(
-      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 })
+      getProductAggregationPipeline(matchQuery, skip, limitNum, { minPrice: 1 }, filters)
     ).toArray();
 
-    responseData.products = aggregationResult[0]?.data || [];
+    const products = aggregationResult[0]?.data || [];
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
-    responseData.pagination = {
-      total,
-      page: pageNum,
-      limit: limitNum,
-      pages: Math.ceil(total / limitNum)
+    const responseData = {
+      products,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
     };
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
     if (userId) {
       const wishlist = await User.getWishlist(userId);
-      responseData.products.forEach(p => {
-        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
-                               wishlist.includes(p.product._id?.toString());
+      products.forEach(p => {
+        p.isWishlisted = wishlist.includes(p.productId) || 
+                         wishlist.includes(p._id?.toString());
       });
     }
 
@@ -743,6 +837,130 @@ exports.getSearchSuggestions = async (req, res) => {
       message: 'Suggestions fetched successfully',
       data: suggestions 
     });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getFilterMetaData = async (req, res) => {
+  try {
+    const { categoryId, subCategoryId, search } = req.query;
+    
+    // Build context-aware match query
+    let matchQuery = { 
+      $and: [
+        {
+          $or: [
+            { roleId: 1 },
+            { roleId: 2, approvalStatus: 'approved' }
+          ]
+        },
+        { status: { $in: [true, "true"] } }
+      ]
+    };
+    
+    if (categoryId) matchQuery.$and.push({ mainCategoryId: categoryId });
+    if (subCategoryId) matchQuery.$and.push({ subCategoryId: subCategoryId });
+    if (search) {
+      matchQuery.$and.push({
+        $or: [
+          { productName: { $regex: search, $options: 'i' } },
+          { brand: { $regex: search, $options: 'i' } }
+        ]
+      });
+    }
+
+    // Pipeline to get metadata
+    const metadataPipeline = [
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: "product_variants",
+          localField: "productId",
+          foreignField: "productId",
+          as: "variants"
+        }
+      },
+      { $unwind: "$variants" },
+      { $match: { "variants.approvalStatus": "approved", "variants.status": true } },
+      {
+        $addFields: {
+          "variants.currentPrice": { 
+            $cond: [{ $and: [{ $ne: ["$variants.salePrice", null] }, { $gt: ["$variants.salePrice", 0] }] }, "$variants.salePrice", "$variants.price"] 
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          brands: { $addToSet: "$brand" },
+          minPrice: { $min: "$variants.currentPrice" },
+          maxPrice: { $max: "$variants.currentPrice" },
+          attributes: { $push: "$variants.attributes" },
+          avgRating: { $avg: "$avgRating" }
+        }
+      }
+    ];
+
+    const result = await Product.collection().aggregate(metadataPipeline).toArray();
+    
+    if (!result || result.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          brands: [],
+          priceRange: { min: 0, max: 0 },
+          attributes: {},
+          ratings: [4, 3, 2, 1]
+        }
+      });
+    }
+
+    const data = result[0];
+    
+    // Process attributes into unique sets
+    const processedAttributes = {};
+    if (data.attributes) {
+      data.attributes.forEach(attrList => {
+        if (Array.isArray(attrList)) {
+          attrList.forEach(attr => {
+            if (!processedAttributes[attr.name]) {
+              processedAttributes[attr.name] = new Set();
+            }
+            processedAttributes[attr.name].add(attr.value);
+          });
+        }
+      });
+    }
+
+    // Convert Sets to Arrays
+    Object.keys(processedAttributes).forEach(key => {
+      processedAttributes[key] = Array.from(processedAttributes[key]);
+    });
+
+    // Get Subcategories if only Main Category is provided
+    let subCategories = [];
+    if (categoryId && !subCategoryId) {
+      subCategories = await getDB().collection('sub_categories')
+        .find({ categoryId: categoryId })
+        .project({ name: 1, subCategoryId: 1 })
+        .toArray();
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        brands: data.brands.filter(b => b),
+        priceRange: { 
+          min: Math.floor(data.minPrice || 0), 
+          max: Math.ceil(data.maxPrice || 0) 
+        },
+        attributes: processedAttributes,
+        ratings: [4, 3, 2, 1],
+        subCategories: subCategories.map(s => ({ id: s.subCategoryId, name: s.name }))
+      }
+    });
+
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

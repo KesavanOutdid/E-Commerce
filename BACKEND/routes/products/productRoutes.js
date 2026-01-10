@@ -27,6 +27,7 @@ router.post('/seller/check-slug', authMiddleware, sellerProductController.checkP
 
 // Website/Public Routes
 router.get('/', websiteProductController.getProducts);
+router.get('/filters', websiteProductController.getFilterMetaData);
 router.get('/best-sellers', websiteProductController.getBestSellers);
 router.get('/search', websiteProductController.searchProducts);
 router.get('/search/suggestions', websiteProductController.getSearchSuggestions);

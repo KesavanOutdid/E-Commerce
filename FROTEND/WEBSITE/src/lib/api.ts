@@ -4,6 +4,8 @@ export const API_ENDPOINTS = {
   CATEGORIES: `${API_BASE_URL}/api/categories`,
   SUBCATEGORIES: (id: string) => `${API_BASE_URL}/api/categories/subcategory/${id}`,
   PRODUCTS: `${API_BASE_URL}/api/products`,
+  PRODUCT_FILTERS: `${API_BASE_URL}/api/products/filters`,
+  SEARCH_PRODUCTS: `${API_BASE_URL}/api/products/search`,
   BEST_SELLERS: `${API_BASE_URL}/api/products/best-sellers`,
   PRODUCT_DETAILS: (id: string) => `${API_BASE_URL}/api/products/${id}`,
   PRODUCTS_BY_SUBCATEGORY: (subCategoryId: string) => `${API_BASE_URL}/api/products/subcategory/${subCategoryId}`,
