@@ -7,6 +7,7 @@ import { useDispatch } from "react-redux";
 import { addToCart } from "@/redux/features/cart-slice";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Breadcrumb from "../Common/Breadcrumb";
 
 const SellersList = ({ productId }: { productId: string }) => {
@@ -14,7 +15,11 @@ const SellersList = ({ productId }: { productId: string }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
+  const [expandedSellers, setExpandedSellers] = useState<Record<number, boolean>>({});
+
+  const toggleAttributes = (index: number) => {
+    setExpandedSellers(prev => ({ ...prev, [index]: !prev[index] }));
+  };
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -23,7 +28,11 @@ const SellersList = ({ productId }: { productId: string }) => {
         const response = await fetch(API_ENDPOINTS.PRODUCT_DETAILS(productId));
         const data = await response.json();
         if (data.success) {
-          setProduct(data.data.product);
+          setProduct({
+            ...data.data.product,
+            allOffers: data.data.allOffers,
+            minPriceDetails: data.data.selectedVariant
+          });
         }
       } catch (error) {
         console.error("Failed to fetch product:", error);
@@ -57,7 +66,7 @@ const SellersList = ({ productId }: { productId: string }) => {
             thumbnails: product.images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
           },
           sellerId: seller.sellerId,
-          sellerProductId: seller.sellerProductId,
+          sellerProductId: seller.variantId,
           sellerName: seller.sellerName,
           quantity: 1,
         },
@@ -85,7 +94,7 @@ const SellersList = ({ productId }: { productId: string }) => {
     price: offer.price,
     salePrice: offer.price, // allOffers already has the final price
     deliveryDays: offer.deliveryDays || 3,
-    sellerProductId: offer.sellerProductId,
+    variantId: offer.variantId,
     isCurrent: offer.sellerId === product.minPriceDetails?.sellerId
   }));
 
@@ -137,9 +146,12 @@ const SellersList = ({ productId }: { productId: string }) => {
                   {/* Seller Info */}
                   <div className="col-span-1 md:col-span-4 flex flex-col justify-center">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-blue text-base hover:underline cursor-pointer" onClick={() => router.push(`/shop-details/${seller.sellerProductId || productId}`)}>
+                      <Link 
+                        href={`/shop-details/${seller.variantId || productId}`}
+                        className="font-medium text-blue text-base hover:underline cursor-pointer"
+                      >
                         {seller.sellerName}
-                      </span>
+                      </Link>
                       {isCurrent && (
                         <span className="text-blue text-[10px]  uppercase tracking-wider">[Best Price]</span>
                       )}
@@ -148,6 +160,24 @@ const SellersList = ({ productId }: { productId: string }) => {
                       )}
                     </div>
                     {seller.shopName && <p className="text-xs text-gray-400 mt-0.5">{seller.shopName}</p>}
+                    {seller.attributes && (
+                      <div className="mt-2 space-y-1">
+                        {(expandedSellers[index] ? seller.attributes : seller.attributes.slice(0, 3)).map((attr: any, i: number) => (
+                          <div key={i} className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                            <span className="w-1 h-1 rounded-full bg-blue"></span>
+                            <span>{attr.value}{["Ram", "Rom", "Storage"].includes(attr.name) ? "GB" : ""} {attr.name}</span>
+                          </div>
+                        ))}
+                        {seller.attributes.length > 3 && (
+                          <button 
+                            onClick={() => toggleAttributes(index)}
+                            className="text-[10px] text-blue font-bold uppercase mt-1 hover:underline"
+                          >
+                            {expandedSellers[index] ? "- View Less" : `+ View ${seller.attributes.length - 3} More`}
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Price Info */}

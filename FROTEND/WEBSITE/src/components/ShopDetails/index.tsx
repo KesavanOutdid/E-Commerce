@@ -353,6 +353,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     };
 
     fetchProduct();
+    window.scrollTo(0, 0);
   }, [productId]);
 
   const handleAttributeChange = (name: string, value: string) => {
@@ -1195,20 +1196,16 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         
                         {product.allOffers?.length > 1 && (
                           <div className="pt-1">
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                const modal = document.getElementById('allOffers');
-                                if (modal) modal.classList.toggle('hidden');
-                              }}
-                              className="text-blue  text-sm flex items-center gap-1 group"
+                            <Link 
+                              href={`/shop-details/${productId}/sellers`}
+                              className="text-blue text-sm flex items-center gap-1 group"
                             >
                               {product.allOffers.length === 2 
                                 ? `1 other seller from ₹${product.allOffers.find((s: any) => s.sellerId !== product.minPriceDetails?.sellerId)?.currentPrice}`
                                 : `View ${product.allOffers.length - 1} more sellers from ₹${Math.min(...product.allOffers.filter((s: any) => s.sellerId !== product.minPriceDetails?.sellerId).map((s: any) => s.currentPrice))}`
                               }
                               <svg className="transform group-hover:translate-x-0.5 transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </button>
+                            </Link>
                           </div>
                         )}
                       </div>
@@ -1954,12 +1951,19 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     <div key={idx} className="border border-gray-3 rounded-lg p-4 hover:border-blue hover:shadow-md transition-all">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
-                          <div>
-                            <h4 className="font-semibold text-dark">{offer.sellerName}</h4>
+                          <Link 
+                            href={`/shop-details/${offer.variantId}`}
+                            className="cursor-pointer group/seller"
+                            onClick={() => {
+                              const modal = document.getElementById('allOffers');
+                              if (modal) modal.classList.add('hidden');
+                            }}
+                          >
+                            <h4 className="font-semibold text-dark group-hover/seller:text-blue transition-colors">{offer.sellerName}</h4>
                             {offer.shopName && (
                               <p className="text-xs text-gray-500">{offer.shopName}</p>
                             )}
-                          </div>
+                          </Link>
                         </div>
                         <div className="text-right">
                           <p className="text-lg font-bold text-dark">₹{offer.currentPrice?.toLocaleString()}</p>

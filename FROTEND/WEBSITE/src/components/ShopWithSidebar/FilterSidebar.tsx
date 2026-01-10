@@ -158,7 +158,7 @@ const FilterSidebar = ({ metaData, selectedFilters, setSelectedFilters, onApplyF
             onClick={() => toggleSection('categories')}
             className="px-4 py-3 flex justify-between items-center cursor-pointer group"
           >
-            <h3 className="text-[13px] font-medium text-black uppercase tracking-wider">Categories</h3>
+            <h3 className="text-[13px] font-bold text-black uppercase tracking-wider">Categories</h3>
             <span className={`text-[10px] text-gray-400 transition-transform ${openSections.categories ? 'rotate-180' : ''}`}>▼</span>
           </div>
           {openSections.categories && (
@@ -182,7 +182,7 @@ const FilterSidebar = ({ metaData, selectedFilters, setSelectedFilters, onApplyF
             onClick={() => toggleSection('price')}
             className="px-4 py-3 flex justify-between items-center cursor-pointer group"
           >
-            <h3 className="text-[13px] font-medium text-black uppercase tracking-wider">Price</h3>
+            <h3 className="text-[13px] font-bold text-black uppercase tracking-wider">Price</h3>
             <span className={`text-[10px] text-gray-400 transition-transform ${openSections.price ? 'rotate-180' : ''}`}>▼</span>
           </div>
           {openSections.price && (

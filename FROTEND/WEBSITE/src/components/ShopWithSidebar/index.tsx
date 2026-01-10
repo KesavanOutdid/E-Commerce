@@ -39,6 +39,9 @@ const ShopWithSidebar = () => {
         if (search) url += `search=${search}&`;
 
         const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
         const data = await response.json();
         if (data.success) {
           setFilterMeta(data.data);
@@ -93,6 +96,9 @@ const ShopWithSidebar = () => {
       const url = `${baseUrl}${separator}${params.toString()}`;
 
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const data = await response.json();
       if (data.success) {
         const productsData = Array.isArray(data.data) ? data.data : (data.data.products || []);
