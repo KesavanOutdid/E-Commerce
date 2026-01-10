@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.21.136.218:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.13:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -40,11 +40,11 @@ export const API_ENDPOINTS = {
     GET_ALL: '/products/admin/getproducts', // Admin specific list
     GET_ALL_SELLER: '/products/admin/seller-products', // NEW: Seller products for admin
     GET_SELLERS_LIST: '/products/admin/sellers-list', // NEW: Get all sellers
-    LIST_CATALOG: '/products/admin/list', // NEW: List product from catalog
     GET_BY_ID: (id) => `/products/admin/${id}`, // Use public route for details
     CREATE: '/products/admin',
+    ADD_VARIANT: (masterProductId) => `/products/admin/add-variant/${masterProductId}`,
     UPDATE: (id) => `/products/admin/${id}`,
-    UPDATE_APPROVAL: (id) => `/products/admin/${id}/approval`,
+    UPDATE_APPROVAL: (id) => `/products/admin/update-approval/${id}`,
     DELETE: (id) => `/products/admin/${id}`
   },
   ORDERS: {

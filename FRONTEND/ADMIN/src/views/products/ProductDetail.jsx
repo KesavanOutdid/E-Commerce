@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef, useLayoutEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
     Box,
     Button,
@@ -18,9 +18,18 @@ import {
     Accordion,
     AccordionSummary,
     AccordionDetails,
-    Grid2 as Grid
+    Grid2 as Grid,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem
 } from '@mui/material';
-import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconRuler, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX, IconBuildingStore } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX, IconBuildingStore, IconPlus, IconUpload, IconDeviceFloppy } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
@@ -33,7 +42,8 @@ const BASE_URL = API_BASE_URL.replace('/api', '');
 const ProductDetail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { updateProductApproval, listFromCatalog } = useProducts();
+    const location = useLocation();
+    const { updateProductApproval, addVariant } = useProducts();
 
     const [product, setProduct] = useState(null);
     const [variants, setVariants] = useState([]);
@@ -41,6 +51,37 @@ const ProductDetail = () => {
     const [loading, setLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [imageErrors, setImageErrors] = useState({});
+
+    // Add Variant Dialog State
+    const [addVariantDialogOpen, setAddVariantDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState('add'); // 'add' or 'list'
+    const [pickupAddresses, setPickupAddresses] = useState([]);
+    const [variantFormData, setVariantFormData] = useState({
+        price: '',
+        salePrice: '',
+        stock: '',
+        deliveryDays: '3',
+        pickupAddress: '',
+        attributes: [],
+        images: []
+    });
+    const [variantImages, setVariantImages] = useState([]);
+    const [variantPreviewImages, setVariantPreviewImages] = useState([]);
+
+    const fetchPickupAddresses = useCallback(async () => {
+        try {
+            const response = await axios.get(API_ENDPOINTS.AUTH.PICKUP_ADDRESSES);
+            if (response.data.success) {
+                setPickupAddresses(response.data.data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching pickup addresses", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchPickupAddresses();
+    }, [fetchPickupAddresses]);
 
     const handleImageError = (index) => {
         setImageErrors((prev) => ({ ...prev, [index]: true }));
@@ -90,6 +131,19 @@ const ProductDetail = () => {
     useEffect(() => {
         fetchProduct();
     }, [fetchProduct]);
+
+    // Auto-select default pickup address when addresses are loaded and dialog is open
+    useEffect(() => {
+        if (addVariantDialogOpen && !variantFormData.pickupAddress && pickupAddresses.length > 0) {
+            const defaultAddr = pickupAddresses.find(a => a.isDefault)?.id || 
+                              pickupAddresses.find(a => a.isDefault)?._id || 
+                              pickupAddresses[0]?.id || 
+                              pickupAddresses[0]?._id;
+            if (defaultAddr) {
+                setVariantFormData(prev => ({ ...prev, pickupAddress: defaultAddr }));
+            }
+        }
+    }, [pickupAddresses, addVariantDialogOpen, variantFormData.pickupAddress]);
 
     const handleNextImage = () => {
         if (product?.images?.length) {
@@ -141,47 +195,68 @@ const ProductDetail = () => {
         }
     };
 
-    const handleListProduct = async () => {
-        const { value: formValues } = await Swal.fire({
-            title: 'List in Our Marketplace',
-            html:
-                '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
-                `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Sale Price (₹)</div>' +
-                `<input id="swal-input2" class="swal2-input" type="number" placeholder="Sale Price" value="${product.salePrice || 0}">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Stock</div>' +
-                `<input id="swal-input3" class="swal2-input" type="number" placeholder="Stock" value="10">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Delivery Days</div>' +
-                '<input id="swal-input4" class="swal2-input" type="number" placeholder="Delivery Days" value="3">',
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'List Now',
-            preConfirm: () => {
-                return {
-                    price: document.getElementById('swal-input1').value,
-                    salePrice: document.getElementById('swal-input2').value,
-                    stock: document.getElementById('swal-input3').value,
-                    deliveryDays: document.getElementById('swal-input4').value
+    const handleListProduct = async (variant = null) => {
+        setDialogMode('list');
+        
+        // Handle case where variant is an event or null
+        const variantObj = (variant && !variant.nativeEvent && variant.attributes) ? variant : null;
+        
+        let targetAttributes = [];
+        
+        // Fetch subcategory attributes instead of pre-loading from variant
+        try {
+            if (product?.subCategoryId) {
+                const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(product.mainCategoryId));
+                if (response.data.success) {
+                    const subCategories = response.data.data || [];
+                    const currentSub = subCategories.find(s => (s.subCategoryId || s._id) === product.subCategoryId);
+                    if (currentSub && currentSub.attributes) {
+                        targetAttributes = currentSub.attributes.map(attr => ({
+                            attributeId: attr._id || attr.id,
+                            name: attr.name,
+                            type: attr.type,
+                            required: attr.required,
+                            value: '' // Keep it empty as requested
+                        }));
+                    }
                 }
             }
-        });
-
-        if (formValues) {
-            if (!formValues.price || !formValues.stock) {
-                Swal.fire('Error', 'Price and Stock are required', 'error');
-                return;
-            }
-
-            const success = await listFromCatalog({
-                productId: product.productId,
-                ...formValues
-            });
-
-            if (success) {
-                fetchProduct();
-            }
+        } catch (error) {
+            console.error("Error fetching subcategory attributes", error);
         }
+
+        // Fallback to variant attributes if fetch fails or no subcategory attributes, but make values empty
+        if (targetAttributes.length === 0) {
+            const sourceAttributes = variantObj?.attributes || product?.minPriceDetails?.attributes || product?.attributes || [];
+            const safeAttributes = Array.isArray(sourceAttributes) ? sourceAttributes : [];
+            targetAttributes = safeAttributes.map(attr => ({ ...attr, value: '' }));
+        }
+
+        setVariantFormData({
+            price: variantObj?.price || product?.minPriceDetails?.price || product?.price || '',
+            salePrice: variantObj?.salePrice || product?.minPriceDetails?.salePrice || product?.salePrice || '',
+            stock: '10',
+            deliveryDays: '3',
+            pickupAddress: pickupAddresses.find(a => a.isDefault)?.id || 
+                           pickupAddresses.find(a => a.isDefault)?._id || 
+                           pickupAddresses[0]?.id || 
+                           pickupAddresses[0]?._id || '',
+            attributes: targetAttributes,
+            images: []
+        });
+        setVariantImages([]);
+        setVariantPreviewImages([]);
+        setAddVariantDialogOpen(true);
     };
+
+    // Auto-open listing dialog if navigated from list with state
+    useEffect(() => {
+        if (location.state?.openListDialog && product && pickupAddresses.length > 0) {
+            handleListProduct();
+            // Clear state so it doesn't reopen
+            navigate(location.pathname, { replace: true, state: {} });
+        }
+    }, [location.state, product, pickupAddresses, navigate, location.pathname]);
 
     const handleDelete = async () => {
         const result = await Swal.fire({
@@ -204,6 +279,113 @@ const ProductDetail = () => {
             } catch (error) {
                 Swal.fire('Error', error.response?.data?.message || 'Failed to delete product', 'error');
             }
+        }
+    };
+
+    const handleOpenAddVariantDialog = async () => {
+        setDialogMode('add');
+        
+        let templateAttributes = [];
+
+        // Try to fetch attributes from subcategory first for a clean add
+        try {
+            if (product?.subCategoryId) {
+                const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(product.mainCategoryId));
+                if (response.data.success) {
+                    const subCategories = response.data.data || [];
+                    const currentSub = subCategories.find(s => (s.subCategoryId || s._id) === product.subCategoryId);
+                    if (currentSub && currentSub.attributes) {
+                        templateAttributes = currentSub.attributes.map(attr => ({
+                            attributeId: attr._id || attr.id,
+                            name: attr.name,
+                            type: attr.type,
+                            required: attr.required,
+                            value: ''
+                        }));
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching subcategory attributes for add", error);
+        }
+
+        // Fallback to first variant or product attributes if fetch fails
+        if (templateAttributes.length === 0) {
+            const firstVariantAttributes = (variants && variants.length > 0) ? variants[0].attributes : null;
+            templateAttributes = Array.isArray(firstVariantAttributes)
+                ? firstVariantAttributes.map(attr => ({ ...attr, value: '' }))
+                : (Array.isArray(product?.attributes) ? product.attributes.map(attr => ({ ...attr, value: '' })) : []);
+        }
+
+        setVariantFormData({
+            price: '',
+            salePrice: '',
+            stock: '',
+            deliveryDays: '3',
+            pickupAddress: pickupAddresses.find(a => a.isDefault)?.id || 
+                           pickupAddresses.find(a => a.isDefault)?._id || 
+                           pickupAddresses[0]?.id || 
+                           pickupAddresses[0]?._id || '',
+            attributes: templateAttributes,
+            images: []
+        });
+        setVariantImages([]);
+        setVariantPreviewImages([]);
+        setAddVariantDialogOpen(true);
+    };
+
+    const handleVariantFieldChange = (field, value) => {
+        setVariantFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleVariantAttributeChange = (index, value) => {
+        const updatedAttributes = [...variantFormData.attributes];
+        updatedAttributes[index].value = value;
+        setVariantFormData(prev => ({ ...prev, attributes: updatedAttributes }));
+    };
+
+    const handleVariantImageChange = (e) => {
+        const files = Array.from(e.target.files);
+        setVariantImages(prev => [...prev, ...files]);
+        
+        const newPreviews = files.map(file => URL.createObjectURL(file));
+        setVariantPreviewImages(prev => [...prev, ...newPreviews]);
+    };
+
+    const removeVariantImage = (index) => {
+        setVariantImages(prev => prev.filter((_, i) => i !== index));
+        setVariantPreviewImages(prev => prev.filter((_, i) => i !== index));
+    };
+
+    const handleSaveVariant = async () => {
+        if (!variantFormData.price || !variantFormData.stock || !variantFormData.pickupAddress) {
+            Swal.fire('Error', 'Price, Stock and Pickup Address are required', 'error');
+            return;
+        }
+
+        // Validate required attributes
+        const missingAttributes = variantFormData.attributes.filter(a => a.required && !a.value);
+        if (missingAttributes.length > 0) {
+            Swal.fire('Error', `Please fill required attributes: ${missingAttributes.map(a => a.name).join(', ')}`, 'error');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('price', variantFormData.price);
+        formData.append('salePrice', variantFormData.salePrice);
+        formData.append('stock', variantFormData.stock);
+        formData.append('deliveryDays', variantFormData.deliveryDays);
+        formData.append('pickupAddress', variantFormData.pickupAddress);
+        formData.append('attributes', JSON.stringify(variantFormData.attributes));
+        
+        variantImages.forEach((image) => {
+            formData.append('images', image);
+        });
+
+        const success = await addVariant(product.productId || product._id, formData);
+        if (success) {
+            setAddVariantDialogOpen(false);
+            fetchProduct();
         }
     };
 
@@ -577,6 +759,84 @@ const ProductDetail = () => {
                     </Grid>
                 </Grid>
 
+                {/* Approval Status Banner (for Seller Products) */}
+                {product.roleId === 2 && (
+                    <Grid size={12}>
+                        <Paper 
+                            sx={{ 
+                                p: 2, 
+                                mb: 1, 
+                                borderRadius: 2, 
+                                border: '1px solid',
+                                bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : 
+                                         product.approvalStatus === 'rejected' ? '#ffebee' : '#fff3e0',
+                                borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : 
+                                             product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffe0b2',
+                            }}
+                        >
+                            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={2}>
+                                <Stack direction="row" spacing={2} alignItems="center">
+                                    <Box sx={{ 
+                                        p: 1, 
+                                        bgcolor: product.approvalStatus === 'approved' ? '#2e7d32' : 
+                                                 product.approvalStatus === 'rejected' ? '#d32f2f' : '#f57f17',
+                                        borderRadius: 1.5,
+                                        color: 'white',
+                                        display: 'flex'
+                                    }}>
+                                        {product.approvalStatus === 'approved' ? <IconCheck size={24} /> : 
+                                         product.approvalStatus === 'rejected' ? <IconX size={24} /> : <IconTag size={24} />}
+                                    </Box>
+                                    <Box>
+                                        <Typography variant="caption" fontWeight={700} sx={{ 
+                                            color: product.approvalStatus === 'approved' ? '#2e7d32' : 
+                                                   product.approvalStatus === 'rejected' ? '#d32f2f' : '#e65100',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: 1
+                                        }}>
+                                            Approval Status
+                                        </Typography>
+                                        <Typography variant="h4" sx={{ 
+                                            color: product.approvalStatus === 'approved' ? '#1b5e20' : 
+                                                   product.approvalStatus === 'rejected' ? '#c62828' : '#bf360c'
+                                        }}>
+                                            {product.approvalStatus?.toUpperCase() || 'PENDING'}
+                                        </Typography>
+                                        {product.approvalStatus === 'rejected' && product.rejectionReason && (
+                                            <Typography variant="body2" color="error" sx={{ mt: 0.5, fontStyle: 'italic' }}>
+                                                Reason: {product.rejectionReason}
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                </Stack>
+
+                                {(product.approvalStatus === 'pending' || !product.approvalStatus) && (
+                                    <Stack direction="row" spacing={1.5}>
+                                        <Button 
+                                            variant="contained" 
+                                            color="success" 
+                                            startIcon={<IconCheck size={18} />}
+                                            onClick={() => handleApproval('approved')}
+                                            sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button 
+                                            variant="contained" 
+                                            color="error" 
+                                            startIcon={<IconX size={18} />}
+                                            onClick={() => handleApproval('rejected')}
+                                            sx={{ borderRadius: 1.5, fontWeight: 600 }}
+                                        >
+                                            Reject
+                                        </Button>
+                                    </Stack>
+                                )}
+                            </Stack>
+                        </Paper>
+                    </Grid>
+                )}
+
                 {/* Minimum Price Highlights */}
                 {product.minPriceDetails && (
                     <Grid size={12}>
@@ -634,9 +894,25 @@ const ProductDetail = () => {
                     <Grid size={12}>
                         <Accordion defaultExpanded elevation={0} sx={{ border: '1px solid #eee', mt: 2 }}>
                             <AccordionSummary expandIcon={<IconChevronDown />}>
-                                <Stack direction="row" alignItems="center" spacing={1}>
-                                    <IconBuildingStore size={20} />
-                                    <Typography variant="h4">Marketplace Offers & Variants ({variants.length})</Typography>
+                                <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%', pr: 2 }}>
+                                    <Stack direction="row" alignItems="center" spacing={1}>
+                                        <IconBuildingStore size={20} />
+                                        <Typography variant="h4">Marketplace Offers & Variants ({variants.length})</Typography>
+                                    </Stack>
+                                    {(product.roleId === 1 || product.sellerName === 'Admin') && (
+                                        <Button
+                                            size="small"
+                                            variant="contained"
+                                            startIcon={<IconPlus size={16} />}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleOpenAddVariantDialog();
+                                            }}
+                                            sx={{ borderRadius: 1.5, textTransform: 'none' }}
+                                        >
+                                            Add Variant
+                                        </Button>
+                                    )}
                                 </Stack>
                             </AccordionSummary>
                             <AccordionDetails sx={{ p: 0 }}>
@@ -646,10 +922,11 @@ const ProductDetail = () => {
                                             <TableRow>
                                                 <TableCell sx={{ fontWeight: 600 }}>Seller / Company</TableCell>
                                                 <TableCell sx={{ fontWeight: 600 }}>Specifications / Variant</TableCell>
-                                                <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
+                                                <TableCell align="right" sx={{ fontWeight: 600 }}>Pricing</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Stock</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Delivery</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 600 }}>Type</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 600 }}>Action</TableCell>
                                             </TableRow>
                                         </TableHead>
                                         <TableBody>
@@ -720,8 +997,13 @@ const ProductDetail = () => {
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         <Stack alignItems="flex-end" spacing={0.25}>
+                                                            {offer.salePrice && Number(offer.salePrice) > 0 && (
+                                                                <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
+                                                                    ₹{offer.price?.toLocaleString('en-IN')}
+                                                                </Typography>
+                                                            )}
                                                             <Typography variant="subtitle2" fontWeight={700} color="primary.main">
-                                                                ₹{offer.price?.toLocaleString('en-IN')}
+                                                                ₹{(offer.salePrice && Number(offer.salePrice) > 0 ? offer.salePrice : offer.price)?.toLocaleString('en-IN')}
                                                             </Typography>
                                                             {offer.currentPrice === minPriceVariant?.currentPrice && (
                                                                 <Chip 
@@ -754,6 +1036,29 @@ const ProductDetail = () => {
                                                             color={offer.isSeller ? 'primary' : 'secondary'}
                                                             sx={{ fontSize: '0.65rem', height: 20 }}
                                                         />
+                                                    </TableCell>
+                                                    <TableCell align="center">
+                                                        {!offer.isSeller || offer.sellerName === 'Admin' ? (
+                                                            <Button
+                                                                size="small"
+                                                                startIcon={<IconEdit size={14} />}
+                                                                onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                                                                sx={{ textTransform: 'none', py: 0 }}
+                                                            >
+                                                                Edit
+                                                            </Button>
+                                                        ) : (
+                                                            <Button
+                                                                size="small"
+                                                                color="success"
+                                                                variant="outlined"
+                                                                startIcon={<IconPlus size={14} />}
+                                                                onClick={() => handleListProduct(offer)}
+                                                                sx={{ textTransform: 'none', py: 0, fontSize: '0.75rem' }}
+                                                            >
+                                                                Add to List
+                                                            </Button>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -823,12 +1128,12 @@ const ProductDetail = () => {
                                                 size="small"
                                                 sx={{
                                                     mt: 0.5,
-                                                    bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : product.approvalStatus === 'rejected' ? '#ffebee' : '#fff8e1',
-                                                    color: product.approvalStatus === 'approved' ? '#2e7d32' : product.approvalStatus === 'rejected' ? '#d32f2f' : '#f57f17',
+                                                    bgcolor: product.approvalStatus === 'approved' ? '#e8f5e9' : product.approvalStatus === 'rejected' ? '#ffebee' : '#fff3e0',
+                                                    color: product.approvalStatus === 'approved' ? '#2e7d32' : product.approvalStatus === 'rejected' ? '#d32f2f' : '#e65100',
                                                     fontWeight: 600,
                                                     borderRadius: '16px',
                                                     border: '1px solid',
-                                                    borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffecb3',
+                                                    borderColor: product.approvalStatus === 'approved' ? '#c8e6c9' : product.approvalStatus === 'rejected' ? '#ffcdd2' : '#ffe0b2',
                                                     textTransform: 'uppercase',
                                                     fontSize: '0.65rem'
                                                 }}
@@ -863,6 +1168,157 @@ const ProductDetail = () => {
                     </Paper>
                 </Grid>
             </Grid>
+
+            {/* Add Variant Dialog */}
+            <Dialog 
+                open={addVariantDialogOpen} 
+                onClose={() => setAddVariantDialogOpen(false)}
+                maxWidth="md"
+                fullWidth
+            >
+                <DialogTitle sx={{ pb: 1 }}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        {dialogMode === 'add' ? <IconPlus size={20} color="#2196f3" /> : <IconBuildingStore size={20} color="#2196f3" />}
+                        <Typography variant="h3">{dialogMode === 'add' ? 'Add New Variant' : 'List in Our Marketplace'}</Typography>
+                    </Stack>
+                    <Typography variant="caption" color="textSecondary">
+                        {dialogMode === 'add' ? `Create a new configuration for ${product.productName}` : `Adopt this configuration for your listing`}
+                    </Typography>
+                </DialogTitle>
+                <DialogContent dividers>
+                    <Grid container spacing={2} sx={{ mt: 0.5 }}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField
+                                fullWidth
+                                label="MRP (₹)"
+                                type="number"
+                                value={variantFormData.price}
+                                onChange={(e) => handleVariantFieldChange('price', e.target.value)}
+                                required
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField
+                                fullWidth
+                                label="Price (₹)"
+                                type="number"
+                                value={variantFormData.salePrice}
+                                onChange={(e) => handleVariantFieldChange('salePrice', e.target.value)}
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField
+                                fullWidth
+                                label="Stock"
+                                type="number"
+                                value={variantFormData.stock}
+                                onChange={(e) => handleVariantFieldChange('stock', e.target.value)}
+                                required
+                            />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
+                            <TextField
+                                fullWidth
+                                label="Delivery Days"
+                                type="number"
+                                value={variantFormData.deliveryDays}
+                                onChange={(e) => handleVariantFieldChange('deliveryDays', e.target.value)}
+                            />
+                        </Grid>
+                        <Grid size={12}>
+                            <FormControl fullWidth>
+                                <InputLabel>Pickup Address</InputLabel>
+                                <Select
+                                    value={variantFormData.pickupAddress}
+                                    label="Pickup Address"
+                                    onChange={(e) => handleVariantFieldChange('pickupAddress', e.target.value)}
+                                >
+                                    {pickupAddresses.map((addr) => (
+                                        <MenuItem key={addr.id || addr._id} value={addr.id || addr._id}>
+                                            {addr.name} - {addr.city}, {addr.pincode} {addr.isDefault ? '(Default)' : ''}
+                                        </MenuItem>
+                                    ))}
+                                </Select>
+                            </FormControl>
+                        </Grid>
+
+                        <Grid size={12}>
+                            <Typography variant="subtitle1" sx={{ mb: 1, mt: 1, color: 'primary.main', fontWeight: 600 }}>
+                                Variant Attributes
+                            </Typography>
+                            <Grid container spacing={2}>
+                                {variantFormData.attributes.map((attr, idx) => (
+                                    <Grid size={{ xs: 12, sm: 6 }} key={idx}>
+                                        <TextField
+                                            fullWidth
+                                            label={attr.name + (attr.required ? ' *' : '')}
+                                            value={attr.value}
+                                            onChange={(e) => handleVariantAttributeChange(idx, e.target.value)}
+                                            placeholder={`Enter ${attr.name}`}
+                                            required={attr.required}
+                                        />
+                                    </Grid>
+                                ))}
+                            </Grid>
+                        </Grid>
+
+                        <Grid size={12}>
+                            <Typography variant="subtitle1" sx={{ mb: 1, mt: 1, color: 'primary.main', fontWeight: 600 }}>
+                                Variant Images
+                            </Typography>
+                            <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                                {variantPreviewImages.map((preview, idx) => (
+                                    <Box key={idx} sx={{ position: 'relative', width: 100, height: 100 }}>
+                                        <img 
+                                            src={preview} 
+                                            alt={`preview-${idx}`} 
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 8 }} 
+                                        />
+                                        <IconButton
+                                            size="small"
+                                            onClick={() => removeVariantImage(idx)}
+                                            sx={{
+                                                position: 'absolute',
+                                                top: -8,
+                                                right: -8,
+                                                bgcolor: 'error.main',
+                                                color: 'white',
+                                                '&:hover': { bgcolor: 'error.dark' }
+                                            }}
+                                        >
+                                            <IconX size={12} />
+                                        </IconButton>
+                                    </Box>
+                                ))}
+                                <Button
+                                    component="label"
+                                    variant="outlined"
+                                    sx={{ width: 100, height: 100, borderRadius: 2, borderStyle: 'dashed' }}
+                                >
+                                    <Stack alignItems="center">
+                                        <IconUpload size={24} />
+                                        <Typography variant="caption">Upload</Typography>
+                                    </Stack>
+                                    <input type="file" hidden multiple accept="image/*" onChange={handleVariantImageChange} />
+                                </Button>
+                            </Stack>
+                        </Grid>
+                    </Grid>
+                </DialogContent>
+                <DialogActions sx={{ p: 2, bgcolor: '#fdfdfd' }}>
+                    <Button onClick={() => setAddVariantDialogOpen(false)} color="inherit">
+                        Cancel
+                    </Button>
+                    <Button 
+                        onClick={handleSaveVariant} 
+                        variant="contained" 
+                        color="primary"
+                        startIcon={dialogMode === 'add' ? <IconDeviceFloppy size={18} /> : <IconCheck size={18} />}
+                    >
+                        {dialogMode === 'add' ? 'Save Variant' : 'List Now'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </MainCard>
     );
 };

@@ -170,7 +170,7 @@ export const useProducts = () => {
 
     const updateProductApproval = async (id, approvalStatus, rejectionReason = null) => {
         try {
-            const response = await axios.patch(API_ENDPOINTS.PRODUCTS.UPDATE_APPROVAL(id), {
+            const response = await axios.put(API_ENDPOINTS.PRODUCTS.UPDATE_APPROVAL(id), {
                 approvalStatus,
                 rejectionReason
             });
@@ -198,6 +198,20 @@ export const useProducts = () => {
         }
     };
 
+    const addVariant = async (id, formData) => {
+        try {
+            const config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            const response = await axios.post(API_ENDPOINTS.PRODUCTS.ADD_VARIANT(id), formData, config);
+            if (response.data.success) {
+                Swal.fire('Success', 'Variant added successfully', 'success');
+                return true;
+            }
+        } catch (error) {
+            Swal.fire('Error', error.response?.data?.message || 'Failed to add variant', 'error');
+            return false;
+        }
+    };
+
     return {
         products,
         loading,
@@ -212,6 +226,7 @@ export const useProducts = () => {
         createProduct,
         updateProduct,
         updateProductApproval,
-        listFromCatalog
+        listFromCatalog,
+        addVariant
     };
 };

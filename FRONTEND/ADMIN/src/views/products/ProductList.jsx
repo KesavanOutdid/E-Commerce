@@ -11,7 +11,6 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TablePagination,
     TableRow,
     TextField,
     Typography,
@@ -27,7 +26,7 @@ import {
     FormControl,
     InputLabel
 } from '@mui/material';
-import { IconSearch, IconPlus, IconEye, IconEdit, IconBuildingStore } from '@tabler/icons-react';
+import { IconSearch, IconPlus, IconEye, IconEdit } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
@@ -79,9 +78,7 @@ const ProductList = () => {
         handlePageChange,
         handleTypeChange,
         handleFilterChange,
-        updateProductApproval,
-        listFromCatalog,
-        fetchProducts
+        updateProductApproval
     } = useProducts();
 
     const [sellers, setSellers] = useState([]);
@@ -100,56 +97,8 @@ const ProductList = () => {
         fetchSellers();
     }, []);
 
-    const handleQuickList = async (product) => {
-        const { value: formValues } = await Swal.fire({
-            title: 'List in Our Marketplace',
-            html:
-                '<div style="text-align: left; margin-bottom: 10px;">Price (₹)</div>' +
-                `<input id="swal-input1" class="swal2-input" type="number" placeholder="Price" value="${product.price}">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Sale Price (₹)</div>' +
-                `<input id="swal-input2" class="swal2-input" type="number" placeholder="Sale Price" value="${product.salePrice || 0}">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Stock</div>' +
-                `<input id="swal-input3" class="swal2-input" type="number" placeholder="Stock" value="10">` +
-                '<div style="text-align: left; margin-top: 15px; margin-bottom: 10px;">Delivery Days</div>' +
-                '<input id="swal-input4" class="swal2-input" type="number" placeholder="Delivery Days" value="3">',
-            focusConfirm: false,
-            showCancelButton: true,
-            confirmButtonText: 'List Now',
-            preConfirm: () => {
-                return {
-                    price: document.getElementById('swal-input1').value,
-                    salePrice: document.getElementById('swal-input2').value,
-                    stock: document.getElementById('swal-input3').value,
-                    deliveryDays: document.getElementById('swal-input4').value
-                }
-            }
-        });
-
-            if (formValues) {
-                if (!formValues.price || !formValues.stock) {
-                    Swal.fire('Error', 'Price and Stock are required', 'error');
-                    return;
-                }
-
-                // If it's a marketplace product being listed, we need to send it as a variant
-                const variants = [{
-                    price: formValues.price,
-                    salePrice: formValues.salePrice,
-                    stock: formValues.stock,
-                    deliveryDays: formValues.deliveryDays,
-                    attributes: product.attributes || [] // Copy master attributes to variant if needed
-                }];
-
-                const listingPayload = {
-                    productId: product.productId || product._id,
-                    variants: variants
-                };
-
-                const result = await listFromCatalog(listingPayload);
-                if (result) {
-                    fetchProducts(pagination.currentPage);
-                }
-            }
+    const handleQuickList = (product) => {
+        navigate(`/products/view/${product.productId || product._id}`, { state: { openListDialog: true } });
     };
 
     const [search, setSearch] = useState('');
@@ -163,7 +112,8 @@ const ProductList = () => {
     }, [search, handleFilterChange]);
 
     const handleApprovalClick = async (product) => {
-        if (product.approvalStatus !== 'pending') return;
+        const currentStatus = product.approvalStatus || 'pending';
+        if (currentStatus !== 'pending') return;
 
         const result = await Swal.fire({
             title: 'Product Approval',
@@ -239,15 +189,15 @@ const ProductList = () => {
 
         if (status === 'approved') {
             colors = { bg: '#e8f5e9', text: '#2e7d32', border: '#c8e6c9' };
-        } else if (status === 'pending') {
-            colors = { bg: '#fff8e1', text: '#f57f17', border: '#ffecb3' };
+        } else if (status === 'pending' || !status) {
+            colors = { bg: '#fff3e0', text: '#e65100', border: '#ffe0b2' };
         } else if (status === 'rejected') {
-            colors = { bg: '#ffeede', text: '#d32f2f', border: '#ffcdd2' };
+            colors = { bg: '#ffebee', text: '#d32f2f', border: '#ffcdd2' };
         }
 
         return (
             <Chip
-                label={status || 'PENDING'}
+                label={status || 'pending'}
                 size="small"
                 onClick={() => isSellerProduct && handleApprovalClick(product)}
                 sx={{
@@ -259,9 +209,9 @@ const ProductList = () => {
                     borderColor: colors.border,
                     textTransform: 'uppercase',
                     fontSize: '0.65rem',
-                    cursor: (isSellerProduct && status === 'pending') ? 'pointer' : 'default',
+                    cursor: (isSellerProduct && (status === 'pending' || !status)) ? 'pointer' : 'default',
                     '&:hover': {
-                        bgcolor: (isSellerProduct && status === 'pending') ? colors.border : colors.bg
+                        bgcolor: (isSellerProduct && (status === 'pending' || !status)) ? colors.border : colors.bg
                     }
                 }}
             />
@@ -301,6 +251,25 @@ const ProductList = () => {
                     </Grid>
                     <Grid item xs={12} sm={8}>
                         <Stack direction="row" spacing={2} alignItems="center" justifyContent="flex-end">
+                            {productType === 'seller' && (
+                                <FormControl size="small" sx={{ minWidth: 150 }}>
+                                    <InputLabel id="approval-select-label">Approval Status</InputLabel>
+                                    <Select
+                                        labelId="approval-select-label"
+                                        id="approval-select"
+                                        value={filters.approvalStatus || ''}
+                                        label="Approval Status"
+                                        onChange={(e) => handleFilterChange('approvalStatus', e.target.value)}
+                                    >
+                                        <MenuItem value="">
+                                            <em>All Status</em>
+                                        </MenuItem>
+                                        <MenuItem value="pending">Pending</MenuItem>
+                                        <MenuItem value="approved">Approved</MenuItem>
+                                        <MenuItem value="rejected">Rejected</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            )}
                             {productType === 'seller' && (
                                 <FormControl size="small" sx={{ minWidth: 200 }}>
                                     <InputLabel id="seller-select-label">Filter by Seller</InputLabel>
@@ -344,7 +313,7 @@ const ProductList = () => {
                                 <TableCell>Name</TableCell>
                                 <TableCell>Category</TableCell>
                                 <TableCell>Seller</TableCell>
-                                <TableCell align="right">Price</TableCell>
+                                <TableCell align="right">Pricing</TableCell>
                                 <TableCell align="right">Stock</TableCell>
                                 <TableCell align="center">Delivery</TableCell>
                                 <TableCell align="center">Status</TableCell>
@@ -439,6 +408,28 @@ const ProductList = () => {
                                                 >
                                                     <IconEye size={18} />
                                                 </IconButton>
+
+                                                {product.roleId === 2 && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="success"
+                                                        onClick={() => handleQuickList(product)}
+                                                        title="Add to My List"
+                                                    >
+                                                        <IconPlus size={18} />
+                                                    </IconButton>
+                                                )}
+
+                                                {product.roleId === 1 && (
+                                                    <IconButton
+                                                        size="small"
+                                                        color="secondary"
+                                                        onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                                                        title="Edit"
+                                                    >
+                                                        <IconEdit size={18} />
+                                                    </IconButton>
+                                                )}
                                             </Stack>
                                         </TableCell>
                                     </TableRow>

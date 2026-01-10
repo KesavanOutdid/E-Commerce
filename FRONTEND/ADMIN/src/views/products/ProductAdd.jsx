@@ -1,3 +1,4 @@
+// Product Add and Edit View
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -15,12 +16,13 @@ import {
     Autocomplete,
     InputAdornment,
     Tooltip,
+    Chip as MuiChip,
     Dialog,
     DialogTitle,
     DialogContent,
     DialogActions
 } from '@mui/material';
-import { IconArrowLeft, IconUpload, IconX, IconPlus, IconDeviceFloppy, IconEdit } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconX, IconPlus } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
 import { API_ENDPOINTS, API_BASE_URL } from '../../config/apiConfig';
@@ -92,7 +94,20 @@ const ProductAdd = () => {
             try {
                 const response = await axios.get(API_ENDPOINTS.AUTH.PICKUP_ADDRESSES);
                 if (response.data.success) {
-                    setPickupAddresses(response.data.data || []);
+                    const addresses = response.data.data || [];
+                    setPickupAddresses(addresses);
+                    
+                    // Auto-select default address for variants that don't have one
+                    if (addresses.length > 0) {
+                        const defaultAddr = addresses.find(a => a.isDefault) || addresses[0];
+                        setFormData(prev => ({
+                            ...prev,
+                            variants: prev.variants.map(v => ({
+                                ...v,
+                                pickupAddress: v.pickupAddress || defaultAddr
+                            }))
+                        }));
+                    }
                 }
             } catch (error) {
                 console.error("Error fetching pickup addresses", error);
@@ -143,6 +158,7 @@ const ProductAdd = () => {
                             attributes: product.attributes || [],
                             variants: variants.length > 0 ? variants.map(v => ({
                                 variantId: v.variantId,
+                                sellerName: v.sellerName,
                                 price: v.price,
                                 salePrice: v.salePrice || '',
                                 stock: v.stock,
@@ -153,6 +169,7 @@ const ProductAdd = () => {
                                 previewImages: [],
                                 existingImages: v.images || []
                             })) : [{
+                                sellerName: 'Admin',
                                 price: product.price || '',
                                 salePrice: product.salePrice || '',
                                 stock: product.stock || '',
@@ -209,6 +226,30 @@ const ProductAdd = () => {
             }
         }
     }, [subCategories, formData.subCategoryId, isEdit]);
+
+    // Normalize Pickup Address for Variants in Edit Mode
+    useEffect(() => {
+        if (isEdit && pickupAddresses.length > 0) {
+            const needsNormalization = formData.variants.some(v => 
+                v.pickupAddress && typeof v.pickupAddress === 'string'
+            );
+
+            if (needsNormalization) {
+                setFormData(prev => ({
+                    ...prev,
+                    variants: prev.variants.map(v => {
+                        if (v.pickupAddress && typeof v.pickupAddress === 'string') {
+                            const matchedAddr = pickupAddresses.find(a => 
+                                (a.id === v.pickupAddress) || (a._id === v.pickupAddress)
+                            );
+                            return { ...v, pickupAddress: matchedAddr || v.pickupAddress };
+                        }
+                        return v;
+                    })
+                }));
+            }
+        }
+    }, [pickupAddresses, isEdit, formData.variants.length]); // Only run when addresses load or variant count changes during initial load
 
     const fetchSubCategories = async (parentId) => {
         try {
@@ -351,16 +392,18 @@ const ProductAdd = () => {
 
     const addVariant = () => {
         const baseAttributes = formData.variants[0]?.attributes.map(attr => ({ ...attr, value: '' })) || [];
+        const defaultAddr = pickupAddresses.find(a => a.isDefault) || pickupAddresses[0] || null;
         setFormData(prev => ({
             ...prev,
             variants: [
                 ...prev.variants,
                 {
+                    sellerName: 'Admin',
                     price: '',
                     salePrice: '',
                     stock: '',
                     deliveryDays: '3',
-                    pickupAddress: '',
+                    pickupAddress: defaultAddr,
                     attributes: baseAttributes,
                     images: [],
                     previewImages: [],
@@ -494,9 +537,9 @@ const ProductAdd = () => {
             const { images, previewImages, ...vData } = v;
             return {
                 ...vData,
+                // Ensure pickupAddress is just the ID if it's an object
+                pickupAddress: v.pickupAddress?.id || v.pickupAddress?._id || v.pickupAddress,
                 // Provide dummy imageIndices to satisfy backend validation
-                // Backend expects an array of indices into the global 'images' array.
-                // Since we're sending variantSpecificImages, we'll just send [0] or something.
                 imageIndices: images.length > 0 ? images.map((_, idx) => idx) : [0]
             };
         });
@@ -671,206 +714,228 @@ const ProductAdd = () => {
                             </Button>
                         </Stack>
                         
-                        {formData.variants.map((variant, vIndex) => (
-                            <Paper key={vIndex} variant="outlined" sx={{ p: 2, mb: 2, bgcolor: '#fcfcfc' }}>
-                                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                                    <Typography variant="subtitle1" fontWeight={700}>Variant {vIndex + 1}</Typography>
-                                    {formData.variants.length > 1 && (
-                                        <IconButton color="error" size="small" onClick={() => removeVariant(vIndex)}>
-                                            <IconX size={18} />
-                                        </IconButton>
-                                    )}
-                                </Stack>
-                                
-                                <Grid container spacing={2}>
-                                    <Grid item xs={12} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Price"
-                                            type="number"
-                                            value={variant.price}
-                                            onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
-                                            required
-                                            size="small"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Sale Price"
-                                            type="number"
-                                            value={variant.salePrice}
-                                            onChange={(e) => handleVariantChange(vIndex, 'salePrice', e.target.value)}
-                                            size="small"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Stock"
-                                            type="number"
-                                            value={variant.stock}
-                                            onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
-                                            required
-                                            size="small"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12} md={3}>
-                                        <TextField
-                                            fullWidth
-                                            label="Delivery Days"
-                                            type="number"
-                                            value={variant.deliveryDays}
-                                            onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
-                                            required
-                                            size="small"
-                                        />
-                                    </Grid>
-                                    <Grid item xs={12}>
-                                        <Autocomplete
-                                            options={pickupAddresses}
-                                            getOptionLabel={(option) => {
-                                                if (typeof option === 'string') return option;
-                                                const parts = [
-                                                    option.name,
-                                                    option.addressLine1,
-                                                    option.addressLine2,
-                                                    option.landmark,
-                                                    option.city,
-                                                    option.state
-                                                ].filter(Boolean);
-                                                return `${parts.join(', ')} - ${option.pincode}, ${option.country || 'India'}`;
-                                            }}
-                                            isOptionEqualToValue={(option, value) => {
-                                                if (!value) return false;
-                                                return (option.id === value.id) || (option._id === value._id) || (option.name === value.name);
-                                            }}
-                                            value={variant.pickupAddress}
-                                            onChange={(event, newValue) => {
-                                                handleVariantChange(vIndex, 'pickupAddress', newValue);
-                                            }}
-                                            renderInput={(params) => (
-                                                <TextField
-                                                    {...params}
-                                                    fullWidth
-                                                    label="Pickup Address / Warehouse *"
-                                                    placeholder="Search or select warehouse"
-                                                    size="small"
-                                                    required={!variant.pickupAddress}
-                                                    InputProps={{
-                                                        ...params.InputProps,
-                                                        endAdornment: (
-                                                            <>
-                                                                <InputAdornment position="end" sx={{ mr: 2 }}>
-                                                                    <Tooltip title="Add New Pickup Address">
-                                                                        <IconButton 
-                                                                            size="small" 
-                                                                            color="primary" 
-                                                                            onClick={() => handleOpenAddressDialog()}
-                                                                        >
-                                                                            <IconPlus size={18} />
-                                                                        </IconButton>
-                                                                    </Tooltip>
-                                                                </InputAdornment>
-                                                                {params.InputProps.endAdornment}
-                                                            </>
-                                                        )
-                                                    }}
-                                                />
-                                            )}
-                                        />
-                                    </Grid>
+                        {formData.variants.map((variant, vIndex) => {
+                            const isAdminVariant = variant.sellerName === 'Admin';
+                            return (
+                                <Paper key={vIndex} variant="outlined" sx={{ p: 2, mb: 2, bgcolor: isAdminVariant ? '#fcfcfc' : '#f5f5f5', opacity: isAdminVariant ? 1 : 0.8 }}>
+                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+                                        <Stack direction="row" spacing={1} alignItems="center">
+                                            <Typography variant="subtitle1" fontWeight={700}>Variant {vIndex + 1}</Typography>
+                                            {!isAdminVariant && <MuiChip label={variant.sellerName || 'Other Seller'} size="small" color="secondary" variant="outlined" sx={{ height: 20, fontSize: '0.65rem' }} />}
+                                        </Stack>
+                                        {formData.variants.length > 1 && isAdminVariant && (
+                                            <IconButton color="error" size="small" onClick={() => removeVariant(vIndex)}>
+                                                <IconX size={18} />
+                                            </IconButton>
+                                        )}
+                                    </Stack>
                                     
-                                    {/* Variant Attributes */}
-                                    {variant.attributes.length > 0 && (
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField
+                                                fullWidth
+                                                label="Price"
+                                                type="number"
+                                                value={variant.price}
+                                                onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
+                                                required
+                                                size="small"
+                                                disabled={!isAdminVariant}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField
+                                                fullWidth
+                                                label="Sale Price"
+                                                type="number"
+                                                value={variant.salePrice}
+                                                onChange={(e) => handleVariantChange(vIndex, 'salePrice', e.target.value)}
+                                                size="small"
+                                                disabled={!isAdminVariant}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField
+                                                fullWidth
+                                                label="Stock"
+                                                type="number"
+                                                value={variant.stock}
+                                                onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
+                                                required
+                                                size="small"
+                                                disabled={!isAdminVariant}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField
+                                                fullWidth
+                                                label="Delivery Days"
+                                                type="number"
+                                                value={variant.deliveryDays}
+                                                onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
+                                                required
+                                                size="small"
+                                                disabled={!isAdminVariant}
+                                            />
+                                        </Grid>
                                         <Grid item xs={12}>
-                                            <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Specifications for this variant:</Typography>
+                                            <Autocomplete
+                                                options={pickupAddresses}
+                                                disabled={!isAdminVariant}
+                                                getOptionLabel={(option) => {
+                                                    if (typeof option === 'string') return option;
+                                                    const parts = [
+                                                        option.name,
+                                                        option.addressLine1,
+                                                        option.addressLine2,
+                                                        option.landmark,
+                                                        option.city,
+                                                        option.state
+                                                    ].filter(Boolean);
+                                                    return `${parts.join(', ')} - ${option.pincode}, ${option.country || 'India'}`;
+                                                }}
+                                                isOptionEqualToValue={(option, value) => {
+                                                    if (!value) return false;
+                                                    const valId = typeof value === 'string' ? value : (value.id || value._id);
+                                                    return (option.id === valId) || (option._id === valId) || (option.name === (value.name || value));
+                                                }}
+                                                value={variant.pickupAddress}
+                                                onChange={(event, newValue) => {
+                                                    handleVariantChange(vIndex, 'pickupAddress', newValue);
+                                                }}
+                                                renderInput={(params) => (
+                                                    <TextField
+                                                        {...params}
+                                                        fullWidth
+                                                        label="Pickup Address / Warehouse *"
+                                                        placeholder="Search or select warehouse"
+                                                        size="small"
+                                                        required={isAdminVariant && !variant.pickupAddress}
+                                                        InputProps={{
+                                                            ...params.InputProps,
+                                                            endAdornment: (
+                                                                <>
+                                                                    <InputAdornment position="end" sx={{ mr: 2 }}>
+                                                                        <Tooltip title="Add New Pickup Address">
+                                                                            <span>
+                                                                                <IconButton 
+                                                                                    size="small" 
+                                                                                    color="primary" 
+                                                                                    onClick={() => handleOpenAddressDialog()}
+                                                                                    disabled={!isAdminVariant}
+                                                                                >
+                                                                                    <IconPlus size={18} />
+                                                                                </IconButton>
+                                                                            </span>
+                                                                        </Tooltip>
+                                                                    </InputAdornment>
+                                                                    {params.InputProps.endAdornment}
+                                                                </>
+                                                            )
+                                                        }}
+                                                    />
+                                                )}
+                                            />
+                                        </Grid>
+                                        
+                                        {/* Variant Attributes */}
+                                        {variant.attributes.length > 0 && (
+                                            <Grid item xs={12}>
+                                                <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Specifications for this variant:</Typography>
+                                                <Grid container spacing={2}>
+                                                    {variant.attributes.map((attr, aIndex) => (
+                                                        <Grid item xs={12} md={4} key={aIndex}>
+                                                            <TextField
+                                                                fullWidth
+                                                                label={attr.name}
+                                                                placeholder={`Enter ${attr.name}`}
+                                                                value={attr.value}
+                                                                onChange={(e) => handleVariantAttributeChange(vIndex, aIndex, e.target.value)}
+                                                                required={attr.required}
+                                                                size="small"
+                                                                disabled={!isAdminVariant}
+                                                            />
+                                                        </Grid>
+                                                    ))}
+                                                </Grid>
+                                            </Grid>
+                                        )}
+                                        {/* Variant Images */}
+                                        <Grid item xs={12}>
+                                            <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Variant Images *</Typography>
                                             <Grid container spacing={2}>
-                                                {variant.attributes.map((attr, aIndex) => (
-                                                    <Grid item xs={12} md={4} key={aIndex}>
-                                                        <TextField
-                                                            fullWidth
-                                                            label={attr.name}
-                                                            placeholder={`Enter ${attr.name}`}
-                                                            value={attr.value}
-                                                            onChange={(e) => handleVariantAttributeChange(vIndex, aIndex, e.target.value)}
-                                                            required={attr.required}
-                                                            size="small"
-                                                        />
+                                                {variant.existingImages && variant.existingImages.map((img, imgIndex) => (
+                                                    <Grid item key={`exist-${vIndex}-${imgIndex}`}>
+                                                        <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
+                                                            <img
+                                                                src={`${BASE_URL}${img}`}
+                                                                alt="Product"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                                                onError={(e) => { e.target.src = 'https://via.placeholder.com/80x80?text=Error'; }}
+                                                            />
+                                                            {isAdminVariant && (
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                                                    onClick={() => removeExistingImage(vIndex, imgIndex)}
+                                                                >
+                                                                    <IconX size={14} />
+                                                                </IconButton>
+                                                            )}
+                                                        </Box>
                                                     </Grid>
                                                 ))}
-                                            </Grid>
-                                        </Grid>
-                                    )}
-                                    {/* Variant Images */}
-                                    <Grid item xs={12}>
-                                        <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Variant Images *</Typography>
-                                        <Grid container spacing={2}>
-                                            {variant.existingImages && variant.existingImages.map((img, imgIndex) => (
-                                                <Grid item key={`exist-${vIndex}-${imgIndex}`}>
-                                                    <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
-                                                        <img
-                                                            src={`${BASE_URL}${img}`}
-                                                            alt="Product"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                                                            onError={(e) => { e.target.src = 'https://via.placeholder.com/80x80?text=Error'; }}
-                                                        />
-                                                        <IconButton
-                                                            size="small"
-                                                            color="error"
-                                                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
-                                                            onClick={() => removeExistingImage(vIndex, imgIndex)}
-                                                        >
-                                                            <IconX size={14} />
-                                                        </IconButton>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
 
-                                            {variant.previewImages && variant.previewImages.map((img, imgIndex) => (
-                                                <Grid item key={`new-${vIndex}-${imgIndex}`}>
-                                                    <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
-                                                        <img
-                                                            src={img}
-                                                            alt="Preview"
-                                                            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
-                                                        />
-                                                        <IconButton
-                                                            size="small"
-                                                            color="error"
-                                                            sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
-                                                            onClick={() => removeImage(vIndex, imgIndex)}
-                                                        >
-                                                            <IconX size={14} />
-                                                        </IconButton>
-                                                    </Box>
-                                                </Grid>
-                                            ))}
+                                                {variant.previewImages && variant.previewImages.map((img, imgIndex) => (
+                                                    <Grid item key={`new-${vIndex}-${imgIndex}`}>
+                                                        <Box sx={{ position: 'relative', width: 80, height: 80, border: '1px solid #ddd', borderRadius: 1 }}>
+                                                            <img
+                                                                src={img}
+                                                                alt="Preview"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                                            />
+                                                            {isAdminVariant && (
+                                                                <IconButton
+                                                                    size="small"
+                                                                    color="error"
+                                                                    sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                                                    onClick={() => removeImage(vIndex, imgIndex)}
+                                                                >
+                                                                    <IconX size={14} />
+                                                                </IconButton>
+                                                            )}
+                                                        </Box>
+                                                    </Grid>
+                                                ))}
 
-                                            <Grid item>
-                                                <Button
-                                                    variant="outlined"
-                                                    component="label"
-                                                    sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
-                                                >
-                                                    <Stack alignItems="center" spacing={0.5}>
-                                                        <IconUpload size={20} />
-                                                        <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Upload</Typography>
-                                                    </Stack>
-                                                    <input
-                                                        type="file"
-                                                        hidden
-                                                        multiple
-                                                        accept="image/*"
-                                                        onChange={(e) => handleImageChange(e, vIndex)}
-                                                    />
-                                                </Button>
+                                                {isAdminVariant && (
+                                                    <Grid item>
+                                                        <Button
+                                                            variant="outlined"
+                                                            component="label"
+                                                            sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
+                                                        >
+                                                            <Stack alignItems="center" spacing={0.5}>
+                                                                <IconUpload size={20} />
+                                                                <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Upload</Typography>
+                                                            </Stack>
+                                                            <input
+                                                                type="file"
+                                                                hidden
+                                                                multiple
+                                                                accept="image/*"
+                                                                onChange={(e) => handleImageChange(e, vIndex)}
+                                                            />
+                                                        </Button>
+                                                    </Grid>
+                                                )}
                                             </Grid>
                                         </Grid>
                                     </Grid>
-                                </Grid>
-                            </Paper>
-                        ))}
+                                </Paper>
+                            );
+                        })}
                     </Grid>
 
                     <Grid item xs={12}>
