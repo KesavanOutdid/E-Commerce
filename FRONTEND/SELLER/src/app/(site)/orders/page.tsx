@@ -125,7 +125,7 @@ export default function OrdersPage() {
                                             {/* <span>Manage your customer orders</span> */}
                                         </p>
                                         {/* <span className="px-2.5 py-0.5 bg-primary/10 text-primary rounded-full text-xs font-semibold">
-                                            {totalOrders} total
+                                            {totalOrders} totalaas
                                         </span> */}
                                     </div>
                                 </div>
