@@ -648,20 +648,40 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
+    const { id } = req.params;
+
+    // 1. Try to find and delete as a Product Master
+    const product = await Product.findById(id);
+    if (product) {
+      await Product.delete(id);
+      
+      // Also delete all associated variants
+      await ProductVariant.collection().deleteMany({ productId: product.productId });
+      
+      await deleteCachePattern('products:list:*');
+      await deleteCache(`products:detail:${id}`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Product and all its variants deleted successfully' 
+      });
     }
 
-    await Product.delete(req.params.id);
-    
-    await deleteCachePattern('products:list:*');
-    await deleteCache(`products:detail:${req.params.id}`);
+    // 2. Try to find and delete as a Variant
+    const variant = await ProductVariant.findById(id);
+    if (variant) {
+      await ProductVariant.delete(id);
+      
+      await deleteCachePattern('products:list:*');
+      await deleteCache(`products:detail:${variant.productId}`);
 
-    res.status(200).json({ 
-      success: true, 
-      message: 'Product deleted successfully' 
-    });
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Variant deleted successfully' 
+      });
+    }
+
+    return res.status(404).json({ success: false, message: 'Product or Variant not found' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

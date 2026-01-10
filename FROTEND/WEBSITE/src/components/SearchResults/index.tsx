@@ -12,7 +12,7 @@ const SearchResults = () => {
 
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [productStyle, setProductStyle] = useState("grid");
+  const [productStyle, setProductStyle] = useState("list");
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationData, setPaginationData] = useState<any>(null);
 
@@ -77,30 +77,6 @@ const SearchResults = () => {
                   </div>
 
                   <div className="flex items-center gap-2.5">
-                    <button
-                      onClick={() => setProductStyle("grid")}
-                      className={`${
-                        productStyle === "grid"
-                          ? "bg-blue border-blue text-white"
-                          : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
-                      </svg>
-                    </button>
-                    <button
-                      onClick={() => setProductStyle("list")}
-                      className={`${
-                        productStyle === "list"
-                          ? "bg-blue border-blue text-white"
-                          : "text-dark bg-gray-1 border-gray-3"
-                      } flex items-center justify-center w-10.5 h-9 rounded-[5px] border ease-out duration-200 hover:bg-blue hover:border-blue hover:text-white`}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="3" y="3" width="18" height="4"/><rect x="3" y="9" width="18" height="4"/><rect x="3" y="15" width="18" height="4"/>
-                      </svg>
-                    </button>
                   </div>
                 </div>
               </div>

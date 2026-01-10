@@ -49,6 +49,13 @@ class Product {
     );
     return result.value;
   }
+
+  static async delete(id) {
+    const query = ObjectId.isValid(id) 
+      ? { $or: [{ _id: new ObjectId(id) }, { productId: id }] }
+      : { productId: id };
+    return await this.collection().deleteOne(query);
+  }
 }
 
 module.exports = Product;
