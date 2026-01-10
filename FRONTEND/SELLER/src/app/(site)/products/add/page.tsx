@@ -64,6 +64,7 @@ export default function AddProductPage() {
     const [existingProduct, setExistingProduct] = useState<any>(null)
     const [showVariantOnlyMode, setShowVariantOnlyMode] = useState(false)
     const productCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const isAutoFillingRef = useRef(false)
 
     useEffect(() => {
         if (isLoading) return
@@ -87,14 +88,16 @@ export default function AddProductPage() {
     useEffect(() => {
         if (formData.mainCategoryId) {
             fetchSubCategories(formData.mainCategoryId)
-            setFormData(prev => ({ ...prev, subCategoryId: '' }))
-            setSubCategoryAttributes([])
+            if (!isAutoFillingRef.current) {
+                setFormData(prev => ({ ...prev, subCategoryId: '' }))
+                setSubCategoryAttributes([])
+            }
         }
     }, [formData.mainCategoryId])
 
     useEffect(() => {
         const loadSubCategoryAttributes = async () => {
-            if (formData.subCategoryId) {
+            if (formData.subCategoryId && subCategories.length > 0) {
                 const subCategory = subCategories.find((cat: any) =>
                     cat.subCategoryId === formData.subCategoryId || cat._id === formData.subCategoryId
                 )
@@ -102,13 +105,29 @@ export default function AddProductPage() {
                     setSubCategoryAttributes(subCategory.attributes)
                     setCommissionPercentage(subCategory.commissionPercentage || 0)
 
-                    setVariants(prev => prev.map(variant => ({
-                        ...variant,
-                        attributes: subCategory.attributes.map((attr: any) => ({
-                            name: attr.name,
-                            value: ''
-                        }))
-                    })))
+                    if (!isAutoFillingRef.current) {
+                        setVariants(prev => prev.map(variant => ({
+                            ...variant,
+                            attributes: subCategory.attributes.map((attr: any) => ({
+                                name: attr.name,
+                                value: ''
+                            }))
+                        })))
+                    } else {
+                        setVariants([{
+                            price: '',
+                            salePrice: '',
+                            stock: '',
+                            deliveryDays: '3',
+                            pickupAddress: '',
+                            attributes: subCategory.attributes.map((attr: any) => ({
+                                name: attr.name,
+                                value: ''
+                            })),
+                            imageIndices: [],
+                            images: []
+                        }])
+                    }
                 } else {
                     setSubCategoryAttributes([])
                     setCommissionPercentage(0)
@@ -123,21 +142,44 @@ export default function AddProductPage() {
             clearTimeout(productCheckTimeoutRef.current)
         }
 
-        if (formData.productName.trim().length > 2) {
+        if (formData.productName.trim().length > 2 && !showVariantOnlyMode) {
             productCheckTimeoutRef.current = setTimeout(async () => {
                 const result = await checkProductBySlug(formData.productName.trim())
                 if (result && result.exists) {
                     setExistingProduct(result.product)
-                    setShowVariantOnlyMode(!result.alreadyListed)
                     if (result.alreadyListed) {
                         toast.error('You have already listed this product')
+                        setShowVariantOnlyMode(false)
+                    } else {
+                        setShowVariantOnlyMode(true)
+                        isAutoFillingRef.current = true
+                        setFormData({
+                            productName: result.product.productName || '',
+                            mainCategoryId: result.product.mainCategoryId || '',
+                            subCategoryId: result.product.subCategoryId || '',
+                            description: result.product.description || '',
+                            shortDescription: result.product.shortDescription || '',
+                            brand: result.product.brand || '',
+                            warranty: result.product.warranty || '',
+                        })
+                        if (result.product.highlights && result.product.highlights.length > 0) {
+                            setHighlights(result.product.highlights)
+                            setShowHighlights(true)
+                        }
+                        if (result.product.specifications && result.product.specifications.length > 0) {
+                            setSpecifications(result.product.specifications)
+                            setShowSpecifications(true)
+                        }
+                        setTimeout(() => {
+                            isAutoFillingRef.current = false
+                        }, 1000)
                     }
                 } else {
                     setExistingProduct(null)
                     setShowVariantOnlyMode(false)
                 }
             }, 500)
-        } else {
+        } else if (!showVariantOnlyMode) {
             setExistingProduct(null)
             setShowVariantOnlyMode(false)
         }
@@ -281,13 +323,22 @@ export default function AddProductPage() {
     }
 
     const isFormValid = () => {
+        const validateVariant = (v: Variant) => {
+            const priceValid = v.price.trim() !== ''
+            const stockValid = v.stock.trim() !== ''
+            const imagesValid = v.images.length > 0
+            
+            const attributesValid = v.attributes.every(a => {
+                const subCatAttr = subCategoryAttributes.find((attr: any) => attr.name === a.name)
+                const isRequired = subCatAttr?.required ?? true
+                return !isRequired || a.value.trim() !== ''
+            })
+            
+            return priceValid && stockValid && attributesValid && imagesValid
+        }
+
         if (showVariantOnlyMode) {
-            return variants.every(v =>
-                v.price.trim() !== '' &&
-                v.stock.trim() !== '' &&
-                v.attributes.every(a => a.value.trim() !== '') &&
-                v.images.length > 0
-            )
+            return variants.every(validateVariant)
         }
 
         return (
@@ -296,12 +347,7 @@ export default function AddProductPage() {
             formData.subCategoryId !== '' &&
             formData.description.trim() !== '' &&
             formData.shortDescription.trim() !== '' &&
-            variants.every(v =>
-                v.price.trim() !== '' &&
-                v.stock.trim() !== '' &&
-                v.attributes.every(a => a.value.trim() !== '') &&
-                v.images.length > 0
-            )
+            variants.every(validateVariant)
         )
     }
 
@@ -320,7 +366,20 @@ export default function AddProductPage() {
             variantFormData.append('deliveryDays', variant.deliveryDays)
             if (variant.pickupAddress) variantFormData.append('pickupAddress', variant.pickupAddress)
 
-            const validAttributes = variant.attributes.filter(attr => attr.value.trim() !== '')
+            const validAttributes = variant.attributes
+                .filter(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    const isRequired = subCatAttr?.required ?? true
+                    return isRequired ? attr.value.trim() !== '' : true
+                })
+                .map(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    return {
+                        name: attr.name,
+                        value: attr.value,
+                        required: subCatAttr?.required ?? true
+                    }
+                })
             if (validAttributes.length > 0) {
                 variantFormData.append('attributes', JSON.stringify(validAttributes))
             }
@@ -374,7 +433,20 @@ export default function AddProductPage() {
             stock: parseInt(variant.stock),
             deliveryDays: parseInt(variant.deliveryDays) || 3,
             pickupAddress: variant.pickupAddress || null,
-            attributes: variant.attributes.filter(attr => attr.value.trim() !== '')
+            attributes: variant.attributes
+                .filter(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    const isRequired = subCatAttr?.required ?? true
+                    return isRequired ? attr.value.trim() !== '' : true
+                })
+                .map(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    return {
+                        name: attr.name,
+                        value: attr.value,
+                        required: subCatAttr?.required ?? true
+                    }
+                })
         }))
 
         productFormData.append('variants', JSON.stringify(variantsData))
@@ -496,72 +568,80 @@ export default function AddProductPage() {
 
                         <form onSubmit={handleSubmit}>
                             {/* Basic Information */}
-                            {!showVariantOnlyMode && (
-                                <>
-                                    <div className="mb-6">
-                                        <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
-                                            <Icon icon="mdi:information" width={20} height={20} className="text-primary" />
-                                            Basic Information
-                                        </h2>
-                                        <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg space-y-3">
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                    Product Name <span className="text-red-500">*</span>
-                                                </label>
-                                                <input
-                                                    type="text"
-                                                    value={formData.productName}
-                                                    onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                    required
-                                                />
-                                                {existingProduct && !showVariantOnlyMode && (
-                                                    <div className="mt-2 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
-                                                        <p className="text-xs font-medium text-yellow-800 flex items-center gap-1.5">
-                                                            <Icon icon="mdi:alert" width={16} height={16} />
-                                                            Similar product exists in catalog
-                                                        </p>
-                                                    </div>
-                                                )}
+                            <div className="mb-6">
+                                <h2 className="text-lg font-semibold text-black mb-3 flex items-center gap-2">
+                                    <Icon icon="mdi:information" width={20} height={20} className="text-primary" />
+                                    Basic Information
+                                </h2>
+                                {showVariantOnlyMode && (
+                                    <div className="mb-3 p-3 rounded-lg bg-green-50 border border-green-200">
+                                        <p className="text-xs font-medium text-green-800 flex items-center gap-1.5">
+                                            <Icon icon="mdi:check-circle" width={16} height={16} />
+                                            Product exists, you can add your price and stock
+                                        </p>
+                                    </div>
+                                )}
+                                <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg space-y-3">
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                            Product Name <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={formData.productName}
+                                            onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                                            className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                            required
+                                            disabled={showVariantOnlyMode}
+                                        />
+                                        {existingProduct && !showVariantOnlyMode && (
+                                            <div className="mt-2 p-2 rounded-lg bg-yellow-50 border border-yellow-200">
+                                                <p className="text-xs font-medium text-yellow-800 flex items-center gap-1.5">
+                                                    <Icon icon="mdi:alert" width={16} height={16} />
+                                                    Similar product exists in catalog
+                                                </p>
                                             </div>
+                                        )}
+                                    </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                        Main Category <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <select
-                                                        value={formData.mainCategoryId}
-                                                        onChange={(e) => setFormData({ ...formData, mainCategoryId: e.target.value })}
-                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        required>
-                                                        <option value="">Select Main Category</option>
-                                                        {mainCategories.map((category: any) => (
-                                                            <option key={category._id} value={category.categoryId}>
-                                                                {category.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                        Sub Category <span className="text-red-500">*</span>
-                                                    </label>
-                                                    <select
-                                                        value={formData.subCategoryId}
-                                                        onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })}
-                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        required
-                                                        disabled={!formData.mainCategoryId}>
-                                                        <option value="">Select Sub Category</option>
-                                                        {subCategories.map((category: any) => (
-                                                            <option key={category._id} value={category.subCategoryId}>
-                                                                {category.name}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Main Category <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                value={formData.mainCategoryId}
+                                                onChange={(e) => setFormData({ ...formData, mainCategoryId: e.target.value })}
+                                                className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                                required
+                                                disabled={showVariantOnlyMode}>
+                                                <option value="">Select Main Category</option>
+                                                {mainCategories.map((category: any) => (
+                                                    <option key={category._id} value={category.categoryId}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Sub Category <span className="text-red-500">*</span>
+                                            </label>
+                                            <select
+                                                value={formData.subCategoryId}
+                                                onChange={(e) => setFormData({ ...formData, subCategoryId: e.target.value })}
+                                                className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                                required
+                                                disabled={showVariantOnlyMode || !formData.mainCategoryId}>
+                                                <option value="">Select Sub Category</option>
+                                                {subCategories.map((category: any) => (
+                                                    <option key={category._id} value={category.subCategoryId}>
+                                                        {category.name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                    </div>
 
                                             {subCategoryAttributes.length > 0 && (
                                                 <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
@@ -572,60 +652,64 @@ export default function AddProductPage() {
                                                 </div>
                                             )}
 
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                        Brand
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.brand}
-                                                        onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        placeholder="e.g., Samsung, Apple"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                        Warranty
-                                                    </label>
-                                                    <input
-                                                        type="text"
-                                                        value={formData.warranty}
-                                                        onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
-                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        placeholder="e.g., 2 years, 6 months"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                    Short Description <span className="text-red-500">*</span>
-                                                </label>
-                                                <textarea
-                                                    value={formData.shortDescription}
-                                                    onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
-                                                    rows={3}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                    required
-                                                />
-                                            </div>
-
-                                            <div>
-                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                    Description <span className="text-red-500">*</span>
-                                                </label>
-                                                <textarea
-                                                    value={formData.description}
-                                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                                    rows={5}
-                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                    required
-                                                />
-                                            </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Brand
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.brand}
+                                                onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                                                className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                                placeholder="e.g., Samsung, Apple"
+                                                disabled={showVariantOnlyMode}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                Warranty
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={formData.warranty}
+                                                onChange={(e) => setFormData({ ...formData, warranty: e.target.value })}
+                                                className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                                placeholder="e.g., 2 years, 6 months"
+                                                disabled={showVariantOnlyMode}
+                                            />
                                         </div>
                                     </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                            Short Description <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            value={formData.shortDescription}
+                                            onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                                            rows={3}
+                                            className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                            required
+                                            disabled={showVariantOnlyMode}
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                            Description <span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            value={formData.description}
+                                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                            rows={5}
+                                            className={`w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
+                                            required
+                                            disabled={showVariantOnlyMode}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
 
                                     {/* Highlights and Specifications - Two Column Layout */}
                                     <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,27 +729,32 @@ export default function AddProductPage() {
                                                                 type="text"
                                                                 value={highlight}
                                                                 onChange={(e) => updateHighlight(index, e.target.value)}
-                                                                className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                className={`flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                                                                 placeholder="Enter highlight"
+                                                                disabled={showVariantOnlyMode}
                                                             />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    removeHighlight(index)
-                                                                    if (highlights.length === 1) setShowHighlights(false)
-                                                                }}
-                                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors">
-                                                                <Icon icon="mdi:close" width={18} height={18} />
-                                                            </button>
+                                                            {!showVariantOnlyMode && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        removeHighlight(index)
+                                                                        if (highlights.length === 1) setShowHighlights(false)
+                                                                    }}
+                                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors">
+                                                                    <Icon icon="mdi:close" width={18} height={18} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     ))}
-                                                    <button
-                                                        type="button"
-                                                        onClick={addHighlight}
-                                                        className="flex items-center gap-1.5 text-primary hover:text-primary/80 transition text-sm font-medium mt-2">
-                                                        <Icon icon="mdi:plus-circle" width={18} height={18} />
-                                                        Add Another Highlight
-                                                    </button>
+                                                    {!showVariantOnlyMode && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={addHighlight}
+                                                            className="flex items-center gap-1.5 text-primary hover:text-primary/80 transition text-sm font-medium mt-2">
+                                                            <Icon icon="mdi:plus-circle" width={18} height={18} />
+                                                            Add Another Highlight
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <button
@@ -697,34 +786,40 @@ export default function AddProductPage() {
                                                                 type="text"
                                                                 value={spec.name}
                                                                 onChange={(e) => updateSpecification(index, 'name', e.target.value)}
-                                                                className="w-1/3 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                className={`w-1/3 rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                                                                 placeholder="Name (e.g., Processor)"
+                                                                disabled={showVariantOnlyMode}
                                                             />
                                                             <input
                                                                 type="text"
                                                                 value={spec.value}
                                                                 onChange={(e) => updateSpecification(index, 'value', e.target.value)}
-                                                                className="flex-1 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                className={`flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm text-black outline-none transition focus:border-primary ${showVariantOnlyMode ? 'bg-gray-100 cursor-not-allowed' : 'bg-white'}`}
                                                                 placeholder="Value (e.g., Snapdragon 8 Gen 2)"
+                                                                disabled={showVariantOnlyMode}
                                                             />
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    removeSpecification(index)
-                                                                    if (specifications.length === 1) setShowSpecifications(false)
-                                                                }}
-                                                                className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors">
-                                                                <Icon icon="mdi:close" width={18} height={18} />
-                                                            </button>
+                                                            {!showVariantOnlyMode && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        removeSpecification(index)
+                                                                        if (specifications.length === 1) setShowSpecifications(false)
+                                                                    }}
+                                                                    className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors">
+                                                                    <Icon icon="mdi:close" width={18} height={18} />
+                                                                </button>
+                                                            )}
                                                         </div>
                                                     ))}
-                                                    <button
-                                                        type="button"
-                                                        onClick={addSpecification}
-                                                        className="flex items-center gap-1.5 text-primary hover:text-primary/80 transition text-sm font-medium mt-2">
-                                                        <Icon icon="mdi:plus-circle" width={18} height={18} />
-                                                        Add Another Specification
-                                                    </button>
+                                                    {!showVariantOnlyMode && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={addSpecification}
+                                                            className="flex items-center gap-1.5 text-primary hover:text-primary/80 transition text-sm font-medium mt-2">
+                                                            <Icon icon="mdi:plus-circle" width={18} height={18} />
+                                                            Add Another Specification
+                                                        </button>
+                                                    )}
                                                 </div>
                                             ) : (
                                                 <button
@@ -741,8 +836,6 @@ export default function AddProductPage() {
                                             )}
                                         </div>
                                     </div>
-                                </>
-                            )}
 
                             {/* Variants */}
                             <div className="mb-6">
@@ -751,15 +844,18 @@ export default function AddProductPage() {
                                         <Icon icon="mdi:layers" width={20} height={20} className="text-primary" />
                                         Product Variants <span className="text-red-500">*</span>
                                     </h2>
-                                    {!showVariantOnlyMode && (
-                                        <button
-                                            type="button"
-                                            onClick={addVariantToList}
-                                            className="flex items-center gap-1.5 bg-primary text-white px-3 py-1.5 text-xs rounded-lg hover:bg-primary/90 transition font-medium">
-                                            <Icon icon="mdi:plus" width={16} height={16} />
-                                            Add Variant
-                                        </button>
-                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={addVariantToList}
+                                        disabled={showVariantOnlyMode ? !subCategoryAttributes.length : false}
+                                        className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg transition font-medium ${
+                                            (showVariantOnlyMode && !subCategoryAttributes.length)
+                                                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                : 'bg-primary text-white hover:bg-primary/90'
+                                        }`}>
+                                        <Icon icon="mdi:plus" width={16} height={16} />
+                                        Add Variant
+                                    </button>
                                 </div>
                                 <div className="space-y-4">
                                     {variants.map((variant, variantIndex) => (
@@ -911,21 +1007,27 @@ export default function AddProductPage() {
                                                         </label>
                                                         <p className="text-xs text-gray-600 mb-2">These attributes are specific to this variant</p>
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                            {variant.attributes.map((attr, attrIndex) => (
-                                                                <div key={attrIndex}>
-                                                                    <label className="block text-xs text-gray-600 mb-1">
-                                                                        {attr.name} <span className="text-red-500">*</span>
-                                                                    </label>
-                                                                    <input
-                                                                        type="text"
-                                                                        value={attr.value}
-                                                                        onChange={(e) => updateVariantAttribute(variantIndex, attrIndex, e.target.value)}
-                                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                                        placeholder={`Enter ${attr.name.toLowerCase()}`}
-                                                                        required
-                                                                    />
-                                                                </div>
-                                                            ))}
+                                                            {variant.attributes.map((attr, attrIndex) => {
+                                                                const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                                                                const isRequired = subCatAttr?.required ?? true
+                                                                const inputType = subCatAttr?.type === 'number' ? 'number' : subCatAttr?.type === 'boolean' ? 'text' : 'text'
+                                                                
+                                                                return (
+                                                                    <div key={attrIndex}>
+                                                                        <label className="block text-xs text-gray-600 mb-1">
+                                                                            {attr.name} {isRequired && <span className="text-red-500">*</span>}
+                                                                        </label>
+                                                                        <input
+                                                                            type={inputType}
+                                                                            value={attr.value}
+                                                                            onChange={(e) => updateVariantAttribute(variantIndex, attrIndex, e.target.value)}
+                                                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                            placeholder={`Enter ${attr.name.toLowerCase()}`}
+                                                                            required={isRequired}
+                                                                        />
+                                                                    </div>
+                                                                )
+                                                            })}
                                                         </div>
                                                     </div>
                                                 ) : (

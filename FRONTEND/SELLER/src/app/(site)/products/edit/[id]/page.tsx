@@ -231,12 +231,19 @@ export default function EditProductPage() {
             formData.subCategoryId !== '' &&
             formData.description.trim() !== '' &&
             formData.shortDescription.trim() !== '' &&
-            variants.every(v =>
-                v.price.trim() !== '' &&
-                v.stock.trim() !== '' &&
-                v.attributes.every(a => a.value.trim() !== '') &&
-                (v.images.length > 0 || v.existingImages.length > 0)
-            )
+            variants.every(v => {
+                const priceValid = v.price.trim() !== ''
+                const stockValid = v.stock.trim() !== ''
+                const imagesValid = v.images.length > 0 || v.existingImages.length > 0
+                
+                const attributesValid = v.attributes.every(a => {
+                    const subCatAttr = subCategoryAttributes.find((attr: any) => attr.name === a.name)
+                    const isRequired = subCatAttr?.required ?? true
+                    return !isRequired || a.value.trim() !== ''
+                })
+                
+                return priceValid && stockValid && attributesValid && imagesValid
+            })
         )
     }
 
@@ -339,7 +346,20 @@ export default function EditProductPage() {
             stock: parseInt(variant.stock),
             deliveryDays: parseInt(variant.deliveryDays) || 3,
             pickupAddress: variant.pickupAddress || null,
-            attributes: variant.attributes.filter(attr => attr.value.trim() !== ''),
+            attributes: variant.attributes
+                .filter(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    const isRequired = subCatAttr?.required ?? true
+                    return isRequired ? attr.value.trim() !== '' : true
+                })
+                .map(attr => {
+                    const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                    return {
+                        name: attr.name,
+                        value: attr.value,
+                        required: subCatAttr?.required ?? true
+                    }
+                }),
             existingImages: variant.existingImages
         }))
 
@@ -795,21 +815,27 @@ export default function EditProductPage() {
                                                     </label>
                                                     <p className="text-xs text-gray-600 mb-2">These attributes are specific to this variant</p>
                                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                        {variant.attributes.map((attr, attrIndex) => (
-                                                            <div key={attrIndex}>
-                                                                <label className="block text-xs text-gray-600 mb-1">
-                                                                    {attr.name} <span className="text-red-500">*</span>
-                                                                </label>
-                                                                <input
-                                                                    type="text"
-                                                                    value={attr.value}
-                                                                    onChange={(e) => updateVariantAttribute(variantIndex, attrIndex, e.target.value)}
-                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                                    placeholder={`Enter ${attr.name.toLowerCase()}`}
-                                                                    required
-                                                                />
-                                                            </div>
-                                                        ))}
+                                                        {variant.attributes.map((attr, attrIndex) => {
+                                                            const subCatAttr = subCategoryAttributes.find((a: any) => a.name === attr.name)
+                                                            const isRequired = subCatAttr?.required ?? true
+                                                            const inputType = subCatAttr?.type === 'number' ? 'number' : subCatAttr?.type === 'boolean' ? 'text' : 'text'
+                                                            
+                                                            return (
+                                                                <div key={attrIndex}>
+                                                                    <label className="block text-xs text-gray-600 mb-1">
+                                                                        {attr.name} {isRequired && <span className="text-red-500">*</span>}
+                                                                    </label>
+                                                                    <input
+                                                                        type={inputType}
+                                                                        value={attr.value}
+                                                                        onChange={(e) => updateVariantAttribute(variantIndex, attrIndex, e.target.value)}
+                                                                        className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                        placeholder={`Enter ${attr.name.toLowerCase()}`}
+                                                                        required={isRequired}
+                                                                    />
+                                                                </div>
+                                                            )
+                                                        })}
                                                     </div>
                                                 </div>
                                             )}

@@ -71,7 +71,7 @@ exports.createProduct = async (req, res) => {
             const variantData = variants[i];
             const hasImageIndices = variantData.imageIndices && Array.isArray(variantData.imageIndices) && variantData.imageIndices.length > 0;
             const hasVariantFiles = req.files && req.files.some(f => f.fieldname === `variantImages_${i}`);
-            
+
             if (!hasImageIndices && !hasVariantFiles) {
                 return res.status(400).json({
                     success: false,
@@ -154,12 +154,12 @@ exports.createProduct = async (req, res) => {
         // 2. Create Variants (The "Specific Offers" entries)
         for (let i = 0; i < variants.length; i++) {
             const variantData = variants[i];
-            
+
             // Get images specifically for this variant
-            const variantSpecificFiles = req.files 
+            const variantSpecificFiles = req.files
                 ? req.files.filter(f => f.fieldname === `variantImages_${i}`).map(file => `/uploads/products/${file.filename}`)
                 : [];
-            
+
             // If imageIndices are provided, pick from the master images
             let variantImages = [];
             if (variantData.imageIndices && Array.isArray(variantData.imageIndices) && variantData.imageIndices.length > 0) {
@@ -188,7 +188,7 @@ exports.createProduct = async (req, res) => {
                 pickupAddress: variantData.pickupAddress || null,
                 approvalStatus: 'pending'
             });
-            
+
             variantsCreated.push(variant.variantId);
         }
 
@@ -240,7 +240,7 @@ exports.getProducts = async (req, res) => {
             const [mainCategory, subCategory, variants] = await Promise.all([
                 product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
                 product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-                ProductVariant.collection().find({ 
+                ProductVariant.collection().find({
                     productId: product.productId,
                     sellerId: sellerId
                 }).toArray()
@@ -303,14 +303,14 @@ exports.updateProduct = async (req, res) => {
                 try { parsedVariants = JSON.parse(parsedVariants); } catch (e) { parsedVariants = undefined; }
             }
 
-            const updateData = { 
-                productName, 
-                description, 
+            const updateData = {
+                productName,
+                description,
                 shortDescription,
                 attributes: attributes !== undefined ? attributes : undefined
             };
             if (productName) updateData.slug = slugify(productName);
-            
+
             if (req.files && req.files.length > 0) {
                 const masterImages = req.files.filter(f => f.fieldname === 'images').map(file => `/uploads/products/${file.filename}`);
                 if (masterImages.length > 0) {
@@ -343,14 +343,14 @@ exports.updateProduct = async (req, res) => {
                             const newVariantImages = req.files
                                 .filter(f => f.fieldname === `variantImages_${i}`)
                                 .map(file => `/uploads/products/${file.filename}`);
-                            
+
                             if (newVariantImages.length > 0) {
                                 variantUpdateData.images = [...(variantUpdateData.images || []), ...newVariantImages];
                             }
                         }
 
                         Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
-                        
+
                         // Ensure this variant belongs to the seller
                         const existingVariant = await ProductVariant.findById(vData.variantId);
                         if (existingVariant && existingVariant.sellerId.toString() === req.userId.toString()) {
@@ -409,9 +409,9 @@ exports.getProductById = async (req, res) => {
         const sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
 
         // 1. Fetch Master Product (Ensure it belongs to THIS seller)
-        const product = await Product.collection().findOne({ 
+        const product = await Product.collection().findOne({
             productId: id,
-            userId: sellerId 
+            userId: sellerId
         });
 
         if (!product) {
@@ -419,7 +419,7 @@ exports.getProductById = async (req, res) => {
         }
 
         // 2. Fetch only variants belonging to THIS seller for this product
-        const variants = await ProductVariant.collection().find({ 
+        const variants = await ProductVariant.collection().find({
             productId: product.productId,
             sellerId: sellerId
         }).toArray();
@@ -428,7 +428,7 @@ exports.getProductById = async (req, res) => {
         const [mainCategory, subCategory, user] = await Promise.all([
             product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
             product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-            User.collection().findOne({ 
+            User.collection().findOne({
                 $or: [
                     { userId: product.userId ? product.userId.toString() : null },
                     { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
@@ -445,7 +445,7 @@ exports.getProductById = async (req, res) => {
             currentPrice: parseFloat(variant.salePrice) > 0 ? parseFloat(variant.salePrice) : parseFloat(variant.price)
         }));
 
-        const minPriceVariant = variantsWithDetails.length > 0 
+        const minPriceVariant = variantsWithDetails.length > 0
             ? variantsWithDetails.reduce((prev, curr) => (prev.currentPrice < curr.currentPrice ? prev : curr))
             : null;
 
@@ -498,7 +498,7 @@ exports.deleteProduct = async (req, res) => {
             if (masterProduct.userId.toString() !== req.userId.toString()) {
                 return res.status(403).json({ success: false, message: 'Not authorized to delete this master product' });
             }
-            
+
             // Delete Master and all its Variants
             await Promise.all([
                 Product.collection().deleteOne({ productId: masterProduct.productId }),
@@ -535,7 +535,7 @@ exports.addVariant = async (req, res) => {
             }
         }
 
-        const images = req.files && req.files.length > 0 
+        const images = req.files && req.files.length > 0
             ? req.files.map(file => `/uploads/products/${file.filename}`)
             : []; // If no images uploaded, variant might have no images (or we could default to master images if master had any)
 
@@ -620,7 +620,11 @@ exports.checkProductBySlug = async (req, res) => {
                 subCategoryId: existingProduct.subCategoryId,
                 mainCategoryName: mainCategory ? mainCategory.name : null,
                 subCategoryName: subCategory ? subCategory.name : null,
-                attributes: existingProduct.attributes
+                attributes: existingProduct.attributes,
+                brand: existingProduct.brand || null,
+                highlights: existingProduct.highlights || [],
+                specifications: existingProduct.specifications || [],
+                warranty: existingProduct.warranty || null
             }
         });
     } catch (error) {

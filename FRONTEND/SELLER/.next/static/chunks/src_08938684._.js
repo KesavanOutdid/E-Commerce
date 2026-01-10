@@ -1344,7 +1344,17 @@ function EditProductPage() {
         return variant.images.map((file)=>URL.createObjectURL(file));
     };
     const isFormValid = ()=>{
-        return formData.productName.trim() !== '' && formData.mainCategoryId !== '' && formData.subCategoryId !== '' && formData.description.trim() !== '' && formData.shortDescription.trim() !== '' && variants.every((v)=>v.price.trim() !== '' && v.stock.trim() !== '' && v.attributes.every((a)=>a.value.trim() !== '') && (v.images.length > 0 || v.existingImages.length > 0));
+        return formData.productName.trim() !== '' && formData.mainCategoryId !== '' && formData.subCategoryId !== '' && formData.description.trim() !== '' && formData.shortDescription.trim() !== '' && variants.every((v)=>{
+            const priceValid = v.price.trim() !== '';
+            const stockValid = v.stock.trim() !== '';
+            const imagesValid = v.images.length > 0 || v.existingImages.length > 0;
+            const attributesValid = v.attributes.every((a)=>{
+                const subCatAttr = subCategoryAttributes.find((attr)=>attr.name === a.name);
+                const isRequired = subCatAttr?.required ?? true;
+                return !isRequired || a.value.trim() !== '';
+            });
+            return priceValid && stockValid && attributesValid && imagesValid;
+        });
     };
     const hasFormChanged = ()=>{
         if (!originalData) return false;
@@ -1410,7 +1420,18 @@ function EditProductPage() {
                 stock: parseInt(variant.stock),
                 deliveryDays: parseInt(variant.deliveryDays) || 3,
                 pickupAddress: variant.pickupAddress || null,
-                attributes: variant.attributes.filter((attr)=>attr.value.trim() !== ''),
+                attributes: variant.attributes.filter((attr)=>{
+                    const subCatAttr = subCategoryAttributes.find((a)=>a.name === attr.name);
+                    const isRequired = subCatAttr?.required ?? true;
+                    return isRequired ? attr.value.trim() !== '' : true;
+                }).map((attr)=>{
+                    const subCatAttr = subCategoryAttributes.find((a)=>a.name === attr.name);
+                    return {
+                        name: attr.name,
+                        value: attr.value,
+                        required: subCatAttr?.required ?? true
+                    };
+                }),
                 existingImages: variant.existingImages
             }));
         productFormData.append('variants', JSON.stringify(variantsData));
@@ -1431,7 +1452,7 @@ function EditProductPage() {
                     pageName: "Edit Product"
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                    lineNumber: 363,
+                    lineNumber: 383,
                     columnNumber: 17
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -1443,17 +1464,17 @@ function EditProductPage() {
                         className: "container mx-auto max-w-6xl px-4",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Skeleton$2f$ProductForm$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                            lineNumber: 366,
+                            lineNumber: 386,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                        lineNumber: 365,
+                        lineNumber: 385,
                         columnNumber: 21
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                    lineNumber: 364,
+                    lineNumber: 384,
                     columnNumber: 17
                 }, this)
             ]
@@ -1469,7 +1490,7 @@ function EditProductPage() {
                     pageName: "Edit Product"
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                    lineNumber: 380,
+                    lineNumber: 400,
                     columnNumber: 17
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -1481,17 +1502,17 @@ function EditProductPage() {
                         className: "container mx-auto max-w-6xl px-4",
                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$Skeleton$2f$ProductForm$2f$index$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                            lineNumber: 383,
+                            lineNumber: 403,
                             columnNumber: 25
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                        lineNumber: 382,
+                        lineNumber: 402,
                         columnNumber: 21
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                    lineNumber: 381,
+                    lineNumber: 401,
                     columnNumber: 17
                 }, this)
             ]
@@ -1503,7 +1524,7 @@ function EditProductPage() {
                 pageName: "Edit Product"
             }, void 0, false, {
                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                lineNumber: 392,
+                lineNumber: 412,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -1526,7 +1547,7 @@ function EditProductPage() {
                                                 children: "Edit Product"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 398,
+                                                lineNumber: 418,
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -1534,13 +1555,13 @@ function EditProductPage() {
                                                 children: "Update product details and variant information"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 399,
+                                                lineNumber: 419,
                                                 columnNumber: 33
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 397,
+                                        lineNumber: 417,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
@@ -1553,20 +1574,20 @@ function EditProductPage() {
                                                 height: 18
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 406,
+                                                lineNumber: 426,
                                                 columnNumber: 33
                                             }, this),
                                             "Back to Products"
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 403,
+                                        lineNumber: 423,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                lineNumber: 396,
+                                lineNumber: 416,
                                 columnNumber: 25
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -1585,14 +1606,14 @@ function EditProductPage() {
                                                         className: "text-primary"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 415,
+                                                        lineNumber: 435,
                                                         columnNumber: 37
                                                     }, this),
                                                     "Basic Information"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 414,
+                                                lineNumber: 434,
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1612,13 +1633,13 @@ function EditProductPage() {
                                                                         children: "*"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 421,
+                                                                        lineNumber: 441,
                                                                         columnNumber: 58
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 420,
+                                                                lineNumber: 440,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1632,13 +1653,13 @@ function EditProductPage() {
                                                                 required: true
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 423,
+                                                                lineNumber: 443,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 419,
+                                                        lineNumber: 439,
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1655,13 +1676,13 @@ function EditProductPage() {
                                                                                 children: "*"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 435,
+                                                                                lineNumber: 455,
                                                                                 columnNumber: 63
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 434,
+                                                                        lineNumber: 454,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -1678,7 +1699,7 @@ function EditProductPage() {
                                                                                 children: "Select Main Category"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 442,
+                                                                                lineNumber: 462,
                                                                                 columnNumber: 49
                                                                             }, this),
                                                                             mainCategories.map((category)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1686,19 +1707,19 @@ function EditProductPage() {
                                                                                     children: category.name
                                                                                 }, category._id, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 444,
+                                                                                    lineNumber: 464,
                                                                                     columnNumber: 53
                                                                                 }, this))
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 437,
+                                                                        lineNumber: 457,
                                                                         columnNumber: 45
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 433,
+                                                                lineNumber: 453,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1712,13 +1733,13 @@ function EditProductPage() {
                                                                                 children: "*"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 452,
+                                                                                lineNumber: 472,
                                                                                 columnNumber: 62
                                                                             }, this)
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 451,
+                                                                        lineNumber: 471,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("select", {
@@ -1736,7 +1757,7 @@ function EditProductPage() {
                                                                                 children: "Select Sub Category"
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 460,
+                                                                                lineNumber: 480,
                                                                                 columnNumber: 49
                                                                             }, this),
                                                                             subCategories.map((category)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("option", {
@@ -1744,25 +1765,25 @@ function EditProductPage() {
                                                                                     children: category.name
                                                                                 }, category._id, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 462,
+                                                                                    lineNumber: 482,
                                                                                     columnNumber: 53
                                                                                 }, this))
                                                                         ]
                                                                     }, void 0, true, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 454,
+                                                                        lineNumber: 474,
                                                                         columnNumber: 45
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 450,
+                                                                lineNumber: 470,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 432,
+                                                        lineNumber: 452,
                                                         columnNumber: 37
                                                     }, this),
                                                     subCategoryAttributes.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1776,26 +1797,26 @@ function EditProductPage() {
                                                                     height: 16
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 473,
+                                                                    lineNumber: 493,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
                                                                     children: subCategoryAttributes.length
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 474,
+                                                                    lineNumber: 494,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 " variant attributes loaded from this category"
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                            lineNumber: 472,
+                                                            lineNumber: 492,
                                                             columnNumber: 45
                                                         }, this)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 471,
+                                                        lineNumber: 491,
                                                         columnNumber: 41
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1808,7 +1829,7 @@ function EditProductPage() {
                                                                         children: "Brand"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 481,
+                                                                        lineNumber: 501,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1822,13 +1843,13 @@ function EditProductPage() {
                                                                         placeholder: "e.g., Samsung, Apple"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 484,
+                                                                        lineNumber: 504,
                                                                         columnNumber: 45
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 480,
+                                                                lineNumber: 500,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1838,7 +1859,7 @@ function EditProductPage() {
                                                                         children: "Warranty Period"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 493,
+                                                                        lineNumber: 513,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -1852,19 +1873,19 @@ function EditProductPage() {
                                                                         placeholder: "e.g., 1 year, 6 months"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 496,
+                                                                        lineNumber: 516,
                                                                         columnNumber: 45
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 492,
+                                                                lineNumber: 512,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 479,
+                                                        lineNumber: 499,
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1878,13 +1899,13 @@ function EditProductPage() {
                                                                         children: "*"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 508,
+                                                                        lineNumber: 528,
                                                                         columnNumber: 63
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 507,
+                                                                lineNumber: 527,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -1898,13 +1919,13 @@ function EditProductPage() {
                                                                 required: true
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 510,
+                                                                lineNumber: 530,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 506,
+                                                        lineNumber: 526,
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1918,13 +1939,13 @@ function EditProductPage() {
                                                                         children: "*"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 521,
+                                                                        lineNumber: 541,
                                                                         columnNumber: 57
                                                                     }, this)
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 520,
+                                                                lineNumber: 540,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("textarea", {
@@ -1938,25 +1959,25 @@ function EditProductPage() {
                                                                 required: true
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 523,
+                                                                lineNumber: 543,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 519,
+                                                        lineNumber: 539,
                                                         columnNumber: 37
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 418,
+                                                lineNumber: 438,
                                                 columnNumber: 33
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 413,
+                                        lineNumber: 433,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -1977,14 +1998,14 @@ function EditProductPage() {
                                                                         className: "text-primary"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 540,
+                                                                        lineNumber: 560,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     "Highlights"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 539,
+                                                                lineNumber: 559,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2003,20 +2024,20 @@ function EditProductPage() {
                                                                         height: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 552,
+                                                                        lineNumber: 572,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     showHighlights ? 'Hide' : 'Add'
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 543,
+                                                                lineNumber: 563,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 538,
+                                                        lineNumber: 558,
                                                         columnNumber: 37
                                                     }, this),
                                                     showHighlights && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2036,7 +2057,7 @@ function EditProductPage() {
                                                                             placeholder: `Highlight ${index + 1}`
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 560,
+                                                                            lineNumber: 580,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2049,18 +2070,18 @@ function EditProductPage() {
                                                                                 height: 18
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 571,
+                                                                                lineNumber: 591,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 567,
+                                                                            lineNumber: 587,
                                                                             columnNumber: 53
                                                                         }, this)
                                                                     ]
                                                                 }, index, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 559,
+                                                                    lineNumber: 579,
                                                                     columnNumber: 49
                                                                 }, this)),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2074,26 +2095,26 @@ function EditProductPage() {
                                                                         height: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 579,
+                                                                        lineNumber: 599,
                                                                         columnNumber: 49
                                                                     }, this),
                                                                     "Add Highlight"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 575,
+                                                                lineNumber: 595,
                                                                 columnNumber: 45
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 557,
+                                                        lineNumber: 577,
                                                         columnNumber: 41
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 537,
+                                                lineNumber: 557,
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2111,14 +2132,14 @@ function EditProductPage() {
                                                                         className: "text-primary"
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 590,
+                                                                        lineNumber: 610,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     "Specifications"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 589,
+                                                                lineNumber: 609,
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2137,20 +2158,20 @@ function EditProductPage() {
                                                                         height: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 602,
+                                                                        lineNumber: 622,
                                                                         columnNumber: 45
                                                                     }, this),
                                                                     showSpecifications ? 'Hide' : 'Add'
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 593,
+                                                                lineNumber: 613,
                                                                 columnNumber: 41
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 588,
+                                                        lineNumber: 608,
                                                         columnNumber: 37
                                                     }, this),
                                                     showSpecifications && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2170,7 +2191,7 @@ function EditProductPage() {
                                                                             placeholder: "Name"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 610,
+                                                                            lineNumber: 630,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2181,7 +2202,7 @@ function EditProductPage() {
                                                                             placeholder: "Value"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 617,
+                                                                            lineNumber: 637,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2194,18 +2215,18 @@ function EditProductPage() {
                                                                                 height: 18
                                                                             }, void 0, false, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 628,
+                                                                                lineNumber: 648,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 624,
+                                                                            lineNumber: 644,
                                                                             columnNumber: 53
                                                                         }, this)
                                                                     ]
                                                                 }, index, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 609,
+                                                                    lineNumber: 629,
                                                                     columnNumber: 49
                                                                 }, this)),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2219,32 +2240,32 @@ function EditProductPage() {
                                                                         height: 16
                                                                     }, void 0, false, {
                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                        lineNumber: 636,
+                                                                        lineNumber: 656,
                                                                         columnNumber: 49
                                                                     }, this),
                                                                     "Add Specification"
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 632,
+                                                                lineNumber: 652,
                                                                 columnNumber: 45
                                                             }, this)
                                                         ]
                                                     }, void 0, true, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 607,
+                                                        lineNumber: 627,
                                                         columnNumber: 41
                                                     }, this)
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 587,
+                                                lineNumber: 607,
                                                 columnNumber: 33
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 535,
+                                        lineNumber: 555,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2260,14 +2281,14 @@ function EditProductPage() {
                                                         className: "text-primary"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 647,
+                                                        lineNumber: 667,
                                                         columnNumber: 37
                                                     }, this),
                                                     "Product Variants"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 646,
+                                                lineNumber: 666,
                                                 columnNumber: 33
                                             }, this),
                                             variants.map((variant, variantIndex)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2283,12 +2304,12 @@ function EditProductPage() {
                                                                 ]
                                                             }, void 0, true, {
                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                lineNumber: 654,
+                                                                lineNumber: 674,
                                                                 columnNumber: 45
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                            lineNumber: 653,
+                                                            lineNumber: 673,
                                                             columnNumber: 41
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2311,13 +2332,13 @@ function EditProductPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 661,
+                                                                                            lineNumber: 681,
                                                                                             columnNumber: 67
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 660,
+                                                                                    lineNumber: 680,
                                                                                     columnNumber: 53
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2328,13 +2349,13 @@ function EditProductPage() {
                                                                                     required: true
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 663,
+                                                                                    lineNumber: 683,
                                                                                     columnNumber: 53
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 659,
+                                                                            lineNumber: 679,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2344,7 +2365,7 @@ function EditProductPage() {
                                                                                     children: "Sale Price (₹)"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 672,
+                                                                                    lineNumber: 692,
                                                                                     columnNumber: 53
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2354,13 +2375,13 @@ function EditProductPage() {
                                                                                     className: "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 675,
+                                                                                    lineNumber: 695,
                                                                                     columnNumber: 53
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 671,
+                                                                            lineNumber: 691,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2374,13 +2395,13 @@ function EditProductPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 684,
+                                                                                            lineNumber: 704,
                                                                                             columnNumber: 63
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 683,
+                                                                                    lineNumber: 703,
                                                                                     columnNumber: 53
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2391,19 +2412,19 @@ function EditProductPage() {
                                                                                     required: true
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 686,
+                                                                                    lineNumber: 706,
                                                                                     columnNumber: 53
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 682,
+                                                                            lineNumber: 702,
                                                                             columnNumber: 49
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 658,
+                                                                    lineNumber: 678,
                                                                     columnNumber: 45
                                                                 }, this),
                                                                 variant.salePrice && parseFloat(variant.salePrice) > 0 && commissionPercentage > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2421,7 +2442,7 @@ function EditProductPage() {
                                                                                         height: 16
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                        lineNumber: 700,
+                                                                                        lineNumber: 720,
                                                                                         columnNumber: 61
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2438,13 +2459,13 @@ function EditProductPage() {
                                                                                                         ]
                                                                                                     }, void 0, true, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 703,
+                                                                                                        lineNumber: 723,
                                                                                                         columnNumber: 90
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                lineNumber: 702,
+                                                                                                lineNumber: 722,
                                                                                                 columnNumber: 65
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2456,24 +2477,24 @@ function EditProductPage() {
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                lineNumber: 705,
+                                                                                                lineNumber: 725,
                                                                                                 columnNumber: 65
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                        lineNumber: 701,
+                                                                                        lineNumber: 721,
                                                                                         columnNumber: 61
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 699,
+                                                                                lineNumber: 719,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 698,
+                                                                            lineNumber: 718,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2488,7 +2509,7 @@ function EditProductPage() {
                                                                                         height: 16
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                        lineNumber: 713,
+                                                                                        lineNumber: 733,
                                                                                         columnNumber: 61
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2502,7 +2523,7 @@ function EditProductPage() {
                                                                                                         children: "Sale Price:"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 716,
+                                                                                                        lineNumber: 736,
                                                                                                         columnNumber: 69
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2513,13 +2534,13 @@ function EditProductPage() {
                                                                                                         ]
                                                                                                     }, void 0, true, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 717,
+                                                                                                        lineNumber: 737,
                                                                                                         columnNumber: 69
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                lineNumber: 715,
+                                                                                                lineNumber: 735,
                                                                                                 columnNumber: 65
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2534,7 +2555,7 @@ function EditProductPage() {
                                                                                                         ]
                                                                                                     }, void 0, true, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 720,
+                                                                                                        lineNumber: 740,
                                                                                                         columnNumber: 69
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2545,13 +2566,13 @@ function EditProductPage() {
                                                                                                         ]
                                                                                                     }, void 0, true, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 721,
+                                                                                                        lineNumber: 741,
                                                                                                         columnNumber: 69
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                lineNumber: 719,
+                                                                                                lineNumber: 739,
                                                                                                 columnNumber: 65
                                                                                             }, this),
                                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2562,7 +2583,7 @@ function EditProductPage() {
                                                                                                         children: "You Receive:"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 724,
+                                                                                                        lineNumber: 744,
                                                                                                         columnNumber: 69
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
@@ -2573,36 +2594,36 @@ function EditProductPage() {
                                                                                                         ]
                                                                                                     }, void 0, true, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 725,
+                                                                                                        lineNumber: 745,
                                                                                                         columnNumber: 69
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, void 0, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                lineNumber: 723,
+                                                                                                lineNumber: 743,
                                                                                                 columnNumber: 65
                                                                                             }, this)
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                        lineNumber: 714,
+                                                                                        lineNumber: 734,
                                                                                         columnNumber: 61
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                lineNumber: 712,
+                                                                                lineNumber: 732,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 711,
+                                                                            lineNumber: 731,
                                                                             columnNumber: 53
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 697,
+                                                                    lineNumber: 717,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2619,13 +2640,13 @@ function EditProductPage() {
                                                                                             children: "*"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 736,
+                                                                                            lineNumber: 756,
                                                                                             columnNumber: 71
                                                                                         }, this)
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 735,
+                                                                                    lineNumber: 755,
                                                                                     columnNumber: 53
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2636,13 +2657,13 @@ function EditProductPage() {
                                                                                     required: true
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 738,
+                                                                                    lineNumber: 758,
                                                                                     columnNumber: 53
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 734,
+                                                                            lineNumber: 754,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2652,7 +2673,7 @@ function EditProductPage() {
                                                                                     children: "Pickup Address"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 747,
+                                                                                    lineNumber: 767,
                                                                                     columnNumber: 53
                                                                                 }, this),
                                                                                 pickupAddresses.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2669,7 +2690,7 @@ function EditProductPage() {
                                                                                                     className: "mt-0.5 cursor-pointer"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 758,
+                                                                                                    lineNumber: 778,
                                                                                                     columnNumber: 69
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2680,7 +2701,7 @@ function EditProductPage() {
                                                                                                             children: address.name
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                            lineNumber: 766,
+                                                                                                            lineNumber: 786,
                                                                                                             columnNumber: 73
                                                                                                         }, this),
                                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2691,7 +2712,7 @@ function EditProductPage() {
                                                                                                             ]
                                                                                                         }, void 0, true, {
                                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                            lineNumber: 767,
+                                                                                                            lineNumber: 787,
                                                                                                             columnNumber: 73
                                                                                                         }, this),
                                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2707,7 +2728,7 @@ function EditProductPage() {
                                                                                                             ]
                                                                                                         }, void 0, true, {
                                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                            lineNumber: 771,
+                                                                                                            lineNumber: 791,
                                                                                                             columnNumber: 73
                                                                                                         }, this),
                                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2718,24 +2739,24 @@ function EditProductPage() {
                                                                                                             ]
                                                                                                         }, void 0, true, {
                                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                            lineNumber: 774,
+                                                                                                            lineNumber: 794,
                                                                                                             columnNumber: 73
                                                                                                         }, this)
                                                                                                     ]
                                                                                                 }, void 0, true, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 765,
+                                                                                                    lineNumber: 785,
                                                                                                     columnNumber: 69
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, address.id, true, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 753,
+                                                                                            lineNumber: 773,
                                                                                             columnNumber: 65
                                                                                         }, this))
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 751,
+                                                                                    lineNumber: 771,
                                                                                     columnNumber: 57
                                                                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                     className: "text-xs text-gray-500 p-3 border border-gray-300 rounded-md bg-gray-50",
@@ -2748,7 +2769,7 @@ function EditProductPage() {
                                                                                             children: "Pickup Addresses"
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 782,
+                                                                                            lineNumber: 802,
                                                                                             columnNumber: 61
                                                                                         }, this),
                                                                                         ' ',
@@ -2756,19 +2777,19 @@ function EditProductPage() {
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 780,
+                                                                                    lineNumber: 800,
                                                                                     columnNumber: 57
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 746,
+                                                                            lineNumber: 766,
                                                                             columnNumber: 49
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 733,
+                                                                    lineNumber: 753,
                                                                     columnNumber: 45
                                                                 }, this),
                                                                 subCategoryAttributes.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2782,13 +2803,13 @@ function EditProductPage() {
                                                                                     children: "*"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 794,
+                                                                                    lineNumber: 814,
                                                                                     columnNumber: 76
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 793,
+                                                                            lineNumber: 813,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2796,59 +2817,64 @@ function EditProductPage() {
                                                                             children: "These attributes are specific to this variant"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 796,
+                                                                            lineNumber: 816,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             className: "grid grid-cols-1 md:grid-cols-2 gap-3",
-                                                                            children: variant.attributes.map((attr, attrIndex)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                            children: variant.attributes.map((attr, attrIndex)=>{
+                                                                                const subCatAttr = subCategoryAttributes.find((a)=>a.name === attr.name);
+                                                                                const isRequired = subCatAttr?.required ?? true;
+                                                                                const inputType = subCatAttr?.type === 'number' ? 'number' : subCatAttr?.type === 'boolean' ? 'text' : 'text';
+                                                                                return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                     children: [
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
                                                                                             className: "block text-xs text-gray-600 mb-1",
                                                                                             children: [
                                                                                                 attr.name,
                                                                                                 " ",
-                                                                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                                                                isRequired && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
                                                                                                     className: "text-red-500",
                                                                                                     children: "*"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 801,
-                                                                                                    columnNumber: 81
+                                                                                                    lineNumber: 826,
+                                                                                                    columnNumber: 100
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, void 0, true, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 800,
-                                                                                            columnNumber: 65
+                                                                                            lineNumber: 825,
+                                                                                            columnNumber: 69
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                                                            type: "text",
+                                                                                            type: inputType,
                                                                                             value: attr.value,
                                                                                             onChange: (e)=>updateVariantAttribute(variantIndex, attrIndex, e.target.value),
                                                                                             className: "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary",
                                                                                             placeholder: `Enter ${attr.name.toLowerCase()}`,
-                                                                                            required: true
+                                                                                            required: isRequired
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 803,
-                                                                                            columnNumber: 65
+                                                                                            lineNumber: 828,
+                                                                                            columnNumber: 69
                                                                                         }, this)
                                                                                     ]
                                                                                 }, attrIndex, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 799,
-                                                                                    columnNumber: 61
-                                                                                }, this))
+                                                                                    lineNumber: 824,
+                                                                                    columnNumber: 65
+                                                                                }, this);
+                                                                            })
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 797,
+                                                                            lineNumber: 817,
                                                                             columnNumber: 53
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 792,
+                                                                    lineNumber: 812,
                                                                     columnNumber: 49
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2862,13 +2888,13 @@ function EditProductPage() {
                                                                                     children: "*"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 819,
+                                                                                    lineNumber: 845,
                                                                                     columnNumber: 68
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 818,
+                                                                            lineNumber: 844,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
@@ -2876,7 +2902,7 @@ function EditProductPage() {
                                                                             children: "Upload images specific to this variant"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 821,
+                                                                            lineNumber: 847,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         variant.existingImages.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2891,7 +2917,7 @@ function EditProductPage() {
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 825,
+                                                                                    lineNumber: 851,
                                                                                     columnNumber: 57
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2905,7 +2931,7 @@ function EditProductPage() {
                                                                                                     className: "w-full h-32 object-cover rounded-lg border border-gray-200"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 829,
+                                                                                                    lineNumber: 855,
                                                                                                     columnNumber: 69
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2918,29 +2944,29 @@ function EditProductPage() {
                                                                                                         height: 14
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 838,
+                                                                                                        lineNumber: 864,
                                                                                                         columnNumber: 73
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 834,
+                                                                                                    lineNumber: 860,
                                                                                                     columnNumber: 69
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, imageIndex, true, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 828,
+                                                                                            lineNumber: 854,
                                                                                             columnNumber: 65
                                                                                         }, this))
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 826,
+                                                                                    lineNumber: 852,
                                                                                     columnNumber: 57
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 824,
+                                                                            lineNumber: 850,
                                                                             columnNumber: 53
                                                                         }, this),
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
@@ -2951,7 +2977,7 @@ function EditProductPage() {
                                                                             className: "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary file:mr-4 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 846,
+                                                                            lineNumber: 872,
                                                                             columnNumber: 49
                                                                         }, this),
                                                                         variant.images.length > 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2966,7 +2992,7 @@ function EditProductPage() {
                                                                                     ]
                                                                                 }, void 0, true, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 856,
+                                                                                    lineNumber: 882,
                                                                                     columnNumber: 57
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -2980,7 +3006,7 @@ function EditProductPage() {
                                                                                                     className: "w-full h-32 object-cover rounded-lg border border-gray-200"
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 860,
+                                                                                                    lineNumber: 886,
                                                                                                     columnNumber: 69
                                                                                                 }, this),
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -2993,53 +3019,53 @@ function EditProductPage() {
                                                                                                         height: 14
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                        lineNumber: 869,
+                                                                                                        lineNumber: 895,
                                                                                                         columnNumber: 73
                                                                                                     }, this)
                                                                                                 }, void 0, false, {
                                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                                    lineNumber: 865,
+                                                                                                    lineNumber: 891,
                                                                                                     columnNumber: 69
                                                                                                 }, this)
                                                                                             ]
                                                                                         }, imageIndex, true, {
                                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                            lineNumber: 859,
+                                                                                            lineNumber: 885,
                                                                                             columnNumber: 65
                                                                                         }, this))
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                                    lineNumber: 857,
+                                                                                    lineNumber: 883,
                                                                                     columnNumber: 57
                                                                                 }, this)
                                                                             ]
                                                                         }, void 0, true, {
                                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                            lineNumber: 855,
+                                                                            lineNumber: 881,
                                                                             columnNumber: 53
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                                    lineNumber: 817,
+                                                                    lineNumber: 843,
                                                                     columnNumber: 45
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                            lineNumber: 657,
+                                                            lineNumber: 677,
                                                             columnNumber: 41
                                                         }, this)
                                                     ]
                                                 }, variantIndex, true, {
                                                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                    lineNumber: 652,
+                                                    lineNumber: 672,
                                                     columnNumber: 37
                                                 }, this))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 645,
+                                        lineNumber: 665,
                                         columnNumber: 29
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3051,7 +3077,7 @@ function EditProductPage() {
                                                 children: "Cancel"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 883,
+                                                lineNumber: 909,
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3065,42 +3091,42 @@ function EditProductPage() {
                                                         height: 18
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                        lineNumber: 892,
+                                                        lineNumber: 918,
                                                         columnNumber: 37
                                                     }, this),
                                                     "Update Product"
                                                 ]
                                             }, void 0, true, {
                                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                                lineNumber: 888,
+                                                lineNumber: 914,
                                                 columnNumber: 33
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                        lineNumber: 882,
+                                        lineNumber: 908,
                                         columnNumber: 29
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                                lineNumber: 411,
+                                lineNumber: 431,
                                 columnNumber: 25
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                        lineNumber: 395,
+                        lineNumber: 415,
                         columnNumber: 21
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                    lineNumber: 394,
+                    lineNumber: 414,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/(site)/products/edit/[id]/page.tsx",
-                lineNumber: 393,
+                lineNumber: 413,
                 columnNumber: 13
             }, this)
         ]
