@@ -152,7 +152,11 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
           {
             $project: {
               mainCategory: 0,
-              subCategory: 0
+              subCategory: 0,
+              minPrice: 0,
+              maxPrice: 0,
+              totalStock: 0,
+              sellerCount: 0
             }
           }
         ],
@@ -363,82 +367,25 @@ exports.getProductById = async (req, res) => {
     const productData = aggregationResult[0].data[0];
     const allVariants = productData.variants || [];
 
-    // 1. Group variants by their "configuration" (attributes as unique string)
-    const configurations = {};
-    const attributeOptions = {}; // { Color: ["Red", "Blue"], Size: ["M", "L"] }
-
-    allVariants.forEach(v => {
-      // Build configuration key: "Color:Red|Size:M"
-      const configKey = v.attributes
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(a => `${a.name}:${a.value}`)
-        .join('|');
-
-      if (!configurations[configKey]) {
-        configurations[configKey] = {
-          configKey,
-          attributes: v.attributes,
-          offers: [],
-          bestOffer: null
-        };
-      }
-      
-      configurations[configKey].offers.push(v);
-
-      // Track unique attribute options
-      v.attributes.forEach(attr => {
-        if (!attributeOptions[attr.name]) attributeOptions[attr.name] = new Set();
-        attributeOptions[attr.name].add(attr.value);
-      });
-    });
-
-    // Convert Set to Array for attributeOptions
-    Object.keys(attributeOptions).forEach(key => {
-      attributeOptions[key] = Array.from(attributeOptions[key]);
-    });
-
-    // Find best offer for each configuration (lowest currentPrice)
-    Object.values(configurations).forEach(config => {
-      config.bestOffer = config.offers.reduce((best, current) => 
-        (!best || current.currentPrice < best.currentPrice) ? current : best
-      , null);
-    });
-
-    // 2. Determine Selected Variant
     let selectedVariant = null;
     if (variantId) {
       selectedVariant = allVariants.find(v => v.variantId === variantId || v._id?.toString() === variantId);
     }
 
-    // If no specific variantId or not found, pick the one with minPrice (best overall offer)
     if (!selectedVariant) {
       selectedVariant = productData.minPriceDetails;
     }
 
-    // 3. Find other sellers for the selected configuration (Marketplace)
-    const selectedConfigKey = selectedVariant.attributes
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .map(a => `${a.name}:${a.value}`)
-      .join('|');
-    
-    const marketplaceOffers = configurations[selectedConfigKey]?.offers
-      .filter(o => o.variantId !== selectedVariant.variantId)
-      .sort((a, b) => a.currentPrice - b.currentPrice) || [];
+    const allOffers = allVariants.sort((a, b) => a.currentPrice - b.currentPrice);
 
     const responseData = {
       product: {
         ...productData,
-        variants: undefined, // Remove raw variants array
+        variants: undefined,
         minPriceDetails: undefined
       },
       selectedVariant,
-      marketplaceOffers,
-      configurations: Object.values(configurations).map(c => ({
-        configKey: c.configKey,
-        attributes: c.attributes,
-        bestOffer: c.bestOffer
-      })),
-      attributeOptions
+      allOffers
     };
 
     // Add isWishlisted flag if user is logged in

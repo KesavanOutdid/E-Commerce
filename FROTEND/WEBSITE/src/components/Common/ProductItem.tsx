@@ -18,19 +18,15 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
 
-  // Extract values from both structures safely
-  const isNewStructure = !!item.product;
-  const product = item.product;
-
-  const id = isNewStructure ? product?._id : item.id;
-  const title = isNewStructure ? product?.productName : item.title;
-  const reviews = isNewStructure ? product?.totalReviews : item.reviews;
-  const displayPrice = isNewStructure ? (product?.minPriceDetails?.price ?? 0) : item.discountedPrice;
-  const originalPrice = isNewStructure ? product?.price : item.price;
-  const deliveryDays = isNewStructure ? product?.minPriceDetails?.deliveryDays : null;
+  const id = item._id || item.productId || item.id;
+  const title = item.productName || item.title;
+  const reviews = item.totalReviews || item.reviews || 0;
+  const displayPrice = item.minPriceDetails?.salePrice ?? item.minPriceDetails?.price ?? 0;
+  const originalPrice = item.minPriceDetails?.price ?? 0;
+  const deliveryDays = item.minPriceDetails?.deliveryDays || null;
   
-  const productImage = isNewStructure 
-    ? (product?.images?.[0] ? `${API_BASE_URL}${product.images[0]}` : "/images/placeholder.png")
+  const productImage = item.minPriceDetails?.images?.[0] 
+    ? `${API_BASE_URL}${item.minPriceDetails.images[0]}`
     : (item.imgs?.previews?.[0] ?? "/images/placeholder.png");
 
   // update the QuickView state

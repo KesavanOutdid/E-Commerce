@@ -440,13 +440,41 @@ exports.getProductById = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    let { productName, description, shortDescription, updatedby, attributes, price, salePrice, stock, deliveryDays, pickupAddress } = req.body;
+    let { 
+      productName, 
+      description, 
+      shortDescription, 
+      updatedby, 
+      attributes, 
+      price, 
+      salePrice, 
+      stock, 
+      deliveryDays, 
+      pickupAddress,
+      mainCategoryId,
+      subCategoryId,
+      status,
+      brand,
+      highlights,
+      specifications,
+      warranty
+    } = req.body;
 
     // 1. Check if it's a Master Product
     const existingProduct = await Product.findById(id);
     if (existingProduct) {
       if (typeof attributes === 'string') {
         try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
+      }
+
+      let parsedHighlights = highlights;
+      if (typeof highlights === 'string') {
+        try { parsedHighlights = JSON.parse(highlights); } catch (e) { parsedHighlights = undefined; }
+      }
+
+      let parsedSpecifications = specifications;
+      if (typeof specifications === 'string') {
+        try { parsedSpecifications = JSON.parse(specifications); } catch (e) { parsedSpecifications = undefined; }
       }
 
       let parsedVariants = req.body.variants;
@@ -459,6 +487,13 @@ exports.updateProduct = async (req, res) => {
         description, 
         shortDescription, 
         updatedby,
+        mainCategoryId,
+        subCategoryId,
+        brand,
+        highlights: parsedHighlights,
+        specifications: parsedSpecifications,
+        warranty,
+        status: status !== undefined ? (status === 'true' || status === true) : undefined,
         attributes: attributes !== undefined ? attributes : undefined
       };
 
@@ -504,6 +539,32 @@ exports.updateProduct = async (req, res) => {
 
             Object.keys(variantUpdateData).forEach(key => variantUpdateData[key] === undefined && delete variantUpdateData[key]);
             await ProductVariant.update(vData.variantId, variantUpdateData);
+          } else {
+            // Create new variant if variantId is missing
+            let variantImages = req.files
+              ? req.files.filter(f => f.fieldname === `variantImages_${i}`).map(file => `/uploads/products/${file.filename}`)
+              : [];
+            
+            // If no new images uploaded for this variant, check for imageIndices from master product images
+            if (variantImages.length === 0 && vData.imageIndices && Array.isArray(vData.imageIndices)) {
+              const allMasterImages = updateData.images || existingProduct.images || [];
+              variantImages = vData.imageIndices
+                .map(idx => allMasterImages[idx])
+                .filter(img => img !== undefined);
+            }
+            
+            await ProductVariant.create({
+              productId: existingProduct.productId,
+              sellerId: existingProduct.userId,
+              attributes: vData.attributes || [],
+              price: parseFloat(vData.price) || 0,
+              salePrice: vData.salePrice ? parseFloat(vData.salePrice) : null,
+              stock: parseInt(vData.stock) || 0,
+              images: variantImages,
+              deliveryDays: vData.deliveryDays || 3,
+              pickupAddress: vData.pickupAddress || null,
+              approvalStatus: 'approved'
+            });
           }
         }
       }

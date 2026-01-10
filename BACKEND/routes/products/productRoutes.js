@@ -26,11 +26,11 @@ router.delete('/seller/:id', authMiddleware, sellerProductController.deleteProdu
 router.post('/seller/check-slug', authMiddleware, sellerProductController.checkProductBySlug);
 
 // Website/Public Routes
-// router.get('/', websiteProductController.getProducts);
-// router.get('/best-sellers', websiteProductController.getBestSellers);
-// router.get('/search', websiteProductController.searchProducts);
-// router.get('/search/suggestions', websiteProductController.getSearchSuggestions);
-// router.get('/subcategory/:subCategoryId', websiteProductController.getProductsBySubCategory);
-// router.get('/:id', websiteProductController.getProductById);
+router.get('/', websiteProductController.getProducts);
+router.get('/best-sellers', websiteProductController.getBestSellers);
+router.get('/search', websiteProductController.searchProducts);
+router.get('/search/suggestions', websiteProductController.getSearchSuggestions);
+router.get('/subcategory/:subCategoryId', websiteProductController.getProductsBySubCategory);
+router.get('/:id', websiteProductController.getProductById);
 
 module.exports = router;
