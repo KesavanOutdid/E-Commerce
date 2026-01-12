@@ -2,6 +2,7 @@ const Order = require('../../models/Order');
 const Product = require('../../models/Product');
 const ProductVariant = require('../../models/ProductVariant');
 const User = require('../../models/User');
+//user
 
 const enrichOrderWithSellerDetails = async (order) => {
   if (!order.items || order.items.length === 0) return order;
