@@ -4,6 +4,7 @@ import {
   Avatar,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Typography,
   Stack,
@@ -191,25 +192,100 @@ const UserDetail = () => {
       <Box sx={{ p: 1 }}>
         <Grid container spacing={1}>
           {/* Header section with Avatar */}
-          <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Avatar 
-                src={user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}${user.profileImage}`) : ''} 
-                sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main', mb: 1 }}
-              >
-                {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
-              </Avatar>
-              <Typography variant="caption" display="block">Profile Image</Typography>
-            </Box>
+          <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+            <Stack direction="row" alignItems="center" spacing={3}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Avatar 
+                  src={user.profileImage ? (user.profileImage.startsWith('http') ? user.profileImage : `${BASE_URL}${user.profileImage}`) : ''} 
+                  sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.light', color: 'primary.main', mb: 1 }}
+                >
+                  {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
+                </Avatar>
+                <Typography variant="caption" display="block">Profile Image</Typography>
+              </Box>
 
-            <Box>
-              <Typography variant="h3" sx={{ fontWeight: 700, mb: 0.5 }}>
-                {user.firstName} {user.lastName}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                User ID: {user.userId}
-              </Typography>
-            </Box>
+              <Box>
+                <Typography variant="h3" sx={{ fontWeight: 700, mb: 0.5 }}>
+                  {user.firstName} {user.lastName}
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  User ID: {user.userId}
+                </Typography>
+              </Box>
+            </Stack>
+
+            <Stack direction="column" spacing={1.5} alignItems="flex-end">
+              {user.sellerInfo && !user.sellerInfo.kycApproved && (
+                <Button 
+                  variant="outlined" 
+                  color="primary"
+                  size="small"
+                  onClick={handleApproveClick}
+                  startIcon={<IconEdit size="18" />}
+                  sx={{ 
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    px: 1.5,
+                    py: 0.5,
+                    fontSize: '0.75rem'
+                  }}
+                >
+                  KYC
+                </Button>
+              )}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Typography 
+                  variant="caption" 
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontWeight: 500, 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.05em'
+                  }}
+                >
+                  Profile Status
+                </Typography>
+                <Chip
+                  label={user.status ? 'Active' : 'Inactive'}
+                  color={user.status ? 'success' : 'error'}
+                  size="small"
+                  sx={{ 
+                    fontWeight: 700, 
+                    borderRadius: '6px',
+                    textTransform: 'uppercase',
+                    fontSize: '0.7rem'
+                  }}
+                />
+              </Box>
+
+              {user.sellerInfo && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontWeight: 500, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.05em'
+                    }}
+                  >
+                    KYC Status
+                  </Typography>
+                  <Chip
+                    label={user.sellerInfo.kycApproved ? 'Approved' : 'Pending'}
+                    color={user.sellerInfo.kycApproved ? 'success' : 'warning'}
+                    size="small"
+                    sx={{ 
+                      fontWeight: 700, 
+                      borderRadius: '6px',
+                      textTransform: 'uppercase',
+                      fontSize: '0.7rem'
+                    }}
+                  />
+                </Box>
+              )}
+            </Stack>
           </Grid>
 
           {/* Row 1: Basic Info */}
@@ -432,29 +508,6 @@ const UserDetail = () => {
                   </Grid>
                 </>
               )}
-
-              {/* KYC Approval Actions */}
-              <Grid size={12} sx={{ mt: 4, pt: 3, borderTop: '1px dashed', borderColor: 'divider' }}>
-                <Typography variant="h4" sx={{ mb: 3, color: 'primary.main', fontWeight: 600 }}>KYC Actions</Typography>
-                
-                {!user.sellerInfo.kycApproved ? (
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Button 
-                      variant="contained" 
-                      color="success"
-                      onClick={handleApproveClick}
-                    >
-                      Manage KYC Approval
-                    </Button>
-                  </Stack>
-                ) : (
-                  <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, color: 'primary.main' }}>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                      Seller KYC is Approved
-                    </Typography>
-                  </Box>
-                )}
-              </Grid>
             </>
           )}
         </Grid>

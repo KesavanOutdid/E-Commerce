@@ -491,7 +491,7 @@ export default function Dashboard() {
                       marginBottom: '20px'
                     }}
                   >
-                    User Distribution by Role
+                    User Count 
                   </Typography>
                   {loading ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

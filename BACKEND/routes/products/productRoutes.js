@@ -11,6 +11,7 @@ router.post('/admin', authMiddleware, productUpload.any(), adminProductControlle
 router.post('/admin/add-variant/:masterProductId', authMiddleware, productUpload.any(), adminProductController.addVariant);
 router.get('/admin/getproducts', authMiddleware, adminProductController.getProducts);
 router.get('/admin/seller-products', authMiddleware, adminProductController.getAllSellerProducts);
+router.get('/admin/sellers-list', authMiddleware, adminProductController.getSellersList);
 router.get('/admin/:id', authMiddleware, adminProductController.getProductById);
 router.put('/admin/:id', authMiddleware, productUpload.any(), adminProductController.updateProduct);
 router.put('/admin/update-approval/:id', authMiddleware, adminProductController.updateApprovalStatus);

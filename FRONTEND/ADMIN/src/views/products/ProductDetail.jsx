@@ -471,10 +471,10 @@ const ProductDetail = () => {
         <MainCard
             title={
                 <Stack direction="row" alignItems="center" spacing={1}>
-                    <Button onClick={() => navigate(-1)} sx={{ minWidth: 0, p: 1 }}>
-                        <IconArrowLeft />
+                    <Button onClick={() => navigate(-1)} sx={{ minWidth: 0, p: 1, borderRadius: '50%', '&:hover': { bgcolor: 'primary.light' } }}>
+                        <IconArrowLeft size={20} />
                     </Button>
-                    <Typography variant="h3">{product.productName}</Typography>
+                    <Typography variant="h3" fontWeight={700}>{product.productName}</Typography>
                 </Stack>
             }
             secondary={
@@ -483,44 +483,48 @@ const ProductDetail = () => {
                         label={product.status ? 'Active' : 'Inactive'}
                         size="small"
                         sx={{
-                            bgcolor: product.status ? '#e8f5e9' : '#fafafa',
-                            color: product.status ? '#2e7d32' : '#757575',
-                            fontWeight: 600,
-                            borderRadius: '16px',
+                            bgcolor: product.status ? '#e3f2fd' : '#fafafa',
+                            color: product.status ? '#2196f3' : '#757575',
+                            fontWeight: 700,
+                            borderRadius: '8px',
                             px: 1,
                             border: '1px solid',
-                            borderColor: product.status ? '#c8e6c9' : '#eeeeee',
+                            borderColor: product.status ? '#90caf9' : '#eeeeee',
                             textTransform: 'uppercase',
-                            fontSize: '0.65rem',
-                            letterSpacing: '0.05rem'
+                            fontSize: '0.7rem'
                         }}
                     />
-                    {(product.roleId === 1 || (product.variants && product.variants.some(v => v.sellerName === 'Admin'))) ? (
+                    <Stack direction="row" spacing={1}>
+                        {(product.roleId === 1 || (product.variants && product.variants.some(v => v.sellerName === 'Admin'))) ? (
+                            <Button
+                                variant="contained"
+                                startIcon={<IconEdit size={18} />}
+                                onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                                sx={{ borderRadius: '10px', boxShadow: '0 4px 12px rgba(33, 150, 243, 0.3)' }}
+                            >
+                                Edit Product
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="contained"
+                                color="success"
+                                startIcon={<IconBuildingStore size={18} />}
+                                onClick={handleListProduct}
+                                sx={{ borderRadius: '10px' }}
+                            >
+                                Add to My List
+                            </Button>
+                        )}
                         <Button
-                            variant="contained"
-                            startIcon={<IconEdit />}
-                            onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                            variant="outlined"
+                            color="error"
+                            startIcon={<IconTrash size={18} />}
+                            onClick={handleDelete}
+                            sx={{ borderRadius: '10px' }}
                         >
-                            Edit Product
+                            Delete
                         </Button>
-                    ) : (
-                        <Button
-                            variant="contained"
-                            color="success"
-                            startIcon={<IconBuildingStore />}
-                            onClick={handleListProduct}
-                        >
-                            Add to My List
-                        </Button>
-                    )}
-                    <Button
-                        variant="outlined"
-                        color="error"
-                        startIcon={<IconTrash />}
-                        onClick={handleDelete}
-                    >
-                        Delete
-                    </Button>
+                    </Stack>
                 </Stack>
             }
         >
@@ -669,54 +673,11 @@ const ProductDetail = () => {
                     <Grid container spacing={3}>
                         <Grid size={12}>
                             <Typography variant="h4" color="primary" sx={{ mb: 2, borderBottom: '1px solid #eee', pb: 1 }}>
-                                Product Details
+                                Product Specifications
                             </Typography>
                         </Grid>
 
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <DetailRow
-                                icon={<IconCurrencyRupee />}
-                                label="Starting Price"
-                                value={
-                                    minPriceVariant ? (
-                                        minPriceVariant.salePrice ? (
-                                            <Stack direction="row" spacing={1} alignItems="center">
-                                                <Typography variant="body1" fontWeight={500} sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.9rem' }}>
-                                                    ₹{Number(minPriceVariant.price).toLocaleString('en-IN')}
-                                                </Typography>
-                                                <Typography variant="h4" color="primary" fontWeight={600}>
-                                                    ₹{Number(minPriceVariant.salePrice).toLocaleString('en-IN')}
-                                                </Typography>
-                                            </Stack>
-                                        ) : (
-                                            `₹${Number(minPriceVariant.price).toLocaleString('en-IN')}`
-                                        )
-                                    ) : '-'
-                                }
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <DetailRow
-                                icon={<IconCube />}
-                                label="Total Stock"
-                                value={variants.reduce((acc, v) => acc + (v.stock || 0), 0)}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <DetailRow
-                                icon={<IconTag />}
-                                label="Main Category"
-                                value={product.mainCategoryName}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                            <DetailRow
-                                icon={<IconTag />}
-                                label="Sub Category"
-                                value={product.subCategoryName}
-                            />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
+                        <Grid size={12}>
                             <DetailRow
                                 icon={<IconTag />}
                                 label="Brand"
@@ -724,22 +685,13 @@ const ProductDetail = () => {
                             />
                         </Grid>
 
-                        <Grid size={12}>
-                            <Box sx={{ mt: 2 }}>
-                                <Typography variant="subtitle2" color="secondary" gutterBottom>
-                                    Description
-                                </Typography>
-                                <ExpandableText text={product.description} />
-                            </Box>
-                        </Grid>
-
                         {product.highlights && product.highlights.length > 0 && (
                             <Grid size={12}>
-                                <Box sx={{ mt: 2 }}>
-                                    <Typography variant="subtitle2" color="secondary" gutterBottom>
+                                <Box sx={{ mt: 1 }}>
+                                    <Typography variant="subtitle2" color="secondary" gutterBottom sx={{ fontWeight: 600 }}>
                                         Key Highlights
                                     </Typography>
-                                    <Box component="ul" sx={{ mt: 0.5, pl: 2, '& li': { fontSize: '0.875rem', color: 'text.secondary', mb: 0.5 } }}>
+                                    <Box component="ul" sx={{ mt: 0.5, pl: 2, '& li': { fontSize: '0.9rem', color: 'text.secondary', mb: 1, listStyleType: 'disc' } }}>
                                         {product.highlights.map((item, i) => (
                                             <li key={i}>{item}</li>
                                         ))}
@@ -747,16 +699,30 @@ const ProductDetail = () => {
                                 </Box>
                             </Grid>
                         )}
-
-                        <Grid size={12}>
-                            <Box sx={{ mt: 2 }}>
-                                <Typography variant="subtitle2" color="secondary" gutterBottom>
-                                    Short Description
-                                </Typography>
-                                <ExpandableText text={product.shortDescription} />
-                            </Box>
-                        </Grid>
                     </Grid>
+                </Grid>
+
+                {/* Full Width Sections */}
+                <Grid size={12}>
+                    <Box sx={{ mt: 2 }}>
+                        <Box sx={{ mb: 4 }}>
+                            <Typography variant="subtitle2" color="secondary" gutterBottom sx={{ fontWeight: 600 }}>
+                                Product Description
+                            </Typography>
+                            <ExpandableText text={product.description} lines={4} />
+                        </Box>
+
+                        {product.shortDescription && (
+                            <Box sx={{ mb: 2 }}>
+                                <Typography variant="subtitle2" color="secondary" gutterBottom sx={{ fontWeight: 600 }}>
+                                    Summary
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
+                                    {product.shortDescription}
+                                </Typography>
+                            </Box>
+                        )}
+                    </Box>
                 </Grid>
 
                 {/* Approval Status Banner (for Seller Products) */}
@@ -837,57 +803,7 @@ const ProductDetail = () => {
                     </Grid>
                 )}
 
-                {/* Minimum Price Highlights */}
-                {product.minPriceDetails && (
-                    <Grid size={12}>
-                        <Paper sx={{ p: 2, bgcolor: '#e3f2fd', borderRadius: 2, border: '1px solid #bbdefb', mb: 1 }}>
-                            <Grid container spacing={2} alignItems="center">
-                                <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Stack direction="row" spacing={2} alignItems="center">
-                                        <Box sx={{ 
-                                            p: 1, 
-                                            bgcolor: 'primary.light', 
-                                            borderRadius: 1.5,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center'
-                                        }}>
-                                            <IconTag size={24} color="#1e88e5" />
-                                        </Box>
-                                        <Box>
-                                            <Typography variant="caption" fontWeight={600} sx={{ color: 'primary.dark', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                                                Best Price Offer
-                                            </Typography>
-                                            <Typography variant="h3" color="primary.main" sx={{ mt: -0.5 }}>
-                                                ₹{product.minPriceDetails?.currentPrice?.toLocaleString('en-IN')}
-                                            </Typography>
-                                        </Box>
-                                    </Stack>
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Box sx={{ textAlign: 'center' }}>
-                                        <Typography variant="caption" display="block" color="textSecondary">
-                                            Seller: <strong>{product.minPriceDetails.shopName || product.minPriceDetails.sellerName}</strong>
-                                        </Typography>
-                                        <Typography variant="caption" display="block" color="textSecondary">
-                                            Stock: {product.minPriceDetails.stock ?? variants.find(v => v.variantId === product.minPriceDetails.variantId)?.stock ?? '-'}
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                                <Grid size={{ xs: 12, sm: 4 }}>
-                                    <Box sx={{ textAlign: 'right' }}>
-                                        <Typography variant="caption" display="block" color="textSecondary">
-                                            Delivery: <strong>{product.minPriceDetails.deliveryDays ?? variants.find(v => v.variantId === product.minPriceDetails.variantId)?.deliveryDays ?? '-'} Days</strong>
-                                        </Typography>
-                                        <Typography variant="caption" display="block" color="primary.main" sx={{ fontWeight: 600 }}>
-                                            Variant ID: {product.minPriceDetails.variantId?.split('-')[0]}...
-                                        </Typography>
-                                    </Box>
-                                </Grid>
-                            </Grid>
-                        </Paper>
-                    </Grid>
-                )}
+
 
                 {/* Marketplace Offers Section */}
                 {variants && variants.length > 0 && (
@@ -1005,21 +921,7 @@ const ProductDetail = () => {
                                                             <Typography variant="subtitle2" fontWeight={700} color="primary.main">
                                                                 ₹{(offer.salePrice && Number(offer.salePrice) > 0 ? offer.salePrice : offer.price)?.toLocaleString('en-IN')}
                                                             </Typography>
-                                                            {offer.currentPrice === minPriceVariant?.currentPrice && (
-                                                                <Chip 
-                                                                    label="BEST PRICE" 
-                                                                    size="small" 
-                                                                    sx={{ 
-                                                                        height: 16, 
-                                                                        fontSize: '0.55rem', 
-                                                                        bgcolor: '#e8f5e9', 
-                                                                        color: '#2e7d32', 
-                                                                        fontWeight: 900,
-                                                                        borderRadius: '4px',
-                                                                        '& .MuiChip-label': { px: 0.5 }
-                                                                    }} 
-                                                                />
-                                                            )}
+
                                                         </Stack>
                                                     </TableCell>
                                                     <TableCell align="right">

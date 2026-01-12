@@ -274,6 +274,22 @@ exports.getAllSellerProducts = async (req, res) => {
       delete query.roleId;
     }
 
+    if (req.query.approvalStatus) {
+      if (query.$and) {
+        query.$and.push({ approvalStatus: req.query.approvalStatus });
+      } else {
+        query.approvalStatus = req.query.approvalStatus;
+      }
+    }
+
+    if (req.query.sellerId) {
+      if (query.$and) {
+        query.$and.push({ userId: req.query.sellerId });
+      } else {
+        query.userId = req.query.sellerId;
+      }
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limitNum = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limitNum;
@@ -816,6 +832,42 @@ exports.addVariant = async (req, res) => {
       success: true,
       message: 'Variant added successfully by admin',
       data: { variantId: variant.variantId }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.getSellersList = async (req, res) => {
+  try {
+    const sellers = await Seller.collection().find({}).toArray();
+    const sellerIds = sellers.map(s => s.userId);
+    
+    const users = await User.collection().find({
+      $or: [
+        { userId: { $in: sellerIds } },
+        { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
+      ]
+    }).toArray();
+
+    const userMap = new Map();
+    users.forEach(u => {
+      if (u.userId) userMap.set(u.userId.toString(), u);
+      if (u._id) userMap.set(u._id.toString(), u);
+    });
+
+    const sellersList = sellers.map(s => {
+      const user = userMap.get(s.userId?.toString());
+      return {
+        userId: s.userId,
+        shopName: s.shopName,
+        name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || user.email : 'Unknown'
+      };
+    });
+
+    res.status(200).json({
+      success: true,
+      data: sellersList
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
