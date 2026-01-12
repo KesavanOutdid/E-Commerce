@@ -199,7 +199,10 @@ const ProductList = () => {
             <Chip
                 label={status || 'pending'}
                 size="small"
-                onClick={() => isSellerProduct && handleApprovalClick(product)}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    if (isSellerProduct) handleApprovalClick(product);
+                }}
                 sx={{
                     bgcolor: colors.bg,
                     color: colors.text,
@@ -330,15 +333,32 @@ const ProductList = () => {
                                 </TableRow>
                             ) : products.length > 0 ? (
                                 products.map((product, index) => (
-                                    <TableRow key={product._id || product.productId} hover>
+                                    <TableRow 
+                                        key={product._id || product.productId} 
+                                        hover
+                                        onClick={() => navigate(`/products/view/${product.productId || product._id}`)}
+                                        sx={{ cursor: 'pointer' }}
+                                    >
                                         <TableCell sx={{ fontWeight: 500 }}>
                                             {(pagination.currentPage - 1) * pagination.pageSize + index + 1}
                                         </TableCell>
                                         <TableCell>
                                             <ProductAvatar product={product} />
                                         </TableCell>
-                                        <TableCell>
-                                            <Typography variant="subtitle2" fontWeight={500}>
+                                        <TableCell sx={{ maxWidth: 250 }}>
+                                            <Typography 
+                                                variant="subtitle2" 
+                                                fontWeight={500}
+                                                sx={{
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    display: '-webkit-box',
+                                                    WebkitLineClamp: 2,
+                                                    WebkitBoxOrient: 'vertical',
+                                                    lineHeight: '1.4em',
+                                                    height: '2.8em' // 2 lines * 1.4em
+                                                }}
+                                            >
                                                 {product.productName}
                                             </Typography>
                                             <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>
@@ -403,7 +423,10 @@ const ProductList = () => {
                                                 <IconButton
                                                     size="small"
                                                     color="primary"
-                                                    onClick={() => navigate(`/products/view/${product.productId || product._id}`)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        navigate(`/products/view/${product.productId || product._id}`);
+                                                    }}
                                                     title="View"
                                                 >
                                                     <IconEye size={18} />
@@ -413,7 +436,10 @@ const ProductList = () => {
                                                     <IconButton
                                                         size="small"
                                                         color="success"
-                                                        onClick={() => handleQuickList(product)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleQuickList(product);
+                                                        }}
                                                         title="Add to My List"
                                                     >
                                                         <IconPlus size={18} />
@@ -424,7 +450,10 @@ const ProductList = () => {
                                                     <IconButton
                                                         size="small"
                                                         color="secondary"
-                                                        onClick={() => navigate(`/products/edit/${product.productId || product._id}`)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            navigate(`/products/edit/${product.productId || product._id}`);
+                                                        }}
                                                         title="Edit"
                                                     >
                                                         <IconEdit size={18} />

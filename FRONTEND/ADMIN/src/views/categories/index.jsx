@@ -131,7 +131,12 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                             </TableRow>
                         ) : (
                             categories.map((category, index) => (
-                                <TableRow key={category._id || category.id} hover>
+                                <TableRow 
+                                    key={category._id || category.id} 
+                                    hover
+                                    onClick={() => navigate(`/categories/${category._id || category.id}`)}
+                                    sx={{ cursor: 'pointer' }}
+                                >
                                     <TableCell sx={{ fontSize: '0.95rem' }}>{index + 1 + (pagination.currentPage - 1) * pagination.pageSize}</TableCell>
                                     <TableCell>
                                         <Avatar
@@ -159,7 +164,15 @@ const Categories = () => { // Renamed component from Categories to CategoriesPag
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="info" size="small" onClick={() => navigate(`/categories/${category._id || category.id}`)} title="View">
+                                            <IconButton 
+                                                color="info" 
+                                                size="small" 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/categories/${category._id || category.id}`);
+                                                }} 
+                                                title="View"
+                                            >
                                                 <IconEye size={20} />
                                             </IconButton>
                                             {/* <IconButton color="primary" size="small" onClick={() => handleOpenDialog(category)} title="Edit">

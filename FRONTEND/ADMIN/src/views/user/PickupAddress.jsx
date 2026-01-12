@@ -169,7 +169,12 @@ const PickupAddress = () => {
                   </TableRow>
                 ) : (
                   addresses.map((addr) => (
-                    <TableRow key={addr.id}>
+                    <TableRow 
+                      key={addr.id} 
+                      hover 
+                      onClick={() => handleOpen(addr)}
+                      sx={{ cursor: 'pointer' }}
+                    >
                       <TableCell>{addr.name}</TableCell>
                       <TableCell>
                         {addr.addressLine1}
@@ -179,10 +184,22 @@ const PickupAddress = () => {
                       <TableCell>{addr.state}</TableCell>
                       <TableCell>{addr.pincode}</TableCell>
                       <TableCell align="right">
-                        <IconButton color="primary" onClick={() => handleOpen(addr)}>
+                        <IconButton 
+                          color="primary" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpen(addr);
+                          }}
+                        >
                           <EditIcon />
                         </IconButton>
-                        <IconButton color="error" onClick={() => deleteAddress(addr.id)}>
+                        <IconButton 
+                          color="error" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteAddress(addr.id);
+                          }}
+                        >
                           <DeleteIcon />
                         </IconButton>
                       </TableCell>

@@ -4,9 +4,8 @@ import {
     Box,
     Button,
     CardContent,
-    Grid,
+    Grid2 as Grid,
     IconButton,
-    Paper,
     Stack,
     Table,
     TableBody,
@@ -42,6 +41,38 @@ import { API_ENDPOINTS, API_BASE_URL } from '../../config/apiConfig';
 import Swal from 'sweetalert2';
 
 const BASE_URL = API_BASE_URL.replace('/api', '');
+
+const DetailItem = ({ label, value, color }) => (
+    <Box sx={{ mb: 3 }}>
+        <Typography
+            variant="caption"
+            sx={{
+                color: 'text.secondary',
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em',
+                display: 'block',
+                mb: 0.5
+            }}
+        >
+            {label}
+        </Typography>
+        {typeof value === 'string' || typeof value === 'number' ? (
+            <Typography
+                variant="body1"
+                sx={{
+                    fontWeight: 600,
+                    color: color || 'text.primary',
+                    fontSize: '1rem'
+                }}
+            >
+                {value || '-'}
+            </Typography>
+        ) : (
+            value
+        )}
+    </Box>
+);
 
 const OrderDetail = () => {
     const { orderId } = useParams();
@@ -105,109 +136,277 @@ const OrderDetail = () => {
 
     if (loading) {
         return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <CircularProgress />
-            </Box>
+            <MainCard title="Order Details">
+                <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
+                    <CircularProgress />
+                </Box>
+            </MainCard>
         );
     }
 
-    if (!order) return null;
+    if (!order) {
+        return (
+            <MainCard title="Order Details">
+                <Typography variant="h6" color="error">
+                    Order not found
+                </Typography>
+                <Button variant="contained" startIcon={<IconArrowLeft />} onClick={() => navigate('/orders/list')} sx={{ mt: 2 }}>
+                    Go Back
+                </Button>
+            </MainCard>
+        );
+    }
 
     return (
         <MainCard
-            title={
-                <Stack direction="row" alignItems="center" spacing={1}>
-                    <Button onClick={() => navigate('/orders/list')} sx={{ minWidth: 0, p: 1 }}>
-                        <IconArrowLeft />
+            title="Order Details"
+            secondary={
+                <Stack direction="row" spacing={1} alignItems="center">
+                    <Button variant="outlined" startIcon={<IconArrowLeft />} onClick={() => navigate('/orders/list')}>
+                        Back
                     </Button>
-                    <Typography variant="h3">Order #{order.orderId || order._id}</Typography>
-                    <Chip
-                        label={order.orderStatus}
-                        color={getStatusColor(order.orderStatus)}
-                        size="small"
-                        sx={{ ml: 2, textTransform: 'uppercase', fontWeight: 'bold' }}
-                    />
+                    <Box sx={{ minWidth: 150 }}>
+                        <FormControl fullWidth size="small">
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                                value={order.orderStatus}
+                                label="Status"
+                                onChange={(e) => handleStatusUpdate(e.target.value)}
+                                disabled={statusLoading}
+                            >
+                                <MenuItem value="pending">Pending</MenuItem>
+                                <MenuItem value="processing">Processing</MenuItem>
+                                <MenuItem value="shipped">Shipped</MenuItem>
+                                <MenuItem value="delivered">Delivered</MenuItem>
+                                <MenuItem value="cancelled">Cancelled</MenuItem>
+                                <MenuItem value="returned">Returned</MenuItem>
+                            </Select>
+                        </FormControl>
+                    </Box>
                 </Stack>
             }
-            /* secondary={
-                <Box sx={{ minWidth: 200 }}>
-                    <FormControl fullWidth size="small">
-                        <InputLabel>Update Status</InputLabel>
-                        <Select
-                            value={order.orderStatus}
-                            label="Update Status"
-                            onChange={(e) => handleStatusUpdate(e.target.value)}
-                            disabled={statusLoading}
-                        >
-                            <MenuItem value="pending">Pending</MenuItem>
-                            <MenuItem value="processing">Processing</MenuItem>
-                            <MenuItem value="shipped">Shipped</MenuItem>
-                            <MenuItem value="delivered">Delivered</MenuItem>
-                            <MenuItem value="cancelled">Cancelled</MenuItem>
-                            <MenuItem value="returned">Returned</MenuItem>
-                        </Select>
-                    </FormControl>
-                </Box>
-            } */
         >
-            <Grid container spacing={3}>
-                {/* Order Summary Cards */}
-                <Grid item xs={12} md={8}>
-                    {/* Order Items */}
-                    <Paper variant="outlined" sx={{ borderRadius: 2, overflow: 'hidden', mb: 3 }}>
-                        <Box sx={{ p: 2, bgcolor: '#f5f5f5', borderBottom: '1px solid #eee' }}>
-                            <Typography variant="h4">Order Items ({order.items?.length || 0})</Typography>
-                        </Box>
-                        <TableContainer>
+            <Box sx={{ p: 1 }}>
+                <Grid container spacing={1}>
+                    {/* Header section with Order Info */}
+                    <Grid size={12} sx={{ mb: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 3 }}>
+                        <Stack direction="row" alignItems="center" spacing={3}>
+                            <Box sx={{ textAlign: 'center' }}>
+                                <Avatar sx={{ width: 80, height: 80, bgcolor: 'primary.light', color: 'primary.main', mb: 1 }}>
+                                    <IconTruckDelivery size={40} />
+                                </Avatar>
+                            </Box>
+
+                            <Box>
+                                <Typography variant="h3" sx={{ fontWeight: 700, mb: 0.5 }}>
+                                    Order #{order.orderId || order._id}
+                                </Typography>
+                                <Typography variant="body2" color="textSecondary">
+                                    Placed on: {new Date(order.createdAt).toLocaleString()}
+                                </Typography>
+                            </Box>
+                        </Stack>
+
+                        <Stack direction="column" spacing={1.5} alignItems="flex-end">
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                        color: 'text.secondary', 
+                                        fontWeight: 500, 
+                                        textTransform: 'uppercase', 
+                                        letterSpacing: '0.05em'
+                                    }}
+                                >
+                                    Order Status
+                                </Typography>
+                                <Chip
+                                    label={order.orderStatus}
+                                    color={getStatusColor(order.orderStatus)}
+                                    size="small"
+                                    sx={{ 
+                                        fontWeight: 700, 
+                                        borderRadius: '6px',
+                                        textTransform: 'uppercase',
+                                        fontSize: '0.7rem'
+                                    }}
+                                />
+                            </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Typography 
+                                    variant="caption" 
+                                    sx={{ 
+                                        color: 'text.secondary', 
+                                        fontWeight: 500, 
+                                        textTransform: 'uppercase', 
+                                        letterSpacing: '0.05em'
+                                    }}
+                                >
+                                    Total Amount
+                                </Typography>
+                                <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
+                                    ₹{order.grandTotal}
+                                </Typography>
+                            </Box>
+                        </Stack>
+                    </Grid>
+
+                    {/* Order Information Section */}
+                    <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Order Information</Typography>
+                    </Grid>
+                    {/* <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Order ID" value={order.orderId || order._id} />
+                    </Grid> */}
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Order Date" value={new Date(order.createdAt).toLocaleString()} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Payment Method" value={order.paymentType?.toUpperCase() || 'COD'} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Payment Status" value={
+                            <Typography sx={{ fontWeight: 600 }}>
+                                {order.paymentStatus || 'Pending'}
+                            </Typography>
+                        } />
+                    </Grid>
+                    {/* <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Order Status" value={
+                            <Chip 
+                                label={order.orderStatus} 
+                                color={getStatusColor(order.orderStatus)} 
+                                size="small" 
+                                sx={{ fontWeight: 600, textTransform: 'uppercase' }} 
+                            />
+                        } />
+                    </Grid> */}
+
+                    {/* Customer Section */}
+                    <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Customer Details</Typography>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Customer Name" value={order.deliveryAddress?.name || 'Guest User'} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Email ID" value={order.userEmail} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4 }}>
+                        <DetailItem label="Phone Number" value={order.deliveryAddress?.phone || '-'} />
+                    </Grid>
+
+                    {/* Shipping Address Section */}
+                    <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Shipping Address</Typography>
+                    </Grid>
+                    <Grid size={12} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                        <Grid container spacing={1}>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Door No" value={order.deliveryAddress?.doorNo} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Street" value={order.deliveryAddress?.street} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Landmark" value={order.deliveryAddress?.landmark} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="City" value={order.deliveryAddress?.city} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="District" value={order.deliveryAddress?.district} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="State" value={order.deliveryAddress?.state} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Pincode" value={order.deliveryAddress?.pincode} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Country" value={order.deliveryAddress?.country} />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    {/* Order Summary Section */}
+                    <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Order Summary</Typography>
+                    </Grid>
+                    <Grid size={12} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+                        <Grid container spacing={1}>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Subtotal" value={`₹${order.subTotal}`} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Shipping" value={`₹${order.shippingFees || 0}`} />
+                            </Grid>
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="GST" value={`₹${order.gst || 0}`} />
+                            </Grid>
+                            {order.codFees > 0 && (
+                                <Grid size={{ xs: 12, md: 3 }}>
+                                    <DetailItem label="COD Fees" value={`₹${order.codFees}`} />
+                                </Grid>
+                            )}
+                            <Grid size={{ xs: 12, md: 3 }}>
+                                <DetailItem label="Grand Total" value={`₹${order.grandTotal}`} color="primary.main" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+
+                    {/* Order Items Section */}
+                    <Grid size={12} sx={{ mt: 2, mb: 1 }}>
+                        <Typography variant="h4" sx={{ color: 'primary.main', fontWeight: 600 }}>Order Items ({order.items?.length || 0})</Typography>
+                    </Grid>
+                    <Grid size={12}>
+                        <TableContainer component={Box} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                             <Table>
-                                <TableHead>
+                                <TableHead sx={{ bgcolor: 'grey.50' }}>
                                     <TableRow>
-                                        <TableCell>Product & Seller</TableCell>
-                                        <TableCell align="right">Price</TableCell>
-                                        <TableCell align="center">Quantity</TableCell>
-                                        <TableCell align="right">Total</TableCell>
-                                        <TableCell align="right">Payout Info</TableCell>
+                                        <TableCell sx={{ fontWeight: 600 }}>Product & Seller</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
+                                        <TableCell align="center" sx={{ fontWeight: 600 }}>Quantity</TableCell>
+                                        <TableCell align="right" sx={{ fontWeight: 600 }}>Total</TableCell>
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
                                     {order.items?.map((item, index) => {
-                                        const platformFee = (item.totalPrice * 0.05).toFixed(2);
-                                        const sellerEarning = (item.totalPrice - platformFee).toFixed(2);
-                                        
                                         return (
                                             <TableRow key={index}>
                                                 <TableCell>
                                                     <Stack direction="row" spacing={2} alignItems="flex-start">
                                                         <Avatar
-                                                            src={item.images?.length ? `${BASE_URL}${item.images[0]}` : ''}
+                                                            src={item.images?.length ? (item.images[0].startsWith('http') ? item.images[0] : `${BASE_URL}${item.images[0]}`) : ''}
                                                             variant="rounded"
-                                                            sx={{ width: 60, height: 60, mt: 0.5 }}
+                                                            sx={{ width: 60, height: 60 }}
                                                         />
                                                         <Box>
-                                                            <Typography variant="subtitle1" fontWeight={600} color="primary">
+                                                            <Typography 
+                                                                variant="subtitle1" 
+                                                                fontWeight={600} 
+                                                                color="primary"
+                                                                sx={{
+                                                                    overflow: 'hidden',
+                                                                    textOverflow: 'ellipsis',
+                                                                    display: '-webkit-box',
+                                                                    WebkitLineClamp: 2,
+                                                                    WebkitBoxOrient: 'vertical',
+                                                                    lineHeight: '1.4em',
+                                                                    height: '2.8em'
+                                                                }}
+                                                            >
                                                                 {item.productName || 'Product Name'}
                                                             </Typography>
                                                             
                                                             {item.sellerDetails ? (
-                                                                <Box sx={{ mt: 1, p: 1, bgcolor: '#f8f9fa', borderRadius: 1, border: '1px dashed #dee2e6' }}>
-                                                                    <Stack spacing={0.5}>
-                                                                        {item.sellerDetails.storeName && (
-                                                                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600, color: '#444' }}>
-                                                                                <IconBuildingStore size={14} /> {item.sellerDetails.storeName}
-                                                                            </Typography>
-                                                                        )}
-                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                            <IconUser size={14} /> {item.sellerDetails.sellerName}
-                                                                        </Typography>
-                                                                        <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                            <IconMail size={14} /> {item.sellerDetails.sellerEmail}
-                                                                        </Typography>
-                                                                        {item.sellerDetails.sellerPhone && (
-                                                                            <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                                                                <IconPhone size={14} /> {item.sellerDetails.sellerPhone}
-                                                                            </Typography>
-                                                                        )}
-                                                                    </Stack>
+                                                                <Box sx={{ mt: 0.5 }}>
+                                                                    <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontWeight: 600, color: 'text.secondary' }}>
+                                                                        <IconBuildingStore size={14} /> {item.sellerDetails.storeName}
+                                                                    </Typography>
+                                                                    <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                                                                        <IconUser size={14} /> {item.sellerDetails.sellerName}
+                                                                    </Typography>
                                                                 </Box>
                                                             ) : (
                                                                 <Typography variant="caption" color="error">Admin Product</Typography>
@@ -220,127 +419,16 @@ const OrderDetail = () => {
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>
                                                     ₹{item.totalPrice}
                                                 </TableCell>
-                                                <TableCell align="right">
-                                                    {item.sellerDetails ? (
-                                                        <Stack spacing={0.5} alignItems="flex-end">
-                                                            <Typography variant="caption" color="textSecondary">
-                                                                Fee (5%): <Typography component="span" variant="caption" color="error">₹{platformFee}</Typography>
-                                                            </Typography>
-                                                            <Typography variant="caption" color="textSecondary">
-                                                                Earn: <Typography component="span" variant="caption" color="success.main" fontWeight={600}>₹{sellerEarning}</Typography>
-                                                            </Typography>
-                                                        </Stack>
-                                                    ) : (
-                                                        <Typography variant="caption" color="textSecondary">Internal</Typography>
-                                                    )}
-                                                </TableCell>
                                             </TableRow>
                                         );
                                     })}
                                 </TableBody>
                             </Table>
                         </TableContainer>
-                    </Paper>
+                    </Grid>
 
-                    {/* Transaction Info */}
-                    <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
-                        <Typography variant="h4" sx={{ mb: 2 }}>Order Timeline</Typography>
-                        <Stack spacing={2}>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <IconCalendar size={20} color="#757575" />
-                                <Box>
-                                    <Typography variant="caption" display="block">Placed on</Typography>
-                                    <Typography variant="body2" fontWeight={500}>
-                                        {new Date(order.createdAt).toLocaleString()}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                            <Stack direction="row" spacing={2} alignItems="center">
-                                <IconCreditCard size={20} color="#757575" />
-                                <Box>
-                                    <Typography variant="caption" display="block">Payment Method</Typography>
-                                    <Typography variant="body2" fontWeight={500}>
-                                        {order.paymentType ? order.paymentType.toUpperCase() : 'COD'}
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        </Stack>
-                    </Paper>
                 </Grid>
-
-                {/* Right Sidebar */}
-                <Grid item xs={12} md={4}>
-                    <Stack spacing={3}>
-                        {/* Customer Info */}
-                        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
-                            <Typography variant="h4" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <IconUser size={20} /> Customer Details
-                            </Typography>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle1">{order.deliveryAddress?.name || 'Guest User'}</Typography>
-                                <Typography variant="body2" color="textSecondary">{order.userEmail}</Typography>
-                                <Typography variant="body2" color="textSecondary">{order.deliveryAddress?.phone || 'No phone'}</Typography>
-                            </Box>
-                        </Paper>
-
-                        {/* Shipping Address */}
-                        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2 }}>
-                            <Typography variant="h4" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <IconTruckDelivery size={20} /> Shipping Address
-                            </Typography>
-                            <Box>
-                                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                                    {order.deliveryAddress?.name}
-                                </Typography>
-                                <Typography variant="body2" color="textSecondary" sx={{ whiteSpace: 'pre-line' }}>
-                                    {[
-                                        order.deliveryAddress?.doorNo,
-                                        order.deliveryAddress?.street,
-                                        order.deliveryAddress?.landmark,
-                                        order.deliveryAddress?.city,
-                                        order.deliveryAddress?.state,
-                                        order.deliveryAddress?.pincode,
-                                        order.deliveryAddress?.country
-                                    ].filter(Boolean).join(', \n')}
-                                </Typography>
-                                <Typography variant="body2" sx={{ mt: 1 }}>
-                                    Phone: {order.deliveryAddress?.phone}
-                                </Typography>
-                            </Box>
-                        </Paper>
-
-                        {/* Order Summary */}
-                        <Paper variant="outlined" sx={{ borderRadius: 2, p: 2, bgcolor: '#fafafa' }}>
-                            <Typography variant="h4" sx={{ mb: 2 }}>Order Summary</Typography>
-                            <Stack spacing={1}>
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="body2" color="textSecondary">Subtotal</Typography>
-                                    <Typography variant="body2">₹{order.subTotal}</Typography>
-                                </Stack>
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="body2" color="textSecondary">Shipping</Typography>
-                                    <Typography variant="body2">₹{order.shippingFees || 0}</Typography>
-                                </Stack>
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="body2" color="textSecondary">GST</Typography>
-                                    <Typography variant="body2">₹{order.gst || 0}</Typography>
-                                </Stack>
-                                {order.codFees > 0 && (
-                                    <Stack direction="row" justifyContent="space-between">
-                                        <Typography variant="body2" color="textSecondary">COD Fees</Typography>
-                                        <Typography variant="body2">₹{order.codFees}</Typography>
-                                    </Stack>
-                                )}
-                                <Divider sx={{ my: 1 }} />
-                                <Stack direction="row" justifyContent="space-between">
-                                    <Typography variant="subtitle1">Total</Typography>
-                                    <Typography variant="subtitle1" color="primary">₹{order.grandTotal}</Typography>
-                                </Stack>
-                            </Stack>
-                        </Paper>
-                    </Stack>
-                </Grid>
-            </Grid>
+            </Box>
         </MainCard>
     );
 };

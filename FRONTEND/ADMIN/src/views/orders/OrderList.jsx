@@ -172,7 +172,7 @@ const OrderList = () => {
                                 <TableCell>Date</TableCell>
                                 <TableCell align="right">Total Amount</TableCell>
                                 <TableCell align="center">Payment Method</TableCell>
-                                <TableCell align="center">Status</TableCell>
+                                <TableCell align="center"> Order Status</TableCell>
                                 <TableCell align="center">Actions</TableCell>
                             </TableRow>
                         </TableHead>
@@ -185,13 +185,18 @@ const OrderList = () => {
                                 </TableRow>
                             ) : orders.length > 0 ? (
                                 orders.map((order, index) => (
-                                    <TableRow key={order._id || order.orderId} hover>
+                                    <TableRow 
+                                        key={order._id || order.orderId} 
+                                        hover
+                                        onClick={() => navigate(`/orders/view/${order.orderId || order._id}`)}
+                                        sx={{ cursor: 'pointer' }}
+                                    >
                                         <TableCell sx={{ fontWeight: 500 }}>
                                             {(pagination.currentPage - 1) * pagination.pageSize + index + 1}
                                         </TableCell>
                                         <TableCell>
-                                            <Typography variant="subtitle2" fontWeight={500}>
-                                                #{order.orderId || order._id}
+                                            <Typography>
+                                                {order.orderId || order._id}
                                             </Typography>
                                         </TableCell>
                                         <TableCell>
@@ -229,7 +234,10 @@ const OrderList = () => {
                                             <IconButton
                                                 color="primary"
                                                 size="small"
-                                                onClick={() => navigate(`/orders/view/${order.orderId || order._id}`)}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/orders/view/${order.orderId || order._id}`);
+                                                }}
                                             >
                                                 <IconEye size={18} />
                                             </IconButton>

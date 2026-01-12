@@ -6,7 +6,7 @@ import Swal from 'sweetalert2';
 export const useProducts = () => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [productType, setProductType] = useState('admin'); // 'admin' or 'seller'
+    const [productType, setProductType] = useState('seller'); // 'admin' or 'seller'
     const [pagination, setPagination] = useState({
         currentPage: 1,
         pageSize: 10,

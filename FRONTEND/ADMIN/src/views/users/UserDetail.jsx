@@ -112,23 +112,7 @@ const UserDetail = () => {
     });
 
     if (result.isConfirmed) {
-      const { value: commission } = await Swal.fire({
-        title: 'Approve KYC',
-        text: `Enter commission percentage for ${user.firstName}`,
-        input: 'number',
-        inputLabel: 'Commission %',
-        inputValue: user.sellerInfo.commissionPercentage || 10,
-        showCancelButton: true,
-        inputValidator: (value) => {
-          if (!value || value < 0 || value > 100) {
-            return 'Please enter a valid percentage (0-100)';
-          }
-        }
-      });
-
-      if (commission) {
-        handleApproveKyc('approve', commission);
-      }
+      handleApproveKyc('approve');
     } else if (result.isDenied) {
       const { value: reason } = await Swal.fire({
         title: 'Rejection Reason',

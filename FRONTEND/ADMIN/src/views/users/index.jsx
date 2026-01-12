@@ -122,23 +122,7 @@ const Users = () => {
     });
 
     if (result.isConfirmed) {
-      const { value: commission } = await Swal.fire({
-        title: 'Approve KYC',
-        text: `Enter commission percentage for ${user.firstName}`,
-        input: 'number',
-        inputLabel: 'Commission %',
-        inputValue: 10,
-        showCancelButton: true,
-        inputValidator: (value) => {
-          if (!value || value < 0 || value > 100) {
-            return 'Please enter a valid percentage (0-100)';
-          }
-        }
-      });
-
-      if (commission) {
-        await updateKycStatus(user.userId, 'approve', { commissionPercentage: commission });
-      }
+      await updateKycStatus(user.userId, 'approve');
     } else if (result.isDenied) {
       const { value: reason } = await Swal.fire({
         title: 'Rejection Reason',
@@ -180,7 +164,10 @@ const Users = () => {
       <Chip
         label={label}
         size="small"
-        onClick={() => handleKycApprovalClick(user)}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleKycApprovalClick(user);
+        }}
         sx={{
           bgcolor: color.bg,
           color: color.text,
@@ -278,7 +265,12 @@ const Users = () => {
               </TableRow>
             ) : (
               users.map((user, index) => (
-                <TableRow key={user.userId} hover>
+                <TableRow 
+                  key={user.userId} 
+                  hover
+                  onClick={() => handleViewUser(user.userId)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell sx={{ fontSize: '0.95rem' }}>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
                   <TableCell>
                     <Typography variant="subtitle1" fontWeight={600}>
@@ -310,7 +302,15 @@ const Users = () => {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton color="primary" size="small" onClick={() => handleViewUser(user.userId)} title="View">
+                    <IconButton 
+                      color="primary" 
+                      size="small" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewUser(user.userId);
+                      }} 
+                      title="View"
+                    >
                       <IconEye size={20} />
                     </IconButton>
                   </TableCell>

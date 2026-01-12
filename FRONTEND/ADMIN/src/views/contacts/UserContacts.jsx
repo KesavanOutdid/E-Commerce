@@ -67,7 +67,12 @@ const UserContacts = () => {
                             </TableRow>
                         ) : (
                             contacts.map((contact, index) => (
-                                <TableRow key={contact._id || index} hover>
+                                <TableRow 
+                                    key={contact._id || index} 
+                                    hover
+                                    onClick={() => handleViewDetail(contact)}
+                                    sx={{ cursor: 'pointer' }}
+                                >
                                     <TableCell sx={{ fontSize: '0.95rem' }}>
                                         {(pagination.currentPage - 1) * pagination.limit + index + 1}
                                     </TableCell>

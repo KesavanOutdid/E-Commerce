@@ -414,7 +414,7 @@ export default function Dashboard() {
                     label="Total Revenue"
                     value={
                       stats?.summary?.totalRevenue
-                        ? `₹${(stats.summary.totalRevenue / 100000).toFixed(1)}L`
+                        ? `₹${stats.summary.totalRevenue.toLocaleString('en-IN')}`
                         : '₹0'
                     }
                     loading={loading}
@@ -460,10 +460,14 @@ export default function Dashboard() {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <StatCard
                     icon={AssignmentOutlinedIcon}
-                    label="Total Roles"
-                    value={stats?.summary?.totalRoles || 0}
+                    label="Admin revenue"
+                    value={
+                      stats?.summary?.totalPlatformFees
+                        ? `₹${stats.summary.totalPlatformFees.toLocaleString('en-IN')}`
+                        : '₹0'
+                    }
                     loading={loading}
-                    color="#fca311"
+                    color="#ff6b6b"
                   />
                 </Grid>
               </Grid>
@@ -617,14 +621,14 @@ export default function Dashboard() {
                     <TableContainer>
                       <Table>
                         <TableHead>
-                          <TableRow sx={{ background: 'linear-gradient(135deg, #eeeff4ff 0%, #e5e3e3ff 100%)' }}>
-                            <TableCell sx={{ fontWeight: '600', color: '#fff', fontSize: '13px' }}>
+                          <TableRow sx={{ background: '#f8f9fa' }}>
+                            <TableCell sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
                               Product Name
                             </TableCell>
-                            <TableCell align="right" sx={{ fontWeight: '600', color: '#fff', fontSize: '13px' }}>
+                            <TableCell align="right" sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
                               Total Sales
                             </TableCell>
-                            <TableCell align="right" sx={{ fontWeight: '600', color: '#fff', fontSize: '13px' }}>
+                            <TableCell align="right" sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
                               Quantity Sold
                             </TableCell>
                           </TableRow>
@@ -634,15 +638,15 @@ export default function Dashboard() {
                             <TableRow
                               key={idx}
                               sx={{
-                                '&:hover': { backgroundColor: '#f0f4ff' },
+                                '&:hover': { backgroundColor: '#f5f5f5' },
                                 borderBottom: '1px solid #f1f1f1'
                               }}
                             >
                               <TableCell sx={{ fontSize: '13px', color: '#212121', fontWeight: '500' }}>
                                 {product.productName || 'Unknown'}
                               </TableCell>
-                              <TableCell align="right" sx={{ fontSize: '13px', fontWeight: '700', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', backgroundClip: 'text', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                ₹{(product.totalSales / 1000).toFixed(1)}K
+                              <TableCell align="right" sx={{ fontSize: '13px', fontWeight: '700', color: '#667eea' }}>
+                                ₹{product.totalSales?.toLocaleString('en-IN') || 0}
                               </TableCell>
                               <TableCell align="right" sx={{ fontSize: '13px', color: '#757575' }}>
                                 {product.quantity} units
@@ -692,7 +696,7 @@ export default function Dashboard() {
                   ) : (
                     <Stack spacing={1.5}>
                       {stats?.topPerformers?.bestCategories?.slice(0, 5).map((cat, idx) => {
-                        const colors = ['#667eea', '#f093fb', '#06ffa5', '#fca311', '#ff6b6b'];
+                        const colors = ['#667eea', '#f093fb', '#4facfe', '#ff9a9e', '#a18cd1'];
                         const color = colors[idx % colors.length];
                         return (
                           <Box

@@ -3,6 +3,7 @@ const User = require('../../models/User');
 const Role = require('../../models/Role');
 const Product = require('../../models/Product');
 const MainCategory = require('../../models/MainCategory');
+const SubCategory = require('../../models/SubCategory');
 const { ObjectId } = require('mongodb');
 
 const getTimeFilter = (filter, startDate, endDate) => {
@@ -70,12 +71,14 @@ exports.getDashboardStats = async (req, res) => {
         const { start, end } = getTimeFilter(filter, startDate, endDate);
         const matchQuery = start ? { createdAt: { $gte: start, $lte: end } } : {};
 
+        const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000001';
+
         // 1. Summary Stats - Optimized with parallel queries
         const [
             totalUsers,
             totalProducts,
             totalOrders,
-            revenueData,
+            financeStats,
             totalRoles,
             successfulOrdersData,
             orderStatusData
@@ -84,8 +87,32 @@ exports.getDashboardStats = async (req, res) => {
             Product.collection().countDocuments(),
             Order.collection().countDocuments(),
             Order.collection().aggregate([
-                { $match: { paymentStatus: 'completed' } },
-                { $group: { _id: null, totalRevenue: { $sum: '$grandTotal' } } }
+                { $match: matchQuery },
+                { $unwind: '$items' },
+                {
+                    $lookup: {
+                        from: 'sub_categories',
+                        localField: 'items.subCategoryId',
+                        foreignField: 'subCategoryId',
+                        as: 'subCat'
+                    }
+                },
+                { $unwind: { path: '$subCat', preserveNullAndEmptyArrays: true } },
+                {
+                    $group: {
+                        _id: null,
+                        totalRevenue: { $sum: '$items.totalPrice' }, // Total Money (GMV)
+                        totalPlatformFees: {
+                            $sum: {
+                                $cond: [
+                                    { $eq: ['$items.sellerId', ADMIN_USER_ID] },
+                                    '$items.totalPrice',
+                                    { $multiply: ['$items.totalPrice', { $divide: [{ $ifNull: ['$subCat.commissionPercentage', 0] }, 100] }] }
+                                ]
+                            }
+                        }
+                    }
+                }
             ]).toArray(),
             Role.collection().countDocuments(),
             Order.collection().aggregate([
@@ -94,11 +121,12 @@ exports.getDashboardStats = async (req, res) => {
             ]).toArray(),
             Order.collection().aggregate([
                 { $match: matchQuery },
-                { $group: { _id: '$paymentStatus', count: { $sum: 1 } } }
+                { $group: { _id: '$orderStatus', count: { $sum: 1 } } }
             ]).toArray()
         ]);
 
-        const totalRevenue = revenueData[0]?.totalRevenue || 0;
+        const totalRevenue = financeStats[0]?.totalRevenue || 0;
+        const totalPlatformFees = financeStats[0]?.totalPlatformFees || 0;
         const successfulOrders = successfulOrdersData[0]?.total || 0;
         const orderStatusBreakdown = orderStatusData.reduce((acc, item) => {
             acc[item._id || 'pending'] = item.count;
@@ -111,16 +139,41 @@ exports.getDashboardStats = async (req, res) => {
         if (filter === 'today') groupBy = { $dateToString: { format: "%H:00", date: "$createdAt" } };
 
         const rawChartData = await Order.collection().aggregate([
-            { $match: { ...matchQuery, paymentStatus: 'completed' } },
-            { $group: { _id: groupBy, revenue: { $sum: '$grandTotal' }, orders: { $sum: 1 } } },
+            { $match: matchQuery },
+            { $unwind: '$items' },
+            {
+                $lookup: {
+                    from: 'sub_categories',
+                    localField: 'items.subCategoryId',
+                    foreignField: 'subCategoryId',
+                    as: 'subCat'
+                }
+            },
+            { $unwind: { path: '$subCat', preserveNullAndEmptyArrays: true } },
+            {
+                $group: {
+                    _id: {
+                        date: groupBy,
+                        orderId: '$orderId'
+                    },
+                    orderRevenue: { $sum: '$items.totalPrice' } // Show total money in chart
+                }
+            },
+            {
+                $group: {
+                    _id: '$_id.date',
+                    revenue: { $sum: '$orderRevenue' },
+                    orders: { $sum: 1 }
+                }
+            },
             { $sort: { _id: 1 } }
         ]).toArray();
 
         const revenueChart = fillChartGaps(rawChartData, filter, start || new Date(0), end);
 
-        // 3. Best Sellers - Optimized with $lookup to avoid N+1
+        // 3. Best Sellers - Optimized with fields in order items
         const bestSellers = await Order.collection().aggregate([
-            { $match: { ...matchQuery, paymentStatus: 'completed' } },
+            { $match: matchQuery },
             { $unwind: '$items' },
             { $group: { 
                 _id: '$items.sellerId', 
@@ -158,52 +211,36 @@ exports.getDashboardStats = async (req, res) => {
             }
         ]).toArray();
 
-        // 4. Best Products - Optimized with $lookup
+        // 4. Best Products - Optimized with fields in order items
         const bestProducts = await Order.collection().aggregate([
-            { $match: { ...matchQuery, paymentStatus: 'completed' } },
+            { $match: matchQuery },
             { $unwind: '$items' },
             { $group: { 
                 _id: '$items.productId', 
                 totalSales: { $sum: '$items.totalPrice' }, 
-                quantity: { $sum: '$items.qty' } 
+                quantity: { $sum: '$items.qty' },
+                productName: { $first: '$items.productName' },
+                images: { $first: '$items.images' }
             } },
             { $sort: { totalSales: -1 } },
             { $limit: 5 },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: '_id',
-                    foreignField: 'productId',
-                    as: 'productInfo'
-                }
-            },
-            { $unwind: { path: '$productInfo', preserveNullAndEmptyArrays: true } },
             {
                 $project: {
                     _id: 1,
                     totalSales: 1,
                     quantity: 1,
-                    productName: { $ifNull: ['$productInfo.productName', 'Unknown Product'] },
-                    image: { $arrayElemAt: ['$productInfo.images', 0] }
+                    productName: { $ifNull: ['$productName', 'Unknown Product'] },
+                    image: { $arrayElemAt: ['$images', 0] }
                 }
             }
         ]).toArray();
 
-        // 5. Best Categories with nested top products - Optimized
+        // 5. Best Categories - Optimized with fields in order items
         const bestCategoriesRaw = await Order.collection().aggregate([
-            { $match: { ...matchQuery, paymentStatus: 'completed' } },
+            { $match: matchQuery },
             { $unwind: '$items' },
-            {
-                $lookup: {
-                    from: 'products',
-                    localField: 'items.productId',
-                    foreignField: 'productId',
-                    as: 'productInfo'
-                }
-            },
-            { $unwind: '$productInfo' },
             { $group: { 
-                _id: '$productInfo.mainCategoryId', 
+                _id: '$items.mainCategoryId', 
                 totalSales: { $sum: '$items.totalPrice' }, 
                 count: { $sum: 1 } 
             } },
@@ -212,7 +249,7 @@ exports.getDashboardStats = async (req, res) => {
         ]).toArray();
 
         // Fetch category names in one query
-        const categoryIds = bestCategoriesRaw.map(c => c._id);
+        const categoryIds = bestCategoriesRaw.map(c => c._id).filter(id => id != null);
         const categoryMap = new Map();
         if (categoryIds.length > 0) {
             const categories = await MainCategory.collection()
@@ -225,21 +262,12 @@ exports.getDashboardStats = async (req, res) => {
         const bestCategories = await Promise.all(
             bestCategoriesRaw.map(async (c) => {
                 const categoryTopProducts = await Order.collection().aggregate([
-                    { $match: { ...matchQuery, paymentStatus: 'completed' } },
+                    { $match: { ...matchQuery, 'items.mainCategoryId': c._id } },
                     { $unwind: '$items' },
-                    {
-                        $lookup: {
-                            from: 'products',
-                            localField: 'items.productId',
-                            foreignField: 'productId',
-                            as: 'p'
-                        }
-                    },
-                    { $unwind: '$p' },
-                    { $match: { 'p.mainCategoryId': c._id } },
+                    { $match: { 'items.mainCategoryId': c._id } },
                     { $group: { 
                         _id: '$items.productId', 
-                        name: { $first: '$p.productName' }, 
+                        name: { $first: '$items.productName' }, 
                         sales: { $sum: '$items.totalPrice' },
                         qty: { $sum: '$items.qty' }
                     } },
@@ -294,6 +322,7 @@ exports.getDashboardStats = async (req, res) => {
                     totalProducts,
                     totalOrders,
                     totalRevenue,
+                    totalPlatformFees,
                     totalRoles,
                     successfulOrders,
                     orderStatusBreakdown

@@ -269,7 +269,12 @@ const Roles = () => {
               </TableRow>
             ) : (
               roles.map((role, index) => (
-                <TableRow key={role.roleId} hover>
+                <TableRow 
+                  key={role.roleId} 
+                  hover 
+                  onClick={() => handleViewRole(role.roleId)}
+                  sx={{ cursor: 'pointer' }}
+                >
                   <TableCell sx={{ fontSize: '0.95rem' }}>{(pagination.currentPage - 1) * pagination.pageSize + index + 1}</TableCell>
                   <TableCell sx={{ fontSize: '0.95rem' }}>{role.roleId}</TableCell>
                   <TableCell>
@@ -287,12 +292,28 @@ const Roles = () => {
                     />
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton color="secondary" size="small" onClick={() => handleOpenPermissions(role)} title="Permissions">
+                    <IconButton 
+                      color="secondary" 
+                      size="small" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenPermissions(role);
+                      }} 
+                      title="Permissions"
+                    >
                       <IconShieldLock size={20} />
                     </IconButton>
                   </TableCell>
                   <TableCell align="center">
-                    <IconButton color="primary" size="small" onClick={() => handleViewRole(role.roleId)} title="View Details">
+                    <IconButton 
+                      color="primary" 
+                      size="small" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewRole(role.roleId);
+                      }} 
+                      title="View Details"
+                    >
                       <IconEye size={20} />
                     </IconButton>
                   </TableCell>
