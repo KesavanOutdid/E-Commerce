@@ -1,7 +1,1 @@
-{
-  "/(site)/orders/page": "app/(site)/orders/page.js",
-  "/(site)/products/page": "app/(site)/products/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
-  "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/page": "app/page.js"
-}
+{}

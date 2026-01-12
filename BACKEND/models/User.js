@@ -242,7 +242,6 @@ class User {
       { userId },
       { 
         $inc: { 
-          sellerEarnings: amount,
           sellerWallet: amount
         },
         $set: { updatedAt: new Date() }
@@ -256,7 +255,6 @@ class User {
       { userId },
       { 
         $inc: { 
-          platformFees: amount,
           adminWallet: amount
         },
         $set: { updatedAt: new Date() }
