@@ -22,6 +22,8 @@ class User {
       wishlist: userData.wishlist || [],
       sellerEarnings: userData.sellerEarnings || 0,
       platformFees: userData.platformFees || 0,
+      sellerWallet: userData.sellerWallet || 0,
+      adminWallet: userData.adminWallet || 0,
       status: userData.status !== undefined ? userData.status : true,
       authenticator: userData.authenticator || false,
       lastLoginAt: userData.lastLoginAt || null,
@@ -239,7 +241,10 @@ class User {
     return await this.collection().findOneAndUpdate(
       { userId },
       { 
-        $inc: { sellerEarnings: amount },
+        $inc: { 
+          sellerEarnings: amount,
+          sellerWallet: amount
+        },
         $set: { updatedAt: new Date() }
       },
       { returnDocument: 'after' }
@@ -250,7 +255,10 @@ class User {
     return await this.collection().findOneAndUpdate(
       { userId },
       { 
-        $inc: { platformFees: amount },
+        $inc: { 
+          platformFees: amount,
+          adminWallet: amount
+        },
         $set: { updatedAt: new Date() }
       },
       { returnDocument: 'after' }

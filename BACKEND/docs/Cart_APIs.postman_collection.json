@@ -8,7 +8,7 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:5000",
+			"value": "http://localhost:5656",
 			"type": "string"
 		},
 		{
@@ -56,7 +56,7 @@
 						}
 					]
 				},
-				"description": "Get the current user's active cart with pagination. Product details and seller listing info fetched in real-time. For seller listings, includes sellerProductId, sellerId, seller's price/stock, and sellerDetails (sellerId, sellerName, sellerEmail). Response includes: userId, items (with productId, sellerProductId, sellerId, productName, qty, price, salePrice, totalPrice, gst, subTotal, images, stock, sellerDetails), status, timestamps, pagination metadata. Token required."
+				"description": "Get the current user's active cart with pagination. Product details and variant info fetched in real-time. For variants, includes variantId, sellerId, variant's price/stock, and sellerDetails (sellerId, sellerName, sellerEmail). Response includes: userId, items (with productId, variantId, sellerId, productName, qty, price, salePrice, totalPrice, gst, subTotal, images, stock, sellerDetails), status, timestamps, pagination metadata. Token required."
 			},
 			"response": [
 				{
@@ -107,7 +107,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"sellerProductId\": \"697c5bcb-539f-4a20-b97c-cbd1488150a6\",\n  \"productId\": \"{{product_id}}\",\n  \"sellerId\": \"71c5ee2c-eb16-4f70-b3cd-a92d56da4b71\",\n  \"qty\": 1,\n  \"totalPrice\": 10230,\n  \"gst\": 230,\n  \"subTotal\": 10000\n}",
+					"raw": "{\n  \"variantId\": \"7df8cf9c-71aa-410d-baee-3be19fac7972\",\n  \"productId\": \"{{product_id}}\",\n  \"sellerId\": \"71c5ee2c-eb16-4f70-b3cd-a92d56da4b71\",\n  \"qty\": 2,\n  \"totalPrice\": 45230,\n  \"gst\": 230,\n  \"subTotal\": 45000,\n  \"salePrice\": 43200\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -119,7 +119,7 @@
 					"host": ["{{base_url}}"],
 					"path": ["api", "cart", "add"]
 				},
-				"description": "Add a product to the cart. Supports seller listings with sellerProductId and sellerId (optional). If product already exists, returns 409 error. Validates product/listing existence, approval status, and stock availability. For seller listings, uses seller's price and stock. Stores sellerProductId, productId, sellerId, productName, price, salePrice, totalPrice, gst, subTotal, images, stock, userId (from token), createdBy (user email), updatedBy (user email). Token required."
+				"description": "Add a product to the cart. Supports product variants with variantId and sellerId (optional). If same product variant already exists in cart, automatically updates the quantity instead of returning error. Validates product/variant existence, approval status, and stock availability. For variants, uses variant's price and stock. Stores variantId, productId, sellerId, productName, price, salePrice, totalPrice, gst, subTotal, images, stock, userId (from token), createdBy (user email), updatedBy (user email). Token required."
 			},
 			"response": [
 				{
@@ -179,7 +179,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"productId\": \"{{product_id}}\",\n  \"qty\": 3,\n  \"totalPrice\": 30230,\n  \"gst\": 230,\n  \"subTotal\": 30000\n}",
+					"raw": "{\n  \"variantId\": \"7df8cf9c-71aa-410d-baee-3be19fac7972\",\n  \"qty\": 5,\n  \"totalPrice\": 113075,\n  \"gst\": 575,\n  \"subTotal\": 112500\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -258,9 +258,16 @@
 					}
 				],
 				"url": {
-					"raw": "{{base_url}}/api/cart/remove/:productId",
+					"raw": "{{base_url}}/api/cart/remove/:productId?variantId=7df8cf9c-71aa-410d-baee-3be19fac7972",
 					"host": ["{{base_url}}"],
 					"path": ["api", "cart", "remove", ":productId"],
+					"query": [
+						{
+							"key": "variantId",
+							"value": "7df8cf9c-71aa-410d-baee-3be19fac7972",
+							"description": "Variant UUID (optional)"
+						}
+					],
 					"variable": [
 						{
 							"key": "productId",
@@ -269,7 +276,7 @@
 						}
 					]
 				},
-				"description": "Remove a specific product from the cart. Validates userId and productId before removal. Updates updatedBy and updatedAt. Token required."
+				"description": "Remove a specific product variant from the cart. Validates userId, productId, and variantId before removal. Updates updatedBy and updatedAt. Token required."
 			},
 			"response": [
 				{

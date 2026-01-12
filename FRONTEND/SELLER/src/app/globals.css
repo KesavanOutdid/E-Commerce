@@ -11,6 +11,13 @@
   --color-cream: #fcf5ef;
   --color-success: #6b9f36;
   --color-orange: #f9cd92;
+  
+  --color-purple-50: #eff2ff;
+  --color-purple-100: #dbe2ff;
+  --color-purple-200: #bac8ff;
+  --color-purple-500: #5971f0;
+  --color-purple-600: rgb(60 80 224);
+  --color-purple-700: rgb(48 64 179);
 
   --background-image-banner-image: var(--banner-url);
   --background-image-newsletter: var(--newsletter-url);

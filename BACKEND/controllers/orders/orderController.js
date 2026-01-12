@@ -3,7 +3,7 @@ const Payment = require('../../models/Payment');
 const Cart = require('../../models/Cart');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
-const SellerProduct = require('../../models/SellerProduct');
+const ProductVariant = require('../../models/ProductVariant');
 const PriceHistory = require('../../models/PriceHistory');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -41,11 +41,11 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
       let sellerId = null;
       let salePrice = 0;
 
-      if (item.sellerProductId) {
-        const sellerProduct = await SellerProduct.findById(item.sellerProductId);
-        if (sellerProduct) {
-          sellerId = sellerProduct.sellerId;
-          salePrice = (sellerProduct.salePrice || sellerProduct.price) * item.qty;
+      if (item.variantId) {
+        const variant = await ProductVariant.findById(item.variantId);
+        if (variant) {
+          sellerId = variant.sellerId;
+          salePrice = (variant.salePrice || variant.price) * item.qty;
         }
       }
 
@@ -60,7 +60,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
           type: 'seller_earning',
           orderId: orderId,
           productId: item.productId,
-          sellerProductId: item.sellerProductId,
+          variantId: item.variantId,
           sellerId: sellerId.toString(),
           amount: sellerEarnings,
           salePrice: salePrice,
@@ -72,7 +72,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
         results.sellerBreakdown.push({
           sellerId: sellerId.toString(),
           productId: item.productId,
-          sellerProductId: item.sellerProductId,
+          variantId: item.variantId,
           salePrice: salePrice,
           platformFee: platformFee,
           sellerEarnings: sellerEarnings
@@ -92,7 +92,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
         type: 'platform_fee',
         orderId: orderId,
         productId: null,
-        sellerProductId: null,
+        variantId: null,
         sellerId: null,
         amount: results.totalPlatformFees,
         salePrice: null,
@@ -201,7 +201,7 @@ exports.createOrder = async (req, res) => {
     if (productIds && Array.isArray(productIds) && productIds.length > 0) {
       selectedItems = cart.items.filter(item => 
         productIds.includes(item.productId) || 
-        (item.sellerProductId && productIds.includes(item.sellerProductId))
+        (item.variantId && productIds.includes(item.variantId))
       );
       
       if (selectedItems.length === 0) {
@@ -214,7 +214,7 @@ exports.createOrder = async (req, res) => {
       if (selectedItems.length !== productIds.length) {
         const foundIds = selectedItems.reduce((acc, item) => {
           acc.push(item.productId);
-          if (item.sellerProductId) acc.push(item.sellerProductId);
+          if (item.variantId) acc.push(item.variantId);
           return acc;
         }, []);
         const missingIds = productIds.filter(id => !foundIds.includes(id));
@@ -227,13 +227,13 @@ exports.createOrder = async (req, res) => {
     }
 
     for (const item of selectedItems) {
-      if (item.sellerProductId) {
-        const listing = await SellerProduct.findById(item.sellerProductId);
-        if (!listing) {
-          return res.status(404).json({ success: false, message: `Listing for ${item.productName} not found` });
+      if (item.variantId) {
+        const variant = await ProductVariant.findById(item.variantId);
+        if (!variant) {
+          return res.status(404).json({ success: false, message: `Variant for ${item.productName} not found` });
         }
-        if (listing.stock < item.qty) {
-          return res.status(400).json({ success: false, message: `Only ${listing.stock} items available from this seller for ${item.productName}` });
+        if (variant.stock < item.qty) {
+          return res.status(400).json({ success: false, message: `Only ${variant.stock} items available for ${item.productName}` });
         }
       } else {
         const product = await Product.findById(item.productId);
@@ -311,8 +311,8 @@ exports.createOrder = async (req, res) => {
     if (paymentType === 'cod') {
       for (const item of selectedItems) {
         try {
-          if (item.sellerProductId) {
-            await SellerProduct.reduceStock(item.sellerProductId, item.qty);
+          if (item.variantId) {
+            await ProductVariant.reduceStock(item.variantId, item.qty);
           }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
@@ -327,7 +327,7 @@ exports.createOrder = async (req, res) => {
 
       if (productIds && Array.isArray(productIds) && productIds.length > 0) {
         for (const item of selectedItems) {
-          await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
+          await Cart.removeItem(userId, item.productId, item.variantId, user.email);
         }
       } else {
         await Cart.clearCart(userId);
@@ -459,14 +459,14 @@ exports.verifyOrder = async (req, res) => {
     if (order.items && order.items.length > 0) {
       for (const item of order.items) {
         try {
-          if (item.sellerProductId) {
-            await SellerProduct.reduceStock(item.sellerProductId, item.qty);
+          if (item.variantId) {
+            await ProductVariant.reduceStock(item.variantId, item.qty);
           }
         } catch (stockError) {
           console.error(`Stock reduction failed for ${item.productId}:`, stockError);
         }
         
-        await Cart.removeItem(userId, item.productId, item.sellerProductId, user.email);
+        await Cart.removeItem(userId, item.productId, item.variantId, user.email);
       }
 
       await processPlatformFees(order.items, order.orderId, order.paymentType);

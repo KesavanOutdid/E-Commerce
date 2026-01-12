@@ -1,6 +1,6 @@
 const User = require('../../models/User');
 const Product = require('../../models/Product');
-const SellerProduct = require('../../models/SellerProduct');
+const ProductVariant = require('../../models/ProductVariant');
 
 // Add item to wishlist
 exports.addToWishlist = async (req, res) => {
@@ -74,18 +74,18 @@ exports.getWishlist = async (req, res) => {
       ]
     });
 
-    // Fetch seller product details (price, stock) for each product
+    // Fetch product variant details (price, stock) for each product
     const productsWithDetails = await Promise.all(products.map(async (product) => {
-      // Find all approved listings for this product
-      const listings = await SellerProduct.collection().find({
+      // Find all approved variants for this product
+      const variants = await ProductVariant.collection().find({
         productId: product.productId,
         approvalStatus: 'approved',
-        sellerStatus: 'active'
+        status: true
       }).toArray();
 
-      if (listings.length > 0) {
-        // Find the listing with the minimum price
-        const bestListing = listings.reduce((prev, curr) => {
+      if (variants.length > 0) {
+        // Find the variant with the minimum price
+        const bestVariant = variants.reduce((prev, curr) => {
           const prevPrice = prev.salePrice || prev.price;
           const currPrice = curr.salePrice || curr.price;
           return prevPrice < currPrice ? prev : curr;
@@ -93,14 +93,14 @@ exports.getWishlist = async (req, res) => {
 
         return {
           ...product,
-          price: bestListing.price,
-          salePrice: bestListing.salePrice,
-          stock: bestListing.stock,
-          sellerProductId: bestListing.sellerProductId,
-          hasStock: bestListing.stock > 0
+          price: bestVariant.price,
+          salePrice: bestVariant.salePrice,
+          stock: bestVariant.stock,
+          variantId: bestVariant.variantId,
+          hasStock: bestVariant.stock > 0
         };
       } else {
-        // No approved listings found
+        // No approved variants found
         return {
           ...product,
           price: 0,

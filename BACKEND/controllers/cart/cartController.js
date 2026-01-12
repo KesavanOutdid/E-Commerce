@@ -1,5 +1,6 @@
 const Cart = require('../../models/Cart');
 const Product = require('../../models/Product');
+const ProductVariant = require('../../models/ProductVariant');
 const User = require('../../models/User');
 
 exports.getCart = async (req, res) => {
@@ -45,21 +46,20 @@ exports.getCart = async (req, res) => {
         let finalStock = product.stock;
         let sellerDetails = null;
 
-        if (item.sellerProductId) {
-          const SellerProduct = require('../../models/SellerProduct');
-          const listing = await SellerProduct.findById(item.sellerProductId);
+        if (item.variantId) {
+          const variant = await ProductVariant.findById(item.variantId);
           
-          if (listing) {
-            finalPrice = listing.price;
-            finalSalePrice = listing.salePrice;
-            finalStock = listing.stock;
+          if (variant) {
+            finalPrice = variant.price;
+            finalSalePrice = variant.salePrice;
+            finalStock = variant.stock;
 
             if (item.sellerId) {
               const seller = await User.findByUserId(item.sellerId);
               if (seller) {
                 sellerDetails = {
                   sellerId: seller.userId,
-                  sellerName: seller.name || seller.email,
+                  sellerName: `${seller.firstName} ${seller.lastName}`,
                   sellerEmail: seller.email
                 };
               }
@@ -68,7 +68,7 @@ exports.getCart = async (req, res) => {
         }
 
         return {
-          sellerProductId: item.sellerProductId || null,
+          variantId: item.variantId || null,
           productId: item.productId,
           sellerId: item.sellerId || null,
           productName: product.productName,
@@ -133,7 +133,7 @@ exports.getCart = async (req, res) => {
 exports.addItem = async (req, res) => {
   try {
     const userId = req.userId;
-    const { sellerProductId, productId, sellerId, qty, totalPrice, gst, subTotal } = req.body;
+    const { variantId, productId, sellerId, qty, totalPrice, gst, subTotal, salePrice } = req.body;
     
     if (!userId) {
       return res.status(401).json({ 
@@ -182,42 +182,41 @@ exports.addItem = async (req, res) => {
     }
 
     let finalPrice = product.price;
-    let finalSalePrice = product.salePrice;
+    let finalSalePrice = salePrice || product.salePrice;
     let finalStock = product.stock;
 
-    if (sellerProductId) {
-      const SellerProduct = require('../../models/SellerProduct');
-      const listing = await SellerProduct.findById(sellerProductId);
+    if (variantId) {
+      const variant = await ProductVariant.findById(variantId);
       
-      if (!listing) {
+      if (!variant) {
         return res.status(404).json({ 
           success: false, 
-          message: 'Seller listing not found for this product' 
+          message: 'Product variant not found' 
         });
       }
 
-      if (listing.approvalStatus !== 'approved') {
+      if (variant.approvalStatus !== 'approved') {
         return res.status(400).json({ 
           success: false, 
-          message: 'This seller listing is not yet approved' 
+          message: 'This variant is not yet approved' 
         });
       }
 
-      if (listing.sellerStatus !== 'active') {
+      if (!variant.status) {
         return res.status(400).json({ 
           success: false, 
-          message: 'This seller listing is currently not available' 
+          message: 'This variant is currently not available' 
         });
       }
 
-      finalPrice = listing.price;
-      finalSalePrice = listing.salePrice;
-      finalStock = listing.stock;
+      finalPrice = variant.price;
+      finalSalePrice = variant.salePrice || variant.price;
+      finalStock = variant.stock;
 
       if (finalStock < qty) {
         return res.status(400).json({ 
           success: false, 
-          message: `Only ${finalStock} items available from this seller` 
+          message: `Only ${finalStock} items available for this variant` 
         });
       }
     } else {
@@ -230,7 +229,7 @@ exports.addItem = async (req, res) => {
     }
 
     const itemData = {
-      sellerProductId: sellerProductId || null,
+      variantId: variantId || null,
       productId: product.productId,
       sellerId: sellerId || null,
       productName: product.productName,
@@ -248,15 +247,11 @@ exports.addItem = async (req, res) => {
 
     const result = await Cart.addItem(userId, itemData, userId, user.email);
     
-    if (result.alreadyExists) {
-      return res.status(409).json({ 
-        success: false,
-        message: 'This item is already in your cart',
-        data: {
-          productId: result.existingItem.productId,
-          currentQty: result.existingItem.qty,
-          suggestion: 'You can update the quantity from your cart'
-        }
+    if (result.updated) {
+      return res.status(200).json({ 
+        success: true,
+        message: result.message || 'Item quantity updated in your cart!',
+        data: result.cart 
       });
     }
     
@@ -277,7 +272,7 @@ exports.removeItem = async (req, res) => {
   try {
     const userId = req.userId;
     const { productId } = req.params;
-    const { sellerProductId } = req.query;
+    const { variantId } = req.query;
     
     if (!userId) {
       return res.status(401).json({ 
@@ -313,7 +308,7 @@ exports.removeItem = async (req, res) => {
 
     const itemExists = existingCart.items.some(item => 
       item.productId === productId && 
-      (item.sellerProductId === (sellerProductId || null))
+      (item.variantId === (variantId || null))
     );
     
     if (!itemExists) {
@@ -323,7 +318,7 @@ exports.removeItem = async (req, res) => {
       });
     }
 
-    const cart = await Cart.removeItem(userId, productId, sellerProductId || null, user.email);
+    const cart = await Cart.removeItem(userId, productId, variantId || null, user.email);
     
     res.status(200).json({ 
       success: true,
@@ -342,7 +337,7 @@ exports.updateItemQty = async (req, res) => {
   try {
     const userId = req.userId;
     const { productId } = req.params;
-    const { qty, totalPrice, gst, subTotal, sellerProductId } = req.body;
+    const { qty, totalPrice, gst, subTotal, variantId } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -392,7 +387,7 @@ exports.updateItemQty = async (req, res) => {
 
     const itemExists = existingCart.items.some(item => 
       item.productId === productId && 
-      (item.sellerProductId === (sellerProductId || null))
+      (item.variantId === (variantId || null))
     );
     
     if (!itemExists) {
@@ -432,7 +427,7 @@ exports.updateItemQty = async (req, res) => {
       }
     };
 
-    const cart = await Cart.updateItemQty(userId, productId, sellerProductId || null, updateData, user.email);
+    const cart = await Cart.updateItemQty(userId, productId, variantId || null, updateData, user.email);
     
     res.status(200).json({ 
       success: true,
