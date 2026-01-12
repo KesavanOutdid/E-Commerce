@@ -244,7 +244,7 @@ export default function ProfilePage() {
                                     </div>
 
                                     <div className="flex-1 min-w-0">
-                                        <h1 className="text-3xl font-bold text-black mb-1">
+                                        <h1 className="text-3xl font-bold text-primary mb-1">
                                             {formData.firstName} {formData.lastName}
                                         </h1>
                                         <p className="text-primary text-sm mb-1">Seller Account</p>
@@ -514,14 +514,14 @@ export default function ProfilePage() {
                             {user?.sellerInfo && (
                                 <div className="bg-white rounded-xl shadow-lg p-6 mb-4">
                                     <h2 className="text-lg font-bold text-black mb-4 flex items-center gap-2">
-                                        <Icon icon="mdi:store" className="text-purple-600" width={24} height={24} />
+                                        <Icon icon="mdi:store" className="text-primary" width={24} height={24} />
                                         Seller Information
                                     </h2>
 
                                     <div className="rounded-lg p-6 mb-4 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                         {user.sellerInfo.shopLogo && (
-                                            <div className="mb-6 flex items-center gap-4 pb-4 border-b border-purple-200">
-                                                <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-purple-600 shadow-lg flex-shrink-0 bg-white">
+                                            <div className="mb-6 flex items-center gap-4 pb-4 border-b border-primary/20">
+                                                <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-primary shadow-lg flex-shrink-0 bg-white">
                                                     <img
                                                         src={`${process.env.NEXT_PUBLIC_API_URL}${user.sellerInfo.shopLogo}`}
                                                         alt="Shop Logo"

@@ -113,7 +113,7 @@ export default function OrdersPage() {
                         <div className="mb-6">
                             <div className="grid grid-cols-12 gap-4 items-center">
                                 <div className="col-span-12 md:col-span-3">
-                                    <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1">
+                                    <h1 className="text-2xl font-bold text-primary mb-1">
                                         Orders
                                     </h1>
                                     <div className="flex items-center gap-3">

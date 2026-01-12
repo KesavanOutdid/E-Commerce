@@ -1044,14 +1044,19 @@ export default function AddProductPage() {
                                                         Variant Images <span className="text-red-500">*</span>
                                                     </label>
                                                     <div className="mb-3">
-                                                        <input
-                                                            type="file"
-                                                            accept="image/png,image/jpeg,image/jpg"
-                                                            multiple
-                                                            onChange={(e) => handleVariantImageChange(variantIndex, e)}
-                                                            className="w-full text-sm"
-                                                        />
-                                                        <p className="text-xs text-gray-500 mt-1">Upload product images (PNG, JPG, JPEG)</p>
+                                                        <div className="relative">
+                                                            <input
+                                                                type="file"
+                                                                accept="image/png,image/jpeg,image/jpg"
+                                                                multiple
+                                                                onChange={(e) => handleVariantImageChange(variantIndex, e)}
+                                                                className="w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 file:cursor-pointer cursor-pointer"
+                                                            />
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 mt-1.5 flex items-center gap-1">
+                                                            <Icon icon="mdi:information-outline" width={14} height={14} />
+                                                            Upload product images (PNG, JPG, JPEG)
+                                                        </p>
                                                     </div>
 
                                                     {/* Display uploaded variant images */}

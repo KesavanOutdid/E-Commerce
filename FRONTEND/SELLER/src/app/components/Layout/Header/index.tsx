@@ -108,7 +108,7 @@ const Header: React.FC = () => {
 
     return (
         <header
-            className={`fixed top-0 z-40 w-full transition-all duration-300 ${sticky ? ' shadow-lg bg-white py-4' : 'shadow-none py-4'
+            className={`fixed top-0 z-40 w-full transition-all duration-300 ${sticky ? ' shadow-lg bg-primary py-4' : 'shadow-none py-4 bg-primary'
                 }`}>
             <div>
                 <div className='container mx-auto max-w-7xl px-4 flex items-center justify-between'>
@@ -122,14 +122,14 @@ const Header: React.FC = () => {
                         {!isAuthenticated ? (
                             <>
                                 <button
-                                    className='hidden lg:block bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer'
+                                    className='hidden lg:block bg-white text-primary border border-white hover:bg-transparent hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer font-medium'
                                     onClick={() => {
                                         setIsSignInOpen(true)
                                     }}>
                                     Sign In
                                 </button>
                                 <button
-                                    className='hidden lg:block bg-primary text-white text-base font-medium hover:bg-transparent duration-300 hover:text-primary border border-primary px-6 py-2 rounded-lg hover:cursor-pointer'
+                                    className='hidden lg:block bg-white text-primary text-base font-medium hover:bg-transparent hover:text-white border border-white px-6 py-2 rounded-lg hover:cursor-pointer'
                                     onClick={() => {
                                         setIsSignUpOpen(true)
                                     }}>
@@ -140,7 +140,7 @@ const Header: React.FC = () => {
                             <div className='hidden lg:block relative' ref={accountDropdownRef}>
                                 <button
                                     onClick={() => setIsAccountDropdownOpen(!isAccountDropdownOpen)}
-                                    className='flex items-center gap-2 bg-transparent text-primary border hover:bg-primary border-primary hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer'>
+                                    className='flex items-center gap-2 bg-white text-primary border border-white hover:bg-transparent hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer font-medium'>
                                     <Icon icon='mdi:account-circle' width={24} height={24} />
                                     <span>{user?.firstName} {user?.lastName}</span>
                                     <Icon icon='mdi:chevron-down' width={20} height={20} />
@@ -250,9 +250,9 @@ const Header: React.FC = () => {
                             onClick={() => setNavbarOpen(!navbarOpen)}
                             className='block lg:hidden p-2 rounded-lg'
                             aria-label='Toggle mobile menu'>
-                            <span className='block w-6 h-0.5 bg-black'></span>
-                            <span className='block w-6 h-0.5 bg-black mt-1.5'></span>
-                            <span className='block w-6 h-0.5 bg-black mt-1.5'></span>
+                            <span className='block w-6 h-0.5 bg-white'></span>
+                            <span className='block w-6 h-0.5 bg-white mt-1.5'></span>
+                            <span className='block w-6 h-0.5 bg-white mt-1.5'></span>
                         </button>
                     </div>
                 </div>

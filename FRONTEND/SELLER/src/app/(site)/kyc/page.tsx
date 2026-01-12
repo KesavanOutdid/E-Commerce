@@ -270,7 +270,7 @@ export default function KYCPage() {
                                 <div className="flex justify-between items-center mb-4">
                                     <div>
                                         <h2 className="text-lg font-bold text-black mb-1 flex items-center gap-2">
-                                            <Icon icon="mdi:briefcase" className="text-purple-600" width={24} height={24} />
+                                            <Icon icon="mdi:briefcase" className="text-primary" width={24} height={24} />
                                             Business Information
                                         </h2>
                                         <p className="text-sm text-gray-600">
@@ -289,10 +289,10 @@ export default function KYCPage() {
                                 
                                 <div className="rounded-lg p-6 mb-4 border-2 border-gray-200" style={{ backgroundColor: 'rgb(249, 249, 249)' }}>
                                     {(!isKYCApproved || isEditing || logoPreview) && (
-                                        <div className="mb-6 pb-6 border-b border-purple-200">
+                                        <div className="mb-6 pb-6 border-b border-primary/20">
                                             {logoPreview && (
                                                 <div className="flex items-center gap-4 mb-4">
-                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-purple-600 shadow-lg flex-shrink-0 bg-white">
+                                                    <div className="w-24 h-24 rounded-lg overflow-hidden border-3 border-primary shadow-lg flex-shrink-0 bg-white">
                                                         <img
                                                             src={logoPreview}
                                                             alt="Shop Logo"
@@ -312,7 +312,7 @@ export default function KYCPage() {
                                                         <button
                                                             type="button"
                                                             onClick={() => fileInputRef.current?.click()}
-                                                            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition text-sm">
+                                                            className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition text-sm">
                                                             <Icon icon="mdi:upload" width={18} height={18} />
                                                             {logoPreview ? 'Change Logo' : 'Upload Logo'}
                                                         </button>

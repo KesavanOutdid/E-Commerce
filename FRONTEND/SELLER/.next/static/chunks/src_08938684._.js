@@ -551,10 +551,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                             className: "text-center",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                    className: "text-black mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2] dark:text-white",
-                                    style: {
-                                        color: '#611F69'
-                                    },
+                                    className: "text-primary mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2]",
                                     children: pageName
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -592,10 +589,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                                                 className: "text-body-color flex items-center gap-[10px] text-base font-medium",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-body-color dark:text-white dark:text-opacity-50",
-                                                        style: {
-                                                            color: '#611F69'
-                                                        },
+                                                        className: "text-primary",
                                                         children: " / "
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -2926,7 +2920,7 @@ function EditProductPage() {
                                                                                             className: "relative",
                                                                                             children: [
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                                    src: `${("TURBOPACK compile-time value", "http://192.168.0.18:5656")}${image}`,
+                                                                                                    src: `${("TURBOPACK compile-time value", "http://192.168.0.32:5656")}${image}`,
                                                                                                     alt: `Existing ${imageIndex + 1}`,
                                                                                                     className: "w-full h-32 object-cover rounded-lg border border-gray-200"
                                                                                                 }, void 0, false, {

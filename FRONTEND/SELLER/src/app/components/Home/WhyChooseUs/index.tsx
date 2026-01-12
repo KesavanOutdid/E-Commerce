@@ -33,8 +33,8 @@ const WhyChooseUs = () => {
             ),
             title: 'Growth',
             description: 'Sellers see an average 2.8X spike in growth, 2.3X more visibility, and up to 5X growth in The Big Billion Days Sale.',
-            bgColor: 'bg-purple-100',
-            iconColor: 'text-purple-600'
+            bgColor: 'bg-primary/10',
+            iconColor: 'text-primary'
         },
         {
             icon: (

@@ -12,7 +12,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                 <div className="-mx-4 flex flex-wrap items-center">
                     <div className="w-full px-4">
                         <div className="text-center">
-                            <h1 className="text-black mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2] dark:text-white" style={{ color: '#611F69' }}>
+                            <h1 className="text-primary mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2]">
                                 {pageName}
                             </h1>
                             <p className="text-base">
@@ -30,7 +30,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({
                                 </li>
                                 <li>
                                     <p className="text-body-color flex items-center gap-[10px] text-base font-medium">
-                                        <span className="text-body-color dark:text-white dark:text-opacity-50" style={{ color: '#611F69' }}> / </span>
+                                        <span className="text-primary"> / </span>
                                         {pageName}
                                     </p>
                                 </li>

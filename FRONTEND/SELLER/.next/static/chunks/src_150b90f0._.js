@@ -551,10 +551,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                             className: "text-center",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                    className: "text-black mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2] dark:text-white",
-                                    style: {
-                                        color: '#611F69'
-                                    },
+                                    className: "text-primary mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2]",
                                     children: pageName
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -592,10 +589,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                                                 className: "text-body-color flex items-center gap-[10px] text-base font-medium",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-body-color dark:text-white dark:text-opacity-50",
-                                                        style: {
-                                                            color: '#611F69'
-                                                        },
+                                                        className: "text-primary",
                                                         children: " / "
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -3236,23 +3230,41 @@ function AddProductPage() {
                                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                                 className: "mb-3",
                                                                                 children: [
-                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
-                                                                                        type: "file",
-                                                                                        accept: "image/png,image/jpeg,image/jpg",
-                                                                                        multiple: true,
-                                                                                        onChange: (e)=>handleVariantImageChange(variantIndex, e),
-                                                                                        className: "w-full text-sm"
+                                                                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                                                        className: "relative",
+                                                                                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("input", {
+                                                                                            type: "file",
+                                                                                            accept: "image/png,image/jpeg,image/jpg",
+                                                                                            multiple: true,
+                                                                                            onChange: (e)=>handleVariantImageChange(variantIndex, e),
+                                                                                            className: "w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90 file:cursor-pointer cursor-pointer"
+                                                                                        }, void 0, false, {
+                                                                                            fileName: "[project]/src/app/(site)/products/add/page.tsx",
+                                                                                            lineNumber: 1048,
+                                                                                            columnNumber: 61
+                                                                                        }, this)
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
                                                                                         lineNumber: 1047,
                                                                                         columnNumber: 57
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                        className: "text-xs text-gray-500 mt-1",
-                                                                                        children: "Upload product images (PNG, JPG, JPEG)"
-                                                                                    }, void 0, false, {
+                                                                                        className: "text-xs text-gray-500 mt-1.5 flex items-center gap-1",
+                                                                                        children: [
+                                                                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$iconify$2f$react$2f$dist$2f$iconify$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["Icon"], {
+                                                                                                icon: "mdi:information-outline",
+                                                                                                width: 14,
+                                                                                                height: 14
+                                                                                            }, void 0, false, {
+                                                                                                fileName: "[project]/src/app/(site)/products/add/page.tsx",
+                                                                                                lineNumber: 1057,
+                                                                                                columnNumber: 61
+                                                                                            }, this),
+                                                                                            "Upload product images (PNG, JPG, JPEG)"
+                                                                                        ]
+                                                                                    }, void 0, true, {
                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                        lineNumber: 1054,
+                                                                                        lineNumber: 1056,
                                                                                         columnNumber: 57
                                                                                     }, this)
                                                                                 ]
@@ -3273,7 +3285,7 @@ function AddProductPage() {
                                                                                         ]
                                                                                     }, void 0, true, {
                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                        lineNumber: 1060,
+                                                                                        lineNumber: 1065,
                                                                                         columnNumber: 61
                                                                                     }, this),
                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -3287,7 +3299,7 @@ function AddProductPage() {
                                                                                                         className: "w-full h-32 object-cover rounded-lg border border-gray-300"
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                                        lineNumber: 1064,
+                                                                                                        lineNumber: 1069,
                                                                                                         columnNumber: 73
                                                                                                     }, this),
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3300,29 +3312,29 @@ function AddProductPage() {
                                                                                                             height: 14
                                                                                                         }, void 0, false, {
                                                                                                             fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                                            lineNumber: 1073,
+                                                                                                            lineNumber: 1078,
                                                                                                             columnNumber: 77
                                                                                                         }, this)
                                                                                                     }, void 0, false, {
                                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                                        lineNumber: 1069,
+                                                                                                        lineNumber: 1074,
                                                                                                         columnNumber: 73
                                                                                                     }, this)
                                                                                                 ]
                                                                                             }, idx, true, {
                                                                                                 fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                                lineNumber: 1063,
+                                                                                                lineNumber: 1068,
                                                                                                 columnNumber: 69
                                                                                             }, this))
                                                                                     }, void 0, false, {
                                                                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                        lineNumber: 1061,
+                                                                                        lineNumber: 1066,
                                                                                         columnNumber: 61
                                                                                     }, this)
                                                                                 ]
                                                                             }, void 0, true, {
                                                                                 fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                                                lineNumber: 1059,
+                                                                                lineNumber: 1064,
                                                                                 columnNumber: 57
                                                                             }, this)
                                                                         ]
@@ -3364,7 +3376,7 @@ function AddProductPage() {
                                                 children: "Cancel"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                lineNumber: 1088,
+                                                lineNumber: 1093,
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -3380,7 +3392,7 @@ function AddProductPage() {
                                                             height: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                            lineNumber: 1100,
+                                                            lineNumber: 1105,
                                                             columnNumber: 45
                                                         }, this),
                                                         "Creating..."
@@ -3393,7 +3405,7 @@ function AddProductPage() {
                                                             height: 18
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                            lineNumber: 1105,
+                                                            lineNumber: 1110,
                                                             columnNumber: 45
                                                         }, this),
                                                         showVariantOnlyMode ? 'Add Variant' : 'Create Product'
@@ -3401,13 +3413,13 @@ function AddProductPage() {
                                                 }, void 0, true)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                                lineNumber: 1094,
+                                                lineNumber: 1099,
                                                 columnNumber: 33
                                             }, this)
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/(site)/products/add/page.tsx",
-                                        lineNumber: 1087,
+                                        lineNumber: 1092,
                                         columnNumber: 29
                                     }, this)
                                 ]

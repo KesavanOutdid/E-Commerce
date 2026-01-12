@@ -66,19 +66,19 @@ const SellerHero = () => {
                 </div>
 
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8 mt-12 lg:mt-16'>
-                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
+                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
                         <h3 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500'>14 Lakh+</h3>
                         <p className='text-gray-600 mt-2 text-sm lg:text-base group-hover:text-white transition-colors duration-500'>Seller community</p>
                     </div>
-                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
+                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
                         <h3 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500'>24×7</h3>
                         <p className='text-gray-600 mt-2 text-sm lg:text-base group-hover:text-white transition-colors duration-500'>Online Business</p>
                     </div>
-                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
+                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
                         <h3 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500'>7</h3>
                         <p className='text-gray-600 mt-2 text-sm lg:text-base group-hover:text-white transition-colors duration-500'>days* payment</p>
                     </div>
-                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
+                    <div className='text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group'>
                         <h3 className='text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500'>19000+</h3>
                         <p className='text-gray-600 mt-2 text-sm lg:text-base group-hover:text-white transition-colors duration-500'>Pincodes served</p>
                     </div>

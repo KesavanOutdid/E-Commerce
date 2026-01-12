@@ -35,8 +35,8 @@ const HeaderLink: React.FC<{ item: HeaderItem }> = ({ item }) => {
       onMouseLeave={handleMouseLeave}>
       <Link
         href={item.href}
-        className={`text-base flex font-medium hover:text-primary capitalized  ${
-          isActive() ? 'text-primary ' : 'text-black'
+        className={`text-base flex font-medium hover:text-white/80 capitalized relative pb-1 ${
+          isActive() ? 'text-white font-bold after:content-[""] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:bg-white' : 'text-white/90'
         }`}>
         {item.label}
         {item.submenu && (

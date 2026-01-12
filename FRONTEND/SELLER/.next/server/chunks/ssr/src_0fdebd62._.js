@@ -277,10 +277,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                             className: "text-center",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                    className: "text-black mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2] dark:text-white",
-                                    style: {
-                                        color: '#611F69'
-                                    },
+                                    className: "text-primary mb-4 text-3xl font-bold sm:text-4xl md:text-[40px] md:leading-[1.2]",
                                     children: pageName
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -318,10 +315,7 @@ const Breadcrumb = ({ pageName, pageDescription })=>{
                                                 className: "text-body-color flex items-center gap-[10px] text-base font-medium",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                        className: "text-body-color dark:text-white dark:text-opacity-50",
-                                                        style: {
-                                                            color: '#611F69'
-                                                        },
+                                                        className: "text-primary",
                                                         children: " / "
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/components/Common/Breadcrumb.tsx",
@@ -1045,7 +1039,7 @@ function ProductsPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "col-span-12 md:col-span-3",
                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("h1", {
-                                                            className: "text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent mb-1",
+                                                            className: "text-2xl font-bold text-primary mb-1",
                                                             children: "My Products"
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/(site)/products/page.tsx",

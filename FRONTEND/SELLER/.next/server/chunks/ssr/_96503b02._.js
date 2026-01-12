@@ -255,7 +255,7 @@ const SellerHero = ()=>{
                     className: "grid grid-cols-2 md:grid-cols-4 gap-4 lg:gap-8 mt-12 lg:mt-16",
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
+                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                     className: "text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500",
@@ -280,7 +280,7 @@ const SellerHero = ()=>{
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
+                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                     className: "text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500",
@@ -305,7 +305,7 @@ const SellerHero = ()=>{
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
+                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                     className: "text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500",
@@ -330,7 +330,7 @@ const SellerHero = ()=>{
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-[#611f69] transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
+                            className: "text-center p-4 bg-white rounded-[20px] hover:bg-primary transition-all duration-500 transform hover:scale-105 hover:shadow-xl group",
                             children: [
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("h3", {
                                     className: "text-2xl sm:text-3xl lg:text-4xl font-bold text-primary group-hover:text-white transition-colors duration-500",
@@ -462,8 +462,8 @@ const WhyChooseUs = ()=>{
             }, this),
             title: 'Growth',
             description: 'Sellers see an average 2.8X spike in growth, 2.3X more visibility, and up to 5X growth in The Big Billion Days Sale.',
-            bgColor: 'bg-purple-100',
-            iconColor: 'text-purple-600'
+            bgColor: 'bg-primary/10',
+            iconColor: 'text-primary'
         },
         {
             icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$rsc$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$rsc$5d$__$28$ecmascript$29$__["jsxDEV"])("svg", {

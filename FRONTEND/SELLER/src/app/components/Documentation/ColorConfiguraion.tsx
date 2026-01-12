@@ -12,7 +12,7 @@ export const ColorConfiguration = () => {
         </p>
         <div className="py-4 px-5 rounded-md bg-black mt-8">
           <p className="text-sm text-white/60 flex flex-col gap-2">
-            <span>--color-primary: #611f69;</span>
+            <span>--color-primary: rgb(60 80 224);</span>
             <span>--color-cream: #fcf5ef;</span>
             <span>--color-success: #6b9f36;</span>
             <span>--color-orange: #f9cd92;</span>
@@ -29,7 +29,7 @@ export const ColorConfiguration = () => {
         </p>
         <div className="py-4 px-5 rounded-md bg-black mt-8">
           <p className="text-sm text-white/60 flex flex-col gap-2">
-            <span>--color-primary: #611f69;</span>
+            <span>--color-primary: rgb(60 80 224);</span>
           </p>
         </div>
       </div>

@@ -123,7 +123,7 @@ export default function OrderDetailPage() {
                             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
                                 <div className="flex items-start justify-between mb-6">
                                     <div>
-                                        <h1 className="text-2xl font-bold text-gray-900 mb-2">Order #{order.orderId}</h1>
+                                        <h1 className="text-2xl font-bold text-primary mb-2">Order #{order.orderId}</h1>
                                         <p className="text-sm text-gray-500">
                                             Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', {
                                                 day: '2-digit',
