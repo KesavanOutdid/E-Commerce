@@ -4,7 +4,6 @@ import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Newsletter from "../Common/Newsletter";
 import LoginModal from "../Common/LoginModal";
-import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
 import { useAppSelector, AppDispatch } from "@/redux/store";
 import { API_BASE_URL, API_ENDPOINTS } from "@/lib/api";
 import { useDispatch } from "react-redux";
@@ -20,7 +19,6 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const [activeColor, setActiveColor] = useState("blue");
-  const { openPreviewModal } = usePreviewSlider();
   const [previewImg, setPreviewImg] = useState(0);
 
   const [product, setProduct] = useState<any>(null);
@@ -441,11 +439,6 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     }
   };
 
-  // pass the product here when you get the real data.
-  const handlePreviewSlider = () => {
-    openPreviewModal();
-  };
-
   const handleAddToWishlist = async () => {
     if (!isAuthenticated) {
       setShowLoginModal(true);
@@ -863,28 +856,6 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                             </svg>
                           </button>
 
-                          <button
-                            onClick={handlePreviewSlider}
-                            aria-label="button for zoom"
-                            className="gallery__Image w-11 h-11 rounded-[5px] bg-gray-1 shadow-1 flex items-center justify-center ease-out duration-200 text-dark hover:text-blue absolute top-4 lg:top-6 right-4 lg:right-6 z-50"
-                          >
-                            <svg
-                              className="fill-current"
-                              width="22"
-                              height="22"
-                              viewBox="0 0 22 22"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M9.11493 1.14581L9.16665 1.14581C9.54634 1.14581 9.85415 1.45362 9.85415 1.83331C9.85415 2.21301 9.54634 2.52081 9.16665 2.52081C7.41873 2.52081 6.17695 2.52227 5.23492 2.64893C4.31268 2.77292 3.78133 3.00545 3.39339 3.39339C3.00545 3.78133 2.77292 4.31268 2.64893 5.23492C2.52227 6.17695 2.52081 7.41873 2.52081 9.16665C2.52081 9.54634 2.21301 9.85415 1.83331 9.85415C1.45362 9.85415 1.14581 9.54634 1.14581 9.16665L1.14581 9.11493C1.1458 7.43032 1.14579 6.09599 1.28619 5.05171C1.43068 3.97699 1.73512 3.10712 2.42112 2.42112C3.10712 1.73512 3.97699 1.43068 5.05171 1.28619C6.09599 1.14579 7.43032 1.1458 9.11493 1.14581ZM16.765 2.64893C15.823 2.52227 14.5812 2.52081 12.8333 2.52081C12.4536 2.52081 12.1458 2.21301 12.1458 1.83331C12.1458 1.45362 12.4536 1.14581 12.8333 1.14581L12.885 1.14581C14.5696 1.1458 15.904 1.14579 16.9483 1.28619C18.023 1.43068 18.8928 1.73512 19.5788 2.42112C20.2648 3.10712 20.5693 3.97699 20.7138 5.05171C20.8542 6.09599 20.8542 7.43032 20.8541 9.11494V9.16665C20.8541 9.54634 20.5463 9.85415 20.1666 9.85415C19.787 9.85415 19.4791 9.54634 19.4791 9.16665C19.4791 7.41873 19.4777 6.17695 19.351 5.23492C19.227 4.31268 18.9945 3.78133 18.6066 3.39339C18.2186 3.00545 17.6873 2.77292 16.765 2.64893ZM1.83331 12.1458C2.21301 12.1458 2.52081 12.4536 2.52081 12.8333C2.52081 14.5812 2.52227 15.823 2.64893 16.765C2.77292 17.6873 3.00545 18.2186 3.39339 18.6066C3.78133 18.9945 4.31268 19.227 5.23492 19.351C6.17695 19.4777 7.41873 19.4791 9.16665 19.4791C9.54634 19.4791 9.85415 19.787 9.85415 20.1666C9.85415 20.5463 9.54634 20.8541 9.16665 20.8541H9.11494C7.43032 20.8542 6.09599 20.8542 5.05171 20.7138C3.97699 20.5693 3.10712 20.2648 2.42112 19.5788C1.73512 18.8928 1.43068 18.023 1.28619 16.9483C1.14579 15.904 1.1458 14.5696 1.14581 12.885L1.14581 12.8333C1.14581 12.4536 1.45362 12.1458 1.83331 12.1458ZM20.1666 12.1458C20.5463 12.1458 20.8541 12.4536 20.8541 12.8333V12.885C20.8542 14.5696 20.8542 15.904 20.7138 16.9483C20.5693 18.023 20.2648 18.8928 19.5788 19.5788C18.8928 20.2648 18.023 20.5693 16.9483 20.7138C15.904 20.8542 14.5696 20.8542 12.885 20.8541H12.8333C12.4536 20.8541 12.1458 20.5463 12.1458 20.1666C12.1458 19.787 12.4536 19.4791 12.8333 19.4791C14.5812 19.4791 15.823 19.4777 16.765 19.351C17.6873 19.227 18.2186 18.9945 18.6066 18.6066C18.9945 18.2186 19.227 17.6873 19.351 16.765C19.4777 15.823 19.4791 14.5812 19.4791 12.8333C19.4791 12.4536 19.787 12.1458 20.1666 12.1458Z"
-                                fill=""
-                              />
-                            </svg>
-                          </button>
-
                           {product.imgs?.previews?.[previewImg] ? (
                             <Image
                               src={product.imgs.previews[previewImg]}
@@ -932,11 +903,11 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   </div>
 
                   {/* Flipkart Style Buttons for Desktop */}
-                  <div className="hidden lg:flex flex-row gap-2.5 mt-6">
+                  <div className="hidden lg:flex flex-row justify-end gap-2.5 mt-6">
                     <button
                       onClick={handleAddToCart}
                       disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
-                      className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-sm ${
+                      className={`inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-10 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-sm ${
                         parseInt(product.minPriceDetails?.stock || product.stock) > 0 
                           ? "bg-blue hover:bg-blue-dark" 
                           : "bg-gray-4 cursor-not-allowed opacity-70"
@@ -957,7 +928,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                       </svg>
                       ADD TO CART
                     </button>
-                    <button
+                    {/* <button
                       onClick={handleBuyNow}
                       disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
                       className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-sm ${
@@ -970,7 +941,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                       </svg>
                       BUY NOW
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>
@@ -1040,38 +1011,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-5.5 mb-4.5">
-                    <div className="flex items-center gap-2.5">
-                      {/* <!-- stars --> */}
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={i < Math.round(product.avgRating || 0) ? "fill-[#FFA645]" : "fill-gray-4"}
-                            width="18"
-                            height="18"
-                            viewBox="0 0 18 18"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                          >
-                            <g clipPath="url(#clip0_375_9172)">
-                              <path
-                                d="M16.7906 6.72187L11.7 5.93438L9.39377 1.09688C9.22502 0.759375 8.77502 0.759375 8.60627 1.09688L6.30002 5.9625L1.23752 6.72187C0.871891 6.77812 0.731266 7.25625 1.01252 7.50938L4.69689 11.3063L3.82502 16.6219C3.76877 16.9875 4.13439 17.2969 4.47189 17.0719L9.05627 14.5687L13.6125 17.0719C13.9219 17.2406 14.3156 16.9594 14.2313 16.6219L13.3594 11.3063L17.0438 7.50938C17.2688 7.25625 17.1563 6.77812 16.7906 6.72187Z"
-                                fill=""
-                              />
-                            </g>
-                            <defs>
-                              <clipPath id="clip0_375_9172">
-                                <rect width="18" height="18" fill="white" />
-                              </clipPath>
-                            </defs>
-                          </svg>
-                        ))}
-                      </div>
 
-                      <span> ({product.reviews} customer reviews) </span>
-                    </div>
-                  </div>
 
                   <div className="flex items-center gap-3 mb-4.5">
                     <h3 className="font-bold text-2xl text-dark">
@@ -1101,7 +1041,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     {Object.entries(attributeOptions).map(([name, values]: [string, any]) => {
                       return (
                         <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                          <span className="text-gray-500 text-[13px] w-20 flex-shrink-0">{name}</span>
+                          <span className="text-gray-500 text-[15px] w-20 flex-shrink-0">{name}</span>
                           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
                             {values.map((val: string) => {
                               const isSelected = selectedAttributes[name]?.toString().toLowerCase() === val.toString().toLowerCase();
@@ -1119,12 +1059,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                                   key={val}
                                   disabled={!isAvailable}
                                   onClick={() => handleAttributeChange(name, val)}
-                                  className={`relative rounded border transition-all flex items-center justify-center overflow-hidden w-16 h-7 ${
+                                  className={`relative rounded border transition-all flex items-center justify-center overflow-hidden w-16 px-1 h-7 ${
                                     !isAvailable ? "border-gray-50 text-gray-200 cursor-not-allowed" :
                                     isSelected
                                       ? "border-blue text-blue font-normal shadow-sm bg-blue/5"
-                                      : "border-gray-100 text-gray-500 font-normal hover:border-gray-300"
-                                  } text-[10px]`}
+                                      : "border-gray-200 text-gray-500 font-normal hover:border-gray-400"
+                                  } text-[11px]`}
                                   title={val}
                                 >
                                   {isColor && colorImg ? (
@@ -1132,14 +1072,14 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                                       <Image 
                                         src={colorImg} 
                                         alt={val} 
-                                        width={64} 
+                                        width={80} 
                                         height={28} 
                                         className="w-full h-full object-contain"
                                       />
                                     </div>
                                   ) : (
-                                    <span className="text-center px-1 break-words leading-tight whitespace-nowrap">
-                                      {val} {(name.toUpperCase() === "RAM" || name.toUpperCase() === "STORAGE") && "GB"}
+                                    <span className="text-center px-1 truncate w-full leading-tight">
+                                      {val}{(name.toUpperCase() === "RAM" || name.toUpperCase() === "STORAGE") && "GB"}
                                     </span>
                                   )}
                                   {isSelected && isColor && (
@@ -1157,7 +1097,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   </div>
 
                   {/* Delivery & Stock Info */}
-                  <div className="flex items-start gap-2 mb-6">
+                  <div className="mt-8 border-t border-gray-3 pt-8 flex items-start gap-2 mb-6">
                     <span className="text-gray-500 font-medium text-md w-20 pt-0.5">Delivery</span>
                     <div className="flex-1 flex items-center justify-between">
                       <div className="flex flex-col">
@@ -1194,20 +1134,29 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                           )}
                         </div>
                         
-                        {product.allOffers?.length > 1 && (
-                          <div className="pt-1">
-                            <Link 
-                              href={`/shop-details/${productId}/sellers`}
-                              className="text-blue text-sm flex items-center gap-1 group"
-                            >
-                              {product.allOffers.length === 2 
-                                ? `1 other seller from ₹${product.allOffers.find((s: any) => s.sellerId !== product.minPriceDetails?.sellerId)?.currentPrice}`
-                                : `View ${product.allOffers.length - 1} more sellers from ₹${Math.min(...product.allOffers.filter((s: any) => s.sellerId !== product.minPriceDetails?.sellerId).map((s: any) => s.currentPrice))}`
-                              }
-                              <svg className="transform group-hover:translate-x-0.5 transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                            </Link>
-                          </div>
-                        )}
+                        {(() => {
+                          const otherSellersOffers = product.allOffers?.filter((s: any) => s.sellerId !== product.minPriceDetails?.sellerId) || [];
+                          const uniqueOtherSellersCount = new Set(otherSellersOffers.map((s: any) => s.sellerId)).size;
+                          
+                          if (uniqueOtherSellersCount > 0) {
+                            const minPrice = Math.min(...otherSellersOffers.map((s: any) => s.currentPrice));
+                            return (
+                              <div className="pt-1">
+                                <Link 
+                                  href={`/shop-details/${productId}/sellers`}
+                                  className="text-blue text-sm flex items-center gap-1 group"
+                                >
+                                  {uniqueOtherSellersCount === 1 
+                                    ? `1 other seller from ₹${minPrice}`
+                                    : `View ${uniqueOtherSellersCount} more sellers from ₹${minPrice}`
+                                  }
+                                  <svg className="transform group-hover:translate-x-0.5 transition-transform" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                </Link>
+                              </div>
+                            );
+                          }
+                          return null;
+                        })()}
                       </div>
                     </div>
                   )}
@@ -1260,11 +1209,11 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   </div>
 
                   <form onSubmit={(e) => e.preventDefault()} className="lg:hidden">
-                    <div className="flex flex-wrap items-center gap-2 mt-8">
+                    <div className="flex flex-wrap items-center justify-end gap-2 mt-8">
                       <button
                         onClick={handleAddToCart}
                         disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
-                        className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-xs min-w-[140px] ${
+                        className={`inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-10 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-xs ${
                           parseInt(product.minPriceDetails?.stock || product.stock) > 0 
                             ? "bg-blue hover:bg-blue-dark" 
                             : "bg-gray-4 cursor-not-allowed opacity-70"
@@ -1285,7 +1234,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                         </svg>
                         ADD TO CART
                       </button>
-                      <button
+                      {/* <button
                         onClick={handleBuyNow}
                         disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
                         className={`flex-1 inline-flex items-center justify-center gap-2 font-bold text-white py-4 px-2 rounded-sm ease-out duration-200 uppercase tracking-wide shadow-md text-xs min-w-[140px] ${
@@ -1298,7 +1247,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
                         </svg>
                         BUY NOW
-                      </button>
+                      </button> */}
                     </div>
                   </form>
                 </div>
@@ -1319,7 +1268,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
             >
               Add to Cart
             </button>
-            <button
+            {/* <button
               onClick={handleBuyNow}
               disabled={parseInt(product.minPriceDetails?.stock || product.stock) <= 0}
               className={`w-full font-bold text-white py-3.5 text-sm rounded-sm uppercase ${
@@ -1329,7 +1278,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
               }`}
             >
               Buy Now
-            </button>
+            </button> */}
           </div>
 
           <section className="overflow-hidden bg-gray-2 pt-4 pb-20">

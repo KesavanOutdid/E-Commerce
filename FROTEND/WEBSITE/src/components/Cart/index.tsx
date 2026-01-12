@@ -1,12 +1,37 @@
 "use client";
-import React from "react";
-import { useAppSelector } from "@/redux/store";
+import React, { useEffect } from "react";
+import { useAppSelector, AppDispatch } from "@/redux/store";
 import SingleItem from "./SingleItem";
 import Breadcrumb from "../Common/Breadcrumb";
 import Link from "next/link";
+import { useDispatch } from "react-redux";
+import { fetchCart, clearCartServer, removeAllItemsFromCart } from "@/redux/features/cart-slice";
+import toast from "react-hot-toast";
 
 const Cart = () => {
+  const dispatch = useDispatch<AppDispatch>();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
+  const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
+
+  useEffect(() => {
+    if (isAuthenticated && accessToken) {
+      dispatch(fetchCart(accessToken));
+    }
+  }, [dispatch, isAuthenticated, accessToken]);
+
+  const handleClearCart = async () => {
+    if (isAuthenticated && accessToken) {
+      try {
+        await dispatch(clearCartServer(accessToken)).unwrap();
+        toast.success("Cart cleared successfully");
+      } catch (error: any) {
+        toast.error(error || "Failed to clear cart");
+      }
+    } else {
+      dispatch(removeAllItemsFromCart());
+      toast.success("Cart cleared locally");
+    }
+  };
 
   return (
     <>
@@ -20,7 +45,9 @@ const Cart = () => {
           <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
             <div className="flex flex-wrap items-center justify-between gap-5 mb-7.5">
               <h2 className="font-medium text-dark text-2xl">Your Cart</h2>
-              <button className="text-blue">Clear Shopping Cart</button>
+              <button onClick={handleClearCart} className="text-blue hover:underline">
+                Clear Shopping Cart
+              </button>
             </div>
 
             <div className="bg-white rounded-[10px] shadow-1">
@@ -58,7 +85,14 @@ const Cart = () => {
               </div>
             </div>
 
-            
+            <div className="mt-7.5 flex justify-end">
+              <Link
+                href="/checkout"
+                className="inline-flex font-medium text-white bg-dark py-[13px] px-10 rounded-md ease-out duration-200 hover:bg-opacity-90"
+              >
+                Proceed to Checkout
+              </Link>
+            </div>
           </div>
         </section>
       ) : (

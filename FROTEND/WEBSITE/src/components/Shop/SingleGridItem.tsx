@@ -38,12 +38,26 @@ const SingleGridItem = ({ item }: { item: Product }) => {
 
   // add to cart
   const handleAddToCart = () => {
+    const cartItem = isNewStructure ? {
+      productId: product.productId || product._id,
+      title: product.productName,
+      price: product.price,
+      discountedPrice: product.minPriceDetails?.price || product.salePrice || product.price,
+      sellerProductId: product.minPriceDetails?.variantId || null,
+      sellerId: product.minPriceDetails?.sellerId || null,
+      imgs: {
+        thumbnails: product.images?.map(img => `${API_BASE_URL}${img}`) || [],
+        previews: product.images?.map(img => `${API_BASE_URL}${img}`) || [],
+      },
+      quantity: 1
+    } : {
+      ...item,
+      quantity: 1,
+    };
+
     dispatch(
       addToCart({
-        item: {
-          ...item,
-          quantity: 1,
-        },
+        item: cartItem,
         accessToken,
         isAuthenticated
       })

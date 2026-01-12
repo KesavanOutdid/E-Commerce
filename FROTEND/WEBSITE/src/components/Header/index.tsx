@@ -525,10 +525,10 @@ const Header = () => {
             ))}
           </div>
 
-          <div className="hidden lg:flex items-center gap-5 h-full text-dark/80 text-[13px] font-semibold ml-4">
+          {/* <div className="hidden lg:flex items-center gap-5 h-full text-dark/80 text-[13px] font-semibold ml-4">
              <Link href="/shop" className="h-full flex items-center px-2 hover:text-blue transition-all">New Releases</Link>
              <Link href="/deals" className="h-full flex items-center px-2 hover:text-blue transition-all">Today's Deals</Link>
-          </div>
+          </div> */}
         </div>
       </div>
 

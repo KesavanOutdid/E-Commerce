@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 
 const SingleItem = ({ item }: { item: any }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { accessToken } = useAppSelector((state) => state.authReducer);
+  const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
 
   const handleRemoveFromWishlist = async () => {
     try {
@@ -40,10 +40,22 @@ const SingleItem = ({ item }: { item: any }) => {
   };
 
   const handleAddToCart = () => {
+    const cartItem = {
+      productId: item.productId || item.id,
+      title: item.title,
+      price: item.price,
+      discountedPrice: item.discountedPrice,
+      sellerProductId: item.sellerProductId || (item.productId ? item.id : null),
+      sellerId: item.sellerId || null,
+      imgs: item.imgs,
+      quantity: 1,
+    };
+
     dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
+      addToCart({
+        item: cartItem,
+        accessToken,
+        isAuthenticated,
       })
     );
   };
@@ -77,9 +89,9 @@ const SingleItem = ({ item }: { item: any }) => {
             <Link
               href={`/shop-details/${item.id}`}
               className="text-dark font-medium text-base hover:text-blue transition-colors block leading-snug"
-              title={item.title}
+              title={item.title || ""}
             >
-              {item.title.length > 25 ? `${item.title.slice(0, 25)}...` : item.title}
+              {item.title && item.title.length > 25 ? `${item.title.slice(0, 25)}...` : item.title || "Untitled Product"}
             </Link>
           </div>
         </div>

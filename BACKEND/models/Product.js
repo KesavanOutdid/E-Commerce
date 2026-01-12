@@ -37,6 +37,10 @@ class Product {
     return await this.collection().findOne(query);
   }
 
+  static async find(query = {}) {
+    return await this.collection().find(query).toArray();
+  }
+
   static async update(id, updateData) {
     const query = ObjectId.isValid(id) 
       ? { $or: [{ _id: new ObjectId(id) }, { productId: id }] }

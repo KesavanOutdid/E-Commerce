@@ -18,8 +18,16 @@ type WishListItem = {
   };
 };
 
+const getInitialWishlist = (): WishListItem[] => {
+  if (typeof window !== "undefined") {
+    const savedWishlist = localStorage.getItem("wishlist");
+    return savedWishlist ? JSON.parse(savedWishlist) : [];
+  }
+  return [];
+};
+
 const initialState: InitialState = {
-  items: [],
+  items: getInitialWishlist(),
 };
 
 export const wishlist = createSlice({
@@ -44,18 +52,30 @@ export const wishlist = createSlice({
           status,
         });
       }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlist", JSON.stringify(state.items));
+      }
     },
     removeItemFromWishlist: (state, action: PayloadAction<string | number>) => {
       const itemId = action.payload;
       state.items = state.items.filter((item) => item.id !== itemId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlist", JSON.stringify(state.items));
+      }
     },
 
     removeAllItemsFromWishlist: (state) => {
       state.items = [];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlist", JSON.stringify(state.items));
+      }
     },
 
     setWishlist: (state, action: PayloadAction<WishListItem[]>) => {
       state.items = action.payload;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wishlist", JSON.stringify(state.items));
+      }
     },
   },
 });

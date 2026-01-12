@@ -17,6 +17,8 @@ const SellersList = ({ productId }: { productId: string }) => {
   const [loading, setLoading] = useState(true);
   const [expandedSellers, setExpandedSellers] = useState<Record<number, boolean>>({});
 
+  const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
+
   const toggleAttributes = (index: number) => {
     setExpandedSellers(prev => ({ ...prev, [index]: !prev[index] }));
   };

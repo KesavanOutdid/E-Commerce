@@ -74,7 +74,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
           )}
         </span>
 
-        {deliveryDays && (
+        {/* {deliveryDays && (
           <p className="text-custom-sm text-blue mt-1 flex items-center gap-1">
             <svg 
               width="16" 
@@ -93,7 +93,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
             </svg>
             Delivery in {deliveryDays} days
           </p>
-        )}
+        )} */}
       </div>
     );
   }
@@ -116,7 +116,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
       </Link>
 
       <div className="flex items-center gap-2.5 mb-2">
-        <div className="flex items-center gap-1">
+        {/* <div className="flex items-center gap-1">
           {[...Array(5)].map((_, i) => (
             <Image
               key={i}
@@ -128,7 +128,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
           ))}
         </div>
 
-        <p className="text-custom-sm">({reviews})</p>
+        <p className="text-custom-sm">({reviews})</p> */}
       </div>
 
       <h3
@@ -144,7 +144,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
         )}
       </span>
 
-      {deliveryDays && (
+      {/* {deliveryDays && (
         <p className="text-custom-sm text-blue mt-1 flex items-center gap-1">
           <svg 
             width="16" 
@@ -163,7 +163,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
           </svg>
           Delivery in {deliveryDays} days
         </p>
-      )}
+      )} */}
     </div>
   );
 };

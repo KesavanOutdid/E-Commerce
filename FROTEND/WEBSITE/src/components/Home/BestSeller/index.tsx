@@ -29,8 +29,8 @@ const BestSeller = () => {
   }, []);
 
   // Group products by category
-  const groupedProducts = products.reduce((acc: { [key: string]: Product[] }, item) => {
-    const categoryName = item.product?.mainCategoryName || "Other";
+  const groupedProducts = products.reduce((acc: { [key: string]: any[] }, item: any) => {
+    const categoryName = item.mainCategoryName || "Other";
     if (!acc[categoryName]) {
       acc[categoryName] = [];
     }

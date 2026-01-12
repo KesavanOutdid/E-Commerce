@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 
 import { useModalContext } from "@/app/context/QuickViewModalContext";
 import { AppDispatch, useAppSelector } from "@/redux/store";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addToCart } from "@/redux/features/cart-slice";
 import { useDispatch } from "react-redux";
 import Image from "next/image";
 import { usePreviewSlider } from "@/app/context/PreviewSliderContext";
@@ -17,6 +17,8 @@ const QuickViewModal = () => {
   const [quantity, setQuantity] = useState(1);
 
   const dispatch = useDispatch<AppDispatch>();
+
+  const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
 
   // get the product data
   const item = useAppSelector((state) => state.quickViewReducer.value);
@@ -51,10 +53,28 @@ const QuickViewModal = () => {
 
   // add to cart
   const handleAddToCart = () => {
+    const cartItem = isNewStructure ? {
+      productId: p.productId,
+      title: p.productName,
+      price: p.price,
+      discountedPrice: p.minPriceDetails?.price || p.salePrice || p.price,
+      sellerProductId: p.minPriceDetails?.variantId || null,
+      sellerId: p.minPriceDetails?.sellerId || null,
+      imgs: {
+        thumbnails: p.images?.map(img => `${API_BASE_URL}${img}`) || [],
+        previews: p.images?.map(img => `${API_BASE_URL}${img}`) || [],
+      },
+      quantity
+    } : {
+      ...item,
+      quantity,
+    };
+
     dispatch(
-      addItemToCart({
-        ...item,
-        quantity,
+      addToCart({
+        item: cartItem,
+        accessToken,
+        isAuthenticated
       })
     );
     closeModal();

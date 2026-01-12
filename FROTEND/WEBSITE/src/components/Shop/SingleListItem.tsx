@@ -2,18 +2,20 @@
 import React from "react";
 
 import { Product } from "@/types/product";
-import { addItemToCart } from "@/redux/features/cart-slice";
+import { addToCart } from "@/redux/features/cart-slice";
 import { addItemToWishlist } from "@/redux/features/wishlist-slice";
-import { useDispatch } from "react-redux";
-import { AppDispatch } from "@/redux/store";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "@/redux/store";
 import { API_BASE_URL } from "@/lib/api";
 import Link from "next/link";
 import Image from "next/image";
 
 const SingleListItem = ({ item }: { item: Product }) => {
   const dispatch = useDispatch<AppDispatch>();
+  const { accessToken, isAuthenticated } = useSelector((state: RootState) => state.authReducer);
 
   // Extract values from both structures safely
+  const isNewStructure = !!item.product;
   const productData = item.product || item;
 
   const id = (productData as any)._id || (productData as any).productId || (item as any).id;
@@ -33,10 +35,28 @@ const SingleListItem = ({ item }: { item: Product }) => {
 
   // add to cart
   const handleAddToCart = () => {
+    const cartItem = isNewStructure ? {
+      productId: (productData as any).productId || (productData as any)._id,
+      title: (productData as any).productName,
+      price: (productData as any).price,
+      discountedPrice: (productData as any).minPriceDetails?.price || (productData as any).salePrice || (productData as any).price,
+      sellerProductId: (productData as any).minPriceDetails?.variantId || null,
+      sellerId: (productData as any).minPriceDetails?.sellerId || null,
+      imgs: {
+        thumbnails: (productData as any).images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
+        previews: (productData as any).images?.map((img: string) => `${API_BASE_URL}${img}`) || [],
+      },
+      quantity: 1
+    } : {
+      ...item,
+      quantity: 1,
+    };
+
     dispatch(
-      addItemToCart({
-        ...item,
-        quantity: 1,
+      addToCart({
+        item: cartItem,
+        accessToken,
+        isAuthenticated
       })
     );
   };
@@ -100,13 +120,13 @@ const SingleListItem = ({ item }: { item: Product }) => {
             </h3>
 
             {/* Ratings */}
-            <div className="flex items-center gap-2 mb-2">
+            {/* <div className="flex items-center gap-2 mb-2">
               <div className="flex items-center gap-1 bg-green-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                 <span>4.5</span>
                 <Image src="/images/icons/icon-star.svg" alt="star" width={10} height={10} className="brightness-0 invert" />
               </div>
               <p className="text-gray-500 text-sm font-medium">({reviews} Reviews)</p>
-            </div>
+            </div> */}
 
             {/* Highlights List */}
             {highlights && highlights.length > 0 && (

@@ -30,8 +30,16 @@ export type CartItem = {
   slug?: string;
 };
 
+const getInitialCart = (): CartItem[] => {
+  if (typeof window !== "undefined") {
+    const savedCart = localStorage.getItem("cart");
+    return savedCart ? JSON.parse(savedCart) : [];
+  }
+  return [];
+};
+
 const initialState: InitialState = {
-  items: [],
+  items: getInitialCart(),
   loading: false,
   error: null,
 };
@@ -49,14 +57,16 @@ export const fetchCart = createAsyncThunk(
       const data = await response.json();
       if (data.success) {
         return data.data.items.map((item: any) => ({
-          id: item.sellerProductId || item.productId,
+          id: item.variantId || item.sellerProductId || item.productId,
           productId: item.productId,
-          sellerProductId: item.sellerProductId,
+          sellerProductId: item.variantId || item.sellerProductId,
           sellerId: item.sellerId,
           title: item.productName,
           price: parseFloat(item.price),
           discountedPrice: item.salePrice ? parseFloat(item.salePrice) : parseFloat(item.price),
           quantity: item.qty,
+          gst: item.gst || 0,
+          subTotal: item.subTotal || (parseFloat(item.salePrice || item.price) * item.qty),
           imgs: {
             thumbnails: item.images?.map((img: string) => 
               img.startsWith("http") ? img : `${API_BASE_URL}${img}`
@@ -85,7 +95,7 @@ export const updateCartItemServer = createAsyncThunk(
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ qty, totalPrice, gst, subTotal, sellerProductId }),
+        body: JSON.stringify({ qty, totalPrice, gst, subTotal, variantId: sellerProductId }),
       });
       const data = await response.json();
       if (data.success) {
@@ -100,9 +110,14 @@ export const updateCartItemServer = createAsyncThunk(
 
 export const removeCartItemServer = createAsyncThunk(
   "cart/removeCartItemServer",
-  async ({ productId, sellerProductId, accessToken }: { productId: string, sellerProductId?: string | null, accessToken: string }, { rejectWithValue }) => {
+  async ({ productId, variantId, accessToken }: { productId: string, variantId?: string | null, accessToken: string }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_ENDPOINTS.REMOVE_FROM_CART(productId)}${sellerProductId ? `?sellerProductId=${sellerProductId}` : ""}`, {
+      const url = new URL(API_ENDPOINTS.REMOVE_FROM_CART(productId));
+      if (variantId) {
+        url.searchParams.append("variantId", variantId);
+      }
+      
+      const response = await fetch(url.toString(), {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -110,7 +125,7 @@ export const removeCartItemServer = createAsyncThunk(
       });
       const data = await response.json();
       if (data.success) {
-        return { productId, sellerProductId };
+        return { productId, variantId };
       }
       return rejectWithValue(data.message);
     } catch (error: any) {
@@ -185,13 +200,14 @@ export const addToCart = createAsyncThunk(
               Authorization: `Bearer ${accessToken}`,
             },
             body: JSON.stringify({
+              variantId: cartItem.sellerProductId,
               productId: cartItem.productId,
-              sellerProductId: cartItem.sellerProductId,
               sellerId: cartItem.sellerId,
               qty: cartItem.quantity,
               totalPrice: cartItem.discountedPrice * cartItem.quantity,
               gst: 0,
-              subTotal: cartItem.discountedPrice * cartItem.quantity
+              subTotal: cartItem.discountedPrice * cartItem.quantity,
+              salePrice: cartItem.discountedPrice
             }),
           });
           const data = await response.json();
@@ -231,10 +247,16 @@ export const cart = createSlice({
           imgs,
         });
       }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(state.items));
+      }
     },
     removeItemFromCart: (state, action: PayloadAction<string | number>) => {
       const itemId = action.payload;
       state.items = state.items.filter((item) => item.id !== itemId);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(state.items));
+      }
     },
     updateCartItemQuantity: (
       state,
@@ -246,10 +268,16 @@ export const cart = createSlice({
       if (existingItem) {
         existingItem.quantity = quantity;
       }
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(state.items));
+      }
     },
 
     removeAllItemsFromCart: (state) => {
       state.items = [];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(state.items));
+      }
     },
   },
   extraReducers: (builder) => {
@@ -260,6 +288,9 @@ export const cart = createSlice({
       .addCase(fetchCart.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload;
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cart", JSON.stringify(state.items));
+        }
       })
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
@@ -268,14 +299,25 @@ export const cart = createSlice({
       .addCase(updateCartItemServer.fulfilled, (state, action) => {
         const { productId, sellerProductId, qty } = action.payload;
         const item = state.items.find((i) => i.productId === productId && ((i.sellerProductId ?? null) === (sellerProductId ?? null)));
-        if (item) item.quantity = qty;
+        if (item) {
+          item.quantity = qty;
+          if (typeof window !== "undefined") {
+            localStorage.setItem("cart", JSON.stringify(state.items));
+          }
+        }
       })
       .addCase(removeCartItemServer.fulfilled, (state, action) => {
-        const { productId, sellerProductId } = action.payload;
-        state.items = state.items.filter((i) => !(i.productId === productId && ((i.sellerProductId ?? null) === (sellerProductId ?? null))));
+        const { productId, variantId } = action.payload;
+        state.items = state.items.filter((i) => !(i.productId === productId && ((i.sellerProductId ?? null) === (variantId ?? null))));
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cart", JSON.stringify(state.items));
+        }
       })
       .addCase(clearCartServer.fulfilled, (state) => {
         state.items = [];
+        if (typeof window !== "undefined") {
+          localStorage.setItem("cart", JSON.stringify(state.items));
+        }
       });
   },
 });

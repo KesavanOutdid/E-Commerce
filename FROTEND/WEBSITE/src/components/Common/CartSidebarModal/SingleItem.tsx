@@ -16,7 +16,7 @@ const SingleItem = ({ item }) => {
       try {
         await dispatch(removeCartItemServer({ 
           productId: item.productId, 
-          sellerProductId: item.sellerProductId,
+          variantId: item.sellerProductId,
           accessToken 
         })).unwrap();
         toast.success("Item removed from cart");
@@ -54,7 +54,7 @@ const SingleItem = ({ item }) => {
     <div className="flex items-center justify-between gap-5 border-b border-gray-2 pb-4 last:border-0">
       <div className="w-full flex items-center gap-4">
         <div className="flex items-center justify-center rounded-lg bg-gray-100 p-2 min-w-[80px] h-[80px]">
-          <Link href={`/shop-details/${item.id}`} onClick={() => closeCartModal()}>
+          <Link href={`/shop-details/${item.productId}`} onClick={() => closeCartModal()}>
             <Image 
               src={item.imgs?.thumbnails[0] || "/images/product/placeholder.jpg"} 
               alt={item.title} 
@@ -67,7 +67,7 @@ const SingleItem = ({ item }) => {
 
         <div className="flex-grow max-w-[230px] overflow-hidden">
           <h3 className="font-medium text-dark text-sm mb-1 line-clamp-1">
-            <Link href={`/shop-details/${item.id}`} onClick={() => closeCartModal()} className="hover:text-blue transition-colors">
+            <Link href={`/shop-details/${item.productId}`} onClick={() => closeCartModal()} className="hover:text-blue transition-colors">
               {item.title}
             </Link>
           </h3>

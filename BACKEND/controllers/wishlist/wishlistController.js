@@ -70,7 +70,9 @@ exports.getWishlist = async (req, res) => {
     const products = await Product.find({
       $or: [
         { productId: { $in: wishlistIds } },
-        { _id: { $in: wishlistIds.filter(id => id.length === 24).map(id => require('mongodb').ObjectId(id)) } }
+        { _id: { $in: wishlistIds.filter(id => id.length === 24).map(id => {
+          try { return require('mongodb').ObjectId(id); } catch(e) { return null; }
+        }).filter(id => id !== null) } }
       ]
     });
 
@@ -97,7 +99,8 @@ exports.getWishlist = async (req, res) => {
           salePrice: bestVariant.salePrice,
           stock: bestVariant.stock,
           variantId: bestVariant.variantId,
-          hasStock: bestVariant.stock > 0
+          hasStock: bestVariant.stock > 0,
+          images: bestVariant.images && bestVariant.images.length > 0 ? bestVariant.images : (product.images || [])
         };
       } else {
         // No approved variants found

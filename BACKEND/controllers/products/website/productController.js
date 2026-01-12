@@ -536,69 +536,87 @@ exports.getBestSellers = async (req, res) => {
     }
 
     // 1. Aggregate orders to find best selling products
-    const orderItemsAggregation = [
-      { $unwind: "$items" },
-      {
-        $group: {
-          _id: "$items.productId",
-          orderCount: { $sum: 1 },
-          totalQuantity: { $sum: { $toInt: { $ifNull: ["$items.quantity", 1] } } }
-        }
-      },
-      { $sort: { orderCount: -1, totalQuantity: -1 } }
-    ];
+    let bestSellingIds = [];
+    try {
+      const orderItemsAggregation = [
+        { $unwind: "$items" },
+        // Join with products to filter by category if categoryId is provided
+        ...(categoryId ? [
+          {
+            $lookup: {
+              from: "products",
+              localField: "items.productId",
+              foreignField: "productId",
+              as: "productInfo"
+            }
+          },
+          { $unwind: "$productInfo" },
+          { $match: { "productInfo.mainCategoryId": categoryId } }
+        ] : []),
+        {
+          $group: {
+            _id: "$items.productId",
+            orderCount: { $sum: 1 },
+            totalQuantity: { $sum: { $toInt: { $ifNull: ["$items.quantity", 1] } } }
+          }
+        },
+        { $sort: { orderCount: -1, totalQuantity: -1 } },
+        { $limit: 100 }
+      ];
 
-    const bestSellingProducts = await Order.collection().aggregate(orderItemsAggregation).toArray();
-    const bestSellingIds = bestSellingProducts.map(p => p._id);
+      const bestSellingProducts = await Order.collection().aggregate(orderItemsAggregation).toArray();
+      bestSellingIds = bestSellingProducts.map(p => p._id);
+    } catch (orderError) {
+      console.error("Error aggregating best sellers from orders:", orderError);
+    }
 
     // 2. Build match query for products
     let matchQuery = { 
-      $or: [
-        { roleId: 1 },
-        { roleId: 2, approvalStatus: 'approved' }
-      ],
-      status: { $in: [true, "true"] }
+      $and: [
+        {
+          $or: [
+            { roleId: 1 },
+            { roleId: 2, approvalStatus: 'approved' }
+          ]
+        },
+        { status: { $in: [true, "true"] } }
+      ]
     };
     
-    if (categoryId) matchQuery.mainCategoryId = categoryId;
+    if (categoryId) matchQuery.$and.push({ mainCategoryId: categoryId });
     
     // If we have best sellers from orders, we prioritize them
     if (bestSellingIds.length > 0) {
-      matchQuery.productId = { $in: bestSellingIds };
+      matchQuery.$and.push({ productId: { $in: bestSellingIds } });
     }
 
-    // Sort by orderCount if applicable, otherwise fallback to reviews
-    // Since getProductAggregationPipeline doesn't know about orderCount, 
-    // we'll handle sorting by matching the order of bestSellingIds or just using the pipeline's sort.
     const sortOptions = { totalReviews: -1, avgRating: -1 };
-
-    const adminId = await getAdminId();
 
     const aggregationResult = await Product.collection().aggregate(
       getProductAggregationPipeline(matchQuery, skip, limitNum, sortOptions)
     ).toArray();
 
-    let products = aggregationResult[0].data;
-    const total = aggregationResult[0].totalCount[0]?.count || 0;
+    let products = aggregationResult[0]?.data || [];
+    const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
     // If we have bestSellingIds, sort the resulting products to match the order of sales
-    if (bestSellingIds.length > 0) {
+    if (bestSellingIds.length > 0 && products.length > 0) {
       const orderMap = new Map();
       bestSellingIds.forEach((id, index) => orderMap.set(id, index));
       
       products.sort((a, b) => {
-        const indexA = orderMap.has(a.product.productId) ? orderMap.get(a.product.productId) : 9999;
-        const indexB = orderMap.has(b.product.productId) ? orderMap.get(b.product.productId) : 9999;
+        const indexA = orderMap.has(a.productId) ? orderMap.get(a.productId) : 9999;
+        const indexB = orderMap.has(b.productId) ? orderMap.get(b.productId) : 9999;
         return indexA - indexB;
       });
     }
 
     const userId = getUserIdFromRequest(req);
-    if (userId) {
+    if (userId && products.length > 0) {
       const wishlist = await User.getWishlist(userId);
       products.forEach(p => {
-        p.product.isWishlisted = wishlist.includes(p.product.productId) || 
-                               wishlist.includes(p.product._id?.toString());
+        p.isWishlisted = wishlist.includes(p.productId) || 
+                         wishlist.includes(p._id?.toString());
       });
     }
     

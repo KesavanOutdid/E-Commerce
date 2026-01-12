@@ -17,7 +17,7 @@ const SingleItem = ({ item }) => {
       try {
         await dispatch(removeCartItemServer({ 
           productId: item.productId, 
-          sellerProductId: item.sellerProductId,
+          variantId: item.sellerProductId,
           accessToken 
         })).unwrap();
         toast.success("Item removed from cart");
@@ -57,7 +57,7 @@ const SingleItem = ({ item }) => {
         <div className="flex items-center justify-between gap-5">
           <div className="w-full flex items-center gap-5.5">
             <div className="flex items-center justify-center rounded-[5px] bg-gray-2 max-w-[80px] w-full h-17.5 overflow-hidden">
-              <Link href={`/shop-details/${item.id}`}>
+              <Link href={`/shop-details/${item.productId}`}>
                 <Image 
                   width={80} 
                   height={80} 
@@ -70,7 +70,7 @@ const SingleItem = ({ item }) => {
 
             <div className="max-w-[200px] overflow-hidden">
               <h3 className="text-dark ease-out duration-200 hover:text-blue line-clamp-1">
-                <Link href={`/shop-details/${item.id}`}> {item.title} </Link>
+                <Link href={`/shop-details/${item.productId}`}> {item.title} </Link>
               </h3>
             </div>
           </div>
