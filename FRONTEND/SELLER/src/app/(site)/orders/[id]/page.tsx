@@ -236,7 +236,7 @@ export default function OrderDetailPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                            {/* <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                     <Icon icon="mdi:truck" width={20} height={20} className="text-primary" />
                                     Delivery Status
@@ -259,7 +259,7 @@ export default function OrderDetailPage() {
                                         </span>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
                                 <div className="flex items-start gap-3">

@@ -1,6 +1,7 @@
 const Order = require('../../models/Order');
 const User = require('../../models/User');
 const Product = require('../../models/Product');
+const ProductVariant = require('../../models/ProductVariant');
 
 const enrichOrderWithSellerDetails = async (order) => {
   if (!order.items || order.items.length === 0) return order;
@@ -9,25 +10,78 @@ const enrichOrderWithSellerDetails = async (order) => {
     order.items.map(async (item) => {
       try {
         const product = await Product.findById(item.productId);
-        
-        if (product && product.userId) {
+        let variant = null;
+        let sellerId = null;
+        let pickupAddress = null;
+
+        if (item.variantId) {
+          variant = await ProductVariant.findById(item.variantId);
+          if (variant) {
+            sellerId = variant.sellerId;
+            
+            if (variant.pickupAddress && variant.sellerId) {
+              const seller = await User.findByUserId(variant.sellerId.toString());
+              if (seller && seller.pickupAddresses) {
+                const pickupAddr = seller.pickupAddresses.find(
+                  addr => addr._id?.toString() === variant.pickupAddress.toString()
+                );
+                pickupAddress = pickupAddr || null;
+              }
+            }
+          }
+        }
+
+        const finalImages = (variant?.images && variant.images.length > 0) 
+          ? variant.images 
+          : (product?.images || []);
+
+        let sellerDetails = null;
+        if (sellerId) {
+          const seller = await User.findByUserId(sellerId.toString());
+          sellerDetails = seller ? {
+            sellerId: seller.userId,
+            sellerName: `${seller.firstName} ${seller.lastName}`,
+            sellerEmail: seller.email,
+            sellerPhone: seller.phone,
+            storeName: seller.sellerInfo?.storeName
+          } : null;
+        } else if (product && product.userId) {
           const seller = await User.findByUserId(product.userId);
-          
-          return {
-            ...item,
-            sellerDetails: seller ? {
-              sellerId: seller.userId,
-              sellerName: seller.name || seller.email,
-              sellerEmail: seller.email,
-              sellerPhone: seller.phone,
-              storeName: seller.sellerInfo?.storeName
-            } : null
-          };
+          sellerDetails = seller ? {
+            sellerId: seller.userId,
+            sellerName: `${seller.firstName} ${seller.lastName}`,
+            sellerEmail: seller.email,
+            sellerPhone: seller.phone,
+            storeName: seller.sellerInfo?.storeName
+          } : null;
         }
         
-        return item;
+        return {
+          ...item,
+          images: finalImages,
+          productImages: product?.images || [],
+          pickupAddress: pickupAddress,
+          productDetails: product ? {
+            productName: product.productName,
+            images: product.images,
+            description: product.description,
+            shortDescription: product.shortDescription,
+            slug: product.slug
+          } : null,
+          variantDetails: variant ? {
+            variantId: variant.variantId,
+            attributes: variant.attributes,
+            price: variant.price,
+            salePrice: variant.salePrice,
+            stock: variant.stock,
+            images: variant.images,
+            deliveryDays: variant.deliveryDays,
+            pickupAddress: pickupAddress
+          } : null,
+          sellerDetails: sellerDetails
+        };
       } catch (error) {
-        console.error(`Error fetching seller for product ${item.productId}:`, error);
+        console.error(`Error fetching details for product ${item.productId}:`, error);
         return item;
       }
     })

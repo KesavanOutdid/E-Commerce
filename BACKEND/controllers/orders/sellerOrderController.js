@@ -28,6 +28,14 @@ const enrichOrderWithSellerDetails = async (order) => {
             ? variant.images 
             : (product?.images || []);
           
+          let pickupAddress = null;
+          if (variant?.pickupAddress && seller) {
+            const pickupAddr = seller.pickupAddresses?.find(
+              addr => addr._id?.toString() === variant.pickupAddress.toString()
+            );
+            pickupAddress = pickupAddr || null;
+          }
+          
           return {
             ...item,
             images: finalImages,
@@ -46,14 +54,16 @@ const enrichOrderWithSellerDetails = async (order) => {
               salePrice: variant.salePrice,
               stock: variant.stock,
               images: variant.images,
-              deliveryDays: variant.deliveryDays
+              deliveryDays: variant.deliveryDays,
+              pickupAddress: pickupAddress
             } : null,
             sellerDetails: seller ? {
               sellerId: seller.userId,
               sellerName: `${seller.firstName} ${seller.lastName}`,
               sellerEmail: seller.email,
               phone: seller.phone
-            } : null
+            } : null,
+            pickupAddress: pickupAddress
           };
         }
         

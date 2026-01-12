@@ -486,6 +486,62 @@ exports.verifyOrder = async (req, res) => {
   }
 };
 
+const enrichOrderWithPickupAddress = async (order) => {
+  if (!order.items || order.items.length === 0) return order;
+
+  const enrichedItems = await Promise.all(
+    order.items.map(async (item) => {
+      try {
+        if (!item.variantId) return item;
+
+        const variant = await ProductVariant.findById(item.variantId);
+        if (!variant) return item;
+
+        let pickupAddress = null;
+        if (variant.pickupAddress && variant.sellerId) {
+          const seller = await User.findByUserId(variant.sellerId.toString());
+          if (seller && seller.pickupAddresses) {
+            const pickupAddr = seller.pickupAddresses.find(
+              addr => addr._id?.toString() === variant.pickupAddress.toString()
+            );
+            pickupAddress = pickupAddr || null;
+          }
+        }
+
+        const product = await Product.findById(item.productId);
+        const finalImages = (variant?.images && variant.images.length > 0) 
+          ? variant.images 
+          : (product?.images || []);
+
+        return {
+          ...item,
+          images: finalImages,
+          productImages: product?.images || [],
+          pickupAddress: pickupAddress,
+          variantDetails: {
+            variantId: variant.variantId,
+            attributes: variant.attributes,
+            price: variant.price,
+            salePrice: variant.salePrice,
+            stock: variant.stock,
+            images: variant.images,
+            deliveryDays: variant.deliveryDays,
+            pickupAddress: pickupAddress
+          }
+        };
+      } catch (error) {
+        console.error(`Error enriching item ${item.productId}:`, error);
+        return item;
+      }
+    })
+  );
+
+  return {
+    ...order,
+    items: enrichedItems
+  };
+};
+
 exports.getOrderDetail = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -514,10 +570,12 @@ exports.getOrderDetail = async (req, res) => {
       });
     }
 
+    const enrichedOrder = await enrichOrderWithPickupAddress(order);
+
     res.status(200).json({ 
       success: true,
       message: 'Order details retrieved successfully', 
-      data: order 
+      data: enrichedOrder 
     });
   } catch (error) {
     console.error('Error in getOrderDetail:', error);
@@ -563,10 +621,14 @@ exports.getUserOrders = async (req, res) => {
       });
     }
 
+    const enrichedOrders = await Promise.all(
+      orders.map(order => enrichOrderWithPickupAddress(order))
+    );
+
     res.status(200).json({ 
       success: true,
       message: 'Your order history loaded successfully', 
-      data: orders,
+      data: enrichedOrders,
       pagination: {
         total: total,
         page: page,
@@ -604,10 +666,14 @@ exports.getAllOrders = async (req, res) => {
     const total = await Order.countAll(filter);
     const totalPages = Math.ceil(total / limit);
 
+    const enrichedOrders = await Promise.all(
+      orders.map(order => enrichOrderWithPickupAddress(order))
+    );
+
     res.status(200).json({ 
       success: true,
       message: 'Orders retrieved successfully', 
-      data: orders,
+      data: enrichedOrders,
       pagination: {
         total: total,
         page: page,
