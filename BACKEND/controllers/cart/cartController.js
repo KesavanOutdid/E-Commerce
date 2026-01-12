@@ -44,7 +44,9 @@ exports.getCart = async (req, res) => {
         let finalPrice = product.price;
         let finalSalePrice = product.salePrice;
         let finalStock = product.stock;
+        let finalImages = product.images || [];
         let sellerDetails = null;
+        let variantDetails = null;
 
         if (item.variantId) {
           const variant = await ProductVariant.findById(item.variantId);
@@ -53,6 +55,19 @@ exports.getCart = async (req, res) => {
             finalPrice = variant.price;
             finalSalePrice = variant.salePrice;
             finalStock = variant.stock;
+            
+            if (variant.images && variant.images.length > 0) {
+              finalImages = variant.images;
+            }
+
+            variantDetails = {
+              variantId: variant.variantId,
+              attributes: variant.attributes,
+              price: variant.price,
+              salePrice: variant.salePrice,
+              stock: variant.stock,
+              images: variant.images
+            };
 
             if (item.sellerId) {
               const seller = await User.findByUserId(item.sellerId);
@@ -60,7 +75,8 @@ exports.getCart = async (req, res) => {
                 sellerDetails = {
                   sellerId: seller.userId,
                   sellerName: `${seller.firstName} ${seller.lastName}`,
-                  sellerEmail: seller.email
+                  sellerEmail: seller.email,
+                  phone: seller.phone
                 };
               }
             }
@@ -78,13 +94,15 @@ exports.getCart = async (req, res) => {
           totalPrice: item.totalPrice,
           gst: item.gst,
           subTotal: item.subTotal,
-          images: product.images,
+          images: finalImages,
+          productImages: product.images || [],
           stock: finalStock,
           mainCategoryId: product.mainCategoryId,
           subCategoryId: product.subCategoryId,
           description: product.description,
           shortDescription: product.shortDescription,
           slug: product.slug,
+          variantDetails: variantDetails,
           sellerDetails: sellerDetails,
           createdAt: item.createdAt,
           createdBy: item.createdBy,
