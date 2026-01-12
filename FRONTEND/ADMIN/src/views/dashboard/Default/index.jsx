@@ -17,7 +17,8 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TableContainer
+  TableContainer,
+  IconButton
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Chart from 'react-apexcharts';
@@ -369,25 +370,28 @@ export default function Dashboard() {
                   <MenuItem value="thisYear">This Year</MenuItem>
                 </Select>
               </FormControl>
-              <Button
-                startIcon={<RefreshIcon />}
+              <IconButton
                 onClick={refreshStats}
                 disabled={loading}
                 sx={{
-                  borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)',
                   color: 'white',
-                  textTransform: 'none',
-                  fontWeight: '600',
-                  boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                  width: 42,
+                  height: 42,
+                  boxShadow: '0 4px 12px rgba(33, 150, 243, 0.4)',
                   '&:hover': {
-                    boxShadow: '0 6px 20px rgba(102, 126, 234, 0.6)',
+                    background: 'linear-gradient(135deg, #1e88e5 0%, #1565c0 100%)',
+                    boxShadow: '0 6px 16px rgba(33, 150, 243, 0.5)',
                     transform: 'translateY(-2px)'
+                  },
+                  '& .MuiSvgIcon-root': {
+                    fontSize: '24px'
                   }
                 }}
               >
-                Refresh
-              </Button>
+                <RefreshIcon />
+              </IconButton>
             </Stack>
           </Stack>
         </Grid>

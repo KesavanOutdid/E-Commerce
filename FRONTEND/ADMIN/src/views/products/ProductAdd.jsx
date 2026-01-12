@@ -73,6 +73,7 @@ const ProductAdd = () => {
         // Variants
         variants: [
             {
+                sellerName: 'Admin',
                 price: '',
                 salePrice: '',
                 stock: '',
@@ -158,7 +159,7 @@ const ProductAdd = () => {
                             attributes: product.attributes || [],
                             variants: variants.length > 0 ? variants.map(v => ({
                                 variantId: v.variantId,
-                                sellerName: v.sellerName,
+                                sellerName: v.sellerName || 'Admin',
                                 price: v.price,
                                 salePrice: v.salePrice || '',
                                 stock: v.stock,
@@ -734,7 +735,7 @@ const ProductAdd = () => {
                                         <Grid item xs={12} md={3}>
                                             <TextField
                                                 fullWidth
-                                                label="Price"
+                                                label="Price *"
                                                 type="number"
                                                 value={variant.price}
                                                 onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
@@ -757,7 +758,7 @@ const ProductAdd = () => {
                                         <Grid item xs={12} md={3}>
                                             <TextField
                                                 fullWidth
-                                                label="Stock"
+                                                label="Stock *"
                                                 type="number"
                                                 value={variant.stock}
                                                 onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
@@ -769,7 +770,7 @@ const ProductAdd = () => {
                                         <Grid item xs={12} md={3}>
                                             <TextField
                                                 fullWidth
-                                                label="Delivery Days"
+                                                label="Delivery Days *"
                                                 type="number"
                                                 value={variant.deliveryDays}
                                                 onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
