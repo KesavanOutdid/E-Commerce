@@ -183,6 +183,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
         country: formData.country,
       },
       paymentType: payment,
+      productIds: [product.id],
       items: [{
         productId: product.id,
         sellerProductId: seller?.variantId || null,
@@ -199,7 +200,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     };
 
     try {
-      const response = await fetch("http://192.168.0.45:6060/api/orders/create", {
+      const response = await fetch(API_ENDPOINTS.CREATE_ORDER, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -237,7 +238,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
       order_id: order.razorpayOrder.id,
       handler: async (response: any) => {
         try {
-          const verifyRes = await fetch("http://192.168.0.45:6060/api/orders/verify", {
+          const verifyRes = await fetch(API_ENDPOINTS.VERIFY_ORDER, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -1041,7 +1042,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     {Object.entries(attributeOptions).map(([name, values]: [string, any]) => {
                       return (
                         <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                          <span className="text-gray-500 text-[15px] w-20 flex-shrink-0">{name}</span>
+                          <span className="text-gray-500 text-sm w-20 flex-shrink-0">{name}</span>
                           <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
                             {values.map((val: string) => {
                               const isSelected = selectedAttributes[name]?.toString().toLowerCase() === val.toString().toLowerCase();
@@ -1059,11 +1060,13 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                                   key={val}
                                   disabled={!isAvailable}
                                   onClick={() => handleAttributeChange(name, val)}
-                                  className={`relative rounded border transition-all flex items-center justify-center overflow-hidden w-16 px-1 h-7 ${
-                                    !isAvailable ? "border-gray-50 text-gray-200 cursor-not-allowed" :
+                                  className={`relative rounded-[2px] border transition-all flex items-center justify-center overflow-hidden px-1 ${
+                                    isColor ? "w-24 h-16" : "w-16 h-7"
+                                  } ${
+                                    !isAvailable ? "border-gray-100 text-gray-300 cursor-not-allowed" :
                                     isSelected
-                                      ? "border-blue text-blue font-normal shadow-sm bg-blue/5"
-                                      : "border-gray-200 text-gray-500 font-normal hover:border-gray-400"
+                                      ? "border-blue text-blue font-medium bg-white shadow-sm"
+                                      : "border-[#e0e0e0] text-dark font-normal bg-white"
                                   } text-[11px]`}
                                   title={val}
                                 >
@@ -1884,11 +1887,17 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   <div className="mt-2 w-16 h-1 bg-blue mx-auto rounded-full opacity-20"></div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                <div className={
+                  product?.imgs?.previews?.length <= 2 
+                  ? "flex flex-wrap justify-center gap-6 lg:gap-8" 
+                  : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+                }>
                   {product?.imgs?.previews?.map((img: string, index: number) => (
                     <div 
                       key={index} 
-                      className="group relative overflow-hidden rounded-2xl bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1"
+                      className={`group relative overflow-hidden rounded-2xl bg-white p-3 shadow-[0_2px_10px_rgba(0,0,0,0.02)] transition-all duration-500 hover:shadow-[0_8px_25px_rgba(0,0,0,0.04)] hover:-translate-y-1 ${
+                        product?.imgs?.previews?.length <= 2 ? "w-full max-w-[400px]" : ""
+                      }`}
                     >
                       <div className="overflow-hidden rounded-xl aspect-square w-full">
                         <Image

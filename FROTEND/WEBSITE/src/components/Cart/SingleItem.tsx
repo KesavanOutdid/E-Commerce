@@ -29,6 +29,10 @@ const SingleItem = ({ item }) => {
 
   const handleUpdateQuantity = async (newQty: number) => {
     if (newQty < 1) return;
+    if (newQty > 3) {
+      toast.error("Maximum 3 items allowed");
+      return;
+    }
     if (isAuthenticated && accessToken) {
       const totalPrice = item.discountedPrice * newQty;
       const gst = 0;
@@ -109,8 +113,11 @@ const SingleItem = ({ item }) => {
 
           <button
             onClick={() => handleUpdateQuantity(item.quantity + 1)}
+            disabled={item.quantity >= 3}
             aria-label="button for add product"
-            className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue"
+            className={`flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue ${
+              item.quantity >= 3 ? "opacity-50 cursor-not-allowed" : ""
+            }`}
           >
             <svg
               className="fill-current"

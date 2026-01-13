@@ -248,7 +248,8 @@ exports.createOrder = async (req, res) => {
 
     const finalCodFees = codFees || 0;
     const finalShippingFees = shippingFees || 0;
-    const finalGrandTotal = grandTotal + finalCodFees + finalShippingFees;
+    // grandTotal already includes shipping and COD fees from frontend
+    const finalGrandTotal = grandTotal;
 
     let razorpayOrder = null;
     if (paymentType === 'online') {

@@ -235,7 +235,7 @@ const Checkout = () => {
         }
       },
       prefill: {
-        name: `${formData.firstName} ${formData.lastName}`,
+        name: formData.name,
         email: formData.email,
         contact: formData.phone,
       },
