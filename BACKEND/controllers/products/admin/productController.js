@@ -261,36 +261,73 @@ exports.getProducts = async (req, res) => {
 
 exports.getAllSellerProducts = async (req, res) => {
   try {
-    let query = { roleId: 2 };
+    const sellers = await User.collection().find({ roles: 2 }).toArray();
+    const sellerIdsSearch = [];
+    sellers.forEach(u => {
+      const id = u.userId || u._id.toString();
+      sellerIdsSearch.push(id);
+      if (ObjectId.isValid(id)) {
+        sellerIdsSearch.push(new ObjectId(id));
+      }
+    });
+
+    let baseQuery = {
+      $or: [
+        { roleId: 2 }
+      ]
+    };
+
+    let variantSellerFilter = { sellerId: { $in: sellerIdsSearch } };
+
+    // If specific seller filtering is requested
+    if (req.query.sellerId) {
+      const selectedSellerId = req.query.sellerId;
+      const selectedSellerIdVariants = [selectedSellerId];
+      if (ObjectId.isValid(selectedSellerId)) {
+        selectedSellerIdVariants.push(new ObjectId(selectedSellerId));
+      }
+      const selectedSellerIdQuery = { $in: selectedSellerIdVariants };
+      
+      variantSellerFilter = { sellerId: selectedSellerIdQuery };
+
+      const variantProductIdsForSeller = await ProductVariant.collection().distinct('productId', variantSellerFilter);
+      
+      baseQuery = {
+        $or: [
+          { userId: selectedSellerIdQuery },
+          { productId: { $in: variantProductIdsForSeller } }
+        ]
+      };
+    } else {
+      // Include any product that has at least one seller variant
+      const variantProductIdsWithSellers = await ProductVariant.collection().distinct('productId', variantSellerFilter);
+      baseQuery.$or.push({ productId: { $in: variantProductIdsWithSellers } });
+    }
+
+    let query = baseQuery;
 
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
-      query.$and = [
-        { roleId: 2 },
-        {
-          $or: [
-            { productName: searchRegex },
-            { slug: searchRegex },
-            { description: searchRegex }
-          ]
-        }
-      ];
-      delete query.roleId;
+      const searchCondition = {
+        $or: [
+          { productName: searchRegex },
+          { slug: searchRegex },
+          { description: searchRegex }
+        ]
+      };
+      query = { $and: [query, searchCondition] };
     }
 
     if (req.query.approvalStatus) {
+      // Find productIds that have at least one variant with this approvalStatus
+      const variantFilterWithStatus = { ...variantSellerFilter, approvalStatus: req.query.approvalStatus };
+      const productIdsWithStatus = await ProductVariant.collection().distinct('productId', variantFilterWithStatus);
+      
+      const statusCondition = { productId: { $in: productIdsWithStatus } };
       if (query.$and) {
-        query.$and.push({ approvalStatus: req.query.approvalStatus });
+        query.$and.push(statusCondition);
       } else {
-        query.approvalStatus = req.query.approvalStatus;
-      }
-    }
-
-    if (req.query.sellerId) {
-      if (query.$and) {
-        query.$and.push({ userId: req.query.sellerId });
-      } else {
-        query.userId = req.query.sellerId;
+        query = { $and: [query, statusCondition] };
       }
     }
 
@@ -317,7 +354,10 @@ exports.getAllSellerProducts = async (req, res) => {
       const [mainCategory, subCategory, variants, user] = await Promise.all([
         product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
         product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
-        ProductVariant.collection().find({ productId: product.productId }).toArray(),
+        ProductVariant.collection().find({ 
+          productId: product.productId,
+          ...variantSellerFilter
+        }).toArray(),
         User.collection().findOne(userQuery)
       ]);
 
@@ -844,28 +884,24 @@ exports.addVariant = async (req, res) => {
 
 exports.getSellersList = async (req, res) => {
   try {
-    const sellers = await Seller.collection().find({}).toArray();
-    const sellerIds = sellers.map(s => s.userId);
+    const users = await User.collection().find({ roles: 2 }).toArray();
+    const userIds = users.map(u => u.userId || u._id.toString());
     
-    const users = await User.collection().find({
-      $or: [
-        { userId: { $in: sellerIds } },
-        { _id: { $in: sellerIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id)) } }
-      ]
+    const sellers = await Seller.collection().find({
+      userId: { $in: userIds }
     }).toArray();
 
-    const userMap = new Map();
-    users.forEach(u => {
-      if (u.userId) userMap.set(u.userId.toString(), u);
-      if (u._id) userMap.set(u._id.toString(), u);
+    const sellerMap = new Map();
+    sellers.forEach(s => {
+      if (s.userId) sellerMap.set(s.userId.toString(), s);
     });
 
-    const sellersList = sellers.map(s => {
-      const user = userMap.get(s.userId?.toString());
+    const sellersList = users.map(u => {
+      const seller = sellerMap.get(u.userId?.toString() || u._id.toString());
       return {
-        userId: s.userId,
-        shopName: s.shopName,
-        name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name || user.email : 'Unknown'
+        userId: u.userId || u._id.toString(),
+        shopName: seller ? seller.shopName : null,
+        name: `${u.firstName || ''} ${u.lastName || ''}`.trim() || u.name || u.email || 'Unknown'
       };
     });
 

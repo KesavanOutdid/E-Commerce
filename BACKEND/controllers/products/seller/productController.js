@@ -562,7 +562,7 @@ exports.addVariant = async (req, res) => {
             images: images,
             deliveryDays: deliveryDays || 3,
             pickupAddress: pickupAddress || null,
-            approvalStatus: 'pending'
+            approvalStatus: 'approved'
         });
 
         await deleteCachePattern('products:list:*');
