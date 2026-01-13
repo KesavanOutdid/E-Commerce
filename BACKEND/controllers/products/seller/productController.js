@@ -214,21 +214,27 @@ exports.getProducts = async (req, res) => {
         const skip = (page - 1) * limitNum;
 
         const sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
-        let query = { userId: sellerId };
+        
+        // Find all productIds where this seller has at least one variant
+        const variantProductIds = await ProductVariant.collection().distinct('productId', { sellerId: sellerId });
+
+        let query = {
+            $or: [
+                { userId: sellerId },
+                { productId: { $in: variantProductIds } }
+            ]
+        };
 
         if (req.query.search) {
             const searchRegex = new RegExp(req.query.search, 'i');
-            query.$and = [
-                { userId: sellerId },
-                {
-                    $or: [
-                        { productName: searchRegex },
-                        { slug: searchRegex },
-                        { description: searchRegex }
-                    ]
-                }
-            ];
-            delete query.userId;
+            const searchCondition = {
+                $or: [
+                    { productName: searchRegex },
+                    { slug: searchRegex },
+                    { description: searchRegex }
+                ]
+            };
+            query = { $and: [query, searchCondition] };
         }
 
         const [products, total] = await Promise.all([
@@ -408,14 +414,21 @@ exports.getProductById = async (req, res) => {
         const { id } = req.params;
         const sellerId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
 
-        // 1. Fetch Master Product (Ensure it belongs to THIS seller)
-        const product = await Product.collection().findOne({
-            productId: id,
-            userId: sellerId
-        });
+        // 1. Fetch Master Product
+        const product = await Product.findById(id);
 
         if (!product) {
-            return res.status(404).json({ success: false, message: 'Product not found or not authorized' });
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        // Check if the seller owns the product OR has at least one variant for it
+        const sellerHasVariant = await ProductVariant.collection().findOne({
+            productId: product.productId,
+            sellerId: sellerId
+        });
+
+        if (product.userId.toString() !== sellerId.toString() && !sellerHasVariant) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view this product' });
         }
 
         // 2. Fetch only variants belonging to THIS seller for this product

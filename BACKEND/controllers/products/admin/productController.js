@@ -194,22 +194,26 @@ exports.createProduct = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
   try {
-    let query = { roleId: 1 };
+    const adminId = ObjectId.isValid(req.userId) ? new ObjectId(req.userId) : req.userId;
+    const variantProductIds = await ProductVariant.collection().distinct('productId', { sellerId: adminId });
+
+    let query = {
+      $or: [
+        { roleId: 1 },
+        { productId: { $in: variantProductIds } }
+      ]
+    };
 
     if (req.query.search) {
       const searchRegex = new RegExp(req.query.search, 'i');
-      query.$and = [
-        { roleId: 1 },
-        {
-          $or: [
-            { productName: searchRegex },
-            { slug: searchRegex },
-            { description: searchRegex }
-          ]
-        }
-      ];
-      // Clean up the initial query property if using $and
-      delete query.roleId;
+      const searchCondition = {
+        $or: [
+          { productName: searchRegex },
+          { slug: searchRegex },
+          { description: searchRegex }
+        ]
+      };
+      query = { $and: [query, searchCondition] };
     }
     
     const page = parseInt(req.query.page) || 1;

@@ -1876,6 +1876,39 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
               </div>
               {/* <!-- tab content three end --> */}
               {/* <!--== tab content end ==--> */}
+
+              {/* <!-- Image showcase start --> */}
+              <div className="bg-gray-2/50 rounded-[2.5rem] p-6 pt-2 md:p-8 md:pt-4 lg:p-10 lg:pt-6">
+                <div className="mb-4 text-center">
+                  <h3 className="text-xl text-dark">Product Spotlight</h3>
+                  <div className="mt-2 w-16 h-1 bg-blue mx-auto rounded-full opacity-20"></div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                  {product?.imgs?.previews?.map((img: string, index: number) => (
+                    <div 
+                      key={index} 
+                      className="group relative overflow-hidden rounded-2xl bg-white p-3 shadow-[0_4px_20px_rgba(0,0,0,0.03)] transition-all duration-500 hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1"
+                    >
+                      <div className="overflow-hidden rounded-xl aspect-square w-full">
+                        <Image
+                          src={img}
+                          alt={`${product.title} showcase ${index + 1}`}
+                          width={600}
+                          height={600}
+                          className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
+                        />
+                      </div>
+                      
+                      {/* Subtle corner accent */}
+                      <div className="absolute top-5 right-5 w-7 h-7 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold text-blue shadow-sm opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                        {index + 1}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* <!-- Image showcase end --> */}
             </div>
           </section>
 
