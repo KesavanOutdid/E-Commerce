@@ -11,14 +11,22 @@ const OrderHistory = () => {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Orders");
   const { accessToken } = useAppSelector((state) => state.authReducer);
-  const limit = 8;
+  const limit = 7;
 
   useEffect(() => {
     const fetchOrders = async () => {
       setLoading(true);
       try {
-        const res = await fetch(API_ENDPOINTS.ORDER_HISTORY(currentPage, limit), {
+        let url = API_ENDPOINTS.ORDER_HISTORY(currentPage, limit);
+        
+        // Append filters to URL if backend supports them
+        if (searchQuery) url += `&search=${encodeURIComponent(searchQuery)}`;
+        if (statusFilter !== "All Orders") url += `&status=${encodeURIComponent(statusFilter.toLowerCase())}`;
+
+        const res = await fetch(url, {
           headers: {
             Authorization: `Bearer ${accessToken || localStorage.getItem("accessToken")}`,
           },
@@ -35,12 +43,26 @@ const OrderHistory = () => {
       }
     };
 
-    fetchOrders();
-  }, [accessToken, currentPage]);
+    const debounceTimer = setTimeout(() => {
+      fetchOrders();
+    }, 500);
+
+    return () => clearTimeout(debounceTimer);
+  }, [accessToken, currentPage, searchQuery, statusFilter]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1); // Reset to first page on search
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1); // Reset to first page on filter change
   };
 
   const getStatusTextColor = (status: string) => {
@@ -90,17 +112,23 @@ const OrderHistory = () => {
             type="text" 
             placeholder="Search your orders here" 
             className="w-full pl-10 pr-4 py-2 border border-[#f1f3f6] rounded-sm focus:outline-none focus:border-blue text-sm"
+            value={searchQuery || ""}
+            onChange={handleSearchChange}
           />
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
           </svg>
         </div>
         <div className="flex gap-4 w-full md:w-auto">
-          <select className="flex-grow md:flex-grow-0 px-4 py-2 border border-[#f1f3f6] rounded-sm text-sm focus:outline-none">
+          <select 
+            className="flex-grow md:flex-grow-0 px-4 py-2 border border-[#f1f3f6] rounded-sm text-sm focus:outline-none"
+            value={statusFilter || "All Orders"}
+            onChange={handleStatusChange}
+          >
             <option>All Orders</option>
-            <option>On the way</option>
-            <option>Delivered</option>
-            <option>Cancelled</option>
+            <option value="pending">On the way</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
           </select>
         </div>
       </div>
@@ -108,71 +136,111 @@ const OrderHistory = () => {
       {orders.length > 0 ? (
         <>
           <div className="flex flex-col gap-4">
-            {orders.map((order) => (
-              <div key={order._id} className="flex flex-col">
-                {order.items.map((item, index) => (
-                  <Link
-                    href={`/view-orders/${order.orderId}`}
-                    key={`${order._id}-${index}`}
-                    className="bg-white pt-3 pb-6 px-6 border border-[#f1f3f6] hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-8 mb-[-1px]"
-                  >
-                    {/* Product Image */}
-                    <div className="w-24 h-24 relative flex-shrink-0 bg-gray-50 flex items-center justify-center rounded">
-                      {item.images && item.images.length > 0 ? (
-                        <Image
-                          src={item.images[0]?.startsWith('http') ? item.images[0] : `${API_BASE_URL}${item.images[0]}`}
-                          alt={item.productName}
-                          fill
-                          className="object-contain"
+            {orders
+              .flatMap((order) =>
+                order.items.map((item) => ({
+                  ...item,
+                  orderId: order.orderId,
+                  orderStatus: order.orderStatus,
+                  createdAt: order.createdAt,
+                  updatedAt: order.updatedAt,
+                  _id: order._id,
+                }))
+              )
+              .slice(0, limit)
+              .map((item, index) => (
+                <Link
+                  href={`/view-orders/${item.orderId}`}
+                  key={`${item._id}-${index}`}
+                  className="bg-white pt-3 pb-6 px-6 border border-[#f1f3f6] hover:shadow-md transition-all flex flex-col md:flex-row items-center gap-8 mb-[-1px]"
+                >
+                  {/* Product Image */}
+                  <div className="w-24 h-24 relative flex-shrink-0 bg-gray-50 flex items-center justify-center rounded">
+                    {item.images && item.images.length > 0 ? (
+                      <Image
+                        src={
+                          item.images[0]?.startsWith("http")
+                            ? item.images[0]
+                            : `${API_BASE_URL}${item.images[0]}`
+                        }
+                        alt={item.productName}
+                        fill
+                        className="object-contain"
+                      />
+                    ) : (
+                      <svg
+                        className="w-12 h-12 text-gray-200"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
                         />
-                      ) : (
-                        <svg className="w-12 h-12 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                      )}
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Product Info */}
+                  <div className="flex-grow flex flex-col md:grid md:grid-cols-5 items-start w-full gap-6">
+                    <div className="md:col-span-2">
+                      <h3 className="text-[15px] font-normal text-dark hover:text-blue transition-colors line-clamp-2 mb-1">
+                        {item.productName}
+                      </h3>
+                      <p className="text-xs text-gray-500">
+                        Order ID: {item.orderId}
+                      </p>
                     </div>
 
-                    {/* Product Info */}
-                    <div className="flex-grow flex flex-col md:grid md:grid-cols-5 items-start w-full gap-6">
-                      <div className="md:col-span-2">
-                        <h3 className="text-[15px] font-normal text-dark hover:text-blue transition-colors line-clamp-2 mb-1">
-                          {item.productName}
-                        </h3>
-                        <p className="text-xs text-gray-500">
-                          Order ID: {order.orderId}
+                    <div className="text-left">
+                      <p className="text-[15px] font-medium text-dark">
+                        ₹{item.totalPrice.toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div className="flex items-start gap-2.5">
+                      <div>
+                        <p
+                          className={`text-sm font-normal capitalize ${getStatusTextColor(
+                            item.orderStatus
+                          )}`}
+                        >
+                          {item.orderStatus.toLowerCase() === "ordered"
+                            ? "Confirmed"
+                            : item.orderStatus}
                         </p>
-                      </div>
-
-                      <div className="text-left">
-                        <p className="text-[15px] font-medium text-dark">
-                          ₹{item.totalPrice.toLocaleString()}
-                        </p>
-                      </div>
-
-                      <div className="flex items-start gap-2.5">
-                        <div>
-                          <p className={`text-sm font-normal capitalize ${getStatusTextColor(order.orderStatus)}`}>
-                            {order.orderStatus.toLowerCase() === 'ordered' ? 'Confirmed' : order.orderStatus}
-                          </p>
-                          <p className="text-[12px] text-gray-500 mt-0.5">
-                            {(order.orderStatus === 'confirmed' || order.orderStatus === 'ordered') ? 'Your order has been placed' : ''}
-                            {order.orderStatus === 'delivered' ? `Delivered on ${new Date(order.updatedAt).toLocaleDateString()}` : ''}
-                            {order.orderStatus === 'pending' ? 'Waiting for confirmation' : ''}
-                            {order.orderStatus === 'cancelled' ? 'Order has been cancelled' : ''}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-left">
-                        <p className="text-sm font-medium text-dark">
-                          Ordered on {new Date(order.createdAt).toLocaleDateString()}
+                        <p className="text-[12px] text-gray-500 mt-0.5">
+                          {item.orderStatus === "confirmed" ||
+                          item.orderStatus === "ordered"
+                            ? "Your order has been placed"
+                            : ""}
+                          {item.orderStatus === "delivered"
+                            ? `Delivered on ${new Date(
+                                item.updatedAt
+                              ).toLocaleDateString()}`
+                            : ""}
+                          {item.orderStatus === "pending"
+                            ? "Waiting for confirmation"
+                            : ""}
+                          {item.orderStatus === "cancelled"
+                            ? "Order has been cancelled"
+                            : ""}
                         </p>
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            ))}
+
+                    <div className="text-left">
+                      <p className="text-sm font-medium text-dark">
+                        Ordered on{" "}
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
           </div>
 
           {/* Pagination */}

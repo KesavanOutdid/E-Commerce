@@ -21,6 +21,7 @@ const Checkout = () => {
 
   const [payment, setPayment] = useState("cod");
   const [step, setStep] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -78,10 +79,48 @@ const Checkout = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error for the field being edited
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name.trim()) newErrors.name = "Full name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phone)) {
+      newErrors.phone = "Phone number must be 10 digits";
+    }
+    if (!formData.doorNo.trim()) newErrors.doorNo = "Door number is required";
+    if (!formData.street.trim()) newErrors.street = "Street is required";
+    if (!formData.town.trim()) newErrors.town = "Town/City is required";
+    if (!formData.district.trim()) newErrors.district = "District is required";
+    if (!formData.pincode.trim()) {
+      newErrors.pincode = "Pincode is required";
+    } else if (!/^\d{6}$/.test(formData.pincode)) {
+      newErrors.pincode = "Pincode must be 6 digits";
+    }
+    if (!formData.state.trim()) newErrors.state = "State is required";
+    if (!formData.country.trim()) newErrors.country = "Country is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleAddressSelect = (index: number | null) => {
     setSelectedAddressIndex(index);
+    setErrors({}); // Clear errors when selecting an address
     if (index !== null) {
       const addr = savedAddresses[index];
       setFormData((prev) => ({
@@ -115,8 +154,8 @@ const Checkout = () => {
 
   const nextStep = () => {
     if (step === 1) {
-      if (!formData.name || !formData.email || !formData.phone || !formData.doorNo || !formData.street || !formData.town || !formData.district || !formData.pincode || !formData.state) {
-        toast.error("Please fill in all required billing details");
+      if (!validateForm()) {
+        // toast.error("Please fix the errors in the billing details");
         return;
       }
       setStep(2);
@@ -309,6 +348,7 @@ const Checkout = () => {
                         savedAddresses={savedAddresses}
                         selectedAddressIndex={selectedAddressIndex}
                         handleAddressSelect={handleAddressSelect}
+                        errors={errors}
                       />
                       <div className="mt-10 flex justify-end">
                         <button

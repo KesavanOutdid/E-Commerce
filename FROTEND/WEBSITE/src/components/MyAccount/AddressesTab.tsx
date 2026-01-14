@@ -42,6 +42,78 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
     pincode: "",
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors: Record<string, string> = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+      isValid = false;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Please enter a valid 10-digit phone number";
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    if (!formData.doorNo.trim()) {
+      newErrors.doorNo = "Door/Flat No. is required";
+      isValid = false;
+    }
+
+    if (!formData.street.trim()) {
+      newErrors.street = "Street/Area is required";
+      isValid = false;
+    }
+
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required";
+      isValid = false;
+    }
+
+    if (!formData.district.trim()) {
+      newErrors.district = "District is required";
+      isValid = false;
+    }
+
+    if (!formData.state.trim()) {
+      newErrors.state = "State is required";
+      isValid = false;
+    }
+
+    if (!formData.country.trim()) {
+      newErrors.country = "Country is required";
+      isValid = false;
+    }
+
+    const pincodeRegex = /^[0-9]{6}$/;
+    if (!formData.pincode.trim()) {
+      newErrors.pincode = "Pincode is required";
+      isValid = false;
+    } else if (!pincodeRegex.test(formData.pincode)) {
+      newErrors.pincode = "Please enter a valid 6-digit pincode";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const isFormValid = 
     formData.name.trim() !== "" &&
     formData.phone.trim() !== "" &&
@@ -99,6 +171,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const resetForm = () => {
@@ -115,12 +194,14 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
       country: "IN",
       pincode: "",
     });
+    setErrors({});
     setEditingIndex(null);
     setShowForm(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       const url = editingIndex !== null 
         ? API_ENDPOINTS.ADDRESS_DETAIL(editingIndex)
@@ -219,9 +300,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   value={formData.name}
                   onChange={handleInputChange}
                   placeholder="e.g., John Doe"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.name ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.name && (
+                  <p className="text-red text-xs mt-0.5">{errors.name}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">Phone Number</label>
@@ -231,9 +316,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   placeholder="e.g., 9876543210"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.phone ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.phone && (
+                  <p className="text-red text-xs mt-0.5">{errors.phone}</p>
+                )}
               </div>
             </div>
 
@@ -245,9 +334,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="e.g., example@gmail.com"
-                className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                required
+                className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                  errors.email ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.email && (
+                <p className="text-red text-xs mt-0.5">{errors.email}</p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -259,9 +352,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   value={formData.doorNo}
                   onChange={handleInputChange}
                   placeholder="e.g., 101"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.doorNo ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.doorNo && (
+                  <p className="text-red text-xs mt-0.5">{errors.doorNo}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">Street / Area</label>
@@ -271,9 +368,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   value={formData.street}
                   onChange={handleInputChange}
                   placeholder="e.g., Main Street"
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.street ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.street && (
+                  <p className="text-red text-xs mt-0.5">{errors.street}</p>
+                )}
               </div>
             </div>
 
@@ -297,9 +398,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   name="city"
                   value={formData.city}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.city ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.city && (
+                  <p className="text-red text-xs mt-0.5">{errors.city}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">District</label>
@@ -308,9 +413,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   name="district"
                   value={formData.district}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.district ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.district && (
+                  <p className="text-red text-xs mt-0.5">{errors.district}</p>
+                )}
               </div>
             </div>
 
@@ -322,9 +431,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   name="state"
                   value={formData.state}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.state ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.state && (
+                  <p className="text-red text-xs mt-0.5">{errors.state}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">Country</label>
@@ -333,9 +446,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.country ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.country && (
+                  <p className="text-red text-xs mt-0.5">{errors.country}</p>
+                )}
               </div>
               <div className="space-y-1">
                 <label className="text-sm text-gray-600">Pincode</label>
@@ -344,9 +461,13 @@ const AddressesTab: React.FC<AddressesTabProps> = ({ accessToken }) => {
                   name="pincode"
                   value={formData.pincode}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm"
-                  required
+                  className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all text-sm ${
+                    errors.pincode ? "border-red" : "border-gray-3"
+                  }`}
                 />
+                {errors.pincode && (
+                  <p className="text-red text-xs mt-0.5">{errors.pincode}</p>
+                )}
               </div>
             </div>
 

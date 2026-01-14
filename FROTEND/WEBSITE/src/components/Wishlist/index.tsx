@@ -7,7 +7,7 @@ import { useDispatch } from "react-redux";
 import { setWishlist } from "@/redux/features/wishlist-slice";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
 
-export const Wishlist = () => {
+export const Wishlist = ({ hideHeader = false }: { hideHeader?: boolean }) => {
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
   const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
   const dispatch = useDispatch();
@@ -51,6 +51,50 @@ export const Wishlist = () => {
     fetchWishlist();
   }, [accessToken, isAuthenticated, dispatch]);
 
+  const content = (
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[1170px]">
+        {/* <!-- table header --> */}
+        <div className="flex items-center py-5.5 px-10">
+          <div className="min-w-[400px]">
+            <p className="text-dark font-medium">Product</p>
+          </div>
+
+          <div className="min-w-[265px] text-center">
+            <p className="text-dark font-medium">Stock Status</p>
+          </div>
+
+          <div className="min-w-[205px] text-center">
+            <p className="text-dark font-medium">Unit Price</p>
+          </div>
+
+          <div className="min-w-[230px]">
+            <p className="text-dark font-medium text-right">Action</p>
+          </div>
+        </div>
+
+        {/* <!-- wish item --> */}
+        {loading ? (
+          <div className="p-10 text-center text-dark">Loading your wishlist...</div>
+        ) : wishlistItems.length > 0 ? (
+          wishlistItems.map((item, key) => (
+            <SingleItem item={item} key={key} />
+          ))
+        ) : (
+          <div className="p-10 text-center text-dark">Your wishlist is empty.</div>
+        )}
+      </div>
+    </div>
+  );
+
+  if (hideHeader) {
+    return (
+      <div className="bg-white rounded-[10px] shadow-1 mt-4">
+        {content}
+      </div>
+    );
+  }
+
   return (
     <>
       <Breadcrumb title={"Wishlist"} pages={["Wishlist"]} />
@@ -62,39 +106,7 @@ export const Wishlist = () => {
           </div>
 
           <div className="bg-white rounded-[10px] shadow-1">
-            <div className="w-full overflow-x-auto">
-              <div className="min-w-[1170px]">
-                {/* <!-- table header --> */}
-                <div className="flex items-center py-5.5 px-10">
-                  <div className="min-w-[400px]">
-                    <p className="text-dark font-medium">Product</p>
-                  </div>
-
-                  <div className="min-w-[265px] text-center">
-                    <p className="text-dark font-medium">Stock Status</p>
-                  </div>
-
-                  <div className="min-w-[205px] text-center">
-                    <p className="text-dark font-medium">Unit Price</p>
-                  </div>
-
-                  <div className="min-w-[230px]">
-                    <p className="text-dark font-medium text-right">Action</p>
-                  </div>
-                </div>
-
-                {/* <!-- wish item --> */}
-                {loading ? (
-                  <div className="p-10 text-center text-dark">Loading your wishlist...</div>
-                ) : wishlistItems.length > 0 ? (
-                  wishlistItems.map((item, key) => (
-                    <SingleItem item={item} key={key} />
-                  ))
-                ) : (
-                  <div className="p-10 text-center text-dark">Your wishlist is empty.</div>
-                )}
-              </div>
-            </div>
+            {content}
           </div>
         </div>
       </section>

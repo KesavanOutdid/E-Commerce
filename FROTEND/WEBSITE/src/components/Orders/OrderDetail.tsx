@@ -151,9 +151,9 @@ const OrderDetail = () => {
                           })}
                           
                         <div className="mt-4 flex flex-col gap-2">
-                          <button className="text-[14px] font-medium text-[#2874f0] hover:underline w-fit">See All Updates</button>
+                          {/* <button className="text-[14px] font-medium text-[#2874f0] hover:underline w-fit">See All Updates</button> */}
                           <p className="text-[13px] text-[#212121]">
-                            {currentStep === 3 ? "Your item has been delivered." : `Your order is ${order.orderStatus.toLowerCase()} as per your request.`}
+                            {/* {currentStep === 3 ? "Your item has been delivered." : `Your order is ${order.orderStatus.toLowerCase()} as per your request.`} */}
                           </p>
                         </div>
                         </div>
@@ -239,7 +239,7 @@ const OrderDetail = () => {
             </div>
 
             {/* Actions Card */}
-            <div className="bg-white rounded-sm shadow-sm border border-[#e0e0e0] p-6 space-y-4">
+            {/* <div className="bg-white rounded-sm shadow-sm border border-[#e0e0e0] p-6 space-y-4">
               <button className="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#e0e0e0] rounded-sm text-[14px] font-medium text-[#212121] hover:bg-[#fafafa]">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
@@ -258,7 +258,7 @@ const OrderDetail = () => {
                   <p className="text-[10px] text-[#878787]">15 SuperCoins will be credited...</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

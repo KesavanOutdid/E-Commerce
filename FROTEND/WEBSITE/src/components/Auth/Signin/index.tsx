@@ -18,14 +18,50 @@ const Signin = () => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string) => {
+    let errorMsg = "";
+    switch (name) {
+      case "identifier":
+        if (!value.trim()) {
+          errorMsg = "Email or Phone is required";
+        } else {
+          const isEmail = value.includes("@");
+          const isPhone = /^[0-9]+$/.test(value.replace(/\s/g, ""));
+          
+          if (isEmail) {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+              errorMsg = "Please enter a valid email address";
+            }
+          } else if (isPhone) {
+            if (!/^[0-9]{10}$/.test(value.replace(/\s/g, ""))) {
+              errorMsg = "Please enter a valid 10-digit phone number";
+            }
+          } else if (value.length < 3) {
+            errorMsg = "Please enter a valid email or phone number";
+          }
+        }
+        break;
+      case "password":
+        if (!value) errorMsg = "Please enter your password";
+        else if (value.length < 8) errorMsg = "Password must be at least 8 characters";
+        break;
+    }
+    setValidationErrors((prev) => ({ ...prev, [name]: errorMsg }));
+    return errorMsg;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
     if (error) setError("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
     setLoading(true);
     setError("");
 
@@ -92,9 +128,13 @@ const Signin = () => {
                     value={formData.identifier}
                     onChange={handleChange}
                     placeholder="Enter your email or phone"
-                    required
-                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      validationErrors.identifier ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {validationErrors.identifier && (
+                    <p className="text-red text-xs mt-1">{validationErrors.identifier}</p>
+                  )}
                 </div>
 
                 <div className="mb-4">
@@ -110,9 +150,13 @@ const Signin = () => {
                     onChange={handleChange}
                     placeholder="Enter your password"
                     autoComplete="current-password"
-                    required
-                    className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      validationErrors.password ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {validationErrors.password && (
+                    <p className="text-red text-xs mt-1">{validationErrors.password}</p>
+                  )}
                   {error && (
                     <p className="text-red text-sm mt-2 font-medium">{error}</p>
                   )}

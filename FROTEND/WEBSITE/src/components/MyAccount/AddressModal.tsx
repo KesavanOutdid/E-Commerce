@@ -1,6 +1,78 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 
 const AddressModal = ({ isOpen, closeModal }) => {
+  const [formData, setFormData] = useState({
+    name: "James Septimus",
+    email: "jamse@example.com",
+    phone: "1234 567890",
+    address: "7398 Smoke Ranch RoadLas Vegas, Nevada 89128",
+  });
+
+  const [errors, setErrors] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+    };
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(formData.email)) {
+      newErrors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(formData.phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Please enter a valid 10-digit phone number";
+      isValid = false;
+    }
+
+    if (!formData.address.trim()) {
+      newErrors.address = "Address is required";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      // Handle form submission
+      console.log("Form submitted:", formData);
+      closeModal();
+    }
+  };
+
   useEffect(() => {
     // closing modal while clicking outside
     function handleClickOutside(event) {
@@ -51,7 +123,7 @@ const AddressModal = ({ isOpen, closeModal }) => {
           </button>
 
           <div>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
                 <div className="w-full">
                   <label htmlFor="name" className="block mb-2.5">
@@ -61,9 +133,15 @@ const AddressModal = ({ isOpen, closeModal }) => {
                   <input
                     type="text"
                     name="name"
-                    value="James Septimus"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      errors.name ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {errors.name && (
+                    <p className="text-red text-xs mt-1">{errors.name}</p>
+                  )}
                 </div>
 
                 <div className="w-full">
@@ -74,9 +152,15 @@ const AddressModal = ({ isOpen, closeModal }) => {
                   <input
                     type="email"
                     name="email"
-                    value="jamse@example.com"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      errors.email ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {errors.email && (
+                    <p className="text-red text-xs mt-1">{errors.email}</p>
+                  )}
                 </div>
               </div>
 
@@ -89,9 +173,15 @@ const AddressModal = ({ isOpen, closeModal }) => {
                   <input
                     type="text"
                     name="phone"
-                    value="1234 567890"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      errors.phone ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {errors.phone && (
+                    <p className="text-red text-xs mt-1">{errors.phone}</p>
+                  )}
                 </div>
 
                 <div className="w-full">
@@ -102,9 +192,15 @@ const AddressModal = ({ isOpen, closeModal }) => {
                   <input
                     type="text"
                     name="address"
-                    value="7398 Smoke Ranch RoadLas Vegas, Nevada 89128"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                    className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      errors.address ? "border-red" : "border-gray-3"
+                    }`}
                   />
+                  {errors.address && (
+                    <p className="text-red text-xs mt-1">{errors.address}</p>
+                  )}
                 </div>
               </div>
 

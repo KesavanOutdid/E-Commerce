@@ -6,6 +6,7 @@ interface BillingProps {
   savedAddresses: any[];
   selectedAddressIndex: number | null;
   handleAddressSelect: (index: number | null) => void;
+  errors: Record<string, string>;
 }
 
 const Billing = ({ 
@@ -13,7 +14,8 @@ const Billing = ({
   handleInputChange, 
   savedAddresses, 
   selectedAddressIndex, 
-  handleAddressSelect 
+  handleAddressSelect,
+  errors
 }: BillingProps) => {
   return (
     <div className="mt-9">
@@ -85,8 +87,11 @@ const Billing = ({
               value={formData.name || ""}
               onChange={handleInputChange}
               required
-              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+              className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                errors.name ? "border-red" : "border-gray-3"
+              }`}
             />
+            {errors.name && <p className="text-red text-sm mt-1">{errors.name}</p>}
           </div>
 
           <div className="flex flex-col lg:flex-row gap-5 sm:gap-8 mb-5">
@@ -103,8 +108,11 @@ const Billing = ({
                 value={formData.email || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.email ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.email && <p className="text-red text-sm mt-1">{errors.email}</p>}
             </div>
 
             <div className="w-full">
@@ -120,8 +128,11 @@ const Billing = ({
                 value={formData.phone || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.phone ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.phone && <p className="text-red text-sm mt-1">{errors.phone}</p>}
             </div>
           </div>
 
@@ -139,8 +150,11 @@ const Billing = ({
                 value={formData.doorNo || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.doorNo ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.doorNo && <p className="text-red text-sm mt-1">{errors.doorNo}</p>}
             </div>
 
             <div className="w-full">
@@ -156,8 +170,11 @@ const Billing = ({
                 value={formData.street || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.street ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.street && <p className="text-red text-sm mt-1">{errors.street}</p>}
             </div>
           </div>
 
@@ -190,8 +207,11 @@ const Billing = ({
                 value={formData.district || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.district ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.district && <p className="text-red text-sm mt-1">{errors.district}</p>}
             </div>
           </div>
 
@@ -209,8 +229,11 @@ const Billing = ({
                 value={formData.town || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.town ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.town && <p className="text-red text-sm mt-1">{errors.town}</p>}
             </div>
 
             <div>
@@ -226,8 +249,11 @@ const Billing = ({
                 value={formData.pincode || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.pincode ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.pincode && <p className="text-red text-sm mt-1">{errors.pincode}</p>}
             </div>
           </div>
 
@@ -245,8 +271,11 @@ const Billing = ({
                 value={formData.state || ""}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.state ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.state && <p className="text-red text-sm mt-1">{errors.state}</p>}
             </div>
 
             <div>
@@ -262,8 +291,11 @@ const Billing = ({
                 value={formData.country || "India"}
                 onChange={handleInputChange}
                 required
-                className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                  errors.country ? "border-red" : "border-gray-3"
+                }`}
               />
+              {errors.country && <p className="text-red text-sm mt-1">{errors.country}</p>}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Breadcrumb from "../Common/Breadcrumb";
 import Image from "next/image";
 import Orders from "../Orders";
+import { Wishlist } from "../Wishlist";
 import AddressesTab from "./AddressesTab";
 import { useAppSelector } from "@/redux/store";
 import { useDispatch } from "react-redux";
@@ -27,6 +28,56 @@ const MyAccount = () => {
     profileImage: user?.profileImage || "",
     password: "",
   });
+
+  const [errors, setErrors] = useState({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    password: "",
+  });
+
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      password: "",
+    };
+
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+      isValid = false;
+    } else if (formData.firstName.length < 2) {
+      newErrors.firstName = "Please enter a valid first name";
+      isValid = false;
+    }
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+      isValid = false;
+    } else if (formData.lastName.length < 2) {
+      newErrors.lastName = "Please enter a valid last name";
+      isValid = false;
+    }
+
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(formData.phone)) {
+      newErrors.phone = "Please enter a valid 10-digit phone number";
+      isValid = false;
+    }
+
+    if (formData.password && formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
 
   const isDirty = 
     formData.firstName !== (user?.firstName || "") ||
@@ -55,6 +106,9 @@ const MyAccount = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name as keyof typeof errors]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleLogout = () => {
@@ -111,6 +165,7 @@ const MyAccount = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) return;
     try {
       const updateData: any = { 
         firstName: formData.firstName,
@@ -149,13 +204,13 @@ const MyAccount = () => {
     <>
       <Breadcrumb title={"My Account"} pages={["my account"]} />
 
-      <section className="overflow-hidden py-20 bg-gray-2">
+      <section className="overflow-hidden py-14 bg-gray-2">
         <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-          <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex flex-col md:flex-row items-stretch gap-8">
             {/* Sidebar Navigation */}
-            <div className="md:w-[280px] lg:w-[300px] flex-shrink-0 space-y-4">
+            <div className="md:w-[280px] lg:w-[300px] flex-shrink-0 flex flex-col gap-4">
               {/* Profile Card (Flipkart Style) */}
-              <div className="bg-white rounded shadow-sm p-3 flex items-center gap-4">
+              <div className="bg-white rounded-xl shadow-sm p-3 flex items-center gap-4">
                 <div className="relative w-12 h-12 flex-shrink-0 group cursor-pointer">
                   {formData.profileImage ? (
                     <Image
@@ -194,12 +249,12 @@ const MyAccount = () => {
               </div>
 
               {/* Navigation Card */}
-              <div className="bg-white rounded shadow-sm overflow-hidden sticky top-24">
+              <div className="bg-white rounded-xl shadow-sm overflow-hidden min-h-[500px]">
                 <nav className="flex flex-col">
                   {/* Dashboard Section */}
                   <button
                     onClick={() => handleTabChange("dashboard")}
-                    className={`flex items-center justify-between px-6 py-4 transition-all border-b border-gray-1 group ${
+                    className={`flex items-center justify-between w-full text-left px-6 py-3.5 transition-all border-b border-gray-1 group ${
                       activeTab === "dashboard" ? "bg-white" : "hover:bg-gray-50"
                     }`}
                   >
@@ -216,14 +271,16 @@ const MyAccount = () => {
 
                   {/* My Orders Section */}
                   <button
-                    onClick={() => router.push("/view-orders")}
-                    className={`flex items-center justify-between px-6 py-4 transition-all border-b border-gray-1 group hover:bg-gray-50`}
+                    onClick={() => handleTabChange("orders")}
+                    className={`flex items-center justify-between w-full text-left px-6 py-3.5 transition-all border-b border-gray-1 group ${
+                      activeTab === "orders" ? "bg-white" : "hover:bg-gray-50"
+                    }`}
                   >
                     <div className="flex items-center gap-4">
-                      <svg className={`transition-colors text-gray-400 group-hover:text-blue`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <svg className={`transition-colors ${activeTab === "orders" ? "text-blue" : "text-gray-400"}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/>
                       </svg>
-                      <span className={`text-[13px] font-medium text-dark group-hover:text-blue`}>MY ORDERS</span>
+                      <span className={`text-[13px] font-medium ${activeTab === "orders" ? "text-blue" : "text-dark"}`}>MY ORDERS</span>
                     </div>
                     <svg className="text-gray-300 group-hover:text-gray-400 transition-all" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                       <polyline points="9 18 15 12 9 6"/>
@@ -233,7 +290,7 @@ const MyAccount = () => {
                   {/* Account Settings Section */}
                   <button
                     onClick={() => handleTabChange("account-details")}
-                    className={`flex items-center justify-between px-6 py-4 transition-all border-b border-gray-1 group ${
+                    className={`flex items-center justify-between w-full text-left px-6 py-3.5 transition-all border-b border-gray-1 group ${
                       activeTab === "account-details" || activeTab === "change-password" ? "bg-white" : "hover:bg-gray-50"
                     }`}
                   >
@@ -250,14 +307,16 @@ const MyAccount = () => {
 
                   {/* My Wishlist */}
                   <button
-                    onClick={() => router.push("/wishlist")}
-                    className={`flex items-center justify-between px-6 py-4 transition-all border-b border-gray-1 group hover:bg-gray-50`}
+                    onClick={() => handleTabChange("wishlist")}
+                    className={`flex items-center justify-between w-full text-left px-6 py-3.5 transition-all border-b border-gray-1 group ${
+                      activeTab === "wishlist" ? "bg-white" : "hover:bg-gray-50"
+                    }`}
                   >
                     <div className="flex items-center gap-4">
-                      <svg className={`transition-colors text-gray-400 group-hover:text-blue`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <svg className={`transition-colors ${activeTab === "wishlist" ? "text-blue" : "text-gray-400"}`} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                       </svg>
-                      <span className={`text-[13px] font-medium text-dark`}>MY WISHLIST</span>
+                      <span className={`text-[13px] font-medium ${activeTab === "wishlist" ? "text-blue" : "text-dark"}`}>MY WISHLIST</span>
                     </div>
                     <svg className="text-gray-300 group-hover:text-gray-400 transition-all" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                       <polyline points="9 18 15 12 9 6"/>
@@ -267,7 +326,7 @@ const MyAccount = () => {
                   {/* Addresses Section */}
                   <button
                     onClick={() => handleTabChange("addresses")}
-                    className={`flex items-center justify-between px-6 py-4 transition-all border-b border-gray-1 group ${
+                    className={`flex items-center justify-between w-full text-left px-6 py-3.5 transition-all border-b border-gray-1 group ${
                       activeTab === "addresses" ? "bg-white" : "hover:bg-gray-50"
                     }`}
                   >
@@ -285,7 +344,7 @@ const MyAccount = () => {
                   {/* Logout */}
                   <button
                     onClick={handleLogout}
-                    className="flex items-center gap-4 px-6 py-4 transition-all hover:bg-gray-50 group"
+                    className="flex items-center gap-4 w-full text-left px-6 py-3.5 transition-all hover:bg-gray-50 group"
                   >
                     <svg className="text-red/70 group-hover:text-red transition-colors" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/>
@@ -298,7 +357,7 @@ const MyAccount = () => {
 
             {/* Main Content Area */}
             <div className="flex-grow">
-              <div className="bg-white rounded-xl shadow-sm p-6 sm:p-8 min-h-[600px]">
+              <div className="bg-white rounded-xl shadow-sm p-6 min-h-[500px]">
                 {/* Dashboard Tab */}
                 {activeTab === "dashboard" && (
                   <div className="animate-fadeIn">
@@ -306,8 +365,8 @@ const MyAccount = () => {
                     <p className="text-gray-600 mb-8 leading-relaxed">
                       From your account dashboard you can view your recent orders, manage your shipping and billing addresses, and edit your password and account details.
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      <div onClick={() => router.push("/view-orders")} className="p-6 border border-gray-1 rounded-xl hover:border-blue hover:shadow-md transition-all cursor-pointer group bg-gray-1/30">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
+                      <div onClick={() => handleTabChange("orders")} className="p-6 border border-gray-1 rounded-xl hover:border-blue hover:shadow-md transition-all cursor-pointer group bg-gray-1/30">
                         <div className="w-12 h-12 bg-blue/10 text-blue rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-all">
                           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/>
@@ -315,6 +374,15 @@ const MyAccount = () => {
                         </div>
                         <h4 className="font-bold text-dark mb-1">Orders</h4>
                         <p className="text-sm text-gray-500">Check your order status</p>
+                      </div>
+                      <div onClick={() => handleTabChange("wishlist")} className="p-6 border border-gray-1 rounded-xl hover:border-blue hover:shadow-md transition-all cursor-pointer group bg-gray-1/30">
+                        <div className="w-12 h-12 bg-blue/10 text-blue rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-all">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                          </svg>
+                        </div>
+                        <h4 className="font-bold text-dark mb-1">Wishlist</h4>
+                        <p className="text-sm text-gray-500">View your saved items</p>
                       </div>
                       <div onClick={() => handleTabChange("account-details")} className="p-6 border border-gray-1 rounded-xl hover:border-blue hover:shadow-md transition-all cursor-pointer group bg-gray-1/30">
                         <div className="w-12 h-12 bg-blue/10 text-blue rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-all">
@@ -338,6 +406,22 @@ const MyAccount = () => {
                   </div>
                 )}
 
+                {/* Orders Tab */}
+                {activeTab === "orders" && (
+                  <div className="animate-fadeIn">
+                    <h2 className="text-xl font-medium text-dark mb-6 border-b border-gray-1 pb-4">My Orders</h2>
+                    <Orders />
+                  </div>
+                )}
+
+                {/* Wishlist Tab */}
+                {activeTab === "wishlist" && (
+                  <div className="animate-fadeIn">
+                    <h2 className="text-xl font-medium text-dark mb-6 border-b border-gray-1 pb-4">My Wishlist</h2>
+                    <Wishlist hideHeader={true} />
+                  </div>
+                )}
+
                 {/* Basic Info Tab */}
                 {(activeTab === "account-details" || activeTab === "change-password") && (
                   <div className="animate-fadeIn">
@@ -351,9 +435,13 @@ const MyAccount = () => {
                             name="firstName"
                             value={formData.firstName}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all"
-                            required
+                            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all ${
+                              errors.firstName ? "border-red" : "border-gray-3"
+                            }`}
                           />
+                          {errors.firstName && (
+                            <p className="text-red text-xs mt-1">{errors.firstName}</p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <label className="text-sm font-medium text-gray-700">Last Name</label>
@@ -362,9 +450,13 @@ const MyAccount = () => {
                             name="lastName"
                             value={formData.lastName}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all"
-                            required
+                            className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all ${
+                              errors.lastName ? "border-red" : "border-gray-3"
+                            }`}
                           />
+                          {errors.lastName && (
+                            <p className="text-red text-xs mt-1">{errors.lastName}</p>
+                          )}
                         </div>
                       </div>
                       <div className="space-y-2">
@@ -374,9 +466,13 @@ const MyAccount = () => {
                           name="phone"
                           value={formData.phone}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all"
-                          required
+                          className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all ${
+                            errors.phone ? "border-red" : "border-gray-3"
+                          }`}
                         />
+                        {errors.phone && (
+                          <p className="text-red text-xs mt-1">{errors.phone}</p>
+                        )}
                       </div>
                       <div className="space-y-2 pt-2 border-t border-gray-1 mt-6">
                         <label className="text-sm font-medium text-gray-700">New Password</label>
@@ -385,9 +481,14 @@ const MyAccount = () => {
                           name="password"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="w-full px-4 py-3 rounded-lg border border-gray-3 focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all"
+                          className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue/20 focus:border-blue outline-none transition-all ${
+                            errors.password ? "border-red" : "border-gray-3"
+                          }`}
                           placeholder="Enter new password to change"
                         />
+                        {errors.password && (
+                          <p className="text-red text-xs mt-1">{errors.password}</p>
+                        )}
                         <p className="text-xs text-gray-500">Leave blank if you don't want to change your password.</p>
                       </div>
                       <div className="pt-4 flex justify-right">

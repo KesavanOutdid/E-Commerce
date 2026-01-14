@@ -22,9 +22,48 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+
+  const validateField = (name: string, value: string) => {
+    let errorMsg = "";
+    switch (name) {
+      case "firstName":
+        if (!value.trim()) errorMsg = "First name is required";
+        else if (value.length < 2) errorMsg = "Please enter a valid first name";
+        break;
+      case "lastName":
+        if (!value.trim()) errorMsg = "Last name is required";
+        else if (value.length < 2) errorMsg = "Please enter a valid last name";
+        break;
+      case "email":
+        if (!value.trim()) errorMsg = "Email is required";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errorMsg = "Please enter a valid email address";
+        break;
+      case "phone":
+        if (!value.trim()) errorMsg = "Phone is required";
+        else if (!/^[0-9]{10}$/.test(value.replace(/\s/g, ""))) errorMsg = "Please enter a valid 10-digit phone number";
+        break;
+      case "password":
+        if (!value) errorMsg = "Password is required";
+        else if (value.length < 8) errorMsg = "Password must be at least 8 characters";
+        break;
+      case "confirmPassword":
+        if (!value) errorMsg = "Please confirm your password";
+        else if (value !== formData.password) errorMsg = "Passwords do not match";
+        break;
+      case "otpCode":
+        if (!value) errorMsg = "OTP is required";
+        else if (!/^[0-9]{6}$/.test(value)) errorMsg = "Please enter a valid 6-digit OTP";
+        break;
+    }
+    setValidationErrors(prev => ({ ...prev, [name]: errorMsg }));
+    return errorMsg;
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    validateField(name, value);
     if (error) setError("");
   };
 
@@ -57,8 +96,13 @@ const Signup = () => {
 
   const nextStep = () => {
     if (step === 1) {
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.otpCode) {
-        setError("Please fill in all fields and verify OTP");
+      const e1 = validateField("firstName", formData.firstName);
+      const e2 = validateField("lastName", formData.lastName);
+      const e3 = validateField("email", formData.email);
+      const e4 = validateField("otpCode", formData.otpCode);
+
+      if (e1 || e2 || e3 || e4) {
+        setError("Please fix errors before proceeding");
         return;
       }
       setStep(2);
@@ -75,11 +119,16 @@ const Signup = () => {
       nextStep();
       return;
     }
-    setError("");
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
+
+    const e1 = validateField("phone", formData.phone);
+    const e2 = validateField("password", formData.password);
+    const e3 = validateField("confirmPassword", formData.confirmPassword);
+
+    if (e1 || e2 || e3) {
+      setError("Please fix errors before submitting");
       return;
     }
+
     if (!otpSent) {
       setError("Please send and enter OTP first");
       return;
@@ -224,9 +273,13 @@ const Signup = () => {
                           value={formData.firstName}
                           onChange={handleChange}
                           placeholder="First name"
-                          required
-                          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                            validationErrors.firstName ? "border-red" : "border-gray-3"
+                          }`}
                         />
+                        {validationErrors.firstName && (
+                          <p className="text-red text-xs mt-1">{validationErrors.firstName}</p>
+                        )}
                       </div>
                       <div className="w-full sm:w-1/2">
                         <label htmlFor="lastName" className="block mb-2.5">
@@ -239,9 +292,13 @@ const Signup = () => {
                           value={formData.lastName}
                           onChange={handleChange}
                           placeholder="Last name"
-                          required
-                          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                            validationErrors.lastName ? "border-red" : "border-gray-3"
+                          }`}
                         />
+                        {validationErrors.lastName && (
+                          <p className="text-red text-xs mt-1">{validationErrors.lastName}</p>
+                        )}
                       </div>
                     </div>
 
@@ -257,20 +314,21 @@ const Signup = () => {
                           value={formData.email}
                           onChange={handleChange}
                           placeholder="Enter your email address"
-                          required
-                          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                            validationErrors.email ? "border-red" : "border-gray-3"
+                          }`}
                         />
                         <button
                           type="button"
                           onClick={sendOtp}
                           disabled={loading || otpSent}
-                          className="whitespace-nowrap rounded-lg bg-blue px-3 py-1 text-custom-xs font-medium text-white hover:bg-blue/90 disabled:bg-gray-4 mt-auto mb-1"
+                          className="whitespace-nowrap rounded-lg bg-blue px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-blue/90 disabled:bg-gray-4 mt-auto mb-1 h-fit"
                         >
                           {otpSent ? "Sent" : "Send OTP"}
                         </button>
                       </div>
-                      {error && error.toLowerCase().includes("email") && (
-                        <p className="text-red text-sm mt-2 font-medium">{error}</p>
+                      {validationErrors.email && (
+                        <p className="text-red text-xs mt-1">{validationErrors.email}</p>
                       )}
                     </div>
 
@@ -287,9 +345,13 @@ const Signup = () => {
                             value={formData.otpCode}
                             onChange={handleChange}
                             placeholder="Enter 6-digit OTP"
-                            required
-                            className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                            className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                              validationErrors.otpCode ? "border-red" : "border-gray-3"
+                            }`}
                           />
+                          {validationErrors.otpCode && (
+                            <p className="text-red text-xs mt-1">{validationErrors.otpCode}</p>
+                          )}
                         </div>
 
                         <div className="flex justify-center mt-6">
@@ -319,9 +381,13 @@ const Signup = () => {
                         value={formData.phone}
                         onChange={handleChange}
                         placeholder="Enter your phone number"
-                        required
-                        className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                        className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                          validationErrors.phone ? "border-red" : "border-gray-3"
+                        }`}
                       />
+                      {validationErrors.phone && (
+                        <p className="text-red text-xs mt-1">{validationErrors.phone}</p>
+                      )}
                     </div>
 
                     <div className="flex flex-col sm:flex-row gap-5 mb-4">
@@ -337,9 +403,13 @@ const Signup = () => {
                           onChange={handleChange}
                           placeholder="Enter your password"
                           autoComplete="new-password"
-                          required
-                          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                            validationErrors.password ? "border-red" : "border-gray-3"
+                          }`}
                         />
+                        {validationErrors.password && (
+                          <p className="text-red text-xs mt-1">{validationErrors.password}</p>
+                        )}
                       </div>
                       <div className="w-full sm:w-1/2">
                         <label htmlFor="confirmPassword" className="block mb-2.5">
@@ -353,9 +423,13 @@ const Signup = () => {
                           onChange={handleChange}
                           placeholder="Re-type your password"
                           autoComplete="new-password"
-                          required
-                          className="rounded-lg border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                          className={`rounded-lg border bg-gray-1 placeholder:text-dark-5 w-full py-3 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                            validationErrors.confirmPassword ? "border-red" : "border-gray-3"
+                          }`}
                         />
+                        {validationErrors.confirmPassword && (
+                          <p className="text-red text-xs mt-1">{validationErrors.confirmPassword}</p>
+                        )}
                       </div>
                     </div>
 

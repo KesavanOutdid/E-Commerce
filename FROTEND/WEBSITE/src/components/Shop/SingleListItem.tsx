@@ -84,7 +84,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
               className="object-contain p-3 group-hover:scale-105 transition-transform duration-300"
             />
             
-            <button
+            {/* <button
               onClick={(e) => {
                 e.preventDefault();
                 handleItemToWishList();
@@ -107,7 +107,7 @@ const SingleListItem = ({ item }: { item: Product }) => {
                   fill=""
                 />
               </svg>
-            </button>
+            </button> */}
           </div>
         </Link>
 

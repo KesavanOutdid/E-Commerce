@@ -1037,67 +1037,69 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   )}
 
                   {/* Variant Selection UI */}
-                  <div className="flex flex-col gap-3 mb-2 mt-2 ">
-                    <h3 className="font-medium text-md text-dark mb-1 tracking-tight">Product Variants</h3>
-                    {Object.entries(attributeOptions).map(([name, values]: [string, any]) => {
-                      return (
-                        <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
-                          <span className="text-gray-500 text-sm w-20 flex-shrink-0">{name}</span>
-                          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
-                            {values.map((val: string) => {
-                              const isSelected = selectedAttributes[name]?.toString().toLowerCase() === val.toString().toLowerCase();
-                              
-                              // Check if this option is available in ANY variant
-                              const isAvailable = allOffers.some(v => 
-                                v.attributes.some((a: any) => a.name.toLowerCase() === name.toLowerCase() && a.value.toString().toLowerCase() === val.toString().toLowerCase())
-                              );
+                  {allOffers.length > 1 && (
+                    <div className="flex flex-col gap-3 mb-2 mt-2 ">
+                      <h3 className="font-medium text-md text-dark mb-1 tracking-tight">Product Variants</h3>
+                      {Object.entries(attributeOptions).map(([name, values]: [string, any]) => {
+                        return (
+                          <div key={name} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6">
+                            <span className="text-gray-500 text-sm w-20 flex-shrink-0">{name}</span>
+                            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
+                              {values.map((val: string) => {
+                                const isSelected = selectedAttributes[name]?.toString().toLowerCase() === val.toString().toLowerCase();
+                                
+                                // Check if this option is available in ANY variant
+                                const isAvailable = allOffers.some(v => 
+                                  v.attributes.some((a: any) => a.name.toLowerCase() === name.toLowerCase() && a.value.toString().toLowerCase() === val.toString().toLowerCase())
+                                );
 
-                              const isColor = name.toLowerCase() === "color";
-                              const colorImg = isColor ? colorImages[val.toLowerCase()] : null;
+                                const isColor = name.toLowerCase() === "color";
+                                const colorImg = isColor ? colorImages[val.toLowerCase()] : null;
 
-                              return (
-                                <button
-                                  key={val}
-                                  disabled={!isAvailable}
-                                  onClick={() => handleAttributeChange(name, val)}
-                                  className={`relative rounded-[2px] border transition-all flex items-center justify-center overflow-hidden px-1 ${
-                                    isColor ? "w-24 h-16" : "w-16 h-7"
-                                  } ${
-                                    !isAvailable ? "border-gray-100 text-gray-300 cursor-not-allowed" :
-                                    isSelected
-                                      ? "border-blue text-blue font-medium bg-white shadow-sm"
-                                      : "border-[#e0e0e0] text-dark font-normal bg-white"
-                                  } text-[11px]`}
-                                  title={val}
-                                >
-                                  {isColor && colorImg ? (
-                                    <div className={`w-full h-full p-0.5 bg-white ${!isSelected && "opacity-80"}`}>
-                                      <Image 
-                                        src={colorImg} 
-                                        alt={val} 
-                                        width={80} 
-                                        height={28} 
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <span className="text-center px-1 truncate w-full leading-tight">
-                                      {val}{(name.toUpperCase() === "RAM" || name.toUpperCase() === "STORAGE") && "GB"}
-                                    </span>
-                                  )}
-                                  {isSelected && isColor && (
-                                    <div className="absolute top-0 right-0 bg-blue text-white w-2.5 h-2.5 flex items-center justify-center rounded-bl-sm">
-                                      <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    </div>
-                                  )}
-                                </button>
-                              );
-                            })}
+                                return (
+                                  <button
+                                    key={val}
+                                    disabled={!isAvailable}
+                                    onClick={() => handleAttributeChange(name, val)}
+                                    className={`relative rounded-[2px] border transition-all flex items-center justify-center overflow-hidden px-1 ${
+                                      isColor ? "w-24 h-16" : "w-16 h-7"
+                                    } ${
+                                      !isAvailable ? "border-gray-100 text-gray-300 cursor-not-allowed" :
+                                      isSelected
+                                        ? "border-blue text-blue font-medium bg-white shadow-sm"
+                                        : "border-[#e0e0e0] text-dark font-normal bg-white"
+                                    } text-[11px]`}
+                                    title={val}
+                                  >
+                                    {isColor && colorImg ? (
+                                      <div className={`w-full h-full p-0.5 bg-white ${!isSelected && "opacity-80"}`}>
+                                        <Image 
+                                          src={colorImg} 
+                                          alt={val} 
+                                          width={80} 
+                                          height={28} 
+                                          className="w-full h-full object-contain"
+                                        />
+                                      </div>
+                                    ) : (
+                                      <span className="text-center px-1 truncate w-full leading-tight">
+                                        {val}{(name.toUpperCase() === "RAM" || name.toUpperCase() === "STORAGE") && "GB"}
+                                      </span>
+                                    )}
+                                    {isSelected && isColor && (
+                                      <div className="absolute top-0 right-0 bg-blue text-white w-2.5 h-2.5 flex items-center justify-center rounded-bl-sm">
+                                        <svg width="6" height="6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
 
                   {/* Delivery & Stock Info */}
                   <div className="mt-8 border-t border-gray-3 pt-8 flex items-start gap-2 mb-6">
