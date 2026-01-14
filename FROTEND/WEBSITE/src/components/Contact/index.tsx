@@ -14,20 +14,50 @@ const Contact = () => {
     phone: "",
     message: "",
   });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email is invalid";
+    }
+    if (!formData.subject.trim()) newErrors.subject = "Subject is required";
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phone.replace(/[\s-]/g, ""))) {
+      newErrors.phone = "Phone number must be 10 digits";
+    }
+    if (!formData.message.trim()) newErrors.message = "Message is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.phone || !formData.message) {
-      toast.error("Please fill in all required fields");
+
+    if (!validate()) {
+      // toast.error("Please fix the errors in the form");
       return;
     }
 
@@ -162,8 +192,15 @@ const Contact = () => {
                       value={formData.firstName}
                       onChange={handleChange}
                       placeholder="Jhon"
-                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                      className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                        errors.firstName ? "border-red" : "border-gray-3"
+                      }`}
                     />
+                    {errors.firstName && (
+                      <span className="text-red text-sm mt-1 block">
+                        {errors.firstName}
+                      </span>
+                    )}
                   </div>
 
                   <div className="w-full">
@@ -178,8 +215,15 @@ const Contact = () => {
                       value={formData.lastName}
                       onChange={handleChange}
                       placeholder="Deo"
-                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                      className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                        errors.lastName ? "border-red" : "border-gray-3"
+                      }`}
                     />
+                    {errors.lastName && (
+                      <span className="text-red text-sm mt-1 block">
+                        {errors.lastName}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -196,8 +240,15 @@ const Contact = () => {
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="Enter your email"
-                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                      className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                        errors.email ? "border-red" : "border-gray-3"
+                      }`}
                     />
+                    {errors.email && (
+                      <span className="text-red text-sm mt-1 block">
+                        {errors.email}
+                      </span>
+                    )}
                   </div>
 
                   <div className="w-full">
@@ -212,8 +263,15 @@ const Contact = () => {
                       value={formData.subject}
                       onChange={handleChange}
                       placeholder="Type your subject"
-                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                      className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                        errors.subject ? "border-red" : "border-gray-3"
+                      }`}
                     />
+                    {errors.subject && (
+                      <span className="text-red text-sm mt-1 block">
+                        {errors.subject}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -230,8 +288,15 @@ const Contact = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="Enter your phone"
-                      className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                      className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                        errors.phone ? "border-red" : "border-gray-3"
+                      }`}
                     />
+                    {errors.phone && (
+                      <span className="text-red text-sm mt-1 block">
+                        {errors.phone}
+                      </span>
+                    )}
                   </div>
 
                   <div className="w-full"></div>
@@ -249,8 +314,15 @@ const Contact = () => {
                     onChange={handleChange}
                     rows={5}
                     placeholder="Type your message"
-                    className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full p-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
+                    className={`rounded-md border bg-gray-1 placeholder:text-dark-5 w-full p-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20 ${
+                      errors.message ? "border-red" : "border-gray-3"
+                    }`}
                   ></textarea>
+                  {errors.message && (
+                    <span className="text-red text-sm mt-1 block">
+                      {errors.message}
+                    </span>
+                  )}
                 </div>
 
                 <button
