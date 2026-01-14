@@ -424,7 +424,7 @@ const Checkout = () => {
                       <div key={index} className="flex items-center justify-between py-4 border-b border-gray-3 last:border-0">
                         <div className="max-w-[70%]">
                           <p className="text-dark font-medium truncate">{item.title}</p>
-                          <p className="text-sm text-dark-4">Quantity: {item.quantity}</p>
+                          <p className="text-sm text-dark-4">Quantity {item.quantity}</p>
                         </div>
                         <p className="text-dark font-medium">₹{item.discountedPrice * item.quantity}</p>
                       </div>
