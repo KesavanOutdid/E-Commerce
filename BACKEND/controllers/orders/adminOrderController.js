@@ -191,7 +191,7 @@ exports.updateOrder = async (req, res) => {
     const { id } = req.params;
     const updateData = {
       ...req.body,
-      updatedBy: req.userId
+      updatedBy: req.userEmail
     };
 
     const order = await Order.update(id, updateData);
@@ -220,7 +220,7 @@ exports.updateOrder = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, trackingId, carrier, estimatedDeliveryDate, deliveryStatus } = req.body;
 
     if (!status) {
       return res.status(400).json({ 
@@ -229,14 +229,59 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    const order = await Order.updateOrderStatus(id, status, req.userId);
-
-    if (!order) {
+    const currentOrder = await Order.findByOrderId(id);
+    if (!currentOrder) {
       return res.status(404).json({ 
         success: false, 
         message: 'Order not found' 
       });
     }
+
+    const statusHierarchy = ['pending', 'packed', 'shipped', 'out_of_delivery', 'delivered'];
+    const currentStatusIndex = statusHierarchy.indexOf(currentOrder.orderStatus);
+    const newStatusIndex = statusHierarchy.indexOf(status);
+
+    // Prevent going back in status (except for cancelled/returned which aren't in hierarchy)
+    if (newStatusIndex !== -1 && currentStatusIndex !== -1 && newStatusIndex < currentStatusIndex) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot change status from ${currentOrder.orderStatus} to ${status}`
+      });
+    }
+
+    // Handle skipped statuses for history
+    const skippedHistoryEntries = [];
+    if (newStatusIndex !== -1 && currentStatusIndex !== -1) {
+      for (let i = currentStatusIndex + 1; i < newStatusIndex; i++) {
+        skippedHistoryEntries.push({
+          status: statusHierarchy[i],
+          timestamp: new Date(),
+          updatedBy: req.userEmail,
+          note: 'Automatically updated due to subsequent status change'
+        });
+      }
+    }
+
+    const extraData = {};
+    if (trackingId) extraData.trackingId = trackingId;
+    if (carrier) extraData.carrier = carrier;
+    if (estimatedDeliveryDate) extraData.estimatedDeliveryDate = estimatedDeliveryDate;
+    if (deliveryStatus) extraData.deliveryStatus = deliveryStatus;
+
+    // Payment status logic
+    if (currentOrder.paymentType === 'online' || currentOrder.paymentType === 'razorpay') {
+      if (['shipped', 'out_of_delivery', 'delivered'].includes(status)) {
+        extraData.paymentStatus = 'completed';
+      }
+    }
+    // For COD, user said "dont change payamenst status" - so we skip automatic update
+
+    // If there are skipped statuses, we update history first or as part of update
+    if (skippedHistoryEntries.length > 0) {
+      await Order.updateStatusHistory(id, skippedHistoryEntries);
+    }
+
+    const order = await Order.updateOrderStatus(id, status, req.userEmail, extraData);
 
     res.status(200).json({ 
       success: true,
@@ -264,7 +309,7 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
-    const order = await Order.updatePaymentStatus(id, paymentStatus, req.userId);
+    const order = await Order.updatePaymentStatus(id, paymentStatus, req.userEmail);
 
     if (!order) {
       return res.status(404).json({ 

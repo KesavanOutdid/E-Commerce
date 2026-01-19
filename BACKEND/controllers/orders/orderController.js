@@ -696,7 +696,7 @@ exports.updateOrder = async (req, res) => {
     const { id } = req.params;
     const updateData = {
       ...req.body,
-      updatedBy: req.userId
+      updatedBy: req.userEmail
     };
 
     const order = await Order.update(id, updateData);
@@ -734,7 +734,7 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    const order = await Order.updateStatus(id, status, req.userId);
+    const order = await Order.updateOrderStatus(id, status, req.userEmail);
 
     if (!order) {
       return res.status(404).json({ 
@@ -769,7 +769,7 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
-    const order = await Order.updatePaymentStatus(id, paymentStatus, req.userId);
+    const order = await Order.updatePaymentStatus(id, paymentStatus, req.userEmail);
 
     if (!order) {
       return res.status(404).json({ 

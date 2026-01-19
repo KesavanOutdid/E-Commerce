@@ -33,7 +33,7 @@ exports.createContact = async (req, res) => {
       email: email.trim().toLowerCase(),
       phone: phone.trim(),
       message: message.trim(),
-      createdBy: req.userId || null
+      createdBy: req.userEmail || null
     };
 
     const contact = await SellerContact.create(contactData);

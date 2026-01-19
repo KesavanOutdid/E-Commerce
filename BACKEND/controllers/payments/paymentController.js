@@ -28,8 +28,8 @@ exports.createPayment = async (req, res) => {
       paymentGateway: paymentGateway || 'manual',
       paymentDetails: paymentDetails || {},
       status: 'pending',
-      createdBy: req.userId,
-      updatedBy: req.userId
+      createdBy: req.userEmail,
+      updatedBy: req.userEmail
     };
 
     const payment = await Payment.create(paymentData);
@@ -118,7 +118,7 @@ exports.updatePayment = async (req, res) => {
     const { id } = req.params;
     const updateData = {
       ...req.body,
-      updatedBy: req.userId
+      updatedBy: req.userEmail
     };
 
     const payment = await Payment.update(id, updateData);
@@ -148,7 +148,7 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
-    const payment = await Payment.updateStatus(id, status, transactionId, req.userId);
+    const payment = await Payment.updateStatus(id, status, transactionId, req.userEmail);
 
     if (!payment) {
       return res.status(404).json({ 
@@ -158,7 +158,7 @@ exports.updatePaymentStatus = async (req, res) => {
     }
 
     if (status === 'completed' && payment.orderId) {
-      await Order.updatePaymentStatus(payment.orderId.toString(), 'paid', req.userId);
+      await Order.updatePaymentStatus(payment.orderId.toString(), 'paid', req.userEmail);
     }
 
     res.status(200).json({ success: true, data: payment });

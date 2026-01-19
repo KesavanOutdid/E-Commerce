@@ -55,49 +55,57 @@ const OrderList = () => {
         let bgcolor = '#f5f5f5';
         let borderColor = '#bdbdbd';
         let textColor = '#757575';
+        let label = status;
 
         switch (status?.toLowerCase()) {
             case 'pending':
+                label = 'Pending';
                 color = 'warning';
                 bgcolor = '#fff8e1';
                 borderColor = '#ffecb3';
                 textColor = '#f57f17';
                 break;
-            case 'processing':
+            case 'packed':
+                label = 'Packed';
                 color = 'info';
-                bgcolor = '#e3f2fd';
-                borderColor = '#bbdefb';
-                textColor = '#1976d2';
+                bgcolor = '#e0f7fa';
+                borderColor = '#b2ebf2';
+                textColor = '#006064';
                 break;
             case 'shipped':
+                label = 'Shipped';
                 color = 'primary';
                 bgcolor = '#e8eaf6';
                 borderColor = '#c5cae9';
                 textColor = '#3f51b5';
                 break;
+            case 'out_of_delivery':
+                label = 'Out of Delivery';
+                color = 'secondary';
+                bgcolor = '#f3e5f5';
+                borderColor = '#e1bee7';
+                textColor = '#7b1fa2';
+                break;
             case 'delivered':
+                label = 'Delivered';
                 color = 'success';
                 bgcolor = '#e8f5e9';
                 borderColor = '#c8e6c9';
                 textColor = '#2e7d32';
                 break;
             case 'cancelled':
+                label = 'Cancelled';
                 color = 'error';
                 bgcolor = '#ffebee';
                 borderColor = '#ffcdd2';
                 textColor = '#d32f2f';
                 break;
             case 'returned':
+                label = 'Returned';
                 color = 'default';
                 bgcolor = '#eceff1';
                 borderColor = '#cfd8dc';
                 textColor = '#455a64';
-                break;
-            case 'confirmed':
-                color = 'primary';
-                bgcolor = '#e3f2fd';
-                borderColor = '#90caf9';
-                textColor = '#1e88e5';
                 break;
             default:
                 break;
@@ -105,7 +113,7 @@ const OrderList = () => {
 
         return (
             <Chip
-                label={status || 'UNKNOWN'}
+                label={label || 'UNKNOWN'}
                 size="small"
                 sx={{
                     bgcolor: bgcolor,
@@ -152,11 +160,10 @@ const OrderList = () => {
                             >
                                 <MenuItem value="">All Statuses</MenuItem>
                                 <MenuItem value="pending">Pending</MenuItem>
-                                <MenuItem value="processing">Processing</MenuItem>
+                                <MenuItem value="packed">Packed</MenuItem>
                                 <MenuItem value="shipped">Shipped</MenuItem>
+                                <MenuItem value="out_of_delivery">Out of Delivery</MenuItem>
                                 <MenuItem value="delivered">Delivered</MenuItem>
-                                <MenuItem value="cancelled">Cancelled</MenuItem>
-                                <MenuItem value="returned">Returned</MenuItem>
                             </Select>
                         </FormControl>
                     </Grid>

@@ -31,6 +31,17 @@ class Order {
       razorpayOrderId: orderData.razorpayOrderId || null,
       razorpayPaymentId: orderData.razorpayPaymentId || null,
       razorpaySignature: orderData.razorpaySignature || null,
+      trackingId: orderData.trackingId || null,
+      carrier: orderData.carrier || null,
+      estimatedDeliveryDate: orderData.estimatedDeliveryDate || null,
+      deliveryStatus: orderData.deliveryStatus || 'pending',
+      statusHistory: orderData.statusHistory || [
+        {
+          status: orderData.orderStatus || 'pending',
+          timestamp: new Date(),
+          updatedBy: orderData.createdBy || 'system'
+        }
+      ],
       time: orderData.time || new Date(),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -108,15 +119,36 @@ class Order {
     );
   }
 
-  static async updateOrderStatus(orderId, status, updatedBy) {
+  static async updateOrderStatus(orderId, status, updatedBy, extraData = {}) {
+    const update = { 
+      orderStatus: status,
+      updatedAt: new Date(),
+      updatedBy: updatedBy,
+      ...extraData
+    };
+    
+    const historyEntry = {
+      status: status,
+      timestamp: new Date(),
+      updatedBy: updatedBy
+    };
+
     return await this.collection().findOneAndUpdate(
       { orderId: orderId },
       { 
-        $set: { 
-          orderStatus: status,
-          updatedAt: new Date(),
-          updatedBy: updatedBy
-        }
+        $set: update,
+        $push: { statusHistory: historyEntry }
+      },
+      { returnDocument: 'after' }
+    );
+  }
+
+  static async updateStatusHistory(orderId, historyEntries) {
+    return await this.collection().findOneAndUpdate(
+      { orderId: orderId },
+      { 
+        $push: { statusHistory: { $each: historyEntries } },
+        $set: { updatedAt: new Date() }
       },
       { returnDocument: 'after' }
     );
