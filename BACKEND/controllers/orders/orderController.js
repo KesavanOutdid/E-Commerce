@@ -5,6 +5,8 @@ const User = require('../../models/User');
 const Product = require('../../models/Product');
 const ProductVariant = require('../../models/ProductVariant');
 const PriceHistory = require('../../models/PriceHistory');
+const SubCategory = require('../../models/SubCategory');
+const { calculateCartPrices } = require('../../utils/priceCalculator');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -39,18 +41,31 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
   for (const item of orderItems) {
     try {
       let sellerId = null;
-      let salePrice = 0;
+      let salePrice = item.itemTotal; // Total for this item after discounts
+      let subCategoryId = item.subCategoryId;
 
       if (item.variantId) {
         const variant = await ProductVariant.findById(item.variantId);
         if (variant) {
           sellerId = variant.sellerId;
-          salePrice = (variant.salePrice || variant.price) * item.qty;
         }
       }
 
       if (sellerId && salePrice > 0) {
-        const platformFee = (salePrice * PLATFORM_FEE_PERCENTAGE) / 100;
+        // Fetch commission from SubCategory
+        const subCat = await SubCategory.findById(subCategoryId);
+        const baseCommissionPercent = subCat ? (subCat.commissionPercentage || 0) : 5;
+        
+        // Calculate Platform Fee (Subtract incentive if any)
+        // If Admin gave a 2% incentive, we take (Base - 2)%
+        const platformIncentive = item.platformIncentive || 0; // Per unit
+        const totalIncentiveForLineItem = platformIncentive * item.qty;
+        
+        let platformFee = (salePrice * baseCommissionPercent) / 100;
+        
+        // Final platform fee is reduced by the incentive given to the user
+        platformFee = Math.max(0, platformFee - totalIncentiveForLineItem);
+
         const sellerEarnings = salePrice - platformFee;
 
         await User.addSellerEarnings(sellerId.toString(), sellerEarnings);
@@ -110,7 +125,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.userId;
-    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time } = req.body;
+    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time, couponCode } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -235,6 +250,11 @@ exports.createOrder = async (req, res) => {
         if (variant.stock < item.qty) {
           return res.status(400).json({ success: false, message: `Only ${variant.stock} items available for ${item.productName}` });
         }
+        // Attach subCategoryId for price calculation
+        const product = await Product.findById(variant.productId);
+        item.subCategoryId = product?.subCategoryId;
+        item.price = variant.price;
+        item.salePrice = variant.salePrice;
       } else {
         const product = await Product.findById(item.productId);
         if (!product) {
@@ -243,13 +263,30 @@ exports.createOrder = async (req, res) => {
         if (product.stock < item.qty) {
           return res.status(400).json({ success: false, message: `Only ${product.stock} items available for ${item.productName}` });
         }
+        item.subCategoryId = product.subCategoryId;
+        item.price = product.price;
+        item.salePrice = product.salePrice;
       }
     }
 
+    // Recalculate prices based on offers and coupons
+    const priceCalculation = await calculateCartPrices(selectedItems, couponCode);
+    
+    // Override totals with backend calculated values
+    totalPrice = priceCalculation.subTotal;
+    const finalCouponDiscount = priceCalculation.couponDiscount;
+    subTotal = priceCalculation.subTotal - finalCouponDiscount;
+    
+    // Re-calculate GST if needed (assuming 18% for now or keep original if already calculated)
+    // For this implementation, we will trust the frontend's GST ratio but apply it to new subTotal
+    const gstRatio = gst / (req.body.subTotal || subTotal);
+    const finalGst = subTotal * (gstRatio || 0.18);
+
     const finalCodFees = codFees || 0;
     const finalShippingFees = shippingFees || 0;
-    // grandTotal already includes shipping and COD fees from frontend
-    const finalGrandTotal = grandTotal;
+    const finalGrandTotal = subTotal + finalGst + finalCodFees + finalShippingFees;
+
+    const finalProcessedItems = priceCalculation.items;
 
     let razorpayOrder = null;
     if (paymentType === 'online') {
@@ -271,9 +308,9 @@ exports.createOrder = async (req, res) => {
     const orderData = {
       userId: userId,
       userEmail: user.email,
-      items: selectedItems,
+      items: finalProcessedItems,
       totalPrice: totalPrice,
-      gst: gst,
+      gst: finalGst,
       subTotal: subTotal,
       grandTotal: finalGrandTotal,
       codFees: finalCodFees,
@@ -281,6 +318,8 @@ exports.createOrder = async (req, res) => {
       deliveryAddress: deliveryAddress,
       paymentType: paymentType,
       paymentStatus: 'pending',
+      couponCode: couponCode || null,
+      couponDiscount: finalCouponDiscount,
       orderStatus: paymentType === 'cod' ? 'confirmed' : 'pending',
       razorpayOrderId: razorpayOrder?.id || null,
       time: time || new Date(),
@@ -296,7 +335,7 @@ exports.createOrder = async (req, res) => {
       userEmail: user.email,
       razorpayOrderId: razorpayOrder?.id || null,
       totalPrice: totalPrice,
-      gst: gst,
+      gst: finalGst,
       subTotal: subTotal,
       grandTotal: finalGrandTotal,
       codFees: finalCodFees,
@@ -310,7 +349,7 @@ exports.createOrder = async (req, res) => {
     await Payment.create(paymentData);
 
     if (paymentType === 'cod') {
-      for (const item of selectedItems) {
+      for (const item of finalProcessedItems) {
         try {
           if (item.variantId) {
             await ProductVariant.reduceStock(item.variantId, item.qty);
@@ -324,7 +363,7 @@ exports.createOrder = async (req, res) => {
         }
       }
 
-      await processPlatformFees(selectedItems, order.orderId, paymentType);
+      await processPlatformFees(finalProcessedItems, order.orderId, paymentType);
 
       if (productIds && Array.isArray(productIds) && productIds.length > 0) {
         for (const item of selectedItems) {
@@ -341,13 +380,14 @@ exports.createOrder = async (req, res) => {
       razorpayOrder: razorpayOrder,
       razorpayKeyId: process.env.RAZORPAY_KEY_ID,
       paymentType: paymentType,
-      items: selectedItems,
+      items: finalProcessedItems,
       deliveryAddress: deliveryAddress,
       time: order.time,
       priceBreakdown: {
         totalPrice: totalPrice,
-        gst: gst,
+        gst: finalGst,
         subTotal: subTotal,
+        couponDiscount: finalCouponDiscount,
         codFees: finalCodFees,
         shippingFees: finalShippingFees,
         grandTotal: finalGrandTotal

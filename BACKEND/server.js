@@ -60,11 +60,13 @@ const contactRoutes = require('./routes/contact/contactRoutes');
 const newsletterRoutes = require('./routes/newsletter/newsletterRoutes');
 const searchRoutes = require('./routes/search/searchRoutes');
 const reviewRoutes = require('./routes/reviews/reviewRoutes');
+const adminPromotionRoutes = require('./routes/promotions/admin/adminPromotionRoutes');
 
 /* -------------------- Route Mounting -------------------- */
 app.use('/api/admin', adminRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/seller', sellerRoutes);
+app.use('/api/admin/promotions', adminPromotionRoutes);
 
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);

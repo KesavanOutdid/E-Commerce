@@ -12,7 +12,9 @@ import {
   IconListCheck,
   IconMessage2,
   IconMessageDots,
-  IconMapPin
+  IconMapPin,
+  IconGift,
+  IconTicket
 } from '@tabler/icons-react';
 
 // ==============================|| MANAGEMENT MENU ITEMS ||============================== //
@@ -122,6 +124,30 @@ const management = {
           icon: IconMessageDots,
           breadcrumbs: false,
           module: 'Seller Contacts'
+        }
+      ]
+    },
+    {
+      id: 'promotion-management',
+      title: 'Promotions',
+      type: 'collapse',
+      icon: IconGift,
+      children: [
+        {
+          id: 'offers',
+          title: 'Offers',
+          type: 'item',
+          url: '/promotions/offers',
+          icon: IconGift,
+          breadcrumbs: false
+        },
+        {
+          id: 'coupons',
+          title: 'Coupons',
+          type: 'item',
+          url: '/promotions/coupons',
+          icon: IconTicket,
+          breadcrumbs: false
         }
       ]
     }
