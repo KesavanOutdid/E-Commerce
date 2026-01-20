@@ -22,7 +22,7 @@ import {
     DialogContent,
     DialogActions
 } from '@mui/material';
-import { IconArrowLeft, IconUpload, IconX, IconPlus } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconX, IconPlus, IconCamera } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
 import { API_ENDPOINTS, API_BASE_URL } from '../../config/apiConfig';
@@ -911,25 +911,46 @@ const ProductAdd = () => {
                                                 ))}
 
                                                 {isAdminVariant && (
-                                                    <Grid item>
-                                                        <Button
-                                                            variant="outlined"
-                                                            component="label"
-                                                            sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
-                                                        >
-                                                            <Stack alignItems="center" spacing={0.5}>
-                                                                <IconUpload size={20} />
-                                                                <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Upload</Typography>
-                                                            </Stack>
-                                                            <input
-                                                                type="file"
-                                                                hidden
-                                                                multiple
-                                                                accept="image/*"
-                                                                onChange={(e) => handleImageChange(e, vIndex)}
-                                                            />
-                                                        </Button>
-                                                    </Grid>
+                                                    <>
+                                                        <Grid item>
+                                                            <Button
+                                                                variant="outlined"
+                                                                component="label"
+                                                                sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
+                                                            >
+                                                                <Stack alignItems="center" spacing={0.5}>
+                                                                    <IconUpload size={20} />
+                                                                    <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Upload</Typography>
+                                                                </Stack>
+                                                                <input
+                                                                    type="file"
+                                                                    hidden
+                                                                    multiple
+                                                                    accept="image/*"
+                                                                    onChange={(e) => handleImageChange(e, vIndex)}
+                                                                />
+                                                            </Button>
+                                                        </Grid>
+                                                        <Grid item sx={{ display: { xs: 'block', sm: 'block', md: 'block' } }}>
+                                                            <Button
+                                                                variant="outlined"
+                                                                component="label"
+                                                                sx={{ width: 80, height: 80, borderStyle: 'dashed' }}
+                                                            >
+                                                                <Stack alignItems="center" spacing={0.5}>
+                                                                    <IconCamera size={20} />
+                                                                    <Typography variant="caption" sx={{ fontSize: '0.65rem' }}>Camera</Typography>
+                                                                </Stack>
+                                                                <input
+                                                                    type="file"
+                                                                    hidden
+                                                                    accept="image/*"
+                                                                    capture="environment"
+                                                                    onChange={(e) => handleImageChange(e, vIndex)}
+                                                                />
+                                                            </Button>
+                                                        </Grid>
+                                                    </>
                                                 )}
                                             </Grid>
                                         </Grid>

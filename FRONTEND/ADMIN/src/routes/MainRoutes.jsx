@@ -45,6 +45,12 @@ const OrderDetailPage = Loadable(lazy(() => import('views/orders/OrderDetail')))
 const UserContactsPage = Loadable(lazy(() => import('views/contacts/UserContacts')));
 const SellerContactsPage = Loadable(lazy(() => import('views/contacts/SellerContacts')));
 
+// promotions routing
+const OfferListPage = Loadable(lazy(() => import('views/promotions/OfferList')));
+const OfferAddPage = Loadable(lazy(() => import('views/promotions/OfferAdd')));
+const CouponListPage = Loadable(lazy(() => import('views/promotions/CouponList')));
+const CouponAddPage = Loadable(lazy(() => import('views/promotions/CouponAdd')));
+
 // ==============================|| MAIN ROUTING ||============================== //
 
 const MainRoutes = {
@@ -215,6 +221,35 @@ const MainRoutes = {
     {
       path: 'user/pickup-addresses',
       element: <PickupAddressPage />
+    },
+    {
+      path: 'promotions',
+      children: [
+        {
+          path: 'offers',
+          element: <OfferListPage />
+        },
+        {
+          path: 'offers/add',
+          element: <OfferAddPage />
+        },
+        {
+          path: 'offers/edit/:id',
+          element: <OfferAddPage />
+        },
+        {
+          path: 'coupons',
+          element: <CouponListPage />
+        },
+        {
+          path: 'coupons/add',
+          element: <CouponAddPage />
+        },
+        {
+          path: 'coupons/edit/:id',
+          element: <CouponAddPage />
+        }
+      ]
     }
   ]
 };
