@@ -15,7 +15,7 @@ class Review {
       orderId: reviewData.orderId,
       rating: Number(reviewData.rating),
       comment: reviewData.comment,
-      photo: reviewData.photo || null,
+      photos: Array.isArray(reviewData.photos) ? reviewData.photos : [],
       createdAt: new Date(),
       updatedAt: new Date()
     };

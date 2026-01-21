@@ -6,7 +6,7 @@ exports.createReview = async (req, res) => {
   try {
     const { productId, orderId, rating, comment } = req.body;
     const userId = req.userId; // Set by authMiddleware
-    const photo = req.file ? `/uploads/reviews/${req.file.filename}` : null;
+    const photos = req.files ? req.files.map(file => `/uploads/reviews/${file.filename}`) : [];
 
     // Validate rating
     const ratingNum = Number(rating);
@@ -57,7 +57,7 @@ exports.createReview = async (req, res) => {
       orderId,
       rating: ratingNum,
       comment,
-      photo
+      photos
     });
 
     // 6. Update Product average rating and total reviews
