@@ -13,14 +13,12 @@ async function calculateCartPrices(items, couponCode = null) {
   const activeOffers = await Offer.findActive();
   let totalOrderValue = 0;
   let totalDiscount = 0;
-  let platformIncentiveTotal = 0;
 
   const processedItems = await Promise.all(items.map(async (item) => {
-    let price = item.price; // Original Price
-    let salePrice = item.salePrice || item.price; // Seller's current sale price
+    let price = parseFloat(item.price) || 0; // Original Price
+    let salePrice = parseFloat(item.salePrice || item.price) || 0; // Seller's current sale price
     let finalItemPrice = salePrice;
     let appliedOffer = null;
-    let itemPlatformIncentive = 0;
 
     // 1. Check for Active Offers (Direct or Tiered)
     const matchingOffer = activeOffers.find(offer => {
@@ -31,11 +29,12 @@ async function calculateCartPrices(items, couponCode = null) {
     });
 
     if (matchingOffer) {
+      const discountValue = parseFloat(matchingOffer.discountValue) || 0;
       if (matchingOffer.type === 'direct') {
         if (matchingOffer.discountType === 'percentage') {
-          finalItemPrice = salePrice * (1 - matchingOffer.discountValue / 100);
+          finalItemPrice = salePrice * (1 - discountValue / 100);
         } else {
-          finalItemPrice = Math.max(0, salePrice - matchingOffer.discountValue);
+          finalItemPrice = Math.max(0, salePrice - discountValue);
         }
         appliedOffer = matchingOffer.name;
       } else if (matchingOffer.type === 'quantity_tiered') {
@@ -44,25 +43,19 @@ async function calculateCartPrices(items, couponCode = null) {
           .find(t => item.qty >= t.minQty);
         
         if (tier) {
+          const tierValue = parseFloat(tier.value) || 0;
           if (tier.discountType === 'percentage') {
-            finalItemPrice = salePrice * (1 - tier.value / 100);
+            finalItemPrice = salePrice * (1 - tierValue / 100);
           } else {
-            finalItemPrice = Math.max(0, salePrice - tier.value);
+            finalItemPrice = Math.max(0, salePrice - tierValue);
           }
           appliedOffer = `${matchingOffer.name} (Tier: ${item.qty}+ items)`;
         }
-      }
-
-      // 2. Calculate Platform Incentive (Admin sharing the discount cost)
-      if (matchingOffer.adminIncentivePercentage > 0) {
-        const discountAmount = salePrice - finalItemPrice;
-        itemPlatformIncentive = (discountAmount * matchingOffer.adminIncentivePercentage) / 100;
       }
     }
 
     const itemTotal = finalItemPrice * item.qty;
     totalOrderValue += itemTotal;
-    platformIncentiveTotal += (itemPlatformIncentive * item.qty);
 
     return {
       ...item,
@@ -70,8 +63,7 @@ async function calculateCartPrices(items, couponCode = null) {
       sellerSalePrice: salePrice,
       finalPrice: finalItemPrice,
       itemTotal: itemTotal,
-      appliedOffer: appliedOffer,
-      platformIncentive: itemPlatformIncentive
+      appliedOffer: appliedOffer
     };
   }));
 
@@ -83,14 +75,18 @@ async function calculateCartPrices(items, couponCode = null) {
     const coupon = await Coupon.findByCode(couponCode);
     if (coupon) {
       const now = new Date();
-      if (coupon.expiryDate >= now && totalOrderValue >= coupon.minOrderValue) {
+      const minOrderValue = parseFloat(coupon.minOrderValue) || 0;
+      const discountValue = parseFloat(coupon.discountValue) || 0;
+      const maxDiscountAmount = coupon.maxDiscountAmount ? parseFloat(coupon.maxDiscountAmount) : null;
+
+      if (coupon.expiryDate >= now && totalOrderValue >= minOrderValue) {
         if (coupon.discountType === 'percentage') {
-          couponDiscount = (totalOrderValue * coupon.discountValue) / 100;
-          if (coupon.maxDiscountAmount) {
-            couponDiscount = Math.min(couponDiscount, coupon.maxDiscountAmount);
+          couponDiscount = (totalOrderValue * discountValue) / 100;
+          if (maxDiscountAmount) {
+            couponDiscount = Math.min(couponDiscount, maxDiscountAmount);
           }
         } else {
-          couponDiscount = Math.min(coupon.discountValue, totalOrderValue);
+          couponDiscount = Math.min(discountValue, totalOrderValue);
         }
         appliedCoupon = coupon.code;
       }
@@ -104,7 +100,6 @@ async function calculateCartPrices(items, couponCode = null) {
     subTotal: totalOrderValue,
     couponDiscount: couponDiscount,
     appliedCoupon: appliedCoupon,
-    platformIncentiveTotal: platformIncentiveTotal,
     grandTotal: grandTotal
   };
 }

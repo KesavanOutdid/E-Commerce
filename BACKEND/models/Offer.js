@@ -23,11 +23,11 @@ class Offer {
       },
       tiers: data.tiers || [], // [{ minQty: 2, discountType: 'percentage', value: 10 }]
       discountType: data.discountType, // 'percentage', 'fixed' (for direct offers)
-      discountValue: data.discountValue,
-      adminIncentivePercentage: data.adminIncentivePercentage || 0, // Admin's share of discount
+      discountValue: parseFloat(data.discountValue) || 0,
+      image: data.image || null,
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
-      status: data.status !== undefined ? data.status : true,
+      status: data.status === 'true' || data.status === true,
       createdAt: new Date(),
       updatedAt: new Date()
     };
@@ -38,7 +38,7 @@ class Offer {
   static async findActive() {
     const now = new Date();
     return await this.collection().find({
-      status: true,
+      status: { $in: [true, 'true'] },
       startDate: { $lte: now },
       endDate: { $gte: now }
     }).toArray();
@@ -57,6 +57,7 @@ class Offer {
       : { offerId: id };
 
     const updateData = { ...data, updatedAt: new Date() };
+    delete updateData._id;
 
     // Handle nested mappings if flat fields are provided
     if (data.applicableType || data.applicableIds) {
@@ -79,6 +80,8 @@ class Offer {
 
     if (data.startDate) updateData.startDate = new Date(data.startDate);
     if (data.endDate) updateData.endDate = new Date(data.endDate);
+    if (data.status !== undefined) updateData.status = (data.status === 'true' || data.status === true);
+    if (data.discountValue !== undefined) updateData.discountValue = parseFloat(data.discountValue);
 
     const result = await this.collection().findOneAndUpdate(
       query,

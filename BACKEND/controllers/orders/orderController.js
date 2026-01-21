@@ -56,16 +56,9 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
         const subCat = await SubCategory.findById(subCategoryId);
         const baseCommissionPercent = subCat ? (subCat.commissionPercentage || 0) : 5;
         
-        // Calculate Platform Fee (Subtract incentive if any)
-        // If Admin gave a 2% incentive, we take (Base - 2)%
-        const platformIncentive = item.platformIncentive || 0; // Per unit
-        const totalIncentiveForLineItem = platformIncentive * item.qty;
-        
+        // Calculate Platform Fee
         let platformFee = (salePrice * baseCommissionPercent) / 100;
         
-        // Final platform fee is reduced by the incentive given to the user
-        platformFee = Math.max(0, platformFee - totalIncentiveForLineItem);
-
         const sellerEarnings = salePrice - platformFee;
 
         await User.addSellerEarnings(sellerId.toString(), sellerEarnings);

@@ -18,11 +18,11 @@ import {
     Autocomplete,
     Chip
 } from '@mui/material';
-import { IconArrowLeft, IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconArrowLeft, IconPlus, IconTrash, IconCamera, IconUpload, IconX } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
-import { API_ENDPOINTS } from '../../config/apiConfig';
+import { API_ENDPOINTS, BASE_URL } from '../../config/apiConfig';
 import axios from '../../utils/axiosInstance';
 
 const OfferAdd = () => {
@@ -34,6 +34,9 @@ const OfferAdd = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [existingImage, setExistingImage] = useState(null);
     
     const [formData, setFormData] = useState({
         name: '',
@@ -43,7 +46,6 @@ const OfferAdd = () => {
         applicableIds: [],
         discountType: 'percentage',
         discountValue: 0,
-        adminIncentivePercentage: 0,
         startDate: '',
         endDate: '',
         status: true,
@@ -86,9 +88,14 @@ const OfferAdd = () => {
                         const data = response.data.data;
                         setFormData({
                             ...data,
+                            applicableType: data.applicableTo?.type || 'all',
+                            applicableIds: data.applicableTo?.ids || [],
                             startDate: data.startDate.split('T')[0],
                             endDate: data.endDate.split('T')[0]
                         });
+                        if (data.image) {
+                            setExistingImage(data.image);
+                        }
                     }
                 } catch (error) {
                     Swal.fire('Error', 'Failed to fetch offer details', 'error');
@@ -101,6 +108,23 @@ const OfferAdd = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
+    };
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
+    const removeExistingImage = () => {
+        setExistingImage(null);
     };
 
     const handleTierChange = (index, field, value) => {
@@ -125,11 +149,39 @@ const OfferAdd = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const apiCall = isEdit 
-                ? axios.put(API_ENDPOINTS.PROMOTIONS.OFFERS.UPDATE(id), formData)
-                : axios.post(API_ENDPOINTS.PROMOTIONS.OFFERS.CREATE, formData);
+            
+            const submitData = new FormData();
+            
+            // Append flat fields
+            Object.keys(formData).forEach(key => {
+                if (key === 'tiers') {
+                    submitData.append(key, JSON.stringify(formData[key]));
+                } else if (key === 'applicableIds') {
+                    // Send as stringified array or multiple appends depending on backend
+                    // The backend model expects an array, so we stringify it or let axios/multer handle it
+                    // multer-form-data usually needs stringified for complex objects
+                    submitData.append(key, JSON.stringify(formData[key]));
+                } else {
+                    submitData.append(key, formData[key]);
+                }
+            });
 
-            const response = await apiCall;
+            if (imageFile) {
+                submitData.append('image', imageFile);
+            } else if (existingImage) {
+                submitData.append('image', existingImage);
+            }
+
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            };
+
+            const response = isEdit 
+                ? await axios.put(API_ENDPOINTS.PROMOTIONS.OFFERS.UPDATE(id), submitData, config)
+                : await axios.post(API_ENDPOINTS.PROMOTIONS.OFFERS.CREATE, submitData, config);
+
             if (response.data.success) {
                 Swal.fire('Success', `Offer ${isEdit ? 'updated' : 'created'} successfully`, 'success');
                 navigate('/promotions/offers');
@@ -319,6 +371,63 @@ const OfferAdd = () => {
                         </Grid>
                     )}
 
+                    <Grid item xs={12}>
+                        <Typography variant="h5" sx={{ mb: 1 }}>Promotion Image</Typography>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            {(imagePreview || existingImage) ? (
+                                <Box sx={{ position: 'relative', width: 200, height: 120, border: '1px solid #ddd', borderRadius: 1 }}>
+                                    <img
+                                        src={imagePreview || `${BASE_URL}${existingImage}`}
+                                        alt="Promotion"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                    />
+                                    <IconButton
+                                        size="small"
+                                        color="error"
+                                        sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                        onClick={imagePreview ? removeImage : removeExistingImage}
+                                    >
+                                        <IconX size={14} />
+                                    </IconButton>
+                                </Box>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<IconUpload />}
+                                    >
+                                        Upload Image
+                                        <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                        />
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<IconCamera />}
+                                        color="secondary"
+                                    >
+                                        Take Photo
+                                        <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*"
+                                            capture="environment"
+                                            onChange={handleImageChange}
+                                        />
+                                    </Button>
+                                </>
+                            )}
+                        </Stack>
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                            Recommended size: 800x400 pixels. This image will be used as a cover for the promotion.
+                        </Typography>
+                    </Grid>
+
                     <Grid item xs={12} md={6}>
                         <TextField
                             fullWidth
@@ -341,18 +450,6 @@ const OfferAdd = () => {
                             onChange={handleChange}
                             InputLabelProps={{ shrink: true }}
                             required
-                        />
-                    </Grid>
-
-                    <Grid item xs={12} md={6}>
-                        <TextField
-                            fullWidth
-                            label="Admin Incentive Share (%)"
-                            name="adminIncentivePercentage"
-                            type="number"
-                            value={formData.adminIncentivePercentage}
-                            onChange={handleChange}
-                            helperText="Admin's contribution to this discount cost"
                         />
                     </Grid>
 

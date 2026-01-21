@@ -14,14 +14,15 @@ import {
     Select,
     Switch,
     FormControlLabel,
+    IconButton,
     Autocomplete,
     Chip
 } from '@mui/material';
-import { IconArrowLeft } from '@tabler/icons-react';
+import { IconArrowLeft, IconCamera, IconUpload, IconX } from '@tabler/icons-react';
 import Swal from 'sweetalert2';
 
 import MainCard from 'ui-component/cards/MainCard';
-import { API_ENDPOINTS } from '../../config/apiConfig';
+import { API_ENDPOINTS, BASE_URL } from '../../config/apiConfig';
 import axios from '../../utils/axiosInstance';
 
 const CouponAdd = () => {
@@ -32,6 +33,9 @@ const CouponAdd = () => {
     const [loading, setLoading] = useState(false);
     const [products, setProducts] = useState([]);
     const [subCategories, setSubCategories] = useState([]);
+    const [imageFile, setImageFile] = useState(null);
+    const [imagePreview, setImagePreview] = useState(null);
+    const [existingImage, setExistingImage] = useState(null);
     
     const [formData, setFormData] = useState({
         code: '',
@@ -84,6 +88,9 @@ const CouponAdd = () => {
                             applicableType: data.applicableTo?.type || 'all',
                             applicableIds: data.applicableTo?.ids || []
                         });
+                        if (data.image) {
+                            setExistingImage(data.image);
+                        }
                     }
                 } catch (error) {
                     Swal.fire('Error', 'Failed to fetch coupon details', 'error');
@@ -98,15 +105,54 @@ const CouponAdd = () => {
         setFormData({ ...formData, [name]: value });
     };
 
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
+    const removeImage = () => {
+        setImageFile(null);
+        setImagePreview(null);
+    };
+
+    const removeExistingImage = () => {
+        setExistingImage(null);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setLoading(true);
-            const apiCall = isEdit 
-                ? axios.put(API_ENDPOINTS.PROMOTIONS.COUPONS.UPDATE(id), formData)
-                : axios.post(API_ENDPOINTS.PROMOTIONS.COUPONS.CREATE, formData);
 
-            const response = await apiCall;
+            const submitData = new FormData();
+            
+            Object.keys(formData).forEach(key => {
+                if (key === 'applicableIds') {
+                    submitData.append(key, JSON.stringify(formData[key]));
+                } else {
+                    submitData.append(key, formData[key]);
+                }
+            });
+
+            if (imageFile) {
+                submitData.append('image', imageFile);
+            } else if (existingImage) {
+                submitData.append('image', existingImage);
+            }
+
+            const config = {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            };
+
+            const response = isEdit 
+                ? await axios.put(API_ENDPOINTS.PROMOTIONS.COUPONS.UPDATE(id), submitData, config)
+                : await axios.post(API_ENDPOINTS.PROMOTIONS.COUPONS.CREATE, submitData, config);
+
             if (response.data.success) {
                 Swal.fire('Success', `Coupon ${isEdit ? 'updated' : 'created'} successfully`, 'success');
                 navigate('/promotions/coupons');
@@ -292,6 +338,63 @@ const CouponAdd = () => {
                                 }
                             />
                         )}
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Typography variant="h5" sx={{ mb: 1 }}>Coupon Image (Optional)</Typography>
+                        <Stack direction="row" spacing={2} alignItems="center">
+                            {(imagePreview || existingImage) ? (
+                                <Box sx={{ position: 'relative', width: 200, height: 120, border: '1px solid #ddd', borderRadius: 1 }}>
+                                    <img
+                                        src={imagePreview || `${BASE_URL}${existingImage}`}
+                                        alt="Coupon"
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 4 }}
+                                    />
+                                    <IconButton
+                                        size="small"
+                                        color="error"
+                                        sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'white', boxShadow: 1, p: 0.5 }}
+                                        onClick={imagePreview ? removeImage : removeExistingImage}
+                                    >
+                                        <IconX size={14} />
+                                    </IconButton>
+                                </Box>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<IconUpload />}
+                                    >
+                                        Upload Image
+                                        <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                        />
+                                    </Button>
+                                    <Button
+                                        variant="outlined"
+                                        component="label"
+                                        startIcon={<IconCamera />}
+                                        color="secondary"
+                                    >
+                                        Take Photo
+                                        <input
+                                            type="file"
+                                            hidden
+                                            accept="image/*"
+                                            capture="environment"
+                                            onChange={handleImageChange}
+                                        />
+                                    </Button>
+                                </>
+                            )}
+                        </Stack>
+                        <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block' }}>
+                            Optional: This image will be shown to users when they view the coupon.
+                        </Typography>
                     </Grid>
 
                     <Grid item xs={12} md={6}>

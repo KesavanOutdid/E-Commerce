@@ -1,8 +1,25 @@
 const Offer = require('../../../models/Offer');
 
+const parseJsonFields = (data) => {
+  const fieldsToParse = ['applicableIds', 'tiers'];
+  fieldsToParse.forEach(field => {
+    if (data[field] && typeof data[field] === 'string') {
+      try {
+        data[field] = JSON.parse(data[field]);
+      } catch (e) {
+        console.error(`Error parsing ${field}:`, e);
+      }
+    }
+  });
+  return data;
+};
+
 exports.createOffer = async (req, res) => {
   try {
-    const offerData = { ...req.body, ownerType: 'admin', ownerId: req.userId };
+    const offerData = parseJsonFields({ ...req.body, ownerType: 'admin', ownerId: req.userId });
+    if (req.file) {
+      offerData.image = `/uploads/promotions/${req.file.filename}`;
+    }
     const offer = await Offer.create(offerData);
     res.status(201).json({ success: true, message: 'Offer created successfully', data: offer });
   } catch (error) {
@@ -31,7 +48,11 @@ exports.getOfferById = async (req, res) => {
 
 exports.updateOffer = async (req, res) => {
   try {
-    const offer = await Offer.update(req.params.id, req.body);
+    const updateData = parseJsonFields({ ...req.body });
+    if (req.file) {
+      updateData.image = `/uploads/promotions/${req.file.filename}`;
+    }
+    const offer = await Offer.update(req.params.id, updateData);
     if (!offer) return res.status(404).json({ success: false, message: 'Offer not found' });
     res.status(200).json({ success: true, message: 'Offer updated successfully', data: offer });
   } catch (error) {

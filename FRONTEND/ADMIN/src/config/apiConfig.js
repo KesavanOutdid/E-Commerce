@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.41:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.19:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {
@@ -92,6 +92,12 @@ export const API_ENDPOINTS = {
       CREATE: '/admin/promotions/coupons',
       UPDATE: (id) => `/admin/promotions/coupons/${id}`,
       DELETE: (id) => `/admin/promotions/coupons/${id}`
+    },
+    WEBSITE: {
+      GET_OFFERS: '/promotions/offers',
+      GET_PRODUCT_OFFERS: (productId) => `/promotions/offers/product/${productId}`,
+      GET_COUPONS: '/promotions/coupons',
+      VERIFY_COUPON: '/promotions/coupons/verify'
     }
   }
 };
