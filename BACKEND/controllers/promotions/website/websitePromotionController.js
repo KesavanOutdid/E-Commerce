@@ -43,13 +43,18 @@ exports.getOffersByProduct = async (req, res) => {
     // Filter offers that apply to this specific product or its category or 'all'
     const productOffers = activeOffers.filter(offer => {
       if (offer.applicableTo.type === 'all') return true;
+      
+      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
+      const prodId = product._id.toString();
+      const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
+      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
+
       if (offer.applicableTo.type === 'product') {
-        return offer.applicableTo.ids.includes(productId) || 
-               offer.applicableTo.ids.includes(product._id.toString());
+        return applicableIds.includes(productId) || applicableIds.includes(prodId);
       }
       if (offer.applicableTo.type === 'category') {
-        return offer.applicableTo.ids.includes(product.subCategoryId) ||
-               offer.applicableTo.ids.includes(product.mainCategoryId);
+        return (subCatId && applicableIds.includes(subCatId)) || 
+               (mainCatId && applicableIds.includes(mainCatId));
       }
       return false;
     });
@@ -156,6 +161,60 @@ exports.verifyCoupon = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error verifying coupon',
+      error: error.message
+    });
+  }
+};
+
+exports.getCouponsByProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (!productId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Product ID is required'
+      });
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    const activeCoupons = await Coupon.findActive();
+    
+    // Filter coupons that apply to this specific product or its category or 'all'
+    const productCoupons = activeCoupons.filter(coupon => {
+      if (coupon.applicableTo.type === 'all') return true;
+
+      const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString());
+      const prodId = product._id.toString();
+      const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
+      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
+
+      if (coupon.applicableTo.type === 'product') {
+        return applicableIds.includes(productId) || applicableIds.includes(prodId);
+      }
+      if (coupon.applicableTo.type === 'category') {
+        return (subCatId && applicableIds.includes(subCatId)) || 
+               (mainCatId && applicableIds.includes(mainCatId));
+      }
+      return false;
+    });
+
+    res.json({
+      success: true,
+      data: productCoupons
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching product coupons',
       error: error.message
     });
   }
