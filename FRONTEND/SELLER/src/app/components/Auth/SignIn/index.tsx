@@ -12,10 +12,11 @@ import { Icon } from '@iconify/react/dist/iconify.js'
 
 interface SigninProps {
     onSwitchToSignUp?: () => void
+    onSwitchToForgotPassword?: () => void
     onCloseModal?: () => void
 }
 
-const Signin = ({ onSwitchToSignUp, onCloseModal }: SigninProps) => {
+const Signin = ({ onSwitchToSignUp, onSwitchToForgotPassword, onCloseModal }: SigninProps) => {
     const router = useRouter()
     const { login } = useAuth()
 
@@ -133,11 +134,12 @@ const Signin = ({ onSwitchToSignUp, onCloseModal }: SigninProps) => {
                 </div>
             </form>
 
-            <Link
-                href='/'
+            <button
+                type="button"
+                onClick={onSwitchToForgotPassword}
                 className='mb-2 inline-block text-base text-primary hover:underline'>
                 Forgot Password?
-            </Link>
+            </button>
             <p className='text-body-secondary text-black text-base'>
                 Not a member yet?{' '}
                 <button 

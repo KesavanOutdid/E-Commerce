@@ -138,6 +138,24 @@ export default function ProductsPage() {
                                             <Icon icon="mdi:chevron-right" width={20} height={20} />
                                         </div>
                                     </Link>
+                                    <Link
+                                        href="/promotions"
+                                        className="w-full relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102">
+                                        <div className="px-4 py-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-white">
+                                                        <Icon icon="mdi:tag-multiple" width={20} height={20} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="font-semibold block">Promotions</span>
+                                                        <span className="text-xs opacity-80">Offers & Coupons</span>
+                                                    </div>
+                                                </div>
+                                                <Icon icon="mdi:chevron-right" width={20} height={20} />
+                                            </div>
+                                        </div>
+                                    </Link>
                                 </div>
                             </div>
                         </div>
@@ -311,21 +329,27 @@ export default function ProductsPage() {
                                                                 <div className="flex items-center justify-center gap-2">
                                                                     <Link
                                                                         href={`/products/view/${product.productId}`}
-                                                                        className="p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                                        title="View Product">
+                                                                        className="group relative p-2 text-primary hover:bg-primary/10 rounded-lg transition-colors">
                                                                         <Icon icon="mdi:eye" width={18} height={18} />
+                                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                                            View Product
+                                                                        </span>
                                                                     </Link>
                                                                     <Link
                                                                         href={`/products/edit/${product.productId}`}
-                                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                        title="Edit Product">
+                                                                        className="group relative p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
                                                                         <Icon icon="mdi:pencil" width={18} height={18} />
+                                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                                            Edit Product
+                                                                        </span>
                                                                     </Link>
                                                                     <button
                                                                         onClick={() => setDeleteConfirm({ id: product.productId, name: product.productName })}
-                                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                                        title="Delete Product">
+                                                                        className="group relative p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                                         <Icon icon="mdi:delete" width={18} height={18} />
+                                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                                            Delete Product
+                                                                        </span>
                                                                     </button>
                                                                 </div>
                                                             </td>

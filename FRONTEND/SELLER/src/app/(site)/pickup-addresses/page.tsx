@@ -257,13 +257,19 @@ export default function PickupAddressesPage() {
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => handleOpenModal(address)}
-                                                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-md transition">
+                                                        className="group relative p-2 text-blue-600 hover:bg-blue-50 rounded-md transition">
                                                         <Icon icon="mdi:pencil" width={18} height={18} />
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                            Edit Address
+                                                        </span>
                                                     </button>
                                                     <button
                                                         onClick={() => setDeleteConfirm(address.id)}
-                                                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition">
+                                                        className="group relative p-2 text-red-600 hover:bg-red-50 rounded-md transition">
                                                         <Icon icon="mdi:delete" width={18} height={18} />
+                                                        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                                            Delete Address
+                                                        </span>
                                                     </button>
                                                 </div>
                                             </div>

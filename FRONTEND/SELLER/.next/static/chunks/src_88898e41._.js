@@ -997,12 +997,12 @@ function ProductViewPage() {
                                         style: {
                                             backgroundColor: 'rgb(249, 249, 249)'
                                         },
-                                        className: "p-5 rounded-lg space-y-3",
+                                        className: "p-5 rounded-lg space-y-4",
                                         children: [
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                        className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                        className: "block text-sm font-bold text-black mb-1",
                                                         children: "Product Name"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1010,7 +1010,7 @@ function ProductViewPage() {
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "text-base text-gray-900 font-semibold",
+                                                        className: "text-base text-gray-700",
                                                         children: product.productName
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1024,12 +1024,12 @@ function ProductViewPage() {
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-1 md:grid-cols-2 gap-3",
+                                                className: "grid grid-cols-1 md:grid-cols-2 gap-4",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Main Category"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1037,7 +1037,7 @@ function ProductViewPage() {
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-sm text-gray-900",
+                                                                className: "text-base text-gray-700",
                                                                 children: product.mainCategoryName || 'N/A'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1053,7 +1053,7 @@ function ProductViewPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Sub Category"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1061,7 +1061,7 @@ function ProductViewPage() {
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-sm text-gray-900",
+                                                                className: "text-base text-gray-700",
                                                                 children: product.subCategoryName || 'N/A'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1081,12 +1081,12 @@ function ProductViewPage() {
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-1 md:grid-cols-2 gap-3",
+                                                className: "grid grid-cols-1 md:grid-cols-2 gap-4",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Brand"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1094,7 +1094,7 @@ function ProductViewPage() {
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-sm text-gray-900",
+                                                                className: "text-base text-gray-700",
                                                                 children: product.brand || 'N/A'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1110,7 +1110,7 @@ function ProductViewPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Warranty"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1118,7 +1118,7 @@ function ProductViewPage() {
                                                                 columnNumber: 41
                                                             }, this),
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                className: "text-sm text-gray-900",
+                                                                className: "text-base text-gray-700",
                                                                 children: product.warranty || 'N/A'
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1140,7 +1140,7 @@ function ProductViewPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                        className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                        className: "block text-sm font-bold text-black mb-1",
                                                         children: "Short Description"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1148,7 +1148,7 @@ function ProductViewPage() {
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "text-sm text-gray-900 whitespace-pre-wrap leading-relaxed",
+                                                        className: "text-base text-gray-700 whitespace-pre-wrap leading-relaxed",
                                                         children: showFullShortDesc || !needsTruncation(product.shortDescription || '', 7) ? product.shortDescription || 'N/A' : truncateText(product.shortDescription || '', 7)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1199,7 +1199,7 @@ function ProductViewPage() {
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                        className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                        className: "block text-sm font-bold text-black mb-1",
                                                         children: "Description"
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1207,7 +1207,7 @@ function ProductViewPage() {
                                                         columnNumber: 37
                                                     }, this),
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                        className: "text-sm text-gray-900 whitespace-pre-wrap leading-relaxed",
+                                                        className: "text-base text-gray-700 whitespace-pre-wrap leading-relaxed",
                                                         children: showFullDesc || !needsTruncation(product.description || '', 7) ? product.description || 'N/A' : truncateText(product.description || '', 7)
                                                     }, void 0, false, {
                                                         fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1256,12 +1256,12 @@ function ProductViewPage() {
                                                 columnNumber: 33
                                             }, this),
                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                                className: "grid grid-cols-1 md:grid-cols-2 gap-3",
+                                                className: "grid grid-cols-1 md:grid-cols-2 gap-4",
                                                 children: [
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Status"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1296,7 +1296,7 @@ function ProductViewPage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         children: [
                                                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                className: "block text-sm font-bold text-black mb-1",
                                                                 children: "Approval Status"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1589,7 +1589,7 @@ function ProductViewPage() {
                                                             className: "sticky top-4",
                                                             children: [
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                    className: "block text-xs font-semibold text-gray-800 mb-3",
+                                                                    className: "block text-sm font-bold text-black mb-3",
                                                                     children: [
                                                                         "Variant Images (",
                                                                         variantImages.length,
@@ -1603,7 +1603,7 @@ function ProductViewPage() {
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                     className: "mb-4",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.32:5656")}${variantImages[selectedImageIndex]}`,
+                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.46:5656")}${variantImages[selectedImageIndex]}`,
                                                                         alt: `Variant ${selectedVariantIndex + 1} Image ${selectedImageIndex + 1}`,
                                                                         className: "w-full h-96 object-contain bg-gray-50 rounded-lg border border-gray-200"
                                                                     }, void 0, false, {
@@ -1622,7 +1622,7 @@ function ProductViewPage() {
                                                                             onClick: ()=>setSelectedImageIndex(imgIndex),
                                                                             className: `h-16 rounded-lg border-2 overflow-hidden transition ${selectedImageIndex === imgIndex ? 'border-primary ring-2 ring-primary/50' : 'border-gray-200 hover:border-gray-300'}`,
                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.32:5656")}${image}`,
+                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.46:5656")}${image}`,
                                                                                 alt: `Thumbnail ${imgIndex + 1}`,
                                                                                 className: "w-full h-full object-cover"
                                                                             }, void 0, false, {
@@ -1676,7 +1676,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Price"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1703,7 +1703,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Sale Price"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1730,7 +1730,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Stock"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1965,7 +1965,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Delivery Days"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -1973,7 +1973,7 @@ function ProductViewPage() {
                                                                                     columnNumber: 61
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                    className: "text-sm font-bold text-gray-900",
+                                                                                    className: "text-base text-gray-700",
                                                                                     children: [
                                                                                         selectedVariant.deliveryDays || 'N/A',
                                                                                         " days"
@@ -1992,7 +1992,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Status"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2027,7 +2027,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Approval"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2069,7 +2069,7 @@ function ProductViewPage() {
                                                                     className: "pt-3 border-t border-gray-100",
                                                                     children: [
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                            className: "block text-xs font-semibold text-gray-800 mb-3",
+                                                                            className: "block text-sm font-bold text-black mb-3",
                                                                             children: "Variant Attributes"
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2082,7 +2082,7 @@ function ProductViewPage() {
                                                                                     className: "bg-gray-50 rounded-lg p-3 border border-gray-200",
                                                                                     children: [
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                            className: "text-xs font-semibold text-gray-700 mb-1",
+                                                                                            className: "text-sm font-bold text-black mb-1",
                                                                                             children: attr.name
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2090,7 +2090,7 @@ function ProductViewPage() {
                                                                                             columnNumber: 73
                                                                                         }, this),
                                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                            className: "text-sm font-medium text-gray-900",
+                                                                                            className: "text-base text-gray-700",
                                                                                             children: attr.value
                                                                                         }, void 0, false, {
                                                                                             fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2120,7 +2120,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Created At"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2128,7 +2128,7 @@ function ProductViewPage() {
                                                                                     columnNumber: 61
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                    className: "text-xs text-gray-600",
+                                                                                    className: "text-sm text-gray-600",
                                                                                     children: formatIndiaTime(selectedVariant.createdAt)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2144,7 +2144,7 @@ function ProductViewPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             children: [
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                                                    className: "block text-sm font-bold text-black mb-1",
                                                                                     children: "Updated At"
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2152,7 +2152,7 @@ function ProductViewPage() {
                                                                                     columnNumber: 61
                                                                                 }, this),
                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                                                    className: "text-xs text-gray-600",
+                                                                                    className: "text-sm text-gray-600",
                                                                                     children: formatIndiaTime(selectedVariant.updatedAt)
                                                                                 }, void 0, false, {
                                                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2203,12 +2203,12 @@ function ProductViewPage() {
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                 className: "pt-6 border-t border-gray-200",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "grid grid-cols-1 md:grid-cols-2 gap-3",
+                                    className: "grid grid-cols-1 md:grid-cols-2 gap-4",
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                    className: "block text-sm font-bold text-black mb-1",
                                                     children: "Product Created At"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2216,7 +2216,7 @@ function ProductViewPage() {
                                                     columnNumber: 37
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    className: "text-xs text-gray-600",
+                                                    className: "text-sm text-gray-600",
                                                     children: formatIndiaTime(product.createdAt)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2232,7 +2232,7 @@ function ProductViewPage() {
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                             children: [
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                    className: "block text-xs font-semibold text-gray-800 mb-2",
+                                                    className: "block text-sm font-bold text-black mb-1",
                                                     children: "Product Updated At"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",
@@ -2240,7 +2240,7 @@ function ProductViewPage() {
                                                     columnNumber: 37
                                                 }, this),
                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    className: "text-xs text-gray-600",
+                                                    className: "text-sm text-gray-600",
                                                     children: formatIndiaTime(product.updatedAt)
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/(site)/products/view/[id]/page.tsx",

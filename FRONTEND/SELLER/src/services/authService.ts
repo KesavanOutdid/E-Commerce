@@ -42,4 +42,34 @@ export const authService = {
         })
         return response.data
     },
+
+    forgotPassword: async (email: string) => {
+        const response = await axios.post('/api/seller/forgot-password', {
+            email,
+        })
+        return response.data
+    },
+
+    validateOTP: async (otp: string, otpRef: string) => {
+        const response = await axios.post('/api/seller/validate-otp', {
+            otp,
+            otpRef,
+        })
+        return response.data
+    },
+
+    setNewPassword: async (newPassword: string, confirmPassword: string, resetToken: string) => {
+        const response = await axios.post('/api/seller/set-new-password', 
+            {
+                newPassword,
+                confirmPassword,
+            },
+            {
+                headers: {
+                    'Authorization': `Bearer ${resetToken}`,
+                },
+            }
+        )
+        return response.data
+    },
 }

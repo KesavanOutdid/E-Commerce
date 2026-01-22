@@ -1,314 +1,293 @@
-"use client";
-import React from "react";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import axios from "axios";
-import withBasePath from '@/utils/basePath'
-import Loader from "@/app/components/Common/Loader";
-import Link from "next/link";
-import Image from "next/image";
+'use client'
+import { useState } from 'react'
+import toast from 'react-hot-toast'
+import Logo from '@/app/components/Layout/Header/Logo'
+import Loader from '@/app/components/Common/Loader'
+import { authService } from '@/services/authService'
+import { Icon } from '@iconify/react/dist/iconify.js'
 
-const ForgotPassword = () => {
-    const [email, setEmail] = useState("");
-    const [loader, setLoader] = useState(false);
+interface ForgotPasswordProps {
+    onBackToSignIn?: () => void
+    onCloseModal?: () => void
+}
 
-    const handleSubmit = async (e: any) => {
-        e.preventDefault();
+const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) => {
+    const [step, setStep] = useState(1)
+    const [email, setEmail] = useState('')
+    const [otp, setOtp] = useState('')
+    const [otpRef, setOtpRef] = useState('')
+    const [resetToken, setResetToken] = useState('')
+    const [newPassword, setNewPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [loading, setLoading] = useState(false)
+    const [showNewPassword, setShowNewPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+
+    const handleForgotPassword = async (e: any) => {
+        e.preventDefault()
 
         if (!email) {
-            toast.error("Please enter your email address.");
-
-            return;
+            toast.error('Please enter your email')
+            return
         }
 
-        setLoader(true);
-
+        setLoading(true)
         try {
-            // Simulate a successful forgot-password request (static site)
-            await new Promise((r) => setTimeout(r, 200))
-            toast.success('Password reset email sent (simulated)')
-            setEmail('')
-            setLoader(false)
-        } catch (error: any) {
-            toast.error('Failed to send email')
-            setLoader(false)
+            const response = await authService.forgotPassword(email)
+            
+            if (response.success) {
+                setOtpRef(response.data?.otpRef || response.otpRef)
+                toast.success(response.message || 'OTP sent to your email')
+                setStep(2)
+            } else {
+                toast.error(response.message || 'Failed to send OTP')
+            }
+        } catch (err: any) {
+            console.error('Forgot password error:', err)
+            toast.error(err.response?.data?.message || err.message || 'Failed to send OTP')
+        } finally {
+            setLoading(false)
         }
-    };
+    }
+
+    const handleValidateOTP = async (e: any) => {
+        e.preventDefault()
+
+        if (!otp) {
+            toast.error('Please enter the OTP')
+            return
+        }
+
+        if (!otpRef) {
+            toast.error('OTP reference is missing. Please try again.')
+            return
+        }
+
+        setLoading(true)
+        try {
+            const response = await authService.validateOTP(otp, otpRef)
+            
+            if (response.success) {
+                setResetToken(response.data?.resetToken || response.resetToken)
+                toast.success(response.message || 'OTP verified successfully')
+                setStep(3)
+            } else {
+                toast.error(response.message || 'Invalid OTP')
+            }
+        } catch (err: any) {
+            console.error('OTP validation error:', err)
+            toast.error(err.response?.data?.message || err.message || 'Invalid OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleSetNewPassword = async (e: any) => {
+        e.preventDefault()
+
+        if (!newPassword || !confirmPassword) {
+            toast.error('Please fill in all fields')
+            return
+        }
+
+        if (newPassword !== confirmPassword) {
+            toast.error('Passwords do not match')
+            return
+        }
+
+        if (newPassword.length < 8) {
+            toast.error('Password must be at least 8 characters')
+            return
+        }
+
+        if (!resetToken) {
+            toast.error('Reset token is missing. Please try again.')
+            return
+        }
+
+        setLoading(true)
+        try {
+            const response = await authService.setNewPassword(newPassword, confirmPassword, resetToken)
+            
+            if (response.success) {
+                toast.success(response.message || 'Password reset successfully')
+                if (onCloseModal) {
+                    onCloseModal()
+                }
+                if (onBackToSignIn) {
+                    onBackToSignIn()
+                }
+            } else {
+                toast.error(response.message || 'Failed to reset password')
+            }
+        } catch (err: any) {
+            console.error('Set new password error:', err)
+            toast.error(err.response?.data?.message || err.message || 'Failed to reset password')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleResendOTP = async () => {
+        setLoading(true)
+        try {
+            const response = await authService.forgotPassword(email)
+            
+            if (response.success) {
+                setOtpRef(response.data?.otpRef || response.otpRef)
+                toast.success('OTP resent to your email')
+            } else {
+                toast.error(response.message || 'Failed to resend OTP')
+            }
+        } catch (err: any) {
+            console.error('Resend OTP error:', err)
+            toast.error(err.response?.data?.message || err.message || 'Failed to resend OTP')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
-        <section className="bg-[#F4F7FF] py-14 dark:bg-dark lg:py-20">
-            <div className="container">
-                <div className="-mx-4 flex flex-wrap">
-                    <div className="w-full px-4">
-                        <div
-                            className="wow fadeInUp relative mx-auto max-w-[525px] overflow-hidden rounded-lg bg-white px-8 py-14 text-center dark:bg-dark-2 sm:px-12 md:px-[60px]"
-                            data-wow-delay=".15s"
-                        >
-                            <div className="mb-10 text-center">
-                                <Link href="/" className="mx-auto inline-block max-w-[160px]">
-                                    <Image
-                                        src={withBasePath('/images/logo/logo.svg')}
-                                        alt="logo"
-                                        width={140}
-                                        height={30}
-                                        className="dark:hidden"
-                                    />
-                                    <Image
-                                        src={withBasePath('/images/logo/logo-white.svg')}
-                                        alt="logo"
-                                        width={140}
-                                        height={30}
-                                        className="hidden dark:block"
-                                    />
-                                </Link>
-                            </div>
+        <>
+            <div className='mb-10 text-center mx-auto inline-block max-w-[160px]'>
+                <Logo />
+            </div>
 
-                            <form onSubmit={handleSubmit}>
-                                <div className="mb-[22px]">
-                                    <input
-                                        type="email"
-                                        placeholder="Email"
-                                        name="email"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                        required
-                                        className="w-full rounded-md border border-stroke bg-transparent px-5 py-3 text-base text-dark outline-hidden transition placeholder:text-dark-6 focus:border-primary focus-visible:shadow-none dark:border-dark-3 dark:text-white dark:focus:border-primary"
-                                    />
-                                </div>
-                                <div className="">
-                                    <button
-                                        type="submit"
-                                        className="flex w-full cursor-pointer items-center justify-center rounded-md border border-primary bg-primary px-5 py-3 text-base text-white transition duration-300 ease-in-out hover:bg-blue-dark"
-                                    >
-                                        Send Email {loader && <Loader />}
-                                    </button>
-                                </div>
-                            </form>
+            <h2 className='mb-3 text-2xl font-bold text-black'>
+                {step === 1 && 'Forgot Password'}
+                {step === 2 && 'Verify OTP'}
+                {step === 3 && 'Reset Password'}
+            </h2>
+            <p className='mb-8 text-base text-gray-600'>
+                {step === 1 && 'Enter your email to receive an OTP'}
+                {step === 2 && 'Enter the OTP sent to your email'}
+                {step === 3 && 'Create a new password for your account'}
+            </p>
 
-                            <div>
-                                <span className="absolute right-1 top-1">
-                                    <svg
-                                        width="40"
-                                        height="40"
-                                        viewBox="0 0 40 40"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <circle
-                                            cx="1.39737"
-                                            cy="38.6026"
-                                            r="1.39737"
-                                            transform="rotate(-90 1.39737 38.6026)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="1.39737"
-                                            cy="1.99122"
-                                            r="1.39737"
-                                            transform="rotate(-90 1.39737 1.99122)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="13.6943"
-                                            cy="38.6026"
-                                            r="1.39737"
-                                            transform="rotate(-90 13.6943 38.6026)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="13.6943"
-                                            cy="1.99122"
-                                            r="1.39737"
-                                            transform="rotate(-90 13.6943 1.99122)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="25.9911"
-                                            cy="38.6026"
-                                            r="1.39737"
-                                            transform="rotate(-90 25.9911 38.6026)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="25.9911"
-                                            cy="1.99122"
-                                            r="1.39737"
-                                            transform="rotate(-90 25.9911 1.99122)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="38.288"
-                                            cy="38.6026"
-                                            r="1.39737"
-                                            transform="rotate(-90 38.288 38.6026)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="38.288"
-                                            cy="1.99122"
-                                            r="1.39737"
-                                            transform="rotate(-90 38.288 1.99122)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="1.39737"
-                                            cy="26.3057"
-                                            r="1.39737"
-                                            transform="rotate(-90 1.39737 26.3057)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="13.6943"
-                                            cy="26.3057"
-                                            r="1.39737"
-                                            transform="rotate(-90 13.6943 26.3057)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="25.9911"
-                                            cy="26.3057"
-                                            r="1.39737"
-                                            transform="rotate(-90 25.9911 26.3057)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="38.288"
-                                            cy="26.3057"
-                                            r="1.39737"
-                                            transform="rotate(-90 38.288 26.3057)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="1.39737"
-                                            cy="14.0086"
-                                            r="1.39737"
-                                            transform="rotate(-90 1.39737 14.0086)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="13.6943"
-                                            cy="14.0086"
-                                            r="1.39737"
-                                            transform="rotate(-90 13.6943 14.0086)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="25.9911"
-                                            cy="14.0086"
-                                            r="1.39737"
-                                            transform="rotate(-90 25.9911 14.0086)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="38.288"
-                                            cy="14.0086"
-                                            r="1.39737"
-                                            transform="rotate(-90 38.288 14.0086)"
-                                            fill="#3056D3"
-                                        />
-                                    </svg>
-                                </span>
-                                <span className="absolute bottom-1 left-1">
-                                    <svg
-                                        width="29"
-                                        height="40"
-                                        viewBox="0 0 29 40"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <circle
-                                            cx="2.288"
-                                            cy="25.9912"
-                                            r="1.39737"
-                                            transform="rotate(-90 2.288 25.9912)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="14.5849"
-                                            cy="25.9911"
-                                            r="1.39737"
-                                            transform="rotate(-90 14.5849 25.9911)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="26.7216"
-                                            cy="25.9911"
-                                            r="1.39737"
-                                            transform="rotate(-90 26.7216 25.9911)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="2.288"
-                                            cy="13.6944"
-                                            r="1.39737"
-                                            transform="rotate(-90 2.288 13.6944)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="14.5849"
-                                            cy="13.6943"
-                                            r="1.39737"
-                                            transform="rotate(-90 14.5849 13.6943)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="26.7216"
-                                            cy="13.6943"
-                                            r="1.39737"
-                                            transform="rotate(-90 26.7216 13.6943)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="2.288"
-                                            cy="38.0087"
-                                            r="1.39737"
-                                            transform="rotate(-90 2.288 38.0087)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="2.288"
-                                            cy="1.39739"
-                                            r="1.39737"
-                                            transform="rotate(-90 2.288 1.39739)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="14.5849"
-                                            cy="38.0089"
-                                            r="1.39737"
-                                            transform="rotate(-90 14.5849 38.0089)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="26.7216"
-                                            cy="38.0089"
-                                            r="1.39737"
-                                            transform="rotate(-90 26.7216 38.0089)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="14.5849"
-                                            cy="1.39761"
-                                            r="1.39737"
-                                            transform="rotate(-90 14.5849 1.39761)"
-                                            fill="#3056D3"
-                                        />
-                                        <circle
-                                            cx="26.7216"
-                                            cy="1.39761"
-                                            r="1.39737"
-                                            transform="rotate(-90 26.7216 1.39761)"
-                                            fill="#3056D3"
-                                        />
-                                    </svg>
-                                </span>
-                            </div>
+            {step === 1 && (
+                <form onSubmit={handleForgotPassword}>
+                    <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type='email'
+                            placeholder='Enter your email'
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            required
+                        />
+                    </div>
+                    <div className='mb-6'>
+                        <button
+                            type='submit'
+                            disabled={loading || !email}
+                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
+                            Send OTP {loading && <Loader />}
+                        </button>
+                    </div>
+                </form>
+            )}
+
+            {step === 2 && (
+                <form onSubmit={handleValidateOTP}>
+                    <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            OTP <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                            type='text'
+                            placeholder='Enter 6-digit OTP'
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            maxLength={6}
+                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            required
+                        />
+                    </div>
+                    <div className='mb-6'>
+                        <button
+                            type='submit'
+                            disabled={loading || !otp}
+                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
+                            Verify OTP {loading && <Loader />}
+                        </button>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleResendOTP}
+                        disabled={loading}
+                        className='text-sm text-primary hover:underline disabled:opacity-50'>
+                        Resend OTP
+                    </button>
+                </form>
+            )}
+
+            {step === 3 && (
+                <form onSubmit={handleSetNewPassword}>
+                    <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            New Password <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showNewPassword ? 'text' : 'password'}
+                                placeholder='Enter new password'
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                            >
+                                <Icon icon={showNewPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
-        </section>
-    );
-};
+                    <div className='mb-[22px]'>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Confirm Password <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                placeholder='Confirm new password'
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                            >
+                                <Icon icon={showConfirmPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                            </button>
+                        </div>
+                    </div>
+                    <div className='mb-6'>
+                        <button
+                            type='submit'
+                            disabled={loading || !newPassword || !confirmPassword}
+                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
+                            Reset Password {loading && <Loader />}
+                        </button>
+                    </div>
+                </form>
+            )}
 
-export default ForgotPassword;
+            <button
+                onClick={onBackToSignIn}
+                className='text-base text-primary hover:underline'>
+                Back to Sign In
+            </button>
+        </>
+    )
+}
+
+export default ForgotPassword

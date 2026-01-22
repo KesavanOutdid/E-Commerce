@@ -109,6 +109,75 @@ export default function OrdersPage() {
             <Breadcrumb pageName="Orders" />
             <section className="bg-gradient-to-br from-blue-50 to-purple-50 pb-10">
                 <div className="container mx-auto max-w-7xl px-4">
+                    <div className="grid grid-cols-12 gap-6">
+                        <div className="col-span-12 md:col-span-3">
+                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100 sticky top-4">
+                                <div className="mb-6">
+                                    <h2 className="text-xl font-bold text-black mb-2 flex items-center gap-2">
+                                        <div className="p-2 bg-primary/10 rounded-lg">
+                                            <Icon icon="mdi:filter-variant" width={20} height={20} className="text-primary" />
+                                        </div>
+                                        Quick Links
+                                    </h2>
+                                    <p className="text-xs text-gray-500">Navigate sections</p>
+                                </div>
+                                <div className="space-y-3">
+                                    <Link
+                                        href="/products"
+                                        className="w-full group relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102">
+                                        <div className="flex items-center justify-between gap-3 px-4 py-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-white">
+                                                    <Icon icon="mdi:storefront" width={20} height={20} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-semibold block">My Products</span>
+                                                    <span className="text-xs opacity-80">Your listings</span>
+                                                </div>
+                                            </div>
+                                            <Icon icon="mdi:chevron-right" width={20} height={20} />
+                                        </div>
+                                    </Link>
+                                    <div className="w-full group relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg">
+                                        <div className="flex items-center justify-between gap-3 px-4 py-4 relative z-10">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 rounded-lg bg-white/20">
+                                                    <Icon icon="mdi:shopping" width={20} height={20} />
+                                                </div>
+                                                <div className="text-left">
+                                                    <span className="font-semibold block">Orders</span>
+                                                    <span className="text-xs opacity-80">Manage orders</span>
+                                                </div>
+                                            </div>
+                                            <span className="px-3 py-1.5 rounded-full text-sm font-bold bg-white/25 text-white">
+                                                {totalOrders}
+                                            </span>
+                                        </div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
+                                    </div>
+                                    <Link
+                                        href="/promotions"
+                                        className="w-full relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-br from-gray-50 to-gray-100 text-gray-700 hover:shadow-md hover:scale-102">
+                                        <div className="px-4 py-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-white">
+                                                        <Icon icon="mdi:tag-multiple" width={20} height={20} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="font-semibold block">Promotions</span>
+                                                        <span className="text-xs opacity-80">Offers & Coupons</span>
+                                                    </div>
+                                                </div>
+                                                <Icon icon="mdi:chevron-right" width={20} height={20} />
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-span-12 md:col-span-9">
                     <div className="bg-white rounded-2xl shadow-xl p-4 border border-gray-100">
                         <div className="mb-6">
                             <div className="grid grid-cols-12 gap-4 items-center">
@@ -374,6 +443,8 @@ export default function OrdersPage() {
                                 )}
                             </>
                         )}
+                    </div>
+                        </div>
                     </div>
                 </div>
             </section>

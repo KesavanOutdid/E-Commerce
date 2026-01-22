@@ -121,34 +121,34 @@ export default function ProductViewPage() {
                                 <Icon icon="mdi:information" width={20} height={20} className="text-primary" />
                                 Basic Information
                             </h2>
-                            <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg space-y-3">
+                            <div style={{ backgroundColor: 'rgb(249, 249, 249)' }} className="p-5 rounded-lg space-y-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Name</label>
-                                    <p className="text-base text-gray-900 font-semibold">{product.productName}</p>
+                                    <label className="block text-sm font-bold text-black mb-1">Product Name</label>
+                                    <p className="text-base text-gray-700">{product.productName}</p>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Main Category</label>
-                                        <p className="text-sm text-gray-900">{product.mainCategoryName || 'N/A'}</p>
+                                        <label className="block text-sm font-bold text-black mb-1">Main Category</label>
+                                        <p className="text-base text-gray-700">{product.mainCategoryName || 'N/A'}</p>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Sub Category</label>
-                                        <p className="text-sm text-gray-900">{product.subCategoryName || 'N/A'}</p>
+                                        <label className="block text-sm font-bold text-black mb-1">Sub Category</label>
+                                        <p className="text-base text-gray-700">{product.subCategoryName || 'N/A'}</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Brand</label>
-                                        <p className="text-sm text-gray-900">{product.brand || 'N/A'}</p>
+                                        <label className="block text-sm font-bold text-black mb-1">Brand</label>
+                                        <p className="text-base text-gray-700">{product.brand || 'N/A'}</p>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Warranty</label>
-                                        <p className="text-sm text-gray-900">{product.warranty || 'N/A'}</p>
+                                        <label className="block text-sm font-bold text-black mb-1">Warranty</label>
+                                        <p className="text-base text-gray-700">{product.warranty || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Short Description</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                    <label className="block text-sm font-bold text-black mb-1">Short Description</label>
+                                    <p className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
                                         {showFullShortDesc || !needsTruncation(product.shortDescription || '', 7)
                                             ? product.shortDescription || 'N/A'
                                             : truncateText(product.shortDescription || '', 7)}
@@ -172,8 +172,8 @@ export default function ProductViewPage() {
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Description</label>
-                                    <p className="text-sm text-gray-900 whitespace-pre-wrap leading-relaxed">
+                                    <label className="block text-sm font-bold text-black mb-1">Description</label>
+                                    <p className="text-base text-gray-700 whitespace-pre-wrap leading-relaxed">
                                         {showFullDesc || !needsTruncation(product.description || '', 7)
                                             ? product.description || 'N/A'
                                             : truncateText(product.description || '', 7)}
@@ -196,16 +196,16 @@ export default function ProductViewPage() {
                                         </button>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Status</label>
+                                        <label className="block text-sm font-bold text-black mb-1">Status</label>
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${product.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                             <Icon icon={product.status ? 'mdi:check-circle' : 'mdi:close-circle'} width={14} height={14} />
                                             {product.status ? 'Active' : 'Inactive'}
                                         </span>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-gray-800 mb-2">Approval Status</label>
+                                        <label className="block text-sm font-bold text-black mb-1">Approval Status</label>
                                         <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${product.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                             <Icon icon={product.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} width={14} height={14} />
                                             {product.approvalStatus === 'approved' ? 'Approved' : 'Pending Approval'}
@@ -302,7 +302,7 @@ export default function ProductViewPage() {
                                             <div className="p-5 bg-white border-r border-gray-200">
                                                 {variantImages.length > 0 ? (
                                                     <div className="sticky top-4">
-                                                        <label className="block text-xs font-semibold text-gray-800 mb-3">Variant Images ({variantImages.length})</label>
+                                                        <label className="block text-sm font-bold text-black mb-3">Variant Images ({variantImages.length})</label>
                                                         <div className="mb-4">
                                                             <img
                                                                 src={`${process.env.NEXT_PUBLIC_API_URL}${variantImages[selectedImageIndex]}`}
@@ -345,19 +345,19 @@ export default function ProductViewPage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                                         {/* Price */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Price</label>
+                                                            <label className="block text-sm font-bold text-black mb-1">Price</label>
                                                             <p className="text-xl font-bold line-through text-gray-500">₹{selectedVariant.price?.toLocaleString('en-IN')}</p>
                                                         </div>
 
                                                         {/* Sale Price */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Sale Price</label>
+                                                            <label className="block text-sm font-bold text-black mb-1">Sale Price</label>
                                                             <p className="text-xl font-bold text-green-600">₹{selectedVariant.salePrice > 0 ? selectedVariant.salePrice?.toLocaleString('en-IN') : selectedVariant.price?.toLocaleString('en-IN')}</p>
                                                         </div>
 
                                                         {/* Stock */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Stock</label>
+                                                            <label className="block text-sm font-bold text-black mb-1">Stock</label>
                                                             <p className="text-lg font-bold text-gray-900">{selectedVariant.stock} units</p>
                                                         </div>
                                                     </div>
@@ -404,13 +404,13 @@ export default function ProductViewPage() {
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
                                                         {/* Delivery Days */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Delivery Days</label>
-                                                            <p className="text-sm font-bold text-gray-900">{selectedVariant.deliveryDays || 'N/A'} days</p>
+                                                            <label className="block text-sm font-bold text-black mb-1">Delivery Days</label>
+                                                            <p className="text-base text-gray-700">{selectedVariant.deliveryDays || 'N/A'} days</p>
                                                         </div>
 
                                                         {/* Status */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Status</label>
+                                                            <label className="block text-sm font-bold text-black mb-1">Status</label>
                                                             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${selectedVariant.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                                                                 <Icon icon={selectedVariant.status ? 'mdi:check-circle' : 'mdi:close-circle'} width={14} height={14} />
                                                                 {selectedVariant.status ? 'Active' : 'Inactive'}
@@ -419,7 +419,7 @@ export default function ProductViewPage() {
 
                                                         {/* Approval */}
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Approval</label>
+                                                            <label className="block text-sm font-bold text-black mb-1">Approval</label>
                                                             <span className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium ${selectedVariant.approvalStatus === 'approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
                                                                 <Icon icon={selectedVariant.approvalStatus === 'approved' ? 'mdi:check-decagram' : 'mdi:clock-outline'} width={14} height={14} />
                                                                 {selectedVariant.approvalStatus === 'approved' ? 'Approved' : 'Pending'}
@@ -430,12 +430,12 @@ export default function ProductViewPage() {
                                                     {/* Variant Attributes */}
                                                     {selectedVariant.attributes && selectedVariant.attributes.length > 0 && (
                                                         <div className="pt-3 border-t border-gray-100">
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-3">Variant Attributes</label>
+                                                            <label className="block text-sm font-bold text-black mb-3">Variant Attributes</label>
                                                             <div className="space-y-2">
                                                                 {selectedVariant.attributes.map((attr: any, attrIndex: number) => (
                                                                     <div key={attrIndex} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                                                        <p className="text-xs font-semibold text-gray-700 mb-1">{attr.name}</p>
-                                                                        <p className="text-sm font-medium text-gray-900">{attr.value}</p>
+                                                                        <p className="text-sm font-bold text-black mb-1">{attr.name}</p>
+                                                                        <p className="text-base text-gray-700">{attr.value}</p>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -445,12 +445,12 @@ export default function ProductViewPage() {
                                                     {/* Timestamps */}
                                                     <div className="pt-3 border-t border-gray-100 space-y-3">
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Created At</label>
-                                                            <p className="text-xs text-gray-600">{formatIndiaTime(selectedVariant.createdAt)}</p>
+                                                            <label className="block text-sm font-bold text-black mb-1">Created At</label>
+                                                            <p className="text-sm text-gray-600">{formatIndiaTime(selectedVariant.createdAt)}</p>
                                                         </div>
                                                         <div>
-                                                            <label className="block text-xs font-semibold text-gray-800 mb-2">Updated At</label>
-                                                            <p className="text-xs text-gray-600">{formatIndiaTime(selectedVariant.updatedAt)}</p>
+                                                            <label className="block text-sm font-bold text-black mb-1">Updated At</label>
+                                                            <p className="text-sm text-gray-600">{formatIndiaTime(selectedVariant.updatedAt)}</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -463,14 +463,14 @@ export default function ProductViewPage() {
 
                         {/* Product Timestamps */}
                         <div className="pt-6 border-t border-gray-200">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Created At</label>
-                                    <p className="text-xs text-gray-600">{formatIndiaTime(product.createdAt)}</p>
+                                    <label className="block text-sm font-bold text-black mb-1">Product Created At</label>
+                                    <p className="text-sm text-gray-600">{formatIndiaTime(product.createdAt)}</p>
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-gray-800 mb-2">Product Updated At</label>
-                                    <p className="text-xs text-gray-600">{formatIndiaTime(product.updatedAt)}</p>
+                                    <label className="block text-sm font-bold text-black mb-1">Product Updated At</label>
+                                    <p className="text-sm text-gray-600">{formatIndiaTime(product.updatedAt)}</p>
                                 </div>
                             </div>
                         </div>

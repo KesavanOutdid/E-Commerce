@@ -6,6 +6,7 @@ import HeaderLink from './Navigation/HeaderLink'
 import MobileHeaderLink from './Navigation/MobileHeaderLink'
 import Signin from '@/app/components/Auth/SignIn'
 import SignUp from '@/app/components/Auth/SignUp'
+import ForgotPassword from '@/app/components/Auth/ForgotPassword'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import { HeaderItem } from '@/app/types/menu'
 import withBasePath from '@/utils/basePath'
@@ -22,11 +23,13 @@ const Header: React.FC = () => {
     const [sticky, setSticky] = useState(false)
     const [isSignInOpen, setIsSignInOpen] = useState(false)
     const [isSignUpOpen, setIsSignUpOpen] = useState(false)
+    const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
     const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false)
 
     const navbarRef = useRef<HTMLDivElement>(null)
     const signInRef = useRef<HTMLDivElement>(null)
     const signUpRef = useRef<HTMLDivElement>(null)
+    const forgotPasswordRef = useRef<HTMLDivElement>(null)
     const mobileMenuRef = useRef<HTMLDivElement>(null)
     const accountDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -62,6 +65,12 @@ const Header: React.FC = () => {
             setIsSignUpOpen(false)
         }
         if (
+            forgotPasswordRef.current &&
+            !forgotPasswordRef.current.contains(event.target as Node)
+        ) {
+            setIsForgotPasswordOpen(false)
+        }
+        if (
             mobileMenuRef.current &&
             !mobileMenuRef.current.contains(event.target as Node) &&
             navbarOpen
@@ -89,15 +98,15 @@ const Header: React.FC = () => {
             window.removeEventListener('scroll', handleScroll)
             document.removeEventListener('mousedown', handleClickOutside)
         }
-    }, [navbarOpen, isSignInOpen, isSignUpOpen])
+    }, [navbarOpen, isSignInOpen, isSignUpOpen, isForgotPasswordOpen])
 
     useEffect(() => {
-        if (isSignInOpen || isSignUpOpen || navbarOpen) {
+        if (isSignInOpen || isSignUpOpen || isForgotPasswordOpen || navbarOpen) {
             document.body.style.overflow = 'hidden'
         } else {
             document.body.style.overflow = ''
         }
-    }, [isSignInOpen, isSignUpOpen, navbarOpen])
+    }, [isSignInOpen, isSignUpOpen, isForgotPasswordOpen, navbarOpen])
 
     const filteredHeaderData = headerData.filter(item => {
         if (!isAuthenticated && (item.label === 'Products' || item.label === 'Orders')) {
@@ -212,6 +221,10 @@ const Header: React.FC = () => {
                                             setIsSignInOpen(false)
                                             setIsSignUpOpen(true)
                                         }}
+                                        onSwitchToForgotPassword={() => {
+                                            setIsSignInOpen(false)
+                                            setIsForgotPasswordOpen(true)
+                                        }}
                                         onCloseModal={() => setIsSignInOpen(false)}
                                     />
                                 </div>
@@ -242,6 +255,32 @@ const Header: React.FC = () => {
                                             setIsSignUpOpen(false)
                                             setIsSignInOpen(true)
                                         }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                        {isForgotPasswordOpen && (
+                            <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
+                                <div
+                                    ref={forgotPasswordRef}
+                                    className='relative mx-auto bg-white w-full max-w-md overflow-hidden rounded-lg bg-dark_grey/90 backdrop-blur-md px-8 pt-14 pb-8 text-center'>
+                                    <button
+                                        onClick={() => setIsForgotPasswordOpen(false)}
+                                        className='absolute top-0 right-0 mr-8 mt-8 dark:invert'
+                                        aria-label='Close Forgot Password Modal'>
+                                        <Icon
+                                            icon='material-symbols:close-rounded'
+                                            width={24}
+                                            height={24}
+                                            className='text-black hover:text-primary inline-block hover:cursor-pointer'
+                                        />
+                                    </button>
+                                    <ForgotPassword 
+                                        onBackToSignIn={() => {
+                                            setIsForgotPasswordOpen(false)
+                                            setIsSignInOpen(true)
+                                        }}
+                                        onCloseModal={() => setIsForgotPasswordOpen(false)}
                                     />
                                 </div>
                             </div>

@@ -114,6 +114,12 @@
       "namedRegex": "^/profile(?:/)?$"
     },
     {
+      "page": "/promotions",
+      "regex": "^/promotions(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/promotions(?:/)?$"
+    },
+    {
       "page": "/signin",
       "regex": "^/signin(?:/)?$",
       "routeKeys": {},
