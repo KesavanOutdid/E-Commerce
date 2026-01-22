@@ -1,4 +1,5 @@
 const Coupon = require('../../../models/Coupon');
+const User = require('../../../models/User');
 
 const parseJsonFields = (data) => {
   const fieldsToParse = ['applicableIds'];
@@ -16,7 +17,15 @@ const parseJsonFields = (data) => {
 
 exports.createCoupon = async (req, res) => {
   try {
-    const couponData = parseJsonFields({ ...req.body });
+    const user = await User.findByUserId(req.userId);
+    const ownerName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Admin';
+
+    const couponData = parseJsonFields({ 
+      ...req.body,
+      ownerType: 'admin',
+      ownerId: req.userId,
+      ownerName: ownerName
+    });
     if (req.file) {
       couponData.image = `/uploads/promotions/${req.file.filename}`;
     }
@@ -48,7 +57,13 @@ exports.getCouponById = async (req, res) => {
 
 exports.updateCoupon = async (req, res) => {
   try {
-    const updateData = parseJsonFields({ ...req.body });
+    const user = await User.findByUserId(req.userId);
+    const ownerName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Admin';
+
+    const updateData = parseJsonFields({ 
+      ...req.body,
+      ownerName: ownerName 
+    });
     if (req.file) {
       updateData.image = `/uploads/promotions/${req.file.filename}`;
     }

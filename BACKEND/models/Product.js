@@ -60,6 +60,33 @@ class Product {
       : { productId: id };
     return await this.collection().deleteOne(query);
   }
+
+  static async resolveProductIds(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) return [];
+    
+    const objectIds = [];
+    const uuids = [];
+
+    ids.forEach(id => {
+      if (ObjectId.isValid(id) && id.toString().length === 24) {
+        objectIds.push(new ObjectId(id));
+      } else {
+        uuids.push(id);
+      }
+    });
+
+    const query = {
+      $or: []
+    };
+
+    if (objectIds.length > 0) query.$or.push({ _id: { $in: objectIds } });
+    if (uuids.length > 0) query.$or.push({ productId: { $in: uuids } });
+
+    if (query.$or.length === 0) return [];
+
+    const products = await this.collection().find(query, { projection: { productId: 1 } }).toArray();
+    return products.map(p => p.productId);
+  }
 }
 
 module.exports = Product;

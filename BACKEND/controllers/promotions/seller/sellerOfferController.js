@@ -31,6 +31,7 @@ exports.createOffer = async (req, res) => {
     offerData.applicableType = 'product';
     offerData.ownerType = 'seller';
     offerData.ownerId = seller._id;
+    offerData.ownerName = seller.shopName;
 
     if (req.file) {
       offerData.image = `/uploads/promotions/${req.file.filename}`;
@@ -101,6 +102,7 @@ exports.updateOffer = async (req, res) => {
     delete updateData.applicableType; 
     delete updateData.ownerType;
     delete updateData.ownerId;
+    delete updateData.ownerName;
 
     if (req.file) {
       updateData.image = `/uploads/promotions/${req.file.filename}`;

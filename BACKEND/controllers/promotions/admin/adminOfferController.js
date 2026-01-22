@@ -1,4 +1,5 @@
 const Offer = require('../../../models/Offer');
+const User = require('../../../models/User');
 
 const parseJsonFields = (data) => {
   const fieldsToParse = ['applicableIds', 'tiers'];
@@ -16,7 +17,15 @@ const parseJsonFields = (data) => {
 
 exports.createOffer = async (req, res) => {
   try {
-    const offerData = parseJsonFields({ ...req.body, ownerType: 'admin', ownerId: req.userId });
+    const user = await User.findByUserId(req.userId);
+    const ownerName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Admin';
+    
+    const offerData = parseJsonFields({ 
+      ...req.body, 
+      ownerType: 'admin', 
+      ownerId: req.userId,
+      ownerName: ownerName
+    });
     if (req.file) {
       offerData.image = `/uploads/promotions/${req.file.filename}`;
     }
@@ -48,7 +57,13 @@ exports.getOfferById = async (req, res) => {
 
 exports.updateOffer = async (req, res) => {
   try {
-    const updateData = parseJsonFields({ ...req.body });
+    const user = await User.findByUserId(req.userId);
+    const ownerName = user ? `${user.firstName} ${user.lastName}`.trim() : 'Admin';
+
+    const updateData = parseJsonFields({ 
+      ...req.body,
+      ownerName: ownerName 
+    });
     if (req.file) {
       updateData.image = `/uploads/promotions/${req.file.filename}`;
     }

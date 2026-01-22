@@ -30,6 +30,9 @@ exports.createCoupon = async (req, res) => {
     // Enforcement: Sellers can only create product-related coupons
     couponData.applicableType = 'product';
     couponData.sellerId = seller._id;
+    couponData.ownerType = 'seller';
+    couponData.ownerId = seller._id;
+    couponData.ownerName = seller.shopName;
 
     if (req.file) {
       couponData.image = `/uploads/promotions/${req.file.filename}`;
@@ -98,6 +101,9 @@ exports.updateCoupon = async (req, res) => {
     // Enforcement: Cannot change type to something other than product
     delete updateData.applicableType; 
     delete updateData.sellerId;
+    delete updateData.ownerType;
+    delete updateData.ownerId;
+    delete updateData.ownerName;
 
     if (req.file) {
       updateData.image = `/uploads/promotions/${req.file.filename}`;

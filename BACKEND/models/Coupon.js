@@ -1,6 +1,7 @@
 const { getDB } = require('../config/db');
 const { ObjectId } = require('mongodb');
 const crypto = require('crypto');
+const Product = require('./Product');
 
 class Coupon {
   static collection() {
@@ -8,6 +9,11 @@ class Coupon {
   }
 
   static async create(data) {
+    let applicableIds = data.applicableIds || [];
+    if (data.applicableType === 'product' && applicableIds.length > 0) {
+      applicableIds = await Product.resolveProductIds(applicableIds);
+    }
+
     const coupon = {
       couponId: crypto.randomUUID(),
       code: data.code.toUpperCase(),
@@ -22,7 +28,12 @@ class Coupon {
       usedCount: 0,
       applicableTo: {
         type: data.applicableType || 'all', // 'product', 'category', 'all'
-        ids: data.applicableIds || []
+        ids: applicableIds
+      },
+      owner: {
+        type: data.ownerType || 'admin',
+        id: data.ownerId ? (ObjectId.isValid(data.ownerId) ? new ObjectId(data.ownerId) : data.ownerId) : null,
+        name: data.ownerName || null
       },
       sellerId: data.sellerId ? (ObjectId.isValid(data.sellerId) ? new ObjectId(data.sellerId) : data.sellerId) : null,
       image: data.image || null,
@@ -72,17 +83,38 @@ class Coupon {
       ? { $or: [{ _id: new ObjectId(id) }, { couponId: id }] }
       : { couponId: id };
 
+    const existingCoupon = await this.findById(id);
+    if (!existingCoupon) return null;
+
     const updateData = { ...data, updatedAt: new Date() };
     delete updateData._id;
 
     // Handle nested mappings if flat fields are provided
     if (data.applicableType || data.applicableIds) {
+      const type = data.applicableType || (existingCoupon ? existingCoupon.applicableTo.type : 'all');
+      let ids = data.applicableIds || (existingCoupon ? existingCoupon.applicableTo.ids : []);
+      
+      if (type === 'product' && ids.length > 0) {
+        ids = await Product.resolveProductIds(ids);
+      }
+
       updateData.applicableTo = {
-        type: data.applicableType || 'all',
-        ids: data.applicableIds || []
+        type: type,
+        ids: ids
       };
       delete updateData.applicableType;
       delete updateData.applicableIds;
+    }
+
+    if (data.ownerType || data.ownerId || data.ownerName) {
+      updateData.owner = {
+        type: data.ownerType || (existingCoupon ? existingCoupon.owner?.type : 'admin'),
+        id: data.ownerId ? (ObjectId.isValid(data.ownerId) ? new ObjectId(data.ownerId) : data.ownerId) : (existingCoupon ? existingCoupon.owner?.id : null),
+        name: data.ownerName || (existingCoupon ? existingCoupon.owner?.name : null)
+      };
+      delete updateData.ownerType;
+      delete updateData.ownerId;
+      delete updateData.ownerName;
     }
 
     if (data.expiryDate) updateData.expiryDate = new Date(data.expiryDate);
