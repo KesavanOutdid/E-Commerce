@@ -2,6 +2,7 @@
   "/(site)/kyc/page": "app/(site)/kyc/page.js",
   "/(site)/pickup-addresses/page": "app/(site)/pickup-addresses/page.js",
   "/(site)/products/add/page": "app/(site)/products/add/page.js",
+  "/(site)/products/edit/[id]/page": "app/(site)/products/edit/[id]/page.js",
   "/(site)/products/page": "app/(site)/products/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js"
