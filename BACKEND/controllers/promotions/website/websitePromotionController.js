@@ -137,13 +137,12 @@ exports.verifyCoupon = async (req, res) => {
 
     // If cart items are provided, calculate actual discount
     if (cartItems && cartItems.length > 0) {
-      const result = await calculateCartPrices(cartItems, code);
+      const result = await calculateCartPrices(cartItems, code, req.userId);
       
       if (!result.appliedCoupon) {
-        // If coupon was not applied, it probably didn't meet minOrderValue
         return res.status(400).json({
           success: false,
-          message: `Coupon requirements not met. Minimum order value: ${coupon.minOrderValue}`,
+          message: result.couponError || `Coupon requirements not met. Minimum order value: ${coupon.minOrderValue}`,
           minOrderValue: coupon.minOrderValue
         });
       }

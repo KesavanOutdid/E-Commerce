@@ -3,6 +3,20 @@ const Coupon = require('../models/Coupon');
 const SubCategory = require('../models/SubCategory');
 const Product = require('../models/Product');
 const ProductVariant = require('../models/ProductVariant');
+const Order = require('../models/Order');
+const { resolveProductSellerIds } = require('./idResolver');
+
+/**
+ * Counts how many times a user has used a specific coupon
+ */
+async function countCouponUsageByUser(userId, couponCode) {
+  if (!userId || !couponCode) return 0;
+  return await Order.collection().countDocuments({
+    userId: userId,
+    couponCode: couponCode,
+    paymentStatus: { $ne: 'failed' } // Only count successful or pending orders
+  });
+}
 
 /**
  * Calculates the layered price for a set of cart items.
@@ -11,37 +25,33 @@ const ProductVariant = require('../models/ProductVariant');
  *         3. Platform Incentives
  *         4. Coupons (Applied at the end)
  */
-async function calculateCartPrices(items, couponCode = null) {
+async function calculateCartPrices(items, couponCode = null, userId = null) {
   const activeOffers = await Offer.findActive();
   let totalOrderValue = 0;
-  let totalDiscount = 0;
 
   const processedItems = await Promise.all(items.map(async (item) => {
     let price = parseFloat(item.price) || 0; // Original Price
     let salePrice = parseFloat(item.salePrice || item.price) || 0; // Seller's current sale price
     let finalItemPrice = salePrice;
     let appliedOffer = null;
-    let resolvedSellerId = item.sellerId;
+    let resolvedSellerIds = [];
 
-    // Resolve sellerId if missing
-    if (!resolvedSellerId) {
-      if (item.variantId) {
-        const variant = await ProductVariant.findById(item.variantId);
-        if (variant) resolvedSellerId = variant.sellerId || variant.userId;
-      } else if (item.productId) {
-        const product = await Product.findById(item.productId);
-        if (product) resolvedSellerId = product.sellerId || product.userId;
-      }
+    // Resolve all possible seller IDs for the product/variant
+    if (item.variantId) {
+      const variant = await ProductVariant.findById(item.variantId);
+      if (variant) resolvedSellerIds = await resolveProductSellerIds(variant);
+    } else if (item.productId) {
+      const product = await Product.findById(item.productId);
+      if (product) resolvedSellerIds = await resolveProductSellerIds(product);
     }
 
     // 1. Check for Active Offers (Direct or Tiered)
     const matchingOffer = activeOffers.find(offer => {
       // a. Seller Ownership Check
       const offerSellerId = offer.sellerId?.toString() || offer.owner?.id?.toString();
-      const itemSellerId = resolvedSellerId?.toString();
       
-      if (offer.owner?.type === 'seller' && offerSellerId && itemSellerId) {
-        if (offerSellerId !== itemSellerId) return false;
+      if (offer.owner?.type === 'seller' && offerSellerId) {
+        if (!resolvedSellerIds.includes(offerSellerId)) return false;
       }
 
       // b. Applicability Type Check
@@ -50,9 +60,13 @@ async function calculateCartPrices(items, couponCode = null) {
       const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString().toLowerCase());
 
       if (offer.applicableTo.type === 'product') {
-        return (item.productId && applicableIds.includes(item.productId.toString().toLowerCase())) || 
-               (item.variantId && applicableIds.includes(item.variantId.toString().toLowerCase())) ||
-               (item._id && applicableIds.includes(item._id.toString().toLowerCase()));
+        const prodId = (item.productId || '').toString().toLowerCase();
+        const varId = (item.variantId || '').toString().toLowerCase();
+        const itemId = (item._id || '').toString().toLowerCase();
+        
+        return (prodId && applicableIds.includes(prodId)) || 
+               (varId && applicableIds.includes(varId)) ||
+               (itemId && applicableIds.includes(itemId));
       }
       
       if (offer.applicableTo.type === 'category') {
@@ -93,7 +107,7 @@ async function calculateCartPrices(items, couponCode = null) {
 
     return {
       ...item,
-      sellerId: resolvedSellerId,
+      resolvedSellerIds,
       originalPrice: price,
       sellerSalePrice: salePrice,
       finalPrice: finalItemPrice,
@@ -105,64 +119,88 @@ async function calculateCartPrices(items, couponCode = null) {
   // 3. Apply Coupon if provided
   let couponDiscount = 0;
   let appliedCoupon = null;
+  let couponError = null;
 
   if (couponCode) {
     const coupon = await Coupon.findByCode(couponCode);
     if (coupon) {
       const now = new Date();
       
-      // Check if coupon is applicable to any item in the cart
-      const applicableItems = processedItems.filter(item => {
-        // 1. Seller Ownership Check
-        // If coupon belongs to a seller, it can only be applied to that seller's products
-        const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
-        const itemSellerId = item.sellerId?.toString();
-        
-        // If it's a seller coupon, ensure it matches the item's seller
-        if (coupon.owner?.type === 'seller' && couponSellerId && itemSellerId) {
-          if (couponSellerId !== itemSellerId) return false;
-        } else if (coupon.owner?.type === 'seller' && !itemSellerId) {
-          // If it's a seller coupon but we couldn't resolve item seller, don't apply for safety
-          return false;
-        }
-
-        // 2. Applicability Type Check
-        if (!coupon.applicableTo || coupon.applicableTo.type === 'all') return true;
-        
-        const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString().toLowerCase());
-        
-        if (coupon.applicableTo.type === 'product') {
-          // Check against Product ID, Variant ID, or Item ID (UUID strings)
-          return (item.productId && applicableIds.includes(item.productId.toString().toLowerCase())) || 
-                 (item.variantId && applicableIds.includes(item.variantId.toString().toLowerCase())) ||
-                 (item._id && applicableIds.includes(item._id.toString().toLowerCase()));
-        }
-        
-        if (coupon.applicableTo.type === 'category') {
-          return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString().toLowerCase());
-        }
-        
-        return false;
-      });
-
-      if (applicableItems.length > 0) {
-        const applicableTotal = applicableItems.reduce((acc, item) => acc + item.itemTotal, 0);
-        const minOrderValue = parseFloat(coupon.minOrderValue) || 0;
-        const discountValue = parseFloat(coupon.discountValue) || 0;
-        const maxDiscountAmount = coupon.maxDiscountAmount ? parseFloat(coupon.maxDiscountAmount) : null;
-
-        if (coupon.expiryDate >= now && totalOrderValue >= minOrderValue) {
-          if (coupon.discountType === 'percentage') {
-            couponDiscount = (applicableTotal * discountValue) / 100;
-            if (maxDiscountAmount) {
-              couponDiscount = Math.min(couponDiscount, maxDiscountAmount);
-            }
-          } else {
-            couponDiscount = Math.min(discountValue, applicableTotal);
-          }
-          appliedCoupon = coupon.code;
+      // Global and Per-User Usage Limits
+      const globalUsage = parseInt(coupon.usedCount) || 0;
+      const globalLimit = coupon.usageLimit ? parseInt(coupon.usageLimit) : null;
+      const userLimit = coupon.userLimit ? parseInt(coupon.userLimit) : null;
+      
+      if (globalLimit !== null && globalUsage >= globalLimit) {
+        couponError = 'Coupon usage limit reached';
+      } else if (userLimit !== null && userId) {
+        const userUsage = await countCouponUsageByUser(userId, coupon.code);
+        if (userUsage >= userLimit) {
+          couponError = `You have already used this coupon ${userUsage} time(s)`;
         }
       }
+
+      if (!couponError) {
+        // Check if coupon is applicable to any item in the cart
+        const applicableItems = processedItems.filter(item => {
+          // 1. Seller Ownership Check
+          const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
+          
+          if (coupon.owner?.type === 'seller' && couponSellerId) {
+            if (!item.resolvedSellerIds.includes(couponSellerId)) return false;
+          }
+
+          // 2. Applicability Type Check
+          if (!coupon.applicableTo || coupon.applicableTo.type === 'all') return true;
+          
+          const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString().toLowerCase());
+          
+          if (coupon.applicableTo.type === 'product') {
+            const prodId = (item.productId || '').toString().toLowerCase();
+            const varId = (item.variantId || '').toString().toLowerCase();
+            const itemId = (item._id || '').toString().toLowerCase();
+
+            return (prodId && applicableIds.includes(prodId)) || 
+                   (varId && applicableIds.includes(varId)) ||
+                   (itemId && applicableIds.includes(itemId));
+          }
+          
+          if (coupon.applicableTo.type === 'category') {
+            return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString().toLowerCase());
+          }
+          
+          return false;
+        });
+
+        if (applicableItems.length > 0) {
+          const applicableTotal = applicableItems.reduce((acc, item) => acc + item.itemTotal, 0);
+          const minOrderValue = parseFloat(coupon.minOrderValue) || 0;
+          const discountValue = parseFloat(coupon.discountValue) || 0;
+          const maxDiscountAmount = coupon.maxDiscountAmount ? parseFloat(coupon.maxDiscountAmount) : null;
+
+          if (coupon.expiryDate >= now) {
+            if (totalOrderValue >= minOrderValue) {
+              if (coupon.discountType === 'percentage') {
+                couponDiscount = (applicableTotal * discountValue) / 100;
+                if (maxDiscountAmount) {
+                  couponDiscount = Math.min(couponDiscount, maxDiscountAmount);
+                }
+              } else {
+                couponDiscount = Math.min(discountValue, applicableTotal);
+              }
+              appliedCoupon = coupon.code;
+            } else {
+              couponError = `Minimum order value of ${minOrderValue} not met`;
+            }
+          } else {
+            couponError = 'Coupon has expired';
+          }
+        } else {
+          couponError = 'Coupon is not applicable to any item in your cart';
+        }
+      }
+    } else {
+      couponError = 'Invalid coupon code';
     }
   }
 
@@ -173,6 +211,7 @@ async function calculateCartPrices(items, couponCode = null) {
     subTotal: totalOrderValue,
     couponDiscount: couponDiscount,
     appliedCoupon: appliedCoupon,
+    couponError: couponError,
     grandTotal: grandTotal
   };
 }
