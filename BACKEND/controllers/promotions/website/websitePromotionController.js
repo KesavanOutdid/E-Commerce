@@ -167,6 +167,7 @@ exports.verifyCoupon = async (req, res) => {
       message: 'Coupon is valid',
       data: {
         code: coupon.code,
+        couponId: coupon.couponId,
         discountType: coupon.discountType,
         discountValue: coupon.discountValue,
         minOrderValue: coupon.minOrderValue,
