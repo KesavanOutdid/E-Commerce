@@ -186,7 +186,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.userId;
-    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time, couponCode, discountAmount } = req.body;
+    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time, couponCode, couponId: reqCouponId, discountAmount } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -329,8 +329,8 @@ exports.createOrder = async (req, res) => {
     let finalDiscountAmount = 0;
     let couponId = null;
 
-    if (couponCode) {
-      const couponValidation = await validateCoupon(couponCode, userId, subTotal);
+    if (couponCode || reqCouponId) {
+      const couponValidation = await validateCoupon(couponCode || reqCouponId, userId, subTotal);
       
       if (!couponValidation.valid) {
         return res.status(400).json({ 

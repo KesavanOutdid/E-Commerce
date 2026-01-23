@@ -70,14 +70,12 @@ const getApplicablePromotions = async (items, activeOffers = null, activeCoupons
 
       if (!(isProductMatch || isCategoryMatch || isAllMatch)) return false;
 
-      // 2. Enforce seller restriction
-      const couponSellerId = (coupon.sellerId || coupon.owner?.id)?.toString();
-      const couponSellerName = (coupon.owner?.name)?.toLowerCase();
-      const itemShopName = item.shopName?.toLowerCase();
-      
-      const hasSellerOwner = coupon.owner?.type === 'seller' || (couponSellerId && couponSellerId !== "null" && couponSellerId !== "undefined");
-      
-      if (hasSellerOwner) {
+      // 2. Enforce seller restriction ONLY for seller-owned coupons
+      if (coupon.owner?.type === 'seller') {
+        const couponSellerId = (coupon.sellerId || coupon.owner?.id)?.toString();
+        const couponSellerName = (coupon.owner?.name)?.toLowerCase();
+        const itemShopName = item.shopName?.toLowerCase();
+
         const isIdMatch = couponSellerId && couponSellerId !== "null" && (itemSellerId === couponSellerId || itemSellerDocId === couponSellerId);
         const isNameMatch = couponSellerName && itemShopName && couponSellerName === itemShopName;
 

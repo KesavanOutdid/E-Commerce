@@ -8,6 +8,7 @@ type InitialState = {
   error: string | null;
   appliedCoupon: {
     code: string;
+    couponId?: string;
     discountValue: number;
     discountType: "percentage" | "fixed";
     maxDiscountAmount?: number;
@@ -200,6 +201,7 @@ export const applyCoupon = createAsyncThunk(
       if (data.success) {
         return {
           code: data.data.code,
+          couponId: data.data.couponId,
           discountValue: data.data.discountValue,
           discountType: data.data.discountType,
         };

@@ -220,6 +220,7 @@ const Checkout = () => {
       shippingFees: 150,
       codFees: payment === "cod" ? 50 : 0,
       couponCode: appliedCoupon?.code || null,
+      couponId: appliedCoupon?.couponId || null,
       discountAmount: discountAmount,
       grandTotal: totalPrice + totalGst + 150 + (payment === "cod" ? 50 : 0) - discountAmount,
     };
