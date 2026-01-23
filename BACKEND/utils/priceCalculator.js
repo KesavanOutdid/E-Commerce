@@ -36,13 +36,29 @@ async function calculateCartPrices(items, couponCode = null) {
 
     // 1. Check for Active Offers (Direct or Tiered)
     const matchingOffer = activeOffers.find(offer => {
+      // a. Seller Ownership Check
+      const offerSellerId = offer.sellerId?.toString() || offer.owner?.id?.toString();
+      const itemSellerId = resolvedSellerId?.toString();
+      
+      if (offer.owner?.type === 'seller' && offerSellerId && itemSellerId) {
+        if (offerSellerId !== itemSellerId) return false;
+      }
+
+      // b. Applicability Type Check
       if (offer.applicableTo.type === 'all') return true;
+      
+      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
+
       if (offer.applicableTo.type === 'product') {
-        const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
-        return applicableIds.includes(item.productId?.toString()) || 
+        return (item.productId && applicableIds.includes(item.productId.toString())) || 
+               (item.variantId && applicableIds.includes(item.variantId.toString())) ||
                (item._id && applicableIds.includes(item._id.toString()));
       }
-      if (offer.applicableTo.type === 'category') return offer.applicableTo.ids.map(id => id.toString()).includes(item.subCategoryId?.toString());
+      
+      if (offer.applicableTo.type === 'category') {
+        return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString());
+      }
+      
       return false;
     });
 

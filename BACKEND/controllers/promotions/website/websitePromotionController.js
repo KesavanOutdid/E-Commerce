@@ -22,6 +22,7 @@ exports.getActiveOffers = async (req, res) => {
 exports.getOffersByProduct = async (req, res) => {
   try {
     const { productId } = req.params;
+    const { variantId } = req.query;
 
     if (!productId) {
       return res.status(400).json({
@@ -40,17 +41,28 @@ exports.getOffersByProduct = async (req, res) => {
 
     const activeOffers = await Offer.findActive();
     
-    // Filter offers that apply to this specific product or its category or 'all'
+    // Filter offers that apply to this specific product, variant, or its category or 'all'
     const productOffers = activeOffers.filter(offer => {
+      // 1. Seller Ownership Check
+      const offerSellerId = offer.sellerId?.toString() || offer.owner?.id?.toString();
+      const productSellerId = (product.sellerId || product.userId)?.toString();
+      
+      if (offer.owner?.type === 'seller' && offerSellerId && productSellerId) {
+        if (offerSellerId !== productSellerId) return false;
+      }
+
+      // 2. Applicability Type Check
       if (offer.applicableTo.type === 'all') return true;
       
       const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
-      const prodId = product._id.toString();
+      const prodId = product._id?.toString() || product.productId;
       const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
       const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
 
       if (offer.applicableTo.type === 'product') {
-        return applicableIds.includes(productId) || applicableIds.includes(prodId);
+        return applicableIds.includes(productId) || 
+               (prodId && applicableIds.includes(prodId)) ||
+               (variantId && applicableIds.includes(variantId.toString()));
       }
       if (offer.applicableTo.type === 'category') {
         return (subCatId && applicableIds.includes(subCatId)) || 
@@ -169,6 +181,7 @@ exports.verifyCoupon = async (req, res) => {
 exports.getCouponsByProduct = async (req, res) => {
   try {
     const { productId } = req.params;
+    const { variantId } = req.query;
 
     if (!productId) {
       return res.status(400).json({
@@ -187,17 +200,28 @@ exports.getCouponsByProduct = async (req, res) => {
 
     const activeCoupons = await Coupon.findActive();
     
-    // Filter coupons that apply to this specific product or its category or 'all'
+    // Filter coupons that apply to this specific product, variant, or its category or 'all'
     const productCoupons = activeCoupons.filter(coupon => {
+      // 1. Seller Ownership Check
+      const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
+      const productSellerId = (product.sellerId || product.userId)?.toString();
+      
+      if (coupon.owner?.type === 'seller' && couponSellerId && productSellerId) {
+        if (couponSellerId !== productSellerId) return false;
+      }
+
+      // 2. Applicability Type Check
       if (coupon.applicableTo.type === 'all') return true;
 
       const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString());
-      const prodId = product._id.toString();
+      const prodId = product._id?.toString() || product.productId;
       const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
       const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
 
       if (coupon.applicableTo.type === 'product') {
-        return applicableIds.includes(productId) || applicableIds.includes(prodId);
+        return applicableIds.includes(productId) || 
+               (prodId && applicableIds.includes(prodId)) ||
+               (variantId && applicableIds.includes(variantId.toString()));
       }
       if (coupon.applicableTo.type === 'category') {
         return (subCatId && applicableIds.includes(subCatId)) || 
