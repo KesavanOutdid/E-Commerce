@@ -5,6 +5,8 @@ const User = require('../../models/User');
 const Product = require('../../models/Product');
 const ProductVariant = require('../../models/ProductVariant');
 const PriceHistory = require('../../models/PriceHistory');
+const Coupon = require('../../models/Coupon');
+const SubCategory = require('../../models/SubCategory');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -27,8 +29,72 @@ const razorpay = isValidRazorpayConfig()
     })
   : null;
 
-const PLATFORM_FEE_PERCENTAGE = 5;
 const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000001';
+
+async function validateCoupon(couponCode, userId, orderTotal) {
+  if (!couponCode) {
+    return { valid: false, error: null, coupon: null };
+  }
+
+  const coupon = await Coupon.findByCode(couponCode);
+  if (!coupon) {
+    return { valid: false, error: 'Invalid coupon code', coupon: null };
+  }
+
+  if (!coupon.status) {
+    return { valid: false, error: 'This coupon is no longer active', coupon: null };
+  }
+
+  const now = new Date();
+  if (new Date(coupon.expiryDate) < now) {
+    return { valid: false, error: 'This coupon has expired', coupon: null };
+  }
+
+  if (orderTotal < coupon.minOrderValue) {
+    return { 
+      valid: false, 
+      error: `Minimum order value of ₹${coupon.minOrderValue} required to use this coupon`, 
+      coupon: null 
+    };
+  }
+
+  if (coupon.usageLimit !== null && coupon.usedCount >= coupon.usageLimit) {
+    return { valid: false, error: 'This coupon has reached its usage limit', coupon: null };
+  }
+
+  if (coupon.userLimit && coupon.userLimit > 0) {
+    const userOrdersWithCoupon = await Order.collection().countDocuments({
+      userId: userId,
+      couponId: coupon.couponId,
+      orderStatus: { $ne: 'cancelled' }
+    });
+
+    if (userOrdersWithCoupon >= coupon.userLimit) {
+      return { 
+        valid: false, 
+        error: 'You have already used this coupon the maximum number of times', 
+        coupon: null 
+      };
+    }
+  }
+
+  let discountAmount = 0;
+  if (coupon.discountType === 'fixed') {
+    discountAmount = coupon.discountValue;
+  } else if (coupon.discountType === 'percentage') {
+    discountAmount = (orderTotal * coupon.discountValue) / 100;
+    if (coupon.maxDiscountAmount && discountAmount > coupon.maxDiscountAmount) {
+      discountAmount = coupon.maxDiscountAmount;
+    }
+  }
+
+  return { 
+    valid: true, 
+    error: null, 
+    coupon: coupon,
+    discountAmount: discountAmount
+  };
+}
 
 async function processPlatformFees(orderItems, orderId, paymentType) {
   const results = {
@@ -40,6 +106,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
     try {
       let sellerId = null;
       let salePrice = 0;
+      let commissionPercentage = 0;
 
       if (item.variantId) {
         const variant = await ProductVariant.findById(item.variantId);
@@ -50,7 +117,15 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
       }
 
       if (sellerId && salePrice > 0) {
-        const platformFee = (salePrice * PLATFORM_FEE_PERCENTAGE) / 100;
+        const product = await Product.findById(item.productId);
+        if (product && product.subCategoryId) {
+          const subCategory = await SubCategory.findById(product.subCategoryId);
+          if (subCategory && subCategory.commissionPercentage) {
+            commissionPercentage = subCategory.commissionPercentage;
+          }
+        }
+
+        const platformFee = (salePrice * commissionPercentage) / 100;
         const sellerEarnings = salePrice - platformFee;
 
         await User.addSellerEarnings(sellerId.toString(), sellerEarnings);
@@ -75,7 +150,8 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
           variantId: item.variantId,
           salePrice: salePrice,
           platformFee: platformFee,
-          sellerEarnings: sellerEarnings
+          sellerEarnings: sellerEarnings,
+          commissionPercentage: commissionPercentage
         });
       }
     } catch (error) {
@@ -110,7 +186,7 @@ async function processPlatformFees(orderItems, orderId, paymentType) {
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.userId;
-    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time } = req.body;
+    let { deliveryAddress, paymentType, totalPrice, gst, subTotal, grandTotal, productIds, shippingFees, codFees, time, couponCode, discountAmount } = req.body;
 
     if (!userId) {
       return res.status(401).json({ 
@@ -248,7 +324,28 @@ exports.createOrder = async (req, res) => {
 
     const finalCodFees = codFees || 0;
     const finalShippingFees = shippingFees || 0;
-    // grandTotal already includes shipping and COD fees from frontend
+
+    let validatedCoupon = null;
+    let finalDiscountAmount = 0;
+    let couponId = null;
+
+    if (couponCode) {
+      const couponValidation = await validateCoupon(couponCode, userId, subTotal);
+      
+      if (!couponValidation.valid) {
+        return res.status(400).json({ 
+          success: false, 
+          message: couponValidation.error 
+        });
+      }
+
+      validatedCoupon = couponValidation.coupon;
+      finalDiscountAmount = couponValidation.discountAmount;
+      couponId = validatedCoupon.couponId;
+    } else if (discountAmount && discountAmount > 0) {
+      finalDiscountAmount = discountAmount;
+    }
+
     const finalGrandTotal = grandTotal;
 
     let razorpayOrder = null;
@@ -278,6 +375,9 @@ exports.createOrder = async (req, res) => {
       grandTotal: finalGrandTotal,
       codFees: finalCodFees,
       shippingFees: finalShippingFees,
+      couponId: couponId,
+      couponCode: couponCode || null,
+      discountAmount: finalDiscountAmount,
       deliveryAddress: deliveryAddress,
       paymentType: paymentType,
       paymentStatus: 'pending',
@@ -325,6 +425,14 @@ exports.createOrder = async (req, res) => {
       }
 
       await processPlatformFees(selectedItems, order.orderId, paymentType);
+
+      if (couponId) {
+        try {
+          await Coupon.incrementUsage(couponId);
+        } catch (couponError) {
+          console.error('Error incrementing coupon usage:', couponError);
+        }
+      }
 
       if (productIds && Array.isArray(productIds) && productIds.length > 0) {
         for (const item of selectedItems) {
@@ -471,6 +579,14 @@ exports.verifyOrder = async (req, res) => {
       }
 
       await processPlatformFees(order.items, order.orderId, order.paymentType);
+
+      if (order.couponId) {
+        try {
+          await Coupon.incrementUsage(order.couponId);
+        } catch (couponError) {
+          console.error('Error incrementing coupon usage:', couponError);
+        }
+      }
     }
 
     return res.status(200).json({

@@ -1603,7 +1603,7 @@ function ProductViewPage() {
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                     className: "mb-4",
                                                                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.46:5656")}${variantImages[selectedImageIndex]}`,
+                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.47:5656")}${variantImages[selectedImageIndex]}`,
                                                                         alt: `Variant ${selectedVariantIndex + 1} Image ${selectedImageIndex + 1}`,
                                                                         className: "w-full h-96 object-contain bg-gray-50 rounded-lg border border-gray-200"
                                                                     }, void 0, false, {
@@ -1622,7 +1622,7 @@ function ProductViewPage() {
                                                                             onClick: ()=>setSelectedImageIndex(imgIndex),
                                                                             className: `h-16 rounded-lg border-2 overflow-hidden transition ${selectedImageIndex === imgIndex ? 'border-primary ring-2 ring-primary/50' : 'border-gray-200 hover:border-gray-300'}`,
                                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.46:5656")}${image}`,
+                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.47:5656")}${image}`,
                                                                                 alt: `Thumbnail ${imgIndex + 1}`,
                                                                                 className: "w-full h-full object-cover"
                                                                             }, void 0, false, {

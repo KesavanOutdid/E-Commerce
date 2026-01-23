@@ -113,6 +113,18 @@ export default function PromotionsPage() {
         }
     }, [isAuthenticated, isLoading, router])
 
+    useEffect(() => {
+        if (isModalOpen || deleteConfirm) {
+            document.body.style.overflow = 'hidden'
+        } else {
+            document.body.style.overflow = 'unset'
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset'
+        }
+    }, [isModalOpen, deleteConfirm])
+
     const fetchAll = async () => {
         setLoading(true)
         await Promise.all([fetchCoupons(), fetchOffers(), fetchProducts()])
