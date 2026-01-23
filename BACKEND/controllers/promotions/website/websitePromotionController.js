@@ -1,7 +1,53 @@
 const Offer = require('../../../models/Offer');
 const Coupon = require('../../../models/Coupon');
 const Product = require('../../../models/Product');
+const User = require('../../../models/User');
+const Seller = require('../../../models/Seller');
 const { calculateCartPrices } = require('../../../utils/priceCalculator');
+
+/**
+ * Resolves all linked IDs for a product's owner (userId, sellerId, and MongoDB ObjectIDs from both collections)
+ */
+async function resolveProductSellerIds(product) {
+  const ids = new Set();
+  if (product.sellerId) ids.add(product.sellerId.toString());
+  if (product.userId) ids.add(product.userId.toString());
+
+  const searchIds = Array.from(ids);
+  if (searchIds.length === 0) return [];
+
+  // 1. Resolve from User collection
+  const user = await User.collection().findOne({
+    $or: [
+      { userId: { $in: searchIds } },
+      { _id: { $in: searchIds.map(id => {
+        try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
+      }).filter(id => id !== null) } }
+    ]
+  });
+
+  if (user) {
+    if (user._id) ids.add(user._id.toString());
+    if (user.userId) ids.add(user.userId.toString());
+  }
+
+  // 2. Resolve from Seller collection
+  const seller = await Seller.collection().findOne({
+    $or: [
+      { userId: { $in: searchIds } },
+      { _id: { $in: searchIds.map(id => {
+        try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
+      }).filter(id => id !== null) } }
+    ]
+  });
+
+  if (seller) {
+    if (seller._id) ids.add(seller._id.toString());
+    if (seller.userId) ids.add(seller.userId.toString());
+  }
+
+  return Array.from(ids);
+}
 
 exports.getActiveOffers = async (req, res) => {
   try {
@@ -39,27 +85,8 @@ exports.getOffersByProduct = async (req, res) => {
       });
     }
 
-    // Resolve all possible seller IDs (both _id and userId)
-    const productSellerIds = [];
-    if (product.sellerId) productSellerIds.push(product.sellerId.toString());
-    if (product.userId) productSellerIds.push(product.userId.toString());
-    
-    // If we only have one ID type, try to find the user to get the other one (matching _id to userId)
-    if (productSellerIds.length > 0) {
-      const User = require('../../../models/User');
-      const seller = await User.collection().findOne({
-        $or: [
-          { userId: { $in: productSellerIds } },
-          { _id: { $in: productSellerIds.map(id => {
-            try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
-          }).filter(id => id !== null) } }
-        ]
-      });
-      if (seller) {
-        if (seller._id) productSellerIds.push(seller._id.toString());
-        if (seller.userId) productSellerIds.push(seller.userId.toString());
-      }
-    }
+    // Resolve all possible seller IDs (both _id and userId from both collections)
+    const productSellerIds = await resolveProductSellerIds(product);
 
     const activeOffers = await Offer.findActive();
     
@@ -220,27 +247,8 @@ exports.getCouponsByProduct = async (req, res) => {
       });
     }
 
-    // Resolve all possible seller IDs (both _id and userId)
-    const productSellerIds = [];
-    if (product.sellerId) productSellerIds.push(product.sellerId.toString());
-    if (product.userId) productSellerIds.push(product.userId.toString());
-    
-    // If we only have one ID type, try to find the user to get the other one (matching _id to userId)
-    if (productSellerIds.length > 0) {
-      const User = require('../../../models/User');
-      const seller = await User.collection().findOne({
-        $or: [
-          { userId: { $in: productSellerIds } },
-          { _id: { $in: productSellerIds.map(id => {
-            try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
-          }).filter(id => id !== null) } }
-        ]
-      });
-      if (seller) {
-        if (seller._id) productSellerIds.push(seller._id.toString());
-        if (seller.userId) productSellerIds.push(seller.userId.toString());
-      }
-    }
+    // Resolve all possible seller IDs (both _id and userId from both collections)
+    const productSellerIds = await resolveProductSellerIds(product);
 
     const activeCoupons = await Coupon.findActive();
     
