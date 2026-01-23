@@ -37,6 +37,9 @@ export interface Order {
   codFees?: number;
   codFee?: number;
   shippingFees?: number;
+  couponId?: string | null;
+  couponCode?: string | null;
+  discountAmount?: number;
   deliveryAddress: {
     name: string;
     phone: string;
