@@ -39,30 +39,52 @@ exports.getOffersByProduct = async (req, res) => {
       });
     }
 
+    // Resolve all possible seller IDs (both _id and userId)
+    const productSellerIds = [];
+    if (product.sellerId) productSellerIds.push(product.sellerId.toString());
+    if (product.userId) productSellerIds.push(product.userId.toString());
+    
+    // If we only have one ID type, try to find the user to get the other one (matching _id to userId)
+    if (productSellerIds.length > 0) {
+      const User = require('../../../models/User');
+      const seller = await User.collection().findOne({
+        $or: [
+          { userId: { $in: productSellerIds } },
+          { _id: { $in: productSellerIds.map(id => {
+            try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
+          }).filter(id => id !== null) } }
+        ]
+      });
+      if (seller) {
+        if (seller._id) productSellerIds.push(seller._id.toString());
+        if (seller.userId) productSellerIds.push(seller.userId.toString());
+      }
+    }
+
     const activeOffers = await Offer.findActive();
     
     // Filter offers that apply to this specific product, variant, or its category or 'all'
     const productOffers = activeOffers.filter(offer => {
       // 1. Seller Ownership Check
-      const offerSellerId = offer.sellerId?.toString() || offer.owner?.id?.toString();
-      const productSellerId = (product.sellerId || product.userId)?.toString();
+      const offerSellerId = (offer.sellerId?.toString() || offer.owner?.id?.toString());
       
-      if (offer.owner?.type === 'seller' && offerSellerId && productSellerId) {
-        if (offerSellerId !== productSellerId) return false;
+      if (offer.owner?.type === 'seller' && offerSellerId) {
+        if (!productSellerIds.includes(offerSellerId)) return false;
       }
 
       // 2. Applicability Type Check
       if (offer.applicableTo.type === 'all') return true;
       
-      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
-      const prodId = product._id?.toString() || product.productId;
-      const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
-      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
+      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString().toLowerCase());
+      const prodId = (product._id?.toString() || product.productId)?.toLowerCase();
+      const variantIdStr = variantId?.toString().toLowerCase();
+      const subCatId = product.subCategoryId ? product.subCategoryId.toString().toLowerCase() : null;
+      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString().toLowerCase() : null;
 
       if (offer.applicableTo.type === 'product') {
-        return applicableIds.includes(productId) || 
+        return (productId && applicableIds.includes(productId.toLowerCase())) || 
                (prodId && applicableIds.includes(prodId)) ||
-               (variantId && applicableIds.includes(variantId.toString()));
+               (variantIdStr && applicableIds.includes(variantIdStr));
       }
       if (offer.applicableTo.type === 'category') {
         return (subCatId && applicableIds.includes(subCatId)) || 
@@ -198,30 +220,52 @@ exports.getCouponsByProduct = async (req, res) => {
       });
     }
 
+    // Resolve all possible seller IDs (both _id and userId)
+    const productSellerIds = [];
+    if (product.sellerId) productSellerIds.push(product.sellerId.toString());
+    if (product.userId) productSellerIds.push(product.userId.toString());
+    
+    // If we only have one ID type, try to find the user to get the other one (matching _id to userId)
+    if (productSellerIds.length > 0) {
+      const User = require('../../../models/User');
+      const seller = await User.collection().findOne({
+        $or: [
+          { userId: { $in: productSellerIds } },
+          { _id: { $in: productSellerIds.map(id => {
+            try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
+          }).filter(id => id !== null) } }
+        ]
+      });
+      if (seller) {
+        if (seller._id) productSellerIds.push(seller._id.toString());
+        if (seller.userId) productSellerIds.push(seller.userId.toString());
+      }
+    }
+
     const activeCoupons = await Coupon.findActive();
     
     // Filter coupons that apply to this specific product, variant, or its category or 'all'
     const productCoupons = activeCoupons.filter(coupon => {
       // 1. Seller Ownership Check
-      const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
-      const productSellerId = (product.sellerId || product.userId)?.toString();
+      const couponSellerId = (coupon.sellerId?.toString() || coupon.owner?.id?.toString());
       
-      if (coupon.owner?.type === 'seller' && couponSellerId && productSellerId) {
-        if (couponSellerId !== productSellerId) return false;
+      if (coupon.owner?.type === 'seller' && couponSellerId) {
+        if (!productSellerIds.includes(couponSellerId)) return false;
       }
 
       // 2. Applicability Type Check
       if (coupon.applicableTo.type === 'all') return true;
 
-      const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString());
-      const prodId = product._id?.toString() || product.productId;
-      const subCatId = product.subCategoryId ? product.subCategoryId.toString() : null;
-      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString() : null;
+      const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString().toLowerCase());
+      const prodId = (product._id?.toString() || product.productId)?.toLowerCase();
+      const variantIdStr = variantId?.toString().toLowerCase();
+      const subCatId = product.subCategoryId ? product.subCategoryId.toString().toLowerCase() : null;
+      const mainCatId = product.mainCategoryId ? product.mainCategoryId.toString().toLowerCase() : null;
 
       if (coupon.applicableTo.type === 'product') {
-        return applicableIds.includes(productId) || 
+        return (productId && applicableIds.includes(productId.toLowerCase())) || 
                (prodId && applicableIds.includes(prodId)) ||
-               (variantId && applicableIds.includes(variantId.toString()));
+               (variantIdStr && applicableIds.includes(variantIdStr));
       }
       if (coupon.applicableTo.type === 'category') {
         return (subCatId && applicableIds.includes(subCatId)) || 

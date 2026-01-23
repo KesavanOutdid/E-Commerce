@@ -47,16 +47,16 @@ async function calculateCartPrices(items, couponCode = null) {
       // b. Applicability Type Check
       if (offer.applicableTo.type === 'all') return true;
       
-      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString());
+      const applicableIds = (offer.applicableTo.ids || []).map(id => id.toString().toLowerCase());
 
       if (offer.applicableTo.type === 'product') {
-        return (item.productId && applicableIds.includes(item.productId.toString())) || 
-               (item.variantId && applicableIds.includes(item.variantId.toString())) ||
-               (item._id && applicableIds.includes(item._id.toString()));
+        return (item.productId && applicableIds.includes(item.productId.toString().toLowerCase())) || 
+               (item.variantId && applicableIds.includes(item.variantId.toString().toLowerCase())) ||
+               (item._id && applicableIds.includes(item._id.toString().toLowerCase()));
       }
       
       if (offer.applicableTo.type === 'category') {
-        return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString());
+        return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString().toLowerCase());
       }
       
       return false;
@@ -129,17 +129,17 @@ async function calculateCartPrices(items, couponCode = null) {
         // 2. Applicability Type Check
         if (!coupon.applicableTo || coupon.applicableTo.type === 'all') return true;
         
-        const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString());
+        const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString().toLowerCase());
         
         if (coupon.applicableTo.type === 'product') {
           // Check against Product ID, Variant ID, or Item ID (UUID strings)
-          return (item.productId && applicableIds.includes(item.productId.toString())) || 
-                 (item.variantId && applicableIds.includes(item.variantId.toString())) ||
-                 (item._id && applicableIds.includes(item._id.toString()));
+          return (item.productId && applicableIds.includes(item.productId.toString().toLowerCase())) || 
+                 (item.variantId && applicableIds.includes(item.variantId.toString().toLowerCase())) ||
+                 (item._id && applicableIds.includes(item._id.toString().toLowerCase()));
         }
         
         if (coupon.applicableTo.type === 'category') {
-          return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString());
+          return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString().toLowerCase());
         }
         
         return false;
