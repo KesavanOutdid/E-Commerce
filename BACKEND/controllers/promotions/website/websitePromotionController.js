@@ -4,50 +4,7 @@ const Product = require('../../../models/Product');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const { calculateCartPrices } = require('../../../utils/priceCalculator');
-
-/**
- * Resolves all linked IDs for a product's owner (userId, sellerId, and MongoDB ObjectIDs from both collections)
- */
-async function resolveProductSellerIds(product) {
-  const ids = new Set();
-  if (product.sellerId) ids.add(product.sellerId.toString());
-  if (product.userId) ids.add(product.userId.toString());
-
-  const searchIds = Array.from(ids);
-  if (searchIds.length === 0) return [];
-
-  // 1. Resolve from User collection
-  const user = await User.collection().findOne({
-    $or: [
-      { userId: { $in: searchIds } },
-      { _id: { $in: searchIds.map(id => {
-        try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
-      }).filter(id => id !== null) } }
-    ]
-  });
-
-  if (user) {
-    if (user._id) ids.add(user._id.toString());
-    if (user.userId) ids.add(user.userId.toString());
-  }
-
-  // 2. Resolve from Seller collection
-  const seller = await Seller.collection().findOne({
-    $or: [
-      { userId: { $in: searchIds } },
-      { _id: { $in: searchIds.map(id => {
-        try { return new (require('mongodb').ObjectId)(id); } catch(e) { return null; }
-      }).filter(id => id !== null) } }
-    ]
-  });
-
-  if (seller) {
-    if (seller._id) ids.add(seller._id.toString());
-    if (seller.userId) ids.add(seller.userId.toString());
-  }
-
-  return Array.from(ids);
-}
+const { resolveProductSellerIds } = require('../../../utils/idResolver');
 
 exports.getActiveOffers = async (req, res) => {
   try {

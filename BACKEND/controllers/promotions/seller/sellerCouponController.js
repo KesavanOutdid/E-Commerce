@@ -1,5 +1,6 @@
 const Coupon = require('../../../models/Coupon');
 const Seller = require('../../../models/Seller');
+const User = require('../../../models/User');
 const { ObjectId } = require('mongodb');
 
 const parseJsonFields = (data) => {
@@ -45,6 +46,23 @@ exports.createCoupon = async (req, res) => {
   }
 };
 
+/**
+ * Resolves all possible IDs for a seller (Seller ObjectID, User ObjectID, User UUID string)
+ */
+async function resolveSellerIds(seller) {
+  const ids = new Set();
+  if (seller._id) ids.add(seller._id.toString());
+  if (seller.userId) ids.add(seller.userId.toString());
+
+  // Also find the User record to get its ObjectID
+  const user = await User.collection().findOne({ userId: seller.userId });
+  if (user && user._id) {
+    ids.add(user._id.toString());
+  }
+
+  return Array.from(ids);
+}
+
 exports.getMyCoupons = async (req, res) => {
   try {
     const userId = req.userId;
@@ -54,8 +72,21 @@ exports.getMyCoupons = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Seller profile not found' });
     }
 
+    const sellerIds = await resolveSellerIds(seller);
+
     const coupons = await Coupon.collection().find({ 
-      sellerId: seller._id 
+      $or: [
+        { sellerId: { $in: sellerIds } },
+        { sellerId: { $in: sellerIds.map(id => {
+            try { return new ObjectId(id); } catch(e) { return null; }
+          }).filter(id => id !== null) 
+        } },
+        { "owner.id": { $in: sellerIds } },
+        { "owner.id": { $in: sellerIds.map(id => {
+            try { return new ObjectId(id); } catch(e) { return null; }
+          }).filter(id => id !== null) 
+        } }
+      ]
     }).toArray();
     
     res.status(200).json({ success: true, data: coupons });
@@ -68,12 +99,16 @@ exports.getCouponById = async (req, res) => {
   try {
     const userId = req.userId;
     const seller = await Seller.findByUserId(userId);
+    if (!seller) return res.status(403).json({ success: false, message: 'Seller profile not found' });
+
+    const sellerIds = await resolveSellerIds(seller);
     
     const coupon = await Coupon.findById(req.params.id);
     if (!coupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
 
-    // Ensure coupon belongs to this seller
-    if (coupon.sellerId.toString() !== seller._id.toString()) {
+    // Ensure coupon belongs to this seller using resolved IDs
+    const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
+    if (!sellerIds.includes(couponSellerId)) {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
@@ -87,12 +122,16 @@ exports.updateCoupon = async (req, res) => {
   try {
     const userId = req.userId;
     const seller = await Seller.findByUserId(userId);
+    if (!seller) return res.status(403).json({ success: false, message: 'Seller profile not found' });
+
+    const sellerIds = await resolveSellerIds(seller);
     
     const existingCoupon = await Coupon.findById(req.params.id);
     if (!existingCoupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
 
     // Ensure coupon belongs to this seller
-    if (existingCoupon.sellerId.toString() !== seller._id.toString()) {
+    const couponSellerId = existingCoupon.sellerId?.toString() || existingCoupon.owner?.id?.toString();
+    if (!sellerIds.includes(couponSellerId)) {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
@@ -120,12 +159,16 @@ exports.deleteCoupon = async (req, res) => {
   try {
     const userId = req.userId;
     const seller = await Seller.findByUserId(userId);
+    if (!seller) return res.status(403).json({ success: false, message: 'Seller profile not found' });
+
+    const sellerIds = await resolveSellerIds(seller);
     
     const existingCoupon = await Coupon.findById(req.params.id);
     if (!existingCoupon) return res.status(404).json({ success: false, message: 'Coupon not found' });
 
     // Ensure coupon belongs to this seller
-    if (existingCoupon.sellerId.toString() !== seller._id.toString()) {
+    const couponSellerId = existingCoupon.sellerId?.toString() || existingCoupon.owner?.id?.toString();
+    if (!sellerIds.includes(couponSellerId)) {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 
