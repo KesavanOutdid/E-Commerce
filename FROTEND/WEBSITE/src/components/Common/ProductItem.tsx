@@ -18,7 +18,7 @@ const ProductItem = ({ item, variant = "default" }: ProductItemProps) => {
   const { openModal } = useModalContext();
   const dispatch = useDispatch<AppDispatch>();
 
-  const id = item._id || item.productId || item.id;
+  const id = item.productId || item._id || item.id;
   const title = item.productName || item.title;
   const reviews = item.totalReviews || item.reviews || 0;
   const displayPrice = item.minPriceDetails?.salePrice ?? item.minPriceDetails?.price ?? 0;

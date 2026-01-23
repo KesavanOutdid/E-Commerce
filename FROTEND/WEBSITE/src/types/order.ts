@@ -17,6 +17,13 @@ export interface OrderItem {
   updatedBy: string;
 }
 
+export interface StatusHistory {
+  status: string;
+  timestamp: string;
+  updatedBy: string;
+  note?: string;
+}
+
 export interface Order {
   _id: string;
   orderId: string;
@@ -46,6 +53,7 @@ export interface Order {
   paymentType: string;
   paymentStatus: string;
   orderStatus: string;
+  statusHistory?: StatusHistory[];
   razorpayOrderId: string | null;
   razorpayPaymentId: string | null;
   razorpaySignature: string | null;

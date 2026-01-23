@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.41:5000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.57:5000";
 
 export const API_ENDPOINTS = {
   CATEGORIES: `${API_BASE_URL}/api/categories`,
@@ -39,4 +39,9 @@ export const API_ENDPOINTS = {
   CONTACT: `${API_BASE_URL}/api/contact`,
   NEWSLETTER_SUBSCRIBE: `${API_BASE_URL}/api/newsletter/subscribe`,
   NEWSLETTER: `${API_BASE_URL}/api/newsletter`,
+  PRODUCT_PROMOTIONS: (productId: string) => `${API_BASE_URL}/api/promotions/offers/product/${productId}`,
+  PRODUCT_COUPONS: (productId: string) => `${API_BASE_URL}/api/promotions/coupons/product/${productId}`,
+  VERIFY_COUPON: `${API_BASE_URL}/api/promotions/coupons/verify`,
+  REVIEWS: `${API_BASE_URL}/api/reviews`,
+  PRODUCT_REVIEWS: (productId: string) => `${API_BASE_URL}/api/reviews/product/${productId}`,
 };

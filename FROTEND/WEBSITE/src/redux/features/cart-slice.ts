@@ -6,6 +6,13 @@ type InitialState = {
   items: CartItem[];
   loading: boolean;
   error: string | null;
+  appliedCoupon: {
+    code: string;
+    discountValue: number;
+    discountType: "percentage" | "fixed";
+    maxDiscountAmount?: number;
+    minOrderValue?: number;
+  } | null;
 };
 
 export type CartItem = {
@@ -28,6 +35,8 @@ export type CartItem = {
   gst?: number;
   subTotal?: number;
   slug?: string;
+  mainCategoryId?: string;
+  subCategoryId?: string;
 };
 
 const getInitialCart = (): CartItem[] => {
@@ -42,6 +51,7 @@ const initialState: InitialState = {
   items: getInitialCart(),
   loading: false,
   error: null,
+  appliedCoupon: null,
 };
 
 // Async Thunks
@@ -76,6 +86,8 @@ export const fetchCart = createAsyncThunk(
             ) || [],
           },
           slug: item.slug,
+          mainCategoryId: item.mainCategoryId,
+          subCategoryId: item.subCategoryId,
         }));
       }
       return rejectWithValue(data.message);
@@ -155,6 +167,50 @@ export const clearCartServer = createAsyncThunk(
   }
 );
 
+export const applyCoupon = createAsyncThunk(
+  "cart/applyCoupon",
+  async (
+    {
+      code,
+      items,
+      subTotal,
+      accessToken,
+    }: { code: string; items: any[]; subTotal: number; accessToken?: string },
+    { rejectWithValue }
+  ) => {
+    try {
+      // Map items to match backend expectation
+      const cartItems = items.map((item) => ({
+        productId: item.productId,
+        variantId: item.sellerProductId || null,
+        qty: item.quantity,
+        price: item.discountedPrice, // Using discountedPrice as the price for coupon calculation
+        subCategoryId: item.subCategoryId,
+      }));
+
+      const response = await fetch(API_ENDPOINTS.VERIFY_COUPON, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
+        },
+        body: JSON.stringify({ code, cartItems, subTotal }),
+      });
+      const data = await response.json();
+      if (data.success) {
+        return {
+          code: data.data.code,
+          discountValue: data.data.discountValue,
+          discountType: data.data.discountType,
+        };
+      }
+      return rejectWithValue(data.message);
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 export const addToCart = createAsyncThunk(
   "cart/addToCart",
   async ({ item, accessToken, isAuthenticated }: { item: any, accessToken?: string, isAuthenticated: boolean }, { dispatch, getState, rejectWithValue }) => {
@@ -169,6 +225,8 @@ export const addToCart = createAsyncThunk(
       discountedPrice: item.discountedPrice || item.price,
       quantity: item.quantity || 1,
       imgs: item.imgs,
+      mainCategoryId: item.mainCategoryId,
+      subCategoryId: item.subCategoryId,
     };
     
     const state = getState() as RootState;
@@ -228,7 +286,7 @@ export const cart = createSlice({
   initialState,
   reducers: {
     addItemToCart: (state, action: PayloadAction<CartItem>) => {
-      const { id, title, price, quantity, discountedPrice, imgs, sellerProductId, sellerId } =
+      const { id, title, price, quantity, discountedPrice, imgs, sellerProductId, sellerId, mainCategoryId, subCategoryId } =
         action.payload;
       const existingItem = state.items.find((item) => item.productId === action.payload.productId && ((item.sellerProductId ?? null) === (sellerProductId ?? null)));
 
@@ -245,6 +303,8 @@ export const cart = createSlice({
           quantity,
           discountedPrice,
           imgs,
+          mainCategoryId,
+          subCategoryId,
         });
       }
       if (typeof window !== "undefined") {
@@ -275,9 +335,13 @@ export const cart = createSlice({
 
     removeAllItemsFromCart: (state) => {
       state.items = [];
+      state.appliedCoupon = null;
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state.items));
       }
+    },
+    removeCoupon: (state) => {
+      state.appliedCoupon = null;
     },
   },
   extraReducers: (builder) => {
@@ -295,6 +359,9 @@ export const cart = createSlice({
       .addCase(fetchCart.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      .addCase(applyCoupon.fulfilled, (state, action) => {
+        state.appliedCoupon = action.payload;
       })
       .addCase(updateCartItemServer.fulfilled, (state, action) => {
         const { productId, sellerProductId, qty } = action.payload;
@@ -330,10 +397,37 @@ export const selectTotalPrice = createSelector([selectCartItems], (items) => {
   }, 0);
 });
 
+export const selectTotalGst = createSelector([selectCartItems], (items) => {
+  return items.reduce((total, item) => {
+    // If item has GST from backend, use it, otherwise assume 18% or 0
+    const itemGst = item.gst || (item.discountedPrice * 0.18);
+    return total + itemGst * item.quantity;
+  }, 0);
+});
+
+export const selectTotalSavings = createSelector([selectCartItems, (state: RootState) => state.cartReducer.appliedCoupon, selectTotalPrice], (items, appliedCoupon, totalPrice) => {
+  const productSavings = items.reduce((total, item) => {
+    const savingsPerItem = Math.max(0, item.price - item.discountedPrice);
+    return total + savingsPerItem * item.quantity;
+  }, 0);
+
+  let couponSavings = 0;
+  if (appliedCoupon) {
+    if (appliedCoupon.discountType === "percentage") {
+      couponSavings = (totalPrice * appliedCoupon.discountValue) / 100;
+    } else {
+      couponSavings = appliedCoupon.discountValue;
+    }
+  }
+
+  return productSavings + couponSavings;
+});
+
 export const {
   addItemToCart,
   removeItemFromCart,
   updateCartItemQuantity,
   removeAllItemsFromCart,
+  removeCoupon,
 } = cart.actions;
 export default cart.reducer;

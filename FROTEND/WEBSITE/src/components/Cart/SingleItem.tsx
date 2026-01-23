@@ -8,7 +8,11 @@ import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 
-const SingleItem = ({ item }) => {
+const SingleItem = ({ item, coupons = [], onApplyCoupon }: { 
+  item: any, 
+  coupons?: any[], 
+  onApplyCoupon?: (code: string) => void 
+}) => {
   const dispatch = useAppDispatch();
   const { accessToken, isAuthenticated } = useAppSelector((state) => state.authReducer);
 
@@ -57,45 +61,59 @@ const SingleItem = ({ item }) => {
 
   return (
     <div className="flex items-center border-t border-gray-3 py-5 px-7.5">
-      <div className="min-w-[400px]">
-        <div className="flex items-center justify-between gap-5">
-          <div className="w-full flex items-center gap-5.5">
-            <div className="flex items-center justify-center rounded-[5px] bg-gray-2 max-w-[80px] w-full h-17.5 overflow-hidden">
-              <Link href={`/shop-details/${item.productId}`}>
-                <Image 
-                  width={80} 
-                  height={80} 
-                  src={item.imgs?.thumbnails[0] || "/images/product/placeholder.jpg"} 
-                  alt={item.title} 
-                  className="object-contain w-full h-full"
-                />
-              </Link>
-            </div>
+      <div className="min-w-[300px] flex-shrink-0">
+        <div className="flex items-center gap-5.5">
+          <div className="flex items-center justify-center rounded-[5px] bg-gray-2 max-w-[80px] w-full h-17.5 overflow-hidden">
+            <Link href={`/shop-details/${item.productId}`}>
+              <Image 
+                width={80} 
+                height={80} 
+                src={item.imgs?.thumbnails[0] || "/images/product/placeholder.jpg"} 
+                alt={item.title} 
+                className="object-contain w-full h-full"
+              />
+            </Link>
+          </div>
 
-            <div className="max-w-[200px] overflow-hidden">
-              <h3 className="text-dark ease-out duration-200 hover:text-blue line-clamp-1">
-                <Link href={`/shop-details/${item.productId}`}> {item.title} </Link>
-              </h3>
-            </div>
+          <div className="max-w-[180px] overflow-hidden">
+            <h3 className="text-dark ease-out duration-200 hover:text-blue line-clamp-2 text-sm font-medium">
+              <Link href={`/shop-details/${item.productId}`}> {item.title} </Link>
+            </h3>
+            {coupons.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {coupons.slice(0, 2).map((coupon: any) => (
+                  <button
+                    key={coupon.couponId}
+                    onClick={() => onApplyCoupon?.(coupon.code)}
+                    className="text-[10px] bg-blue/5 text-blue border border-dashed border-blue/40 px-1.5 py-0.5 rounded hover:bg-blue hover:text-white transition-all font-bold"
+                  >
+                    {coupon.code}
+                  </button>
+                ))}
+                {coupons.length > 2 && (
+                  <span className="text-[10px] text-gray-400">+{coupons.length - 2} more</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div className="min-w-[180px]">
+      <div className="min-w-[150px] flex-shrink-0">
         <p className="text-dark">₹{item.discountedPrice}</p>
       </div>
 
-      <div className="min-w-[275px]">
-        <div className="w-max flex items-center rounded-md border border-gray-3">
+      <div className="min-w-[150px] flex-shrink-0">
+        <div className="w-max flex items-center rounded-md border border-gray-3 scale-90 -ml-2">
           <button
             onClick={() => handleUpdateQuantity(item.quantity - 1)}
             aria-label="button for remove product"
-            className="flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue"
+            className="flex items-center justify-center w-8 h-8 ease-out duration-200 hover:text-blue"
           >
             <svg
               className="fill-current"
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 20 20"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -107,7 +125,7 @@ const SingleItem = ({ item }) => {
             </svg>
           </button>
 
-          <span className="flex items-center justify-center w-16 h-11.5 border-x border-gray-4">
+          <span className="flex items-center justify-center w-10 h-8 border-x border-gray-4 text-sm">
             {item.quantity}
           </span>
 
@@ -115,14 +133,14 @@ const SingleItem = ({ item }) => {
             onClick={() => handleUpdateQuantity(item.quantity + 1)}
             disabled={item.quantity >= 3}
             aria-label="button for add product"
-            className={`flex items-center justify-center w-11.5 h-11.5 ease-out duration-200 hover:text-blue ${
+            className={`flex items-center justify-center w-8 h-8 ease-out duration-200 hover:text-blue ${
               item.quantity >= 3 ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
             <svg
               className="fill-current"
-              width="20"
-              height="20"
+              width="16"
+              height="16"
               viewBox="0 0 20 20"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -140,11 +158,11 @@ const SingleItem = ({ item }) => {
         </div>
       </div>
 
-      <div className="min-w-[200px]">
-        <p className="text-dark">₹{item.discountedPrice * item.quantity}</p>
+      <div className="min-w-[150px] flex-shrink-0">
+        <p className="text-dark font-medium">₹{item.discountedPrice * item.quantity}</p>
       </div>
 
-      <div className="min-w-[50px] flex justify-end">
+      <div className="min-w-[50px] flex-shrink-0 flex justify-end">
         <button
           onClick={() => handleRemoveFromCart()}
           aria-label="button for remove product from cart"

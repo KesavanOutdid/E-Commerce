@@ -3,11 +3,97 @@ const ProductVariant = require('../../../models/ProductVariant');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const Order = require('../../../models/Order');
+const Offer = require('../../../models/Offer');
+const Coupon = require('../../../models/Coupon');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
 const { getDB } = require('../../../config/db');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+
+// Helper to get applicable offers and coupons for products or variants
+const getApplicablePromotions = async (items, activeOffers = null, activeCoupons = null) => {
+  if (!items || items.length === 0) return { activeOffers, activeCoupons };
+  
+  if (!activeOffers || !activeCoupons) {
+    const now = new Date();
+    const db = getDB();
+
+    // Fetch all potentially relevant active offers and coupons
+    [activeOffers, activeCoupons] = await Promise.all([
+      db.collection('offers').find({
+        status: { $in: [true, "true"] },
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      }).toArray(),
+      db.collection('coupons').find({
+        status: { $in: [true, "true"] },
+        expiryDate: { $gte: now }
+      }).toArray()
+    ]);
+  }
+
+  items.forEach(item => {
+    const itemSellerId = (item.userId || item.sellerId)?.toString();
+    const itemSellerDocId = item.sellerDocId?.toString();
+
+    // Filter offers
+    item.offers = activeOffers.filter(offer => {
+      const { type, ids } = offer.applicableTo;
+      
+      // 1. Check if the promotion is applicable to this product/category
+      const isProductMatch = type === 'product' && (ids.includes(item.productId) || ids.includes(item._id?.toString()));
+      const isCategoryMatch = type === 'category' && (ids.includes(item.mainCategoryId) || ids.includes(item.subCategoryId));
+      const isAllMatch = type === 'all';
+
+      if (!(isProductMatch || isCategoryMatch || isAllMatch)) return false;
+
+      // 2. Enforce seller restriction if it's a seller-owned offer
+      if (offer.owner.type === 'seller') {
+        const offerSellerId = offer.owner.id?.toString();
+        const offerSellerName = offer.owner.name?.toLowerCase();
+        const itemShopName = item.shopName?.toLowerCase();
+
+        const isIdMatch = offerSellerId && (itemSellerId === offerSellerId || itemSellerDocId === offerSellerId);
+        const isNameMatch = offerSellerName && itemShopName && offerSellerName === itemShopName;
+
+        if (!isIdMatch && !isNameMatch) return false;
+      }
+
+      return true;
+    });
+
+    // Filter coupons
+    item.coupons = activeCoupons.filter(coupon => {
+      const { type, ids } = coupon.applicableTo;
+      
+      // 1. Check if the promotion is applicable to this product/category
+      const isProductMatch = type === 'product' && (ids.includes(item.productId) || ids.includes(item._id?.toString()));
+      const isCategoryMatch = type === 'category' && (ids.includes(item.mainCategoryId) || ids.includes(item.subCategoryId));
+      const isAllMatch = type === 'all';
+
+      if (!(isProductMatch || isCategoryMatch || isAllMatch)) return false;
+
+      // 2. Enforce seller restriction
+      const couponSellerId = (coupon.sellerId || coupon.owner?.id)?.toString();
+      const couponSellerName = (coupon.owner?.name)?.toLowerCase();
+      const itemShopName = item.shopName?.toLowerCase();
+      
+      const hasSellerOwner = coupon.owner?.type === 'seller' || (couponSellerId && couponSellerId !== "null" && couponSellerId !== "undefined");
+      
+      if (hasSellerOwner) {
+        const isIdMatch = couponSellerId && couponSellerId !== "null" && (itemSellerId === couponSellerId || itemSellerDocId === couponSellerId);
+        const isNameMatch = couponSellerName && itemShopName && couponSellerName === itemShopName;
+
+        if (!isIdMatch && !isNameMatch) return false;
+      }
+
+      return true;
+    });
+  });
+
+  return { activeOffers, activeCoupons };
+};
 
 // Helper to get admin user ID dynamically
 const getAdminId = async () => {
@@ -90,6 +176,7 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               stock: 1,
               deliveryDays: 1,
               sellerId: 1,
+              sellerDocId: "$seller._id",
               variantId: 1,
               productId: 1,
               attributes: 1,
@@ -271,6 +358,23 @@ exports.getProducts = async (req, res) => {
     const products = aggregationResult[0]?.data || [];
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
+    // Attach promotions to variants in each product
+    const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+    const allVariantsToProcess = [];
+    products.forEach(p => {
+      if (p.variants) {
+        p.variants.forEach(v => {
+          v.mainCategoryId = p.mainCategoryId;
+          v.subCategoryId = p.subCategoryId;
+          v.productId = p.productId;
+          allVariantsToProcess.push(v);
+        });
+      }
+    });
+    if (allVariantsToProcess.length > 0) {
+      await getApplicablePromotions(allVariantsToProcess, activeOffers, activeCoupons);
+    }
+
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
     if (userId) {
@@ -306,6 +410,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
+// Fetch products by subcategory for website
 exports.getProductsBySubCategory = async (req, res) => {
   try {
     const { subCategoryId } = req.params;
@@ -361,6 +466,23 @@ exports.getProductsBySubCategory = async (req, res) => {
 
     const products = aggregationResult[0]?.data || [];
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
+
+    // Attach promotions to variants in each product
+    const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+    const allVariantsToProcess = [];
+    products.forEach(p => {
+      if (p.variants) {
+        p.variants.forEach(v => {
+          v.mainCategoryId = p.mainCategoryId;
+          v.subCategoryId = p.subCategoryId;
+          v.productId = p.productId;
+          allVariantsToProcess.push(v);
+        });
+      }
+    });
+    if (allVariantsToProcess.length > 0) {
+      await getApplicablePromotions(allVariantsToProcess, activeOffers, activeCoupons);
+    }
 
     // Add isWishlisted flag if user is logged in
     const userId = getUserIdFromRequest(req);
@@ -442,7 +564,24 @@ exports.getProductById = async (req, res) => {
     }
 
     const productData = aggregationResult[0].data[0];
+    
+    // Fetch active promotions
+    const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
     const allVariants = productData.variants || [];
+    if (allVariants.length > 0) {
+      allVariants.forEach(v => {
+        v.mainCategoryId = productData.mainCategoryId;
+        v.subCategoryId = productData.subCategoryId;
+        v.productId = productData.productId; // Ensure productId is available for promotion filtering
+      });
+      await getApplicablePromotions(allVariants, activeOffers, activeCoupons);
+    }
+    if (productData.minPriceDetails) {
+      productData.minPriceDetails.mainCategoryId = productData.mainCategoryId;
+      productData.minPriceDetails.subCategoryId = productData.subCategoryId;
+      productData.minPriceDetails.productId = productData.productId;
+      await getApplicablePromotions([productData.minPriceDetails], activeOffers, activeCoupons);
+    }
 
     // 1. Extract unique attribute options across all variants (Only required ones)
     const attributeOptions = {};
@@ -599,6 +738,23 @@ exports.getBestSellers = async (req, res) => {
     let products = aggregationResult[0]?.data || [];
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
 
+    // Attach promotions to variants in each product
+    const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+    const allVariantsToProcess = [];
+    products.forEach(p => {
+      if (p.variants) {
+        p.variants.forEach(v => {
+          v.mainCategoryId = p.mainCategoryId;
+          v.subCategoryId = p.subCategoryId;
+          v.productId = p.productId;
+          allVariantsToProcess.push(v);
+        });
+      }
+    });
+    if (allVariantsToProcess.length > 0) {
+      await getApplicablePromotions(allVariantsToProcess, activeOffers, activeCoupons);
+    }
+
     // If we have bestSellingIds, sort the resulting products to match the order of sales
     if (bestSellingIds.length > 0 && products.length > 0) {
       const orderMap = new Map();
@@ -734,6 +890,23 @@ exports.searchProducts = async (req, res) => {
 
     const products = aggregationResult[0]?.data || [];
     const total = aggregationResult[0]?.totalCount[0]?.count || 0;
+
+    // Attach promotions to variants in each product
+    const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+    const allVariantsToProcess = [];
+    products.forEach(p => {
+      if (p.variants) {
+        p.variants.forEach(v => {
+          v.mainCategoryId = p.mainCategoryId;
+          v.subCategoryId = p.subCategoryId;
+          v.productId = p.productId;
+          allVariantsToProcess.push(v);
+        });
+      }
+    });
+    if (allVariantsToProcess.length > 0) {
+      await getApplicablePromotions(allVariantsToProcess, activeOffers, activeCoupons);
+    }
 
     const responseData = {
       products,

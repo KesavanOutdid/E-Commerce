@@ -5,7 +5,7 @@ import LoginModal from "../Common/LoginModal";
 import PaymentMethod from "./PaymentMethod";
 import Billing from "./Billing";
 import { useAppSelector, useAppDispatch } from "@/redux/store";
-import { selectTotalPrice, clearCartServer } from "@/redux/features/cart-slice";
+import { selectTotalPrice, selectTotalGst, clearCartServer, selectTotalSavings, applyCoupon, removeCoupon } from "@/redux/features/cart-slice";
 import { API_ENDPOINTS } from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -15,13 +15,27 @@ const Checkout = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const cartItems = useAppSelector((state) => state.cartReducer.items);
+  const appliedCoupon = useAppSelector((state) => state.cartReducer.appliedCoupon);
   const totalPrice = useAppSelector(selectTotalPrice);
+  const totalGst = useAppSelector(selectTotalGst);
+  const totalSavings = useAppSelector(selectTotalSavings);
   const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.authReducer);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   const [payment, setPayment] = useState("cod");
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  const calculateDiscount = () => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.discountType === "percentage") {
+      return (totalPrice * appliedCoupon.discountValue) / 100;
+    }
+    return appliedCoupon.discountValue;
+  };
+
+  const discountAmount = calculateDiscount();
+
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -201,11 +215,13 @@ const Checkout = () => {
       paymentType: payment,
       productIds: cartItems.map((item) => item.id),
       totalPrice: totalPrice,
-      gst: 0, // Calculate if needed
+      gst: totalGst,
       subTotal: totalPrice,
       shippingFees: 150,
       codFees: payment === "cod" ? 50 : 0,
-      grandTotal: totalPrice + 150 + (payment === "cod" ? 50 : 0),
+      couponCode: appliedCoupon?.code || null,
+      discountAmount: discountAmount,
+      grandTotal: totalPrice + totalGst + 150 + (payment === "cod" ? 50 : 0) - discountAmount,
     };
 
     try {
@@ -434,21 +450,38 @@ const Checkout = () => {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-blue font-medium">Subtotal</span>
-                      <span className="text-dark font-medium">₹{totalPrice}</span>
+                      <span className="text-dark font-medium">₹{totalPrice.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-blue font-medium">GST (18%)</span>
+                      <span className="text-dark font-medium">₹{totalGst.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-blue font-medium">Shipping Fee</span>
                       <span className="text-dark font-medium">₹150</span>
                     </div>
+                    {appliedCoupon && (
+                      <div className="flex justify-between text-green-600">
+                        <span className="font-medium">Discount ({appliedCoupon.code})</span>
+                        <span className="font-medium">-₹{discountAmount.toLocaleString()}</span>
+                      </div>
+                    )}
                     {payment === "cod" && (
                       <div className="flex justify-between">
                         <span className="text-blue font-medium">COD Fee</span>
                         <span className="text-dark font-medium">₹50</span>
                       </div>
                     )}
+                    {totalSavings > 0 && (
+                      <div className="bg-green-50 p-3 rounded-md mt-4">
+                        <p className="text-green-700 text-sm font-medium text-center">
+                          You will save ₹{totalSavings.toLocaleString()} on this order
+                        </p>
+                      </div>
+                    )}
                     <div className="flex justify-between text-2xl font-bold text-dark pt-6 border-t border-gray-3 mt-6">
                       <span>Total</span>
-                      <span>₹{totalPrice + 150 + (payment === "cod" ? 50 : 0)}</span>
+                      <span>₹{(totalPrice + totalGst + 150 + (payment === "cod" ? 50 : 0) - discountAmount).toLocaleString()}</span>
                     </div>
                   </div>
 

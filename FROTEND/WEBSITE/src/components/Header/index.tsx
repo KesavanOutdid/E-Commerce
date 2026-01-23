@@ -6,7 +6,6 @@ import { useAppSelector } from "@/redux/store";
 import { useSelector, useDispatch } from "react-redux";
 import { removeAllItemsFromCart, selectTotalPrice } from "@/redux/features/cart-slice";
 import { logout } from "@/redux/features/auth-slice";
-import { useCartModalContext } from "@/app/context/CartSidebarModalContext";
 import Image from "next/image";
 import Sidebar from "./Sidebar";
 import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
@@ -145,7 +144,6 @@ const Header = () => {
   const [stickyMenu, setStickyMenu] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const suggestionsRef = React.useRef<HTMLDivElement>(null);
-  const { openCartModal } = useCartModalContext();
 
   const { user, isAuthenticated, accessToken } = useAppSelector((state) => state.authReducer);
   const dispatch = useDispatch();
@@ -158,10 +156,6 @@ const Header = () => {
     dispatch(removeAllItemsFromCart());
     dispatch(removeAllItemsFromWishlist());
     router.push("/signin");
-  };
-
-  const handleOpenCartModal = () => {
-    openCartModal();
   };
 
   // Sticky menu
@@ -475,8 +469,8 @@ const Header = () => {
               <span className="text-[13px] font-medium mb-0.5 hidden sm:block ml-1">Wishlist</span>
             </Link>
 
-            <button
-              onClick={handleOpenCartModal}
+            <Link
+              href="/cart"
               className="flex items-end border border-transparent hover:border-white p-1 px-1.5 rounded-sm transition-all relative group"
             >
               <div className="relative">
@@ -489,7 +483,7 @@ const Header = () => {
                 </span>
               </div>
               <span className="text-[13px] font-medium mb-0.5 hidden sm:block ml-1">Cart</span>
-            </button>
+            </Link>
 
             <Link
               href="/contact"

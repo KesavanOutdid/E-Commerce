@@ -18,6 +18,8 @@ class Payment {
       gst: paymentData.gst,
       subTotal: paymentData.subTotal,
       grandTotal: paymentData.grandTotal,
+      couponCode: paymentData.couponCode || null,
+      discountAmount: paymentData.discountAmount || 0,
       codFees: paymentData.codFees || 0,
       shippingFees: paymentData.shippingFees || 0,
       paymentType: paymentData.paymentType,

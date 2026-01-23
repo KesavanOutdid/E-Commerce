@@ -36,11 +36,19 @@ const OrderDetail = () => {
   }, [id, accessToken]);
 
   const getStatusStep = (status: string) => {
-    const steps = ["confirmed", "shipped", "out for delivery", "delivered"];
+    const steps = ["confirmed", "packed", "shipped", "out_of_delivery", "delivered"];
     const currentStatus = status.toLowerCase();
     const currentIdx = steps.indexOf(currentStatus);
     return currentIdx >= 0 ? currentIdx : 0;
   };
+
+  const statusSteps = [
+    { label: "Confirmed", key: "confirmed", color: "#26a541" }, // Green
+    { label: "Packed", key: "packed", color: "#f39c12" },      // Orange
+    { label: "Shipped", key: "shipped", color: "#2874f0" },     // Blue
+    { label: "Out for Delivery", key: "out_of_delivery", color: "#9b59b6" }, // Purple
+    { label: "Delivered", key: "delivered", color: "#26a541" }  // Green
+  ];
 
   if (loading) {
     return (
@@ -116,46 +124,79 @@ const OrderDetail = () => {
 
                       {/* Status Timeline */}
                       <div className="flex-grow pt-4 border-t border-[#f0f0f0]">
-                        <div className="relative pl-6 space-y-4">
-                          {["confirmed", "shipped", "out for delivery", "delivered"].map((step, sIdx) => {
-                            const isCompleted = sIdx <= currentStep;
+                        <div className="relative pl-8 space-y-8">
+                          {/* Vertical Line Background */}
+                          <div className="absolute left-[7px] top-2 bottom-2 w-[2px] bg-[#f0f0f0]"></div>
+
+                          {statusSteps.map((step, sIdx) => {
+                            const historyItem = order.statusHistory?.find(h => h.status.toLowerCase() === step.key.toLowerCase());
+                            const isCompleted = !!historyItem || sIdx <= currentStep;
                             const isCurrent = sIdx === currentStep;
+                            const stepDate = historyItem ? new Date(historyItem.timestamp) : null;
                             
                             // Only show completed steps and the next pending step, or all if delivered
-                            if (!isCompleted && sIdx !== currentStep + 1 && currentStep !== 3) return null;
+                            if (!isCompleted && sIdx !== currentStep + 1 && currentStep !== statusSteps.length - 1) return null;
 
                             return (
-                              <div key={step} className="relative">
-                                {/* Dot */}
-                                <div className={`absolute -left-[23px] top-1.5 w-[8px] h-[8px] rounded-full ${
-                                  isCompleted ? 'bg-[#26a541]' : 'bg-[#e0e0e0]'
-                                }`}></div>
-                                
-                                {/* Connecting Line */}
-                                {sIdx < 3 && isCompleted && (
-                                  <div className="absolute -left-[19.5px] top-3.5 w-[1px] h-full bg-[#26a541]"></div>
+                              <div key={step.key} className="relative flex gap-4">
+                                {/* Indicator Dot */}
+                                <div className="absolute -left-[32px] top-1 z-10 flex items-center justify-center">
+                                  {isCompleted ? (
+                                    <div 
+                                      className="w-[16px] h-[16px] rounded-full border-4 border-white shadow-sm"
+                                      style={{ backgroundColor: step.color }}
+                                    >
+                                      {isCurrent && (
+                                        <div className="absolute inset-0 rounded-full animate-ping opacity-25" style={{ backgroundColor: step.color }}></div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className="w-[16px] h-[16px] rounded-full bg-white border-2 border-[#e0e0e0]"></div>
+                                  )}
+                                </div>
+
+                                {/* Active Line Highlight */}
+                                {sIdx < statusSteps.length - 1 && isCompleted && (
+                                  <div 
+                                    className="absolute -left-[25px] top-[18px] w-[2px] h-[calc(100%+32px)] z-0"
+                                    style={{ backgroundColor: step.color }}
+                                  ></div>
                                 )}
                                 
-                                <div className="flex items-center gap-2">
-                                  <span className={`text-[14px] font-medium capitalize ${isCompleted ? 'text-[#212121]' : 'text-[#878787]'}`}>
-                                    Order {step}
-                                  </span>
-                                  {isCompleted && (
-                                    <span className="text-[14px] font-medium text-[#212121]">
-                                      , {new Date(order.createdAt).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}
+                                <div className="flex flex-col">
+                                  <div className="flex items-center gap-2">
+                                    <span 
+                                      className={`text-[14px] font-medium ${isCompleted ? '' : 'text-[#878787]'}`}
+                                      style={{ color: isCompleted ? step.color : '#878787' }}
+                                    >
+                                      {step.label}
                                     </span>
+                                    {stepDate && (
+                                      <span className="text-[12px] text-[#878787] bg-[#f5f5f5] px-2 py-0.5 rounded">
+                                        {stepDate.toLocaleDateString(undefined, { 
+                                          day: 'numeric', 
+                                          month: 'short', 
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </span>
+                                    )}
+                                  </div>
+                                  {historyItem?.note && historyItem.note !== "Automatically updated due to subsequent status change" && (
+                                    <p className="text-[12px] text-[#878787] mt-1 italic">
+                                      {historyItem.note}
+                                    </p>
+                                  )}
+                                  {isCurrent && currentStep === statusSteps.length - 1 && (
+                                    <p className="text-[13px] text-[#26a541] mt-1 font-medium">
+                                      Your item has been delivered successfully.
+                                    </p>
                                   )}
                                 </div>
                               </div>
                             );
                           })}
-                          
-                        <div className="mt-4 flex flex-col gap-2">
-                          {/* <button className="text-[14px] font-medium text-[#2874f0] hover:underline w-fit">See All Updates</button> */}
-                          <p className="text-[13px] text-[#212121]">
-                            {/* {currentStep === 3 ? "Your item has been delivered." : `Your order is ${order.orderStatus.toLowerCase()} as per your request.`} */}
-                          </p>
-                        </div>
                         </div>
                       </div>
                     </div>

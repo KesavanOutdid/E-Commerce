@@ -15,6 +15,58 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
 
+const getInitials = (name: string) => {
+  if (!name) return "U";
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+};
+
+const RatingBadge = ({ rating, className = "" }: { rating: number, className?: string }) => {
+  const bgColor = 
+    rating === 5 ? "bg-[#388e3c]" : 
+    rating === 4 ? "bg-[#4caf50]" : 
+    rating === 3 ? "bg-[#8bc34a]" : 
+    rating === 2 ? "bg-[#ff9f00]" : 
+    "bg-[#ff6161]";
+  return (
+    <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm text-[11px] font-bold ${bgColor} text-white ${className}`}>
+      <span>{rating}</span>
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+      </svg>
+    </div>
+  );
+};
+
+const Stars = ({ rating, size = 16, interactive = false, onRatingChange }: { rating: number, size?: number, interactive?: boolean, onRatingChange?: (r: number) => void }) => {
+  const [hover, setHover] = useState(0);
+  const currentRating = interactive ? (hover || rating) : rating;
+
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          className={`${interactive ? "cursor-pointer transition-transform hover:scale-110" : ""} ${star <= currentRating ? "text-[#FBB040]" : "text-gray-3"}`}
+          onMouseEnter={() => interactive && setHover(star)}
+          onMouseLeave={() => interactive && setHover(0)}
+          onClick={() => interactive && onRatingChange && onRatingChange(star)}
+        >
+          <svg
+            className="fill-current"
+            width={size}
+            height={size}
+            viewBox="0 0 15 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z" />
+          </svg>
+        </span>
+      ))}
+    </div>
+  );
+};
+
 const ShopDetails = ({ productId }: { productId?: string }) => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
@@ -27,6 +79,17 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [allOffers, setAllOffers] = useState<any[]>([]);
   const [selectedAttributes, setSelectedAttributes] = useState<any>({});
+  const [promotions, setPromotions] = useState<any[]>([]);
+  const [coupons, setCoupons] = useState<any[]>([]);
+  const [productReviews, setProductReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    comment: "",
+    orderId: "",
+    photos: [] as File[]
+  });
 
   const { accessToken, isAuthenticated, user } = useAppSelector((state) => state.authReducer);
   const wishlistItems = useAppSelector((state) => state.wishlistReducer.items);
@@ -34,6 +97,12 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
   const isWishlisted = product ? wishlistItems.some((item) => item.id === product.id) : false;
 
   const [quantity, setQuantity] = useState(1);
+  const [hasPurchased, setHasPurchased] = useState(false);
+  const [isDelivered, setIsDelivered] = useState(false);
+  const [purchasedOrderId, setPurchasedOrderId] = useState("");
+  const [helpfulReviews, setHelpfulReviews] = useState<Record<string, boolean>>({});
+  const [visibleReviews, setVisibleReviews] = useState(5);
+  const [showAllPhotos, setShowAllPhotos] = useState(false);
 
   const colorImages = React.useMemo(() => {
     const map: Record<string, string> = {};
@@ -49,7 +118,34 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     return map;
   }, [allOffers]);
 
-  const [activeTab, setActiveTab] = useState("tabOne");
+  const reviewStats = React.useMemo(() => {
+    if (!productReviews.length) return { average: 0, counts: [0, 0, 0, 0, 0], total: 0, recommendedPercent: 0, allPhotos: [] };
+    const counts = [0, 0, 0, 0, 0];
+    let sum = 0;
+    let positive = 0;
+    const allPhotos: string[] = [];
+    productReviews.forEach((r: any) => {
+      const rating = Math.min(Math.max(Number(r.rating) || 0, 1), 5);
+      counts[rating - 1]++;
+      sum += rating;
+      if (rating >= 4) positive++;
+      
+      if (r.photos && Array.isArray(r.photos)) {
+        allPhotos.push(...r.photos);
+      } else if (r.photo) {
+        allPhotos.push(r.photo);
+      }
+    });
+    return {
+      average: (sum / productReviews.length).toFixed(1),
+      counts: [...counts].reverse(), // 5 to 1
+      total: productReviews.length,
+      recommendedPercent: Math.round((positive / productReviews.length) * 100),
+      allPhotos
+    };
+  }, [productReviews]);
+
+  const [activeTab, setActiveTab] = useState("tabThree");
   const [showFullDescription, setShowFullDescription] = useState(false);
   const [showFullSpecs, setShowFullSpecs] = useState(false);
 
@@ -74,6 +170,40 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     state: "",
     country: "IN",
   });
+
+  useEffect(() => {
+    const checkPurchaseStatus = async () => {
+      if (isAuthenticated && accessToken && productId) {
+        try {
+          // Fetch order history to check if product was purchased
+          const response = await fetch(API_ENDPOINTS.ORDER_HISTORY(1, 50), {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          });
+          const data = await response.json();
+          if (data.success && data.data) {
+            // Check if any order contains this productId
+            const orderWithProduct = data.data.find((order: any) => 
+              order.items.some((item: any) => item.productId === productId)
+            );
+            
+            if (orderWithProduct) {
+              setHasPurchased(true);
+              setIsDelivered(orderWithProduct.orderStatus === "delivered");
+              setPurchasedOrderId(orderWithProduct.orderId);
+              setReviewForm(prev => ({ ...prev, orderId: orderWithProduct.orderId }));
+            } else {
+              setHasPurchased(false);
+              setIsDelivered(false);
+              setPurchasedOrderId("");
+            }
+          }
+        } catch (error) {
+          console.error("Failed to check purchase status:", error);
+        }
+      }
+    };
+    checkPurchaseStatus();
+  }, [isAuthenticated, accessToken, productId]);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -288,8 +418,80 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
     {
       id: "tabTwo",
       title: "Additional Information",
+    },
+    {
+      id: "tabThree",
+      title: "Reviews",
     }
   ];
+
+  const fetchReviews = async () => {
+    if (!productId) return;
+    try {
+      setLoadingReviews(true);
+      const response = await fetch(API_ENDPOINTS.PRODUCT_REVIEWS(productId));
+      const data = await response.json();
+      if (data.success) {
+        setProductReviews(data.data || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch reviews:", error);
+    } finally {
+      setLoadingReviews(false);
+    }
+  };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please login to submit a review");
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (!hasPurchased) {
+      toast.error("Only verified purchasers can submit reviews");
+      return;
+    }
+
+    if (!reviewForm.comment || !reviewForm.rating) {
+      toast.error("Please provide both rating and comment");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("productId", productId || "");
+    formData.append("rating", reviewForm.rating.toString());
+    formData.append("comment", reviewForm.comment);
+    if (reviewForm.orderId) formData.append("orderId", reviewForm.orderId);
+    
+    reviewForm.photos.forEach((photo) => {
+      if (photo) formData.append("photos", photo);
+    });
+
+    try {
+      const response = await fetch(API_ENDPOINTS.REVIEWS, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Review submitted successfully!");
+        setReviewForm({ rating: 5, comment: "", orderId: "", photos: [] });
+        setShowReviewModal(false);
+        fetchReviews(); // Refresh reviews
+      } else {
+        toast.error(data.message || "Failed to submit review");
+      }
+    } catch (error) {
+      console.error("Review submission error:", error);
+      toast.error("Something went wrong");
+    }
+  };
 
   const colors = ["red", "blue", "orange", "pink", "purple"];
 
@@ -306,6 +508,8 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
           setAttributeOptions(p.attributeOptions || {});
           setSelectedVariant(sv);
           setAllOffers(ao || []);
+          setPromotions(sv.offers || []);
+          setCoupons(sv.coupons || []);
           
           // Set initial selected attributes from the selected variant
           const initialAttrs: any = {};
@@ -344,6 +548,9 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
           };
           setProduct(transformedProduct);
         }
+
+        // Fetch Reviews
+        fetchReviews();
       } catch (error) {
         console.error("Failed to fetch product:", error);
       } finally {
@@ -401,6 +608,8 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
     if (matchingVariant) {
       setSelectedVariant(matchingVariant);
+      setPromotions(matchingVariant.offers || []);
+      setCoupons(matchingVariant.coupons || []);
       
       // Update selected attributes based on the actual variant found
       const updatedAttrs: any = {};
@@ -903,7 +1112,6 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     </div>
                   </div>
 
-                  {/* Flipkart Style Buttons for Desktop */}
                   <div className="hidden lg:flex flex-row justify-end gap-2.5 mt-6">
                     <button
                       onClick={handleAddToCart}
@@ -1029,6 +1237,64 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                       </div>
                     )}
                   </div>
+
+                  {coupons && coupons.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="font-medium text-[15px] text-dark mb-3">Available Coupons</h3>
+                      <div className="space-y-3">
+                        {coupons.map((coupon, idx) => (
+                          <div key={idx} className="flex items-center gap-2.5">
+                            <div className="flex-shrink-0 text-blue">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                              </svg>
+                            </div>
+                            <p className="text-[14px] text-dark">
+                              <span className="font-medium text-[12px] uppercase bg-blue/5 text-blue px-2 py-0.5 rounded border border-blue/10 mr-2">{coupon.code}</span>
+                              <span className="font-medium">{coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} Off</span> • {coupon.description}
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(coupon.code);
+                                  toast.success("Code copied!");
+                                }}
+                                className="text-blue text-[11px] font-bold uppercase ml-3 hover:underline"
+                              >
+                                Copy
+                              </button>
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {promotions && promotions.length > 0 && (
+                    <div className="mb-6">
+                      <h3 className="font-medium text-base text-dark mb-3">Available Offers</h3>
+                      <div className="space-y-2.5">
+                        {promotions.map((promo, idx) => (
+                          <div key={idx} className="flex items-start gap-2.5 group">
+                            <div className="mt-1 flex-shrink-0">
+                              <div className="text-green">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                                </svg>
+                              </div>
+                            </div>
+                            <div className="flex flex-col">
+                              <p className="text-[14px] text-dark leading-snug">
+                                <span className="font-bold">{promo.discountType === 'fixed' ? `₹${promo.discountValue}` : `${promo.discountValue}%`} Off</span> on {promo.name}
+                                <span className="text-blue text-xs font-medium ml-2 cursor-pointer hover:underline uppercase tracking-wide">T&C</span>
+                              </p>
+                              <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
+                                {promo.description}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {product.shortDescription && (
                     <p className="text-sm text-gray-500 mb-4 leading-relaxed max-w-2xl line-clamp-3 ">
@@ -1362,522 +1628,225 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
               {/* <!-- tab content two end --> */}
 
               {/* <!-- tab content three start --> */}
-              <div>
-                <div
-                  className={`flex-col sm:flex-row gap-7.5 xl:gap-12.5 mt-6 ${activeTab === "tabThree" ? "flex" : "hidden"
-                    }`}
-                >
-                  <div className="max-w-[570px] w-full">
-                    <h2 className="font-medium text-2xl text-dark mb-9">
-                      03 Review for this product
-                    </h2>
-
-                    <div className="flex flex-col gap-6">
-                      {/* <!-- review item --> */}
-                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
-                        <div className="flex items-center justify-between">
-                          <a href="#" className="flex items-center gap-4">
-                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
-                              <Image
-                                src="/images/users/user-01.jpg"
-                                alt="author"
-                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
-                                width={50}
-                                height={50}
-                              />
-                            </div>
-
-                            <div>
-                              <h3 className="font-medium text-dark">
-                                Davis Dorwart
-                              </h3>
-                              <p className="text-custom-sm">
-                                Serial Entrepreneur
-                              </p>
-                            </div>
-                          </a>
-
-                          <div className="flex items-center gap-1">
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
+              <div
+                className={`mt-4 flex flex-col ${activeTab === "tabThree" ? "flex" : "hidden"}`}
+              >
+                {reviewStats.total > 0 ? (
+                  <>
+                    {/* Ratings Summary */}
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between py-1 gap-6">
+                      <div className="flex items-center gap-8">
+                        <div className="flex flex-col">
+                          <div className="flex items-baseline gap-0.5">
+                            <span className="text-3xl font-bold text-dark">{reviewStats.average}</span>
+                            <span className="text-gray-400 text-sm font-medium">/ 5</span>
                           </div>
+                          <div className="flex mt-1">
+                            {[...Array(5)].map((_, i) => (
+                              <svg key={i} width="14" height="14" viewBox="0 0 24 24" className={i < Math.floor(Number(reviewStats.average)) ? "text-green-600 fill-current" : "text-gray-200 fill-current"}>
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                            ))}
+                          </div>
+                          <p className="text-[12px] text-gray-400 mt-2 font-bold uppercase tracking-wider">{reviewStats.total} Ratings & {productReviews.length} Reviews</p>
                         </div>
-
-                        <p className="text-dark mt-6">
-                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
-                          malesuada justo vitaeaugue suscipit beautiful
-                          vehicula’’
-                        </p>
+                        
+                        <div className="flex flex-col gap-2 w-full min-w-[280px]">
+                          {reviewStats.counts.map((count, index) => {
+                            const starLevel = 5 - index;
+                            const percentage = reviewStats.total > 0 ? (count / reviewStats.total) * 100 : 0;
+                            const barColor = 
+                              starLevel === 5 ? "bg-[#388e3c]" : 
+                              starLevel === 4 ? "bg-[#4caf50]" : 
+                              starLevel === 3 ? "bg-[#8bc34a]" : 
+                              starLevel === 2 ? "bg-[#ff9f00]" : 
+                              "bg-[#ff6161]";
+                            return (
+                              <div key={starLevel} className="flex items-center gap-4">
+                                <span className="text-[13px] font-bold text-dark w-7 flex items-center gap-1">
+                                  {starLevel} <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" /></svg>
+                                </span>
+                                <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden max-w-[250px]">
+                                  <div className={`h-full ${barColor} rounded-full transition-all duration-500`} style={{ width: `${percentage}%` }}></div>
+                                </div>
+                                <span className="text-[12px] text-gray-400 font-bold w-8">{count}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
 
-                      {/* <!-- review item --> */}
-                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
-                        <div className="flex items-center justify-between">
-                          <a href="#" className="flex items-center gap-4">
-                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
-                              <Image
-                                src="/images/users/user-01.jpg"
-                                alt="author"
-                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
-                                width={50}
-                                height={50}
-                              />
-                            </div>
-
-                            <div>
-                              <h3 className="font-medium text-dark">
-                                Davis Dorwart
-                              </h3>
-                              <p className="text-custom-sm">
-                                Serial Entrepreneur
+                      <div className="flex flex-col items-center text-center gap-3 w-full md:w-auto md:items-start md:text-left md:border-l md:border-gray-50 md:pl-10">
+                        <div className="md:block">
+                          <h4 className="text-sm font-bold text-dark mb-0.5">Review this product</h4>
+                          <p className="text-xs text-gray-400">Help others with your experience</p>
+                        </div>
+                        {isDelivered ? (
+                          <button
+                            onClick={() => setShowReviewModal(true)}
+                            className="w-full md:w-auto px-8 py-2.5 bg-blue text-white text-[12px] font-bold rounded shadow-sm hover:bg-blue-dark transition-all uppercase tracking-wider"
+                          >
+                            Rate Product
+                          </button>
+                        ) : (
+                          <div className="flex flex-col items-center md:items-start gap-2 p-4 bg-gray-50 rounded-lg border border-gray-100 max-w-[400px]">
+                            <div className="flex items-center gap-2 text-blue">
+                              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                              </svg>
+                              <p className="text-[13px] font-bold text-dark leading-tight">
+                                {hasPurchased ? "Order not delivered yet" : "Haven't purchased this product?"}
                               </p>
                             </div>
-                          </a>
-
-                          <div className="flex items-center gap-1">
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
+                            <p className="text-[11px] text-gray-500 leading-normal">
+                              {hasPurchased 
+                                ? "You can rate and review this product once it is delivered to you." 
+                                : "You can only rate and review this product after purchasing and receiving it."}
+                            </p>
                           </div>
-                        </div>
-
-                        <p className="text-dark mt-6">
-                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
-                          malesuada justo vitaeaugue suscipit beautiful
-                          vehicula’’
-                        </p>
-                      </div>
-
-                      {/* <!-- review item --> */}
-                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
-                        <div className="flex items-center justify-between">
-                          <a href="#" className="flex items-center gap-4">
-                            <div className="w-12.5 h-12.5 rounded-full overflow-hidden">
-                              <Image
-                                src="/images/users/user-01.jpg"
-                                alt="author"
-                                className="w-12.5 h-12.5 rounded-full overflow-hidden"
-                                width={50}
-                                height={50}
-                              />
-                            </div>
-
-                            <div>
-                              <h3 className="font-medium text-dark">
-                                Davis Dorwart
-                              </h3>
-                              <p className="text-custom-sm">
-                                Serial Entrepreneur
-                              </p>
-                            </div>
-                          </a>
-
-                          <div className="flex items-center gap-1">
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-
-                            <span className="cursor-pointer text-[#FBB040]">
-                              <svg
-                                className="fill-current"
-                                width="15"
-                                height="16"
-                                viewBox="0 0 15 16"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                              >
-                                <path
-                                  d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                  fill=""
-                                />
-                              </svg>
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-dark mt-6">
-                          “Lorem ipsum dolor sit amet, adipiscing elit. Donec
-                          malesuada justo vitaeaugue suscipit beautiful
-                          vehicula’’
-                        </p>
+                        )}
                       </div>
                     </div>
-                  </div>
 
-                  <div className="max-w-[550px] w-full">
-                    <form>
-                      <h2 className="font-medium text-2xl text-dark mb-3.5">
-                        Add a Review
-                      </h2>
-
-                      <p className="mb-6">
-                        Your email address will not be published. Required
-                        fields are marked *
-                      </p>
-
-                      <div className="flex items-center gap-3 mb-7.5">
-                        <span>Your Rating*</span>
-
-                        <div className="flex items-center gap-1">
-                          <span className="cursor-pointer text-[#FBB040]">
-                            <svg
-                              className="fill-current"
-                              width="15"
-                              height="16"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                    {/* Images by customers */}
+                    {reviewStats.allPhotos.length > 0 && (
+                      <div className="flex flex-col gap-3 mt-4 px-1">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-bold text-[#212121]">Images by Customers</h4>
+                          {reviewStats.allPhotos.length > 6 && (
+                            <button 
+                              onClick={() => setShowAllPhotos(true)}
+                              className="text-blue text-xs font-bold hover:underline"
                             >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          </span>
-
-                          <span className="cursor-pointer text-[#FBB040]">
-                            <svg
-                              className="fill-current"
-                              width="15"
-                              height="16"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
+                              View all
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-2.5">
+                          {reviewStats.allPhotos.slice(0, 6).map((photo, index) => (
+                            <div 
+                              key={index} 
+                              className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-md overflow-hidden border border-gray-100 cursor-pointer hover:opacity-90 transition-opacity relative group"
+                              onClick={() => setShowAllPhotos(true)}
                             >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          </span>
-
-                          <span className="cursor-pointer text-[#FBB040]">
-                            <svg
-                              className="fill-current"
-                              width="15"
-                              height="16"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          </span>
-
-                          <span className="cursor-pointer text-gray-5">
-                            <svg
-                              className="fill-current"
-                              width="15"
-                              height="16"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          </span>
-
-                          <span className="cursor-pointer text-gray-5">
-                            <svg
-                              className="fill-current"
-                              width="15"
-                              height="16"
-                              viewBox="0 0 15 16"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M14.6604 5.90785L9.97461 5.18335L7.85178 0.732874C7.69645 0.422375 7.28224 0.422375 7.12691 0.732874L5.00407 5.20923L0.344191 5.90785C0.0076444 5.9596 -0.121797 6.39947 0.137085 6.63235L3.52844 10.1255L2.72591 15.0158C2.67413 15.3522 3.01068 15.6368 3.32134 15.4298L7.54112 13.1269L11.735 15.4298C12.0198 15.5851 12.3822 15.3263 12.3046 15.0158L11.502 10.1255L14.8934 6.63235C15.1005 6.39947 14.9969 5.9596 14.6604 5.90785Z"
-                                fill=""
-                              />
-                            </svg>
-                          </span>
+                              <Image src={`${API_BASE_URL}${photo}`} alt={`Customer image ${index}`} width={80} height={80} className="object-cover w-full h-full" />
+                              {index === 5 && reviewStats.allPhotos.length > 6 && (
+                                <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-white">
+                                  <span className="text-sm font-bold">+{reviewStats.allPhotos.length - 5}</span>
+                                  <span className="text-[8px] font-bold uppercase">Photos</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
                       </div>
+                    )}
 
-                      <div className="rounded-xl bg-white shadow-1 p-4 sm:p-6">
-                        <div className="mb-5">
-                          <label htmlFor="comments" className="block mb-2.5">
-                            Comments
-                          </label>
-
-                          <textarea
-                            name="comments"
-                            id="comments"
-                            rows={5}
-                            placeholder="Your comments"
-                            className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full p-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                          ></textarea>
-
-                          <span className="flex items-center justify-between mt-2.5">
-                            <span className="text-custom-sm text-dark-4">
-                              Maximum
-                            </span>
-                            <span className="text-custom-sm text-dark-4">
-                              0/250
-                            </span>
-                          </span>
+                    {/* Review List */}
+                    <div className="flex flex-col border-t border-gray-100 mt-6">
+                      {loadingReviews ? (
+                        <div className="flex justify-center py-16">
+                          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-dark"></div>
                         </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-col">
+                            {productReviews.slice(0, visibleReviews).map((review, idx) => (
+                              <div key={idx} className="py-4 first:pt-4">
+                                <div className="flex flex-col gap-2">
+                                  <div className="flex items-center gap-3">
+                                    <RatingBadge rating={review.rating} />
+                                    <span className="text-sm font-bold text-[#212121]">
+                                      {review.rating === 5 ? "Excellent" : review.rating === 4 ? "Very Good" : review.rating === 3 ? "Good" : review.rating === 2 ? "Average" : "Poor"}
+                                    </span>
+                                  </div>
 
-                        <div className="flex flex-col lg:flex-row gap-5 sm:gap-7.5 mb-5.5">
-                          <div>
-                            <label htmlFor="name" className="block mb-2.5">
-                              Name
-                            </label>
+                                  <p className="text-[#212121] text-[15px] leading-relaxed font-normal">{review.comment}</p>
 
-                            <input
-                              type="text"
-                              name="name"
-                              id="name"
-                              placeholder="Your name"
-                              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                            />
+                                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-bold text-[#878787]">{review.userName || review.user?.name || "Customer"}</span>
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="text-[#878787]"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    </div>
+                                    <span className="text-xs text-[#878787] font-medium">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                    
+                                    {(review.orderId || review.isVerified) && (
+                                      <div className="flex items-center gap-1 text-[#878787] text-[10px] font-bold uppercase tracking-wider">
+                                        <span>Verified Purchase</span>
+                                      </div>
+                                    )}
+                                    <button 
+                                      onClick={() => setHelpfulReviews(prev => ({ ...prev, [review.id || idx]: !prev[review.id || idx] }))}
+                                      className={`text-[10px] font-bold uppercase tracking-widest ${helpfulReviews[review.id || idx] ? "text-blue" : "text-[#878787] hover:text-[#212121]"}`}
+                                    >
+                                      Helpful {helpfulReviews[review.id || idx] && "(1)"}
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
+                          
+                          {productReviews.length > visibleReviews && (
+                            <div className="pt-4 pb-8 border-t border-gray-50 mt-4">
+                              <button 
+                                onClick={() => setVisibleReviews(prev => prev + 5)}
+                                className="text-blue text-sm font-bold hover:underline flex items-center gap-2"
+                              >
+                                View More
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center pt-4 pb-10 px-4 bg-gray-2/30 rounded-2xl">
+                    <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-bold text-dark mb-1">No Reviews Yet</h3>
+                    <p className="text-sm text-gray-500 mb-8 max-w-[320px] text-center">
+                      There are no reviews for this product yet. Be the first to share your experience!
+                    </p>
 
-                          <div>
-                            <label htmlFor="email" className="block mb-2.5">
-                              Email
-                            </label>
-
-                            <input
-                              type="email"
-                              name="email"
-                              id="email"
-                              placeholder="Your email"
-                              className="rounded-md border border-gray-3 bg-gray-1 placeholder:text-dark-5 w-full py-2.5 px-5 outline-none duration-200 focus:border-transparent focus:shadow-input focus:ring-2 focus:ring-blue/20"
-                            />
-                          </div>
-                        </div>
-
+                    <div className="w-full max-w-[420px] bg-white p-6 rounded-xl border border-gray-100 shadow-sm flex flex-col items-center">
+                      <h4 className="text-sm font-bold text-dark mb-4">Review this product</h4>
+                      {isDelivered ? (
                         <button
-                          type="submit"
-                          className="inline-flex font-medium text-white bg-blue py-3 px-7 rounded-md ease-out duration-200 hover:bg-blue-dark"
+                          onClick={() => setShowReviewModal(true)}
+                          className="px-8 py-2.5 bg-blue text-white text-[12px] font-bold rounded-lg shadow-md hover:bg-blue-dark transition-all uppercase tracking-wider"
                         >
-                          Submit Reviews
+                          Rate Product
                         </button>
-                      </div>
-                    </form>
+                      ) : (
+                        <div className="flex flex-col items-center text-center gap-3">
+                          <div className="inline-flex items-center gap-2 px-3 py-1 bg-blue/10 text-blue rounded-full">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"></circle>
+                              <line x1="12" y1="16" x2="12" y2="12"></line>
+                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            <span className="text-[10px] font-bold uppercase tracking-wider">
+                              {hasPurchased ? "Delivery Pending" : "Purchase Required"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 leading-relaxed">
+                            {hasPurchased 
+                              ? "You can rate and review this product once it is delivered to you." 
+                              : "You can only rate and review this product after purchasing and receiving it."}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
               {/* <!-- tab content three end --> */}
               {/* <!--== tab content end ==--> */}
@@ -1993,6 +1962,149 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
           <Newsletter />
         </>
+      )}
+
+      {/* All Photos Modal */}
+      {showAllPhotos && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-dark/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-bold text-dark">Images by Customers</h3>
+                <p className="text-xs text-gray-400 mt-0.5">{reviewStats.allPhotos.length} Photos total</p>
+              </div>
+              <button 
+                onClick={() => setShowAllPhotos(false)}
+                className="w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-dark transition-all"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {reviewStats.allPhotos.map((photo, index) => (
+                <div key={index} className="aspect-square rounded-lg overflow-hidden border border-gray-100 group cursor-pointer relative">
+                  <Image 
+                    src={`${API_BASE_URL}${photo}`} 
+                    alt={`Customer review ${index}`} 
+                    fill 
+                    className="object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Refined Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-dark/40 backdrop-blur-[2px] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-300">
+            <div className="px-6 py-3.5 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h3 className="text-base font-bold text-dark">Ratings & Reviews</h3>
+                <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">{product?.title}</p>
+              </div>
+              <button 
+                onClick={() => setShowReviewModal(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-dark transition-all"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className="p-6 space-y-5">
+              <div className="flex flex-col items-center justify-center text-center">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">How would you rate it?</label>
+                <Stars 
+                  rating={reviewForm.rating} 
+                  size={32} 
+                  interactive 
+                  onRatingChange={(r) => setReviewForm(prev => ({ ...prev, rating: r }))} 
+                />
+                <p className="mt-2 text-sm font-bold text-blue h-5">
+                  {reviewForm.rating === 5 ? "Excellent!" : reviewForm.rating === 4 ? "Very Good" : reviewForm.rating === 3 ? "Good" : reviewForm.rating === 2 ? "Fair" : "Poor"}
+                </p>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Share your experience</label>
+                <textarea
+                  required
+                  value={reviewForm.comment}
+                  onChange={(e) => setReviewForm(prev => ({ ...prev, comment: e.target.value }))}
+                  placeholder="Tell others what you liked or disliked..."
+                  rows={3}
+                  className="w-full rounded-lg border border-gray-100 bg-gray-50/50 p-4 outline-none focus:border-blue focus:bg-white transition-all resize-none text-sm leading-relaxed text-dark"
+                ></textarea>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Add Photos (Max 3)</label>
+                  <span className="text-[10px] text-gray-400">{reviewForm.photos.filter(Boolean).length} / 3</span>
+                </div>
+                <div className="flex gap-3">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="relative w-16 h-16 rounded-lg border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden hover:border-blue transition-all bg-gray-50/20 group">
+                      {reviewForm.photos[i] ? (
+                        <>
+                          <img 
+                            src={URL.createObjectURL(reviewForm.photos[i])} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover" 
+                          />
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              const newPhotos = [...reviewForm.photos];
+                              newPhotos.splice(i, 1);
+                              setReviewForm(prev => ({ ...prev, photos: newPhotos }));
+                            }}
+                            className="absolute top-1 right-1 w-5 h-5 bg-red text-white rounded-full flex items-center justify-center text-[10px] shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </>
+                      ) : (
+                        <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center gap-1 transition-colors hover:bg-gray-100/50">
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-300"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                          <input 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (file.size > 5 * 1024 * 1024) {
+                                  toast.error("File size must be less than 5MB");
+                                  return;
+                                }
+                                const newPhotos = [...reviewForm.photos];
+                                newPhotos[i] = file;
+                                setReviewForm(prev => ({ ...prev, photos: newPhotos }));
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-1">
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-blue text-white font-bold rounded-lg hover:bg-blue-dark transition-all text-xs uppercase tracking-widest shadow-md shadow-blue/10"
+                >
+                  Submit Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </>
   );

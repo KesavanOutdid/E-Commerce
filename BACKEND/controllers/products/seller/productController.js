@@ -3,9 +3,93 @@ const ProductVariant = require('../../../models/ProductVariant');
 const MainCategory = require('../../../models/MainCategory');
 const SubCategory = require('../../../models/SubCategory');
 const User = require('../../../models/User');
+const Seller = require('../../../models/Seller');
+const Offer = require('../../../models/Offer');
+const Coupon = require('../../../models/Coupon');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 const { slugify } = require('../../../utils/help');
 const { ObjectId } = require('mongodb');
+
+// Helper to get applicable offers and coupons for products or variants
+const getApplicablePromotions = async (items, activeOffers = null, activeCoupons = null) => {
+  if (!items || items.length === 0) return { activeOffers, activeCoupons };
+  
+  if (!activeOffers || !activeCoupons) {
+    const now = new Date();
+    [activeOffers, activeCoupons] = await Promise.all([
+      Offer.collection().find({
+        status: { $in: [true, "true"] },
+        startDate: { $lte: now },
+        endDate: { $gte: now }
+      }).toArray(),
+      Coupon.collection().find({
+        status: { $in: [true, "true"] },
+        expiryDate: { $gte: now }
+      }).toArray()
+    ]);
+  }
+
+  items.forEach(item => {
+    const itemSellerId = (item.userId || item.sellerId)?.toString();
+    const itemSellerDocId = item.sellerDocId?.toString();
+
+    // Filter offers
+    item.offers = activeOffers.filter(offer => {
+      const { type, ids } = offer.applicableTo;
+      
+      // 1. Check if the promotion is applicable to this product/category
+      const isProductMatch = type === 'product' && (ids.includes(item.productId) || ids.includes(item._id?.toString()));
+      const isCategoryMatch = type === 'category' && (ids.includes(item.mainCategoryId) || ids.includes(item.subCategoryId));
+      const isAllMatch = type === 'all';
+
+      if (!(isProductMatch || isCategoryMatch || isAllMatch)) return false;
+
+      // 2. Enforce seller restriction if it's a seller-owned offer
+      if (offer.owner.type === 'seller') {
+        const offerSellerId = offer.owner.id?.toString();
+        const offerSellerName = offer.owner.name?.toLowerCase();
+        const itemShopName = item.shopName?.toLowerCase();
+
+        const isIdMatch = offerSellerId && (itemSellerId === offerSellerId || itemSellerDocId === offerSellerId);
+        const isNameMatch = offerSellerName && itemShopName && offerSellerName === itemShopName;
+
+        if (!isIdMatch && !isNameMatch) return false;
+      }
+
+      return true;
+    });
+
+    // Filter coupons
+    item.coupons = activeCoupons.filter(coupon => {
+      const { type, ids } = coupon.applicableTo;
+      
+      // 1. Check if the promotion is applicable to this product/category
+      const isProductMatch = type === 'product' && (ids.includes(item.productId) || ids.includes(item._id?.toString()));
+      const isCategoryMatch = type === 'category' && (ids.includes(item.mainCategoryId) || ids.includes(item.subCategoryId));
+      const isAllMatch = type === 'all';
+
+      if (!(isProductMatch || isCategoryMatch || isAllMatch)) return false;
+
+      // 2. Enforce seller restriction
+      const couponSellerId = (coupon.sellerId || coupon.owner?.id)?.toString();
+      const couponSellerName = (coupon.owner?.name)?.toLowerCase();
+      const itemShopName = item.shopName?.toLowerCase();
+      
+      const hasSellerOwner = coupon.owner?.type === 'seller' || (couponSellerId && couponSellerId !== "null" && couponSellerId !== "undefined");
+      
+      if (hasSellerOwner) {
+        const isIdMatch = couponSellerId && couponSellerId !== "null" && (itemSellerId === couponSellerId || itemSellerDocId === couponSellerId);
+        const isNameMatch = couponSellerName && itemShopName && couponSellerName === itemShopName;
+
+        if (!isIdMatch && !isNameMatch) return false;
+      }
+
+      return true;
+    });
+  });
+
+  return { activeOffers, activeCoupons };
+};
 
 exports.createProduct = async (req, res) => {
     try {
@@ -242,6 +326,8 @@ exports.getProducts = async (req, res) => {
             Product.collection().countDocuments(query)
         ]);
 
+        const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+
         const productsWithDetails = await Promise.all(products.map(async (product) => {
             const [mainCategory, subCategory, variants] = await Promise.all([
                 product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
@@ -251,6 +337,15 @@ exports.getProducts = async (req, res) => {
                     sellerId: sellerId
                 }).toArray()
             ]);
+
+            if (variants.length > 0) {
+                variants.forEach(v => {
+                    v.mainCategoryId = product.mainCategoryId;
+                    v.subCategoryId = product.subCategoryId;
+                    v.productId = product.productId;
+                });
+                await getApplicablePromotions(variants, activeOffers, activeCoupons);
+            }
 
             return {
                 ...product,
@@ -438,7 +533,7 @@ exports.getProductById = async (req, res) => {
         }).toArray();
 
         // 3. Fetch Category details
-        const [mainCategory, subCategory, user] = await Promise.all([
+        const [mainCategory, subCategory, user, sellerDoc] = await Promise.all([
             product.mainCategoryId ? MainCategory.findById(product.mainCategoryId) : null,
             product.subCategoryId ? SubCategory.findById(product.subCategoryId) : null,
             User.collection().findOne({
@@ -446,17 +541,32 @@ exports.getProductById = async (req, res) => {
                     { userId: product.userId ? product.userId.toString() : null },
                     { _id: ObjectId.isValid(product.userId) ? new ObjectId(product.userId) : null }
                 ].filter(q => q.userId !== null || q._id !== null)
-            })
+            }),
+            Seller.collection().findOne({ userId: sellerId.toString() })
         ]);
 
         let sellerName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim();
         if (!sellerName) sellerName = user?.name || user?.email || 'Unknown';
+        const shopName = sellerDoc?.shopName || 'Outdid';
 
         const variantsWithDetails = variants.map(variant => ({
             ...variant,
             sellerName,
+            shopName,
+            sellerDocId: sellerDoc?._id,
             currentPrice: parseFloat(variant.salePrice) > 0 ? parseFloat(variant.salePrice) : parseFloat(variant.price)
         }));
+
+        // Attach promotions to variants
+        const { activeOffers, activeCoupons } = await getApplicablePromotions([]);
+        if (variantsWithDetails.length > 0) {
+            variantsWithDetails.forEach(v => {
+                v.mainCategoryId = product.mainCategoryId;
+                v.subCategoryId = product.subCategoryId;
+                v.productId = product.productId;
+            });
+            await getApplicablePromotions(variantsWithDetails, activeOffers, activeCoupons);
+        }
 
         const minPriceVariant = variantsWithDetails.length > 0
             ? variantsWithDetails.reduce((prev, curr) => (prev.currentPrice < curr.currentPrice ? prev : curr))
