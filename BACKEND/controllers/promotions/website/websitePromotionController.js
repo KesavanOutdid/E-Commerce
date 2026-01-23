@@ -1,6 +1,7 @@
 const Offer = require('../../../models/Offer');
 const Coupon = require('../../../models/Coupon');
 const Product = require('../../../models/Product');
+const ProductVariant = require('../../../models/ProductVariant');
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const { calculateCartPrices } = require('../../../utils/priceCalculator');
@@ -42,8 +43,29 @@ exports.getOffersByProduct = async (req, res) => {
       });
     }
 
-    // Resolve all possible seller IDs (both _id and userId from both collections)
-    const productSellerIds = await resolveProductSellerIds(product);
+    // Resolve seller IDs based on whether a specific variant is requested
+    let productSellerIds = [];
+
+    if (variantId) {
+      const variant = await ProductVariant.findById(variantId);
+      if (variant) {
+        productSellerIds = await resolveProductSellerIds(variant);
+      } else {
+        // Fallback to product seller if variant not found
+        productSellerIds = await resolveProductSellerIds(product);
+      }
+    } else {
+      // If no specific variant, include sellers from the product and all its variants
+      productSellerIds = await resolveProductSellerIds(product);
+      const variants = await ProductVariant.findByProductId(productId);
+      if (variants && variants.length > 0) {
+        for (const variant of variants) {
+          const variantSellerIds = await resolveProductSellerIds(variant);
+          variantSellerIds.forEach(id => productSellerIds.push(id));
+        }
+        productSellerIds = Array.from(new Set(productSellerIds));
+      }
+    }
 
     const activeOffers = await Offer.findActive();
     
@@ -204,8 +226,29 @@ exports.getCouponsByProduct = async (req, res) => {
       });
     }
 
-    // Resolve all possible seller IDs (both _id and userId from both collections)
-    const productSellerIds = await resolveProductSellerIds(product);
+    // Resolve seller IDs based on whether a specific variant is requested
+    let productSellerIds = [];
+
+    if (variantId) {
+      const variant = await ProductVariant.findById(variantId);
+      if (variant) {
+        productSellerIds = await resolveProductSellerIds(variant);
+      } else {
+        // Fallback to product seller if variant not found
+        productSellerIds = await resolveProductSellerIds(product);
+      }
+    } else {
+      // If no specific variant, include sellers from the product and all its variants
+      productSellerIds = await resolveProductSellerIds(product);
+      const variants = await ProductVariant.findByProductId(productId);
+      if (variants && variants.length > 0) {
+        for (const variant of variants) {
+          const variantSellerIds = await resolveProductSellerIds(variant);
+          variantSellerIds.forEach(id => productSellerIds.push(id));
+        }
+        productSellerIds = Array.from(new Set(productSellerIds));
+      }
+    }
 
     const activeCoupons = await Coupon.findActive();
     
