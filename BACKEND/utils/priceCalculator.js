@@ -1,6 +1,8 @@
 const Offer = require('../models/Offer');
 const Coupon = require('../models/Coupon');
 const SubCategory = require('../models/SubCategory');
+const Product = require('../models/Product');
+const ProductVariant = require('../models/ProductVariant');
 
 /**
  * Calculates the layered price for a set of cart items.
@@ -19,6 +21,18 @@ async function calculateCartPrices(items, couponCode = null) {
     let salePrice = parseFloat(item.salePrice || item.price) || 0; // Seller's current sale price
     let finalItemPrice = salePrice;
     let appliedOffer = null;
+    let resolvedSellerId = item.sellerId;
+
+    // Resolve sellerId if missing
+    if (!resolvedSellerId) {
+      if (item.variantId) {
+        const variant = await ProductVariant.findById(item.variantId);
+        if (variant) resolvedSellerId = variant.sellerId || variant.userId;
+      } else if (item.productId) {
+        const product = await Product.findById(item.productId);
+        if (product) resolvedSellerId = product.sellerId || product.userId;
+      }
+    }
 
     // 1. Check for Active Offers (Direct or Tiered)
     const matchingOffer = activeOffers.find(offer => {
@@ -63,6 +77,7 @@ async function calculateCartPrices(items, couponCode = null) {
 
     return {
       ...item,
+      sellerId: resolvedSellerId,
       originalPrice: price,
       sellerSalePrice: salePrice,
       finalPrice: finalItemPrice,
@@ -82,16 +97,35 @@ async function calculateCartPrices(items, couponCode = null) {
       
       // Check if coupon is applicable to any item in the cart
       const applicableItems = processedItems.filter(item => {
+        // 1. Seller Ownership Check
+        // If coupon belongs to a seller, it can only be applied to that seller's products
+        const couponSellerId = coupon.sellerId?.toString() || coupon.owner?.id?.toString();
+        const itemSellerId = item.sellerId?.toString();
+        
+        // If it's a seller coupon, ensure it matches the item's seller
+        if (coupon.owner?.type === 'seller' && couponSellerId && itemSellerId) {
+          if (couponSellerId !== itemSellerId) return false;
+        } else if (coupon.owner?.type === 'seller' && !itemSellerId) {
+          // If it's a seller coupon but we couldn't resolve item seller, don't apply for safety
+          return false;
+        }
+
+        // 2. Applicability Type Check
         if (!coupon.applicableTo || coupon.applicableTo.type === 'all') return true;
         
         const applicableIds = (coupon.applicableTo.ids || []).map(id => id.toString());
+        
         if (coupon.applicableTo.type === 'product') {
-          return applicableIds.includes(item.productId?.toString()) || 
+          // Check against Product ID, Variant ID, or Item ID (UUID strings)
+          return (item.productId && applicableIds.includes(item.productId.toString())) || 
+                 (item.variantId && applicableIds.includes(item.variantId.toString())) ||
                  (item._id && applicableIds.includes(item._id.toString()));
         }
+        
         if (coupon.applicableTo.type === 'category') {
-          return applicableIds.includes(item.subCategoryId?.toString());
+          return item.subCategoryId && applicableIds.includes(item.subCategoryId.toString());
         }
+        
         return false;
       });
 
