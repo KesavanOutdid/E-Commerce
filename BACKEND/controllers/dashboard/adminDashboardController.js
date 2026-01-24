@@ -4,6 +4,8 @@ const Role = require('../../models/Role');
 const Product = require('../../models/Product');
 const MainCategory = require('../../models/MainCategory');
 const SubCategory = require('../../models/SubCategory');
+const Offer = require('../../models/Offer');
+const Coupon = require('../../models/Coupon');
 const { ObjectId } = require('mongodb');
 
 const getTimeFilter = (filter, startDate, endDate) => {
@@ -72,6 +74,8 @@ exports.getDashboardStats = async (req, res) => {
         const matchQuery = start ? { createdAt: { $gte: start, $lte: end } } : {};
 
         const ADMIN_USER_ID = '00000000-0000-0000-0000-000000000001';
+        const SUCCESSFUL_ORDER_STATUSES = ['confirmed', 'packed', 'delivered', 'shipped', 'order placed'];
+        const successfulMatchQuery = { ...matchQuery, orderStatus: { $in: SUCCESSFUL_ORDER_STATUSES } };
 
         // 1. Summary Stats - Optimized with parallel queries
         const [
@@ -81,13 +85,18 @@ exports.getDashboardStats = async (req, res) => {
             financeStats,
             totalRoles,
             successfulOrdersData,
-            orderStatusData
+            orderStatusData,
+            totalActiveOffers,
+            totalActiveCoupons,
+            promotionStats,
+            topUsedCoupons,
+            totalCategories
         ] = await Promise.all([
             User.collection().countDocuments(),
             Product.collection().countDocuments(),
-            Order.collection().countDocuments(),
+            Order.collection().countDocuments(successfulMatchQuery),
             Order.collection().aggregate([
-                { $match: matchQuery },
+                { $match: successfulMatchQuery },
                 { $unwind: '$items' },
                 {
                     $lookup: {
@@ -116,17 +125,40 @@ exports.getDashboardStats = async (req, res) => {
             ]).toArray(),
             Role.collection().countDocuments(),
             Order.collection().aggregate([
-                { $match: { paymentStatus: 'completed' } },
+                { $match: successfulMatchQuery },
                 { $count: 'total' }
             ]).toArray(),
             Order.collection().aggregate([
-                { $match: matchQuery },
+                { $match: successfulMatchQuery },
                 { $group: { _id: '$orderStatus', count: { $sum: 1 } } }
-            ]).toArray()
+            ]).toArray(),
+            Offer.collection().countDocuments({ status: { $in: [true, 'true'] }, endDate: { $gte: new Date() } }),
+            Coupon.collection().countDocuments({ status: { $in: [true, 'true'] }, expiryDate: { $gte: new Date() } }),
+            Order.collection().aggregate([
+                { $match: successfulMatchQuery },
+                {
+                    $group: {
+                        _id: null,
+                        totalDiscounts: { $sum: '$discountAmount' },
+                        ordersWithCoupons: {
+                            $sum: { $cond: [{ $ne: ['$couponCode', null] }, 1, 0] }
+                        }
+                    }
+                }
+            ]).toArray(),
+            Order.collection().aggregate([
+                { $match: { ...successfulMatchQuery, couponCode: { $ne: null } } },
+                { $group: { _id: '$couponCode', count: { $sum: 1 }, totalSaved: { $sum: '$discountAmount' } } },
+                { $sort: { count: -1 } },
+                { $limit: 5 }
+            ]).toArray(),
+            MainCategory.collection().countDocuments()
         ]);
 
         const totalRevenue = financeStats[0]?.totalRevenue || 0;
         const totalPlatformFees = financeStats[0]?.totalPlatformFees || 0;
+        const totalDiscounts = promotionStats[0]?.totalDiscounts || 0;
+        const ordersWithCoupons = promotionStats[0]?.ordersWithCoupons || 0;
         const successfulOrders = successfulOrdersData[0]?.total || 0;
         const orderStatusBreakdown = orderStatusData.reduce((acc, item) => {
             acc[item._id || 'pending'] = item.count;
@@ -139,7 +171,7 @@ exports.getDashboardStats = async (req, res) => {
         if (filter === 'today') groupBy = { $dateToString: { format: "%H:00", date: "$createdAt" } };
 
         const rawChartData = await Order.collection().aggregate([
-            { $match: matchQuery },
+            { $match: successfulMatchQuery },
             { $unwind: '$items' },
             {
                 $lookup: {
@@ -173,7 +205,7 @@ exports.getDashboardStats = async (req, res) => {
 
         // 3. Best Sellers - Optimized with fields in order items
         const bestSellers = await Order.collection().aggregate([
-            { $match: matchQuery },
+            { $match: successfulMatchQuery },
             { $unwind: '$items' },
             { $group: { 
                 _id: '$items.sellerId', 
@@ -213,7 +245,7 @@ exports.getDashboardStats = async (req, res) => {
 
         // 4. Best Products - Optimized with fields in order items
         const bestProducts = await Order.collection().aggregate([
-            { $match: matchQuery },
+            { $match: successfulMatchQuery },
             { $unwind: '$items' },
             { $group: { 
                 _id: '$items.productId', 
@@ -237,7 +269,7 @@ exports.getDashboardStats = async (req, res) => {
 
         // 5. Best Categories - Optimized with fields in order items
         const bestCategoriesRaw = await Order.collection().aggregate([
-            { $match: matchQuery },
+            { $match: successfulMatchQuery },
             { $unwind: '$items' },
             { $group: { 
                 _id: '$items.mainCategoryId', 
@@ -262,7 +294,7 @@ exports.getDashboardStats = async (req, res) => {
         const bestCategories = await Promise.all(
             bestCategoriesRaw.map(async (c) => {
                 const categoryTopProducts = await Order.collection().aggregate([
-                    { $match: { ...matchQuery, 'items.mainCategoryId': c._id } },
+                    { $match: { ...successfulMatchQuery, 'items.mainCategoryId': c._id } },
                     { $unwind: '$items' },
                     { $match: { 'items.mainCategoryId': c._id } },
                     { $group: { 
@@ -324,8 +356,20 @@ exports.getDashboardStats = async (req, res) => {
                     totalRevenue,
                     totalPlatformFees,
                     totalRoles,
+                    totalCategories,
                     successfulOrders,
-                    orderStatusBreakdown
+                    orderStatusBreakdown,
+                    promotions: {
+                        activeOffers: totalActiveOffers,
+                        activeCoupons: totalActiveCoupons,
+                        totalDiscounts,
+                        ordersWithCoupons,
+                        topUsedCoupons: topUsedCoupons.map(c => ({
+                            code: c._id,
+                            usageCount: c.count,
+                            totalSaved: c.totalSaved
+                        }))
+                    }
                 },
                 charts: {
                     revenueChart

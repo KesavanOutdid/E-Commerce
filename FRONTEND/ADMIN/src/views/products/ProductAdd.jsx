@@ -22,7 +22,7 @@ import {
     DialogContent,
     DialogActions
 } from '@mui/material';
-import { IconArrowLeft, IconUpload, IconX, IconPlus } from '@tabler/icons-react';
+import { IconArrowLeft, IconUpload, IconX, IconPlus, IconTag, IconCurrencyRupee } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
 import { API_ENDPOINTS, API_BASE_URL } from '../../config/apiConfig';
@@ -859,6 +859,42 @@ const ProductAdd = () => {
                                                         </Grid>
                                                     ))}
                                                 </Grid>
+                                            </Grid>
+                                        )}
+
+                                        {isEdit && (variant.offers?.length > 0 || variant.coupons?.length > 0) && (
+                                            <Grid item xs={12}>
+                                                <Box sx={{ mt: 1, p: 1.5, bgcolor: '#fff', borderRadius: 1, border: '1px solid #eee' }}>
+                                                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'primary.main', display: 'block', mb: 1, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                                        Linked Promotions
+                                                    </Typography>
+                                                    <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                                                        {variant.offers?.map((offer, oidx) => (
+                                                            <MuiChip
+                                                                key={`offer-${oidx}`}
+                                                                label={offer.name}
+                                                                size="small"
+                                                                color="primary"
+                                                                variant="outlined"
+                                                                icon={<IconTag size={12} />}
+                                                                title={offer.description}
+                                                                sx={{ height: 24, fontSize: '0.75rem' }}
+                                                            />
+                                                        ))}
+                                                        {variant.coupons?.map((coupon, cidx) => (
+                                                            <MuiChip
+                                                                key={`coupon-${cidx}`}
+                                                                label={coupon.code}
+                                                                size="small"
+                                                                color="secondary"
+                                                                variant="outlined"
+                                                                icon={<IconCurrencyRupee size={12} />}
+                                                                title={`${coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '₹' + coupon.discountValue} OFF`}
+                                                                sx={{ height: 24, fontSize: '0.75rem' }}
+                                                            />
+                                                        ))}
+                                                    </Stack>
+                                                </Box>
                                             </Grid>
                                         )}
                                         {/* Variant Images */}

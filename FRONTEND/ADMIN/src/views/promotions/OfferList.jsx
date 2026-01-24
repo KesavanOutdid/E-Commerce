@@ -87,6 +87,7 @@ const OfferList = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Name</TableCell>
+                                <TableCell>Owner</TableCell>
                                 <TableCell>Type</TableCell>
                                 <TableCell>Applicable To</TableCell>
                                 <TableCell>Discount</TableCell>
@@ -101,6 +102,17 @@ const OfferList = () => {
                                     <TableCell>
                                         <Typography variant="subtitle1">{offer.name}</Typography>
                                         <Typography variant="caption">{offer.description}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip 
+                                            label={offer.owner?.type?.toUpperCase() || 'ADMIN'} 
+                                            size="small" 
+                                            variant="outlined"
+                                            color={offer.owner?.type === 'seller' ? 'secondary' : 'primary'}
+                                        />
+                                        <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                                            {offer.owner?.name || 'System'}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Chip label={offer.type.replace('_', ' ').toUpperCase()} size="small" />
@@ -125,10 +137,20 @@ const OfferList = () => {
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="primary" onClick={() => navigate(`/promotions/offers/edit/${offer.offerId}`)}>
+                                            <IconButton 
+                                                color="primary" 
+                                                onClick={() => navigate(`/promotions/offers/edit/${offer.offerId}`)}
+                                                disabled={offer.owner?.type !== 'admin' && offer.owner?.type !== undefined}
+                                                title={offer.owner?.type !== 'admin' && offer.owner?.type !== undefined ? "Cannot edit seller offers" : "Edit"}
+                                            >
                                                 <IconEdit size="1.2rem" />
                                             </IconButton>
-                                            <IconButton color="error" onClick={() => handleDelete(offer.offerId)}>
+                                            <IconButton 
+                                                color="error" 
+                                                onClick={() => handleDelete(offer.offerId)}
+                                                disabled={offer.owner?.type !== 'admin' && offer.owner?.type !== undefined}
+                                                title={offer.owner?.type !== 'admin' && offer.owner?.type !== undefined ? "Cannot delete seller offers" : "Delete"}
+                                            >
                                                 <IconTrash size="1.2rem" />
                                             </IconButton>
                                         </Stack>

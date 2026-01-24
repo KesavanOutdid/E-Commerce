@@ -122,10 +122,9 @@ const UpdateProfile = () => {
           <Grid item xs={12} md={6}>
             <TextField
               fullWidth
-              label="Email"
-              value={profile?.email || ''}
-              disabled
-              helperText="Email cannot be changed"
+              label="Password"
+              value={formData.password}
+              onChange={(e) => updateProfileData('password', e.target.value)}
             />
           </Grid>
 

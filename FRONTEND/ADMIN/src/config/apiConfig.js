@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.23:5000/api';
+export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.7:5000/api';
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {

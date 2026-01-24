@@ -14,6 +14,14 @@ class Offer {
       applicableIds = await Product.resolveProductIds(applicableIds);
     }
 
+    let discountValue = parseFloat(data.discountValue) || 0;
+    let discountType = data.discountType;
+    if (data.type === 'quantity_tiered' && data.tiers && data.tiers.length > 0) {
+      const sortedTiers = [...data.tiers].sort((a, b) => parseInt(a.minQty) - parseInt(b.minQty));
+      discountValue = parseFloat(sortedTiers[0].value);
+      discountType = sortedTiers[0].discountType;
+    }
+
     const offer = {
       offerId: crypto.randomUUID(),
       name: data.name,
@@ -29,8 +37,8 @@ class Offer {
         ids: applicableIds // Array of Product or Category IDs
       },
       tiers: data.tiers || [], // [{ minQty: 2, discountType: 'percentage', value: 10 }]
-      discountType: data.discountType, // 'percentage', 'fixed' (for direct offers)
-      discountValue: parseFloat(data.discountValue) || 0,
+      discountType: discountType, // 'percentage', 'fixed' (for direct offers)
+      discountValue: discountValue,
       image: data.image || null,
       startDate: new Date(data.startDate),
       endDate: new Date(data.endDate),
@@ -100,7 +108,18 @@ class Offer {
     if (data.startDate) updateData.startDate = new Date(data.startDate);
     if (data.endDate) updateData.endDate = new Date(data.endDate);
     if (data.status !== undefined) updateData.status = (data.status === 'true' || data.status === true);
-    if (data.discountValue !== undefined) updateData.discountValue = parseFloat(data.discountValue);
+
+    const finalType = data.type || existingOffer.type;
+    const finalTiers = data.tiers || existingOffer.tiers;
+
+    if (finalType === 'quantity_tiered' && finalTiers && finalTiers.length > 0) {
+      const sortedTiers = [...finalTiers].sort((a, b) => parseInt(a.minQty) - parseInt(b.minQty));
+      updateData.discountValue = parseFloat(sortedTiers[0].value);
+      updateData.discountType = sortedTiers[0].discountType;
+    } else {
+      if (data.discountValue !== undefined) updateData.discountValue = parseFloat(data.discountValue);
+      if (data.discountType !== undefined) updateData.discountType = data.discountType;
+    }
 
     const result = await this.collection().findOneAndUpdate(
       query,

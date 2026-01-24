@@ -13,7 +13,8 @@ export const useProfile = () => {
     firstName: '',
     lastName: '',
     phone: '',
-    profileImage: ''
+    profileImage: '',
+    password: ''
   });
   const [isDirty, setIsDirty] = useState(false);
   const [initialData, setInitialData] = useState(null);
@@ -29,7 +30,8 @@ export const useProfile = () => {
           firstName: data.firstName || '',
           lastName: data.lastName || '',
           phone: data.phone || '',
-          profileImage: data.profileImage || ''
+          profileImage: data.profileImage || '',
+          password: data.password || ''
         };
         setFormData(formValues);
         setInitialData(formValues);
@@ -59,6 +61,15 @@ export const useProfile = () => {
 
   const handleUpdateProfile = async (e) => {
     if (e) e.preventDefault();
+
+    // Password validation
+    if (formData.password) {
+      if (formData.password.length < 6) {
+        Swal.fire('Error', 'Password must be at least 6 characters long', 'error');
+        return;
+      }
+    }
+
     try {
       setSaving(true);
       
@@ -66,6 +77,10 @@ export const useProfile = () => {
       data.append('firstName', formData.firstName);
       data.append('lastName', formData.lastName);
       data.append('phone', formData.phone);
+      
+      if (formData.password) {
+        data.append('password', formData.password);
+      }
       
       if (formData.profileImage instanceof File) {
         data.append('profileImage', formData.profileImage);
@@ -83,12 +98,15 @@ export const useProfile = () => {
         Swal.fire('Success', 'Profile updated successfully', 'success');
         const updatedData = response.data.data;
         setProfile(updatedData);
-        setInitialData({
+        const nextInitialData = {
           firstName: updatedData.firstName || '',
           lastName: updatedData.lastName || '',
           phone: updatedData.phone || '',
-          profileImage: updatedData.profileImage || ''
-        });
+          profileImage: updatedData.profileImage || '',
+          password: updatedData.password || ''
+        };
+        setFormData(nextInitialData);
+        setInitialData(nextInitialData);
         setIsDirty(false);
         updateUser(updatedData);
       }

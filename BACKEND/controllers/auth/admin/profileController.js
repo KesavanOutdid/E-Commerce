@@ -27,8 +27,6 @@ async function getAdminProfile(req, res) {
       })
     );
 
-    delete user.password;
-
     return res.status(200).json({
       success: true,
       message: 'Admin profile retrieved successfully',
@@ -51,7 +49,7 @@ async function getAdminProfile(req, res) {
 async function updateAdminProfile(req, res) {
   try {
     const userId = req.userId;
-    const { firstName, lastName, phone, profileImage, addresses } = req.body;
+    const { firstName, lastName, phone, profileImage, addresses, password } = req.body;
 
     const user = await User.findByUserId(userId);
     if (!user) {
@@ -68,6 +66,14 @@ async function updateAdminProfile(req, res) {
       });
     }
 
+    // Handle password update if requested
+    if (password && user.password === password) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be different from the current password'
+      });
+    }
+
     const updateData = {
       updatedBy: req.userEmail
     };
@@ -75,6 +81,7 @@ async function updateAdminProfile(req, res) {
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (phone) updateData.phone = phone.replace(/^\+91/, '');
+    if (password) updateData.password = password;
     
     if (req.file) {
       updateData.profileImage = `/uploads/profiles/${req.file.filename}`;
@@ -108,8 +115,6 @@ async function updateAdminProfile(req, res) {
         return role ? role.roleName : null;
       })
     );
-
-    delete updatedUser.password;
 
     return res.status(200).json({
       success: true,

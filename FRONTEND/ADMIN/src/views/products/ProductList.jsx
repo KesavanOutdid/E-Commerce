@@ -364,6 +364,37 @@ const ProductList = () => {
                                             <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 600 }}>
                                                 {product.variantsCount || (product.variants?.length) || 0} Variants
                                             </Typography>
+                                            {(() => {
+                                                const allVariants = product.variants || [];
+                                                const offersCount = allVariants.reduce((acc, v) => acc + (v.offers?.length || 0), 0);
+                                                const couponsCount = allVariants.reduce((acc, v) => acc + (v.coupons?.length || 0), 0);
+                                                
+                                                if (offersCount > 0 || couponsCount > 0) {
+                                                    return (
+                                                        <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                                                            {offersCount > 0 && (
+                                                                <Chip 
+                                                                    label={`${offersCount} Offer${offersCount > 1 ? 's' : ''}`}
+                                                                    size="small"
+                                                                    color="primary"
+                                                                    variant="filled"
+                                                                    sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700 }}
+                                                                />
+                                                            )}
+                                                            {couponsCount > 0 && (
+                                                                <Chip 
+                                                                    label={`${couponsCount} Coupon${couponsCount > 1 ? 's' : ''}`}
+                                                                    size="small"
+                                                                    color="secondary"
+                                                                    variant="filled"
+                                                                    sx={{ height: 16, fontSize: '0.6rem', fontWeight: 700 }}
+                                                                />
+                                                            )}
+                                                        </Stack>
+                                                    );
+                                                }
+                                                return null;
+                                            })()}
                                         </TableCell>
                                         <TableCell>
                                             <Typography variant="body2">

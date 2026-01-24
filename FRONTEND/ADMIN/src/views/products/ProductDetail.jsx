@@ -841,6 +841,7 @@ const ProductDetail = () => {
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Pricing</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Stock</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>Delivery</TableCell>
+                                                <TableCell align="center" sx={{ fontWeight: 600 }}>Promotions</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 600 }}>Type</TableCell>
                                                 <TableCell align="center" sx={{ fontWeight: 600 }}>Action</TableCell>
                                             </TableRow>
@@ -930,6 +931,37 @@ const ProductDetail = () => {
                                                         </Typography>
                                                     </TableCell>
                                                     <TableCell align="right">{offer.deliveryDays} Days</TableCell>
+                                                    <TableCell align="center">
+                                                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, alignItems: 'center' }}>
+                                                            {offer.offers?.map((promo, pidx) => (
+                                                                <Chip 
+                                                                    key={`offer-${pidx}`}
+                                                                    label={promo.name}
+                                                                    size="small"
+                                                                    color="primary"
+                                                                    variant="outlined"
+                                                                    icon={<IconTag size={12} />}
+                                                                    title={promo.description}
+                                                                    sx={{ fontSize: '0.65rem', height: 20 }}
+                                                                />
+                                                            ))}
+                                                            {offer.coupons?.map((coupon, cidx) => (
+                                                                <Chip 
+                                                                    key={`coupon-${cidx}`}
+                                                                    label={coupon.code}
+                                                                    size="small"
+                                                                    color="secondary"
+                                                                    variant="outlined"
+                                                                    icon={<IconCurrencyRupee size={12} />}
+                                                                    title={`${coupon.discountType === 'percentage' ? coupon.discountValue + '%' : '₹' + coupon.discountValue} OFF`}
+                                                                    sx={{ fontSize: '0.65rem', height: 20 }}
+                                                                />
+                                                            ))}
+                                                            {!offer.offers?.length && !offer.coupons?.length && (
+                                                                <Typography variant="caption" color="textSecondary">-</Typography>
+                                                            )}
+                                                        </Box>
+                                                    </TableCell>
                                                     <TableCell align="center">
                                                         <Chip 
                                                             label={offer.isSeller ? 'Marketplace' : 'Primary'} 

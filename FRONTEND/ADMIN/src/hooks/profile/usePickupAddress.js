@@ -36,6 +36,7 @@ export const usePickupAddress = () => {
       const response = await axios.post(API_ENDPOINTS.AUTH.PICKUP_ADDRESSES, addressData);
       if (response.data.success) {
         setAddresses(response.data.data || []);
+        fetchAddresses(); // Re-fetch to ensure list is in sync
         Swal.fire('Success', 'Pickup address added successfully', 'success');
         return true;
       }
@@ -54,6 +55,7 @@ export const usePickupAddress = () => {
       const response = await axios.put(`${API_ENDPOINTS.AUTH.PICKUP_ADDRESSES}/${addressId}`, addressData);
       if (response.data.success) {
         setAddresses(response.data.data || []);
+        fetchAddresses(); // Re-fetch to ensure list is in sync
         Swal.fire('Success', 'Pickup address updated successfully', 'success');
         return true;
       }
@@ -83,6 +85,7 @@ export const usePickupAddress = () => {
         const response = await axios.delete(`${API_ENDPOINTS.AUTH.PICKUP_ADDRESSES}/${addressId}`);
         if (response.data.success) {
           setAddresses(response.data.data || []);
+          fetchAddresses(); // Re-fetch to ensure list is in sync
           Swal.fire('Deleted!', 'Pickup address has been deleted.', 'success');
           return true;
         }

@@ -18,7 +18,8 @@ import {
   TableHead,
   TableRow,
   TableContainer,
-  IconButton
+  IconButton,
+  Chip
 } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 import Chart from 'react-apexcharts';
@@ -29,6 +30,11 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined';
 import LocalOfferOutlinedIcon from '@mui/icons-material/LocalOfferOutlined';
 import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import ConfirmationNumberOutlinedIcon from '@mui/icons-material/ConfirmationNumberOutlined';
+import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
+import ShoppingCartCheckoutOutlinedIcon from '@mui/icons-material/ShoppingCartCheckoutOutlined';
+import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
+import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
 import { useDashboard } from '../../../hooks/dashboard/useDashboard';
@@ -406,72 +412,136 @@ export default function Dashboard() {
 
         <Grid size={12}>
           <Grid container spacing={3}>
+            {/* Main Stats Row 1 */}
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={TrendingUpOutlinedIcon}
+                label="Total Revenue"
+                value={
+                  stats?.summary?.totalRevenue
+                    ? `₹${stats.summary.totalRevenue.toLocaleString('en-IN')}`
+                    : '₹0'
+                }
+                loading={loading}
+                color="#667eea"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={ShoppingBagOutlinedIcon}
+                label="Total Orders"
+                value={stats?.summary?.totalOrders || 0}
+                loading={loading}
+                color="#f093fb"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={CheckCircleOutlinedIcon}
+                label="Successful Orders"
+                value={stats?.summary?.successfulOrders || 0}
+                loading={loading}
+                color="#06ffa5"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={PeopleAltOutlinedIcon}
+                label="Total Users"
+                value={stats?.summary?.totalUsers || 0}
+                loading={loading}
+                color="#fca311"
+              />
+            </Grid>
+
+            {/* Row 2 */}
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={LocalOfferOutlinedIcon}
+                label="Total Products"
+                value={stats?.summary?.totalProducts || 0}
+                loading={loading}
+                color="#06ffa5"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={AssignmentOutlinedIcon}
+                label="Admin revenue"
+                value={
+                  stats?.summary?.totalPlatformFees
+                    ? `₹${stats.summary.totalPlatformFees.toLocaleString('en-IN')}`
+                    : '₹0'
+                }
+                loading={loading}
+                color="#ff6b6b"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={LocalOfferOutlinedIcon}
+                label="Active Offers"
+                value={stats?.summary?.promotions?.activeOffers || 0}
+                loading={loading}
+                color="#4facfe"
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, lg: 3 }}>
+              <StatCard
+                icon={ConfirmationNumberOutlinedIcon}
+                label="Active Coupons"
+                value={stats?.summary?.promotions?.activeCoupons || 0}
+                loading={loading}
+                color="#00f2fe"
+              />
+            </Grid>
+
+            {/* Row 3 - Promotions + User Count */}
             <Grid size={{ xs: 12, lg: 6 }}>
               <Grid container spacing={2}>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <StatCard
-                    icon={TrendingUpOutlinedIcon}
-                    label="Total Revenue"
+                    icon={AccountBalanceWalletOutlinedIcon}
+                    label="Total Discounts"
                     value={
-                      stats?.summary?.totalRevenue
-                        ? `₹${stats.summary.totalRevenue.toLocaleString('en-IN')}`
+                      stats?.summary?.promotions?.totalDiscounts
+                        ? `₹${stats.summary.promotions.totalDiscounts.toLocaleString('en-IN')}`
                         : '₹0'
                     }
-                    loading={loading}
-                    color="#667eea"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <StatCard
-                    icon={ShoppingBagOutlinedIcon}
-                    label="Total Orders"
-                    value={stats?.summary?.totalOrders || 0}
                     loading={loading}
                     color="#f093fb"
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <StatCard
-                    icon={CheckCircleOutlinedIcon}
-                    label="Successful Orders"
-                    value={stats?.summary?.successfulOrders || 0}
+                    icon={ShoppingCartCheckoutOutlinedIcon}
+                    label="Orders with Coupons"
+                    value={stats?.summary?.promotions?.ordersWithCoupons || 0}
                     loading={loading}
-                    color="#06ffa5"
+                    color="#667eea"
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <StatCard
-                    icon={PeopleAltOutlinedIcon}
-                    label="Total Users"
-                    value={stats?.summary?.totalUsers || 0}
-                    loading={loading}
-                    color="#fca311"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <StatCard
-                    icon={LocalOfferOutlinedIcon}
-                    label="Total Products"
-                    value={stats?.summary?.totalProducts || 0}
-                    loading={loading}
-                    color="#06ffa5"
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <StatCard
-                    icon={AssignmentOutlinedIcon}
-                    label="Admin revenue"
-                    value={
-                      stats?.summary?.totalPlatformFees
-                        ? `₹${stats.summary.totalPlatformFees.toLocaleString('en-IN')}`
-                        : '₹0'
-                    }
+                    icon={AdminPanelSettingsOutlinedIcon}
+                    label="Total Roles"
+                    value={stats?.summary?.totalRoles || 0}
                     loading={loading}
                     color="#ff6b6b"
                   />
                 </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <StatCard
+                    icon={CategoryOutlinedIcon}
+                    label="Total Categories"
+                    value={stats?.summary?.totalCategories || 0}
+                    loading={loading}
+                    color="#4facfe"
+                  />
+                </Grid>
               </Grid>
             </Grid>
+
             <Grid size={{ xs: 12, lg: 6 }}>
               <Card
                 sx={{
@@ -737,6 +807,97 @@ export default function Dashboard() {
               </Card>
             </Grid>
           </Grid>
+        </Grid>
+
+        {/* Top Used Coupons Table */}
+        <Grid size={12}>
+          <Card
+            sx={{
+              background: 'white',
+              borderRadius: '16px',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)',
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                boxShadow: '0 8px 30px rgba(0,0,0,0.12)'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 3 }}>
+              <Typography
+                sx={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: '#212121',
+                  marginBottom: '20px'
+                }}
+              >
+                Top Used Coupons
+              </Typography>
+              {loading ? (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  {[1, 2, 3].map(i => (
+                    <Skeleton key={i} variant="rectangular" height={50} sx={{ borderRadius: '8px' }} />
+                  ))}
+                </Box>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ background: '#f8f9fa' }}>
+                        <TableCell sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
+                          Coupon Code
+                        </TableCell>
+                        <TableCell align="center" sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
+                          Usage Count
+                        </TableCell>
+                        <TableCell align="right" sx={{ fontWeight: '600', color: '#212121', fontSize: '13px' }}>
+                          Total Saved
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {stats?.summary?.promotions?.topUsedCoupons?.map((coupon, idx) => (
+                        <TableRow
+                          key={idx}
+                          sx={{
+                            '&:hover': { backgroundColor: '#f5f5f5' },
+                            borderBottom: '1px solid #f1f1f1'
+                          }}
+                        >
+                          <TableCell sx={{ fontSize: '13px', color: '#212121', fontWeight: '500' }}>
+                            <Chip 
+                              label={coupon.code} 
+                              size="small" 
+                              sx={{ 
+                                backgroundColor: '#667eea', 
+                                color: 'white', 
+                                fontWeight: '700',
+                                borderRadius: '4px'
+                              }} 
+                            />
+                          </TableCell>
+                          <TableCell align="center" sx={{ fontSize: '13px', color: '#757575' }}>
+                            {coupon.usageCount} times
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontSize: '13px', fontWeight: '700', color: '#06ffa5' }}>
+                            ₹{coupon.totalSaved?.toLocaleString('en-IN') || 0}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!stats?.summary?.promotions?.topUsedCoupons || stats.summary.promotions.topUsedCoupons.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={3} align="center" sx={{ py: 3, color: '#999' }}>
+                            No coupon usage data available for this period
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </CardContent>
+          </Card>
         </Grid>
       </Grid>
     </Box>

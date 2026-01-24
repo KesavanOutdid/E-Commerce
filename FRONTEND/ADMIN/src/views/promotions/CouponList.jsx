@@ -87,6 +87,7 @@ const CouponList = () => {
                         <TableHead>
                             <TableRow>
                                 <TableCell>Code</TableCell>
+                                <TableCell>Owner</TableCell>
                                 <TableCell>Discount</TableCell>
                                 <TableCell>Requirements</TableCell>
                                 <TableCell>Usage</TableCell>
@@ -101,6 +102,17 @@ const CouponList = () => {
                                     <TableCell>
                                         <Typography variant="h4" color="primary">{coupon.code}</Typography>
                                         <Typography variant="caption">{coupon.description}</Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Chip 
+                                            label={coupon.owner?.type?.toUpperCase() || 'ADMIN'} 
+                                            size="small" 
+                                            variant="outlined"
+                                            color={coupon.owner?.type === 'seller' ? 'secondary' : 'primary'}
+                                        />
+                                        <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                                            {coupon.owner?.name || 'System'}
+                                        </Typography>
                                     </TableCell>
                                     <TableCell>
                                         <Typography variant="subtitle1">
@@ -130,10 +142,20 @@ const CouponList = () => {
                                     </TableCell>
                                     <TableCell align="center">
                                         <Stack direction="row" spacing={1} justifyContent="center">
-                                            <IconButton color="primary" onClick={() => navigate(`/promotions/coupons/edit/${coupon.couponId}`)}>
+                                            <IconButton 
+                                                color="primary" 
+                                                onClick={() => navigate(`/promotions/coupons/edit/${coupon.couponId}`)}
+                                                disabled={coupon.owner?.type !== 'admin' && coupon.owner?.type !== undefined}
+                                                title={coupon.owner?.type !== 'admin' && coupon.owner?.type !== undefined ? "Cannot edit seller coupons" : "Edit"}
+                                            >
                                                 <IconEdit size="1.2rem" />
                                             </IconButton>
-                                            <IconButton color="error" onClick={() => handleDelete(coupon.couponId)}>
+                                            <IconButton 
+                                                color="error" 
+                                                onClick={() => handleDelete(coupon.couponId)}
+                                                disabled={coupon.owner?.type !== 'admin' && coupon.owner?.type !== undefined}
+                                                title={coupon.owner?.type !== 'admin' && coupon.owner?.type !== undefined ? "Cannot delete seller coupons" : "Delete"}
+                                            >
                                                 <IconTrash size="1.2rem" />
                                             </IconButton>
                                         </Stack>
