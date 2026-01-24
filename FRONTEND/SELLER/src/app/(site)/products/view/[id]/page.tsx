@@ -400,6 +400,134 @@ export default function ProductViewPage() {
                                                         </div>
                                                     )}
 
+                                                    {/* Coupons Section */}
+                                                    {selectedVariant.coupons && selectedVariant.coupons.length > 0 && (
+                                                        <div className="pt-3 border-t border-gray-100">
+                                                            <label className="block text-sm font-bold text-black mb-3 flex items-center gap-2">
+                                                                <Icon icon="mdi:ticket-percent" className="text-primary" width={18} height={18} />
+                                                                Available Coupons ({selectedVariant.coupons.length})
+                                                            </label>
+                                                            <div className="space-y-3">
+                                                                {selectedVariant.coupons.map((coupon: any, couponIndex: number) => (
+                                                                    <div key={couponIndex} className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3">
+                                                                        <div className="flex items-start gap-3">
+                                                                            {coupon.image && (
+                                                                                <img
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${coupon.image}`}
+                                                                                    alt={coupon.code}
+                                                                                    className="w-16 h-16 object-cover rounded-lg border border-orange-300"
+                                                                                />
+                                                                            )}
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                                                    <div>
+                                                                                        <p className="text-sm font-bold text-orange-900">{coupon.code}</p>
+                                                                                        <p className="text-xs text-gray-600 mt-0.5">{coupon.description}</p>
+                                                                                    </div>
+                                                                                    <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${coupon.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                                        {coupon.status ? 'Active' : 'Inactive'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Discount:</span>
+                                                                                        <span className="ml-1 font-semibold text-orange-700">
+                                                                                            {coupon.discountType === 'percentage' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Min Order:</span>
+                                                                                        <span className="ml-1 font-semibold text-gray-900">₹{coupon.minOrderValue}</span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Max Discount:</span>
+                                                                                        <span className="ml-1 font-semibold text-gray-900">₹{coupon.maxDiscountAmount}</span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Expires:</span>
+                                                                                        <span className="ml-1 font-semibold text-red-600">
+                                                                                            {new Date(coupon.expiryDate).toLocaleDateString('en-IN')}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Usage:</span>
+                                                                                        <span className="ml-1 font-semibold text-gray-900">
+                                                                                            {coupon.usedCount}/{coupon.usageLimit}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Per User:</span>
+                                                                                        <span className="ml-1 font-semibold text-gray-900">{coupon.userLimit}</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {/* Offers Section */}
+                                                    {selectedVariant.offers && selectedVariant.offers.length > 0 && (
+                                                        <div className="pt-3 border-t border-gray-100">
+                                                            <label className="block text-sm font-bold text-black mb-3 flex items-center gap-2">
+                                                                <Icon icon="mdi:tag-multiple" className="text-primary" width={18} height={18} />
+                                                                Active Offers ({selectedVariant.offers.length})
+                                                            </label>
+                                                            <div className="space-y-3">
+                                                                {selectedVariant.offers.map((offer: any, offerIndex: number) => (
+                                                                    <div key={offerIndex} className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3">
+                                                                        <div className="flex items-start gap-3">
+                                                                            {offer.image && (
+                                                                                <img
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${offer.image}`}
+                                                                                    alt={offer.name}
+                                                                                    className="w-16 h-16 object-cover rounded-lg border border-purple-300"
+                                                                                />
+                                                                            )}
+                                                                            <div className="flex-1 min-w-0">
+                                                                                <div className="flex items-start justify-between gap-2 mb-2">
+                                                                                    <div>
+                                                                                        <p className="text-sm font-bold text-purple-900">{offer.name}</p>
+                                                                                        <p className="text-xs text-gray-600 mt-0.5">{offer.description}</p>
+                                                                                    </div>
+                                                                                    <span className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${offer.status ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                                                        {offer.status ? 'Active' : 'Inactive'}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="grid grid-cols-2 gap-2 text-xs">
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Discount:</span>
+                                                                                        <span className="ml-1 font-semibold text-purple-700">
+                                                                                            {offer.discountType === 'percentage' ? `${offer.discountValue}%` : `₹${offer.discountValue}`}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Type:</span>
+                                                                                        <span className="ml-1 font-semibold text-gray-900 capitalize">{offer.type}</span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">Start:</span>
+                                                                                        <span className="ml-1 font-semibold text-green-600">
+                                                                                            {new Date(offer.startDate).toLocaleDateString('en-IN')}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div>
+                                                                                        <span className="text-gray-600">End:</span>
+                                                                                        <span className="ml-1 font-semibold text-red-600">
+                                                                                            {new Date(offer.endDate).toLocaleDateString('en-IN')}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
                                                     {/* Row 2: Delivery Days, Status, Approval */}
                                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
                                                         {/* Delivery Days */}
