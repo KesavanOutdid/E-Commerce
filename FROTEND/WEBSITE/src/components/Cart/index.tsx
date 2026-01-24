@@ -1,12 +1,12 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAppSelector, AppDispatch } from "@/redux/store";
 import SingleItem from "./SingleItem";
 import CouponCard from "./CouponCard";
 import Breadcrumb from "../Common/Breadcrumb";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
-import { fetchCart, clearCartServer, removeAllItemsFromCart, applyCoupon, selectTotalPrice, selectTotalGst, removeCoupon, selectTotalSavings } from "@/redux/features/cart-slice";
+import { fetchCart, clearCartServer, removeAllItemsFromCart, applyCoupon, selectTotalPrice, selectTotalGst, removeCoupon, selectTotalSavings, applyOffer, removeOffer, selectOfferDiscount } from "@/redux/features/cart-slice";
 import toast from "react-hot-toast";
 import { API_ENDPOINTS } from "@/lib/api";
 
@@ -17,11 +17,17 @@ const Cart = () => {
   const totalPrice = useAppSelector(selectTotalPrice);
   const totalGst = useAppSelector(selectTotalGst);
   const totalSavings = useAppSelector(selectTotalSavings);
+  const manualOfferDiscount = useAppSelector(selectOfferDiscount);
   const appliedCoupon = useAppSelector((state) => state.cartReducer.appliedCoupon);
+  const appliedOffer = useAppSelector((state) => state.cartReducer.appliedOffer);
   const [couponCode, setCouponCode] = useState("");
   const [isApplying, setIsApplying] = useState(false);
   const [availableCoupons, setAvailableCoupons] = useState<any[]>([]);
+  const [availableOffers, setAvailableOffers] = useState<any[]>([]);
   const [productCoupons, setProductCoupons] = useState<Record<string, any[]>>({});
+  const [productOffers, setProductOffers] = useState<Record<string, any[]>>({});
+  const [showAllOffers, setShowAllOffers] = useState(false);
+  const [hasInteractedWithCoupon, setHasInteractedWithCoupon] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && accessToken) {
@@ -29,46 +35,15 @@ const Cart = () => {
     }
   }, [dispatch, isAuthenticated, accessToken]);
 
-  // Fetch available coupons for items in cart
-  useEffect(() => {
-    const fetchAvailableCoupons = async () => {
-      if (cartItems.length === 0) return;
-      
-      try {
-        const couponsMap = new Map();
-        const productMap: Record<string, any[]> = {};
-        
-        await Promise.all(cartItems.map(async (item) => {
-          const url = new URL(API_ENDPOINTS.PRODUCT_COUPONS(item.productId));
-          if (item.sellerProductId) {
-            url.searchParams.append("variantId", item.sellerProductId);
-          }
-          
-          const res = await fetch(url.toString());
-          const data = await res.json();
-          if (data.success && data.data) {
-            productMap[item.productId] = data.data;
-            data.data.forEach((coupon: any) => {
-              couponsMap.set(coupon.code, coupon);
-            });
-          }
-        }));
-        
-        setAvailableCoupons(Array.from(couponsMap.values()));
-        setProductCoupons(productMap);
-      } catch (error) {
-        console.error("Failed to fetch coupons:", error);
-      }
-    };
-
-    fetchAvailableCoupons();
-  }, [cartItems]);
-
-  const handleApplyCoupon = async (codeToApply?: string) => {
+  const handleApplyCoupon = useCallback(async (codeToApply?: string, isAuto = false) => {
     const code = codeToApply || couponCode;
     if (!code.trim()) {
-      toast.error("Please enter a coupon code");
+      if (!codeToApply) toast.error("Please enter a coupon code");
       return;
+    }
+
+    if (!isAuto) {
+      setHasInteractedWithCoupon(true);
     }
 
     setIsApplying(true);
@@ -81,17 +56,86 @@ const Cart = () => {
           accessToken: accessToken || undefined,
         })
       ).unwrap();
-      toast.success("Coupon applied successfully!");
+      
+      if (!isAuto) {
+        toast.success("Coupon applied successfully!");
+      }
       setCouponCode("");
     } catch (error: any) {
-      toast.error(error || "Invalid coupon code");
+      // Show error toast for all manual applications (input or card click)
+      if (!isAuto) {
+        toast.error(error || "Invalid coupon code");
+      }
+      console.error("Coupon application failed:", error);
     } finally {
       setIsApplying(false);
     }
-  };
+  }, [dispatch, couponCode, cartItems, totalPrice, accessToken]);
+
+  // Fetch available coupons and offers for items in cart
+  useEffect(() => {
+    const fetchAvailablePromotions = async () => {
+      if (cartItems.length === 0) return;
+      
+      try {
+        const couponsMap = new Map();
+        const offersMap = new Map();
+        const prodCouponsMap: Record<string, any[]> = {};
+        const prodOffersMap: Record<string, any[]> = {};
+        
+        await Promise.all(cartItems.map(async (item) => {
+          // Fetch Coupons
+          const couponUrl = new URL(API_ENDPOINTS.PRODUCT_COUPONS(item.productId));
+          if (item.sellerProductId) couponUrl.searchParams.append("variantId", item.sellerProductId);
+          
+          const couponRes = await fetch(couponUrl.toString());
+          const couponData = await couponRes.json();
+          if (couponData.success && couponData.data) {
+            prodCouponsMap[item.productId] = couponData.data;
+            couponData.data.forEach((coupon: any) => {
+              couponsMap.set(coupon.code, coupon);
+            });
+          }
+
+          // Fetch Offers
+          const offerUrl = new URL(API_ENDPOINTS.PRODUCT_PROMOTIONS(item.productId));
+          if (item.sellerProductId) offerUrl.searchParams.append("variantId", item.sellerProductId);
+
+          const offerRes = await fetch(offerUrl.toString());
+          const offerData = await offerRes.json();
+          if (offerData.success && offerData.data) {
+            prodOffersMap[item.productId] = offerData.data;
+            offerData.data.forEach((offer: any) => {
+              offersMap.set(offer.offerId, offer);
+            });
+          }
+        }));
+        
+        const coupons = Array.from(couponsMap.values());
+        setAvailableCoupons(coupons);
+        setAvailableOffers(Array.from(offersMap.values()));
+        setProductCoupons(prodCouponsMap);
+        setProductOffers(prodOffersMap);
+
+        // Auto-apply if only one coupon exists and is applicable, AND user hasn't removed it
+        if (coupons.length === 1 && !appliedCoupon && !hasInteractedWithCoupon) {
+          const coupon = coupons[0];
+          if (totalPrice >= coupon.minOrderValue) {
+            console.log("Auto-applying single coupon:", coupon.code);
+            handleApplyCoupon(coupon.code, true);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch promotions:", error);
+      }
+    };
+
+    fetchAvailablePromotions();
+  }, [cartItems, totalPrice, appliedCoupon, handleApplyCoupon, hasInteractedWithCoupon]);
 
   const handleRemoveCoupon = () => {
     dispatch(removeCoupon());
+    setHasInteractedWithCoupon(true);
     toast.success("Coupon removed");
   };
 
@@ -105,7 +149,40 @@ const Cart = () => {
 
   const discountAmount = calculateDiscount();
   const shippingFee = 150;
-  const grandTotal = totalPrice + totalGst + shippingFee - discountAmount;
+  
+  const totalMrp = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  
+  const totalAutomaticDiscount = totalMrp - totalPrice;
+  const grandTotal = totalPrice + totalGst + shippingFee - discountAmount - manualOfferDiscount;
+
+  const handleApplyOffer = (offer: any) => {
+    // Strictly separate code and name. 
+    // If no explicit code, try to extract from name like "Offer (CODE)"
+    let offerCode = offer.code || offer.offerCode || null;
+    const offerName = offer.name || offer.offerName || "Promotion";
+
+    if (!offerCode && offerName.includes("(") && offerName.includes(")")) {
+      const match = offerName.match(/\(([^)]+)\)/);
+      if (match) offerCode = match[1];
+    }
+    
+    dispatch(applyOffer({
+      offerId: offer.offerId,
+      offerCode: offerCode,
+      offerName: offerName,
+      name: offerName,
+      discountValue: offer.discountValue,
+      discountType: offer.discountType,
+      type: offer.type,
+      tiers: offer.tiers
+    }));
+    toast.success(`${offerName} applied!`);
+  };
+
+  const handleRemoveOffer = () => {
+    dispatch(removeOffer());
+    toast.success("Offer removed");
+  };
 
   const handleClearCart = async () => {
     if (isAuthenticated && accessToken) {
@@ -129,80 +206,31 @@ const Cart = () => {
       </section>
       {/* <!-- ===== Breadcrumb Section End ===== --> */}
       {cartItems.length > 0 ? (
-        <section className="overflow-hidden py-20 bg-gray-2">
+        <section className="overflow-hidden py-10 bg-gray-2">
           <div className="max-w-[1300px] w-full mx-auto px-4 sm:px-8 xl:px-0">
-            <div className="flex flex-wrap items-center justify-between gap-5 mb-7.5">
-              <h2 className="font-medium text-dark text-2xl">Your Cart</h2>
-              <button onClick={handleClearCart} className="text-blue hover:underline">
+            <div className="flex flex-wrap items-center justify-between gap-5 mb-5">
+              <h2 className="font-normal text-dark text-2xl">Your Cart</h2>
+              <button onClick={handleClearCart} className="text-[#2874f0] text-sm hover:underline">
                 Clear Shopping Cart
               </button>
             </div>
 
-            {/* Horizontal Available Coupons */}
-            {!appliedCoupon && availableCoupons.length > 0 && (
-              <div className="mb-8">
-                <div className="flex items-center gap-2 mb-4">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue">
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                    <line x1="7" y1="7" x2="7.01" y2="7"></line>
-                  </svg>
-                  <h3 className="font-medium text-lg text-dark">Available Coupons for You</h3>
-                </div>
-                <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
-                  {availableCoupons.map((coupon) => (
-                    <CouponCard 
-                      key={coupon.couponId} 
-                      coupon={{
-                        ...coupon,
-                        isApplicable: totalPrice >= coupon.minOrderValue
-                      }} 
-                      onApply={handleApplyCoupon}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="flex flex-col lg:flex-row gap-8 items-start">
               {/* <!-- Cart Items Column --> */}
               <div className="w-full lg:w-2/3">
-                <div className="bg-white rounded-[10px] shadow-1">
-                  <div className="w-full overflow-x-auto">
-                    <div className="min-w-[800px]">
-                      {/* <!-- table header --> */}
-                      <div className="flex items-center py-5.5 px-7.5">
-                        <div className="min-w-[300px] flex-shrink-0">
-                          <p className="text-dark">Product</p>
-                        </div>
-
-                        <div className="min-w-[150px] flex-shrink-0">
-                          <p className="text-dark">Price</p>
-                        </div>
-
-                        <div className="min-w-[150px] flex-shrink-0">
-                          <p className="text-dark">Quantity</p>
-                        </div>
-
-                        <div className="min-w-[150px] flex-shrink-0">
-                          <p className="text-dark">Subtotal</p>
-                        </div>
-
-                        <div className="min-w-[50px] flex-shrink-0">
-                          <p className="text-dark text-right">Action</p>
-                        </div>
-                      </div>
-
-                      {/* <!-- cart item --> */}
-                      {cartItems.map((item, key) => (
-                        <SingleItem 
-                          item={item} 
-                          key={key} 
-                          coupons={productCoupons[item.productId] || []}
-                          onApplyCoupon={handleApplyCoupon}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                <div className="flex flex-col gap-4">
+                  {cartItems.map((item, key) => (
+                    <SingleItem 
+                      item={item} 
+                      key={key} 
+                      coupons={productCoupons[item.productId] || []}
+                      offers={productOffers[item.productId] || []}
+                      appliedOffer={appliedOffer}
+                      onApplyCoupon={handleApplyCoupon}
+                      onApplyOffer={handleApplyOffer}
+                      onRemoveOffer={handleRemoveOffer}
+                    />
+                  ))}
                 </div>
               </div>
 
@@ -210,7 +238,7 @@ const Cart = () => {
               <div className="w-full lg:w-1/3 lg:sticky lg:top-5">
                 {/* Coupon Input */}
                 <div className="bg-white shadow-1 rounded-xl p-6 mb-6">
-                  <h3 className="font-medium text-lg text-dark mb-4">Have a Coupon?</h3>
+                  <h3 className="font-normal text-[15px] text-dark mb-4">Have a Coupon?</h3>
                   {appliedCoupon ? (
                     <div className="flex items-center justify-between bg-green-50 border border-green-200 p-3 rounded-md">
                       <div>
@@ -231,12 +259,12 @@ const Cart = () => {
                         placeholder="Enter coupon code"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        className="flex-1 border border-gray-3 rounded-md px-4 py-2 focus:outline-none focus:border-blue"
+                        className="flex-1 border border-gray-3 rounded-md px-4 py-2 focus:outline-none focus:border-blue text-sm"
                       />
                       <button
                         onClick={() => handleApplyCoupon()}
                         disabled={isApplying}
-                        className="bg-dark text-white px-4 py-2 rounded-md hover:bg-opacity-90 disabled:bg-opacity-50"
+                        className="bg-dark text-white px-4 py-2 rounded-md hover:bg-opacity-90 disabled:bg-opacity-50 text-sm font-medium"
                       >
                         {isApplying ? "..." : "Apply"}
                       </button>
@@ -246,38 +274,54 @@ const Cart = () => {
 
                 {/* Summary Details */}
                 <div className="bg-white shadow-1 rounded-xl overflow-hidden">
-                  <div className="bg-gray-1 py-4 px-6 border-b border-gray-3">
-                    <h3 className="font-medium text-lg text-dark">Order Summary</h3>
+                  <div className="bg-gray-1 py-3 px-6 border-b border-gray-3">
+                    <h3 className="font-normal text-[15px] text-dark">Order Summary</h3>
                   </div>
                   <div className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex justify-between">
+                    <div className="space-y-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Total MRP</span>
+                        <span className="text-dark font-medium line-through decoration-gray-400 text-gray-400">₹{totalMrp.toLocaleString()}</span>
+                      </div>
+                      {totalAutomaticDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600">
+                          <span>Product Discount</span>
+                          <span>-₹{totalAutomaticDiscount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      {manualOfferDiscount > 0 && (
+                        <div className="flex justify-between text-sm text-green-600 font-medium">
+                          <span>Offer ({appliedOffer?.name})</span>
+                          <span>-₹{manualOfferDiscount.toLocaleString()}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Subtotal</span>
                         <span className="text-dark font-medium">₹{totalPrice.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-600">GST (18%)</span>
                         <span className="text-dark font-medium">₹{totalGst.toLocaleString()}</span>
                       </div>
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-sm">
                         <span className="text-gray-600">Shipping Fee</span>
                         <span className="text-dark font-medium">₹{shippingFee.toLocaleString()}</span>
                       </div>
                       {appliedCoupon && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Discount ({appliedCoupon.code})</span>
+                        <div className="flex justify-between text-sm text-blue font-medium">
+                          <span>Coupon ({appliedCoupon.code})</span>
                           <span>-₹{discountAmount.toLocaleString()}</span>
                         </div>
                       )}
                       {totalSavings > 0 && (
-                        <div className="bg-green-50 p-3 rounded-md mt-4">
-                          <p className="text-green-700 text-sm font-medium text-center">
-                            You will save ₹{totalSavings.toLocaleString()} on this order
+                        <div className="bg-green-50 p-2.5 rounded-md mt-4 border border-green-100">
+                          <p className="text-green-700 text-[12px] font-medium text-center">
+                            Total Savings: ₹{totalSavings.toLocaleString()}
                           </p>
                         </div>
                       )}
-                      <div className="flex justify-between text-xl font-bold text-dark pt-6 border-t border-gray-3 mt-6">
-                        <span>Total</span>
+                      <div className="flex justify-between text-lg font-bold text-dark pt-4 border-t border-gray-3 mt-4">
+                        <span>Total Amount</span>
                         <span>₹{grandTotal.toLocaleString()}</span>
                       </div>
                     </div>

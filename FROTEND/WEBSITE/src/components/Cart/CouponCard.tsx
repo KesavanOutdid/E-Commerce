@@ -28,7 +28,7 @@ const CouponCard: React.FC<CouponCardProps> = ({ coupon, onApply, isApplied }) =
   return (
     <div 
       onClick={() => isApplicable && !isApplied && onApply(coupon.code)}
-      className={`relative min-w-[170px] h-[54px] bg-white rounded border border-dashed cursor-pointer overflow-hidden transition-all duration-300 flex items-center group ${
+      className={`relative min-w-[155px] h-[44px] bg-white rounded border border-dashed cursor-pointer overflow-hidden transition-all duration-300 flex items-center group ${
         isApplied 
           ? "border-green-500 bg-green-50" 
           : isApplicable 
@@ -37,21 +37,21 @@ const CouponCard: React.FC<CouponCardProps> = ({ coupon, onApply, isApplied }) =
       }`}
     >
       {/* Semi-circle cutouts */}
-      <div className="absolute -top-1.5 left-[35%] w-3 h-3 bg-gray-2 rounded-full border-b border-dashed border-inherit"></div>
-      <div className="absolute -bottom-1.5 left-[35%] w-3 h-3 bg-gray-2 rounded-full border-t border-dashed border-inherit"></div>
+      <div className="absolute -top-1.5 left-[30%] w-3 h-3 bg-gray-2 rounded-full border-b border-dashed border-inherit"></div>
+      <div className="absolute -bottom-1.5 left-[30%] w-3 h-3 bg-gray-2 rounded-full border-t border-dashed border-inherit"></div>
 
       {/* Left Section: Discount */}
-      <div className="w-[35%] h-full flex flex-col items-center justify-center border-r border-dashed border-inherit px-1 text-center bg-gray-50/50">
-        <p className="text-sm font-black text-dark leading-none">
+      <div className="w-[30%] h-full flex flex-col items-center justify-center border-r border-dashed border-inherit px-1 text-center bg-gray-50/50">
+        <p className="text-[12px] font-black text-dark leading-none">
           {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}
         </p>
-        <p className="text-[10px] font-bold text-gray-500 uppercase tracking-tighter mt-1">OFF</p>
+        <p className="text-[7px] font-bold text-gray-500 uppercase tracking-tighter mt-0.5">OFF</p>
       </div>
 
       {/* Right Section: Code & Info */}
-      <div className="flex-1 h-full flex flex-col justify-center px-2.5 gap-0.5">
+      <div className="flex-1 h-full flex flex-col justify-center px-2 gap-0">
         <div className="flex items-center justify-between">
-          <span className={`text-xs font-black uppercase tracking-wider ${
+          <span className={`text-[11px] font-black uppercase tracking-wider ${
             isApplied ? "text-green-600" : "text-blue"
           }`}>
             {coupon.code}
@@ -60,7 +60,7 @@ const CouponCard: React.FC<CouponCardProps> = ({ coupon, onApply, isApplied }) =
             onClick={handleCopy}
             className="text-gray-400 hover:text-blue transition-colors"
           >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
@@ -68,9 +68,9 @@ const CouponCard: React.FC<CouponCardProps> = ({ coupon, onApply, isApplied }) =
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-[10px] text-gray-500 font-bold">
+          <p className="text-[9px] text-gray-500 font-bold">
             {isApplied ? (
-              <span className="text-green-600 flex items-center gap-0.5">
+              <span className="text-green-600 flex items-center gap-0.5 uppercase">
                 APPLIED
               </span>
             ) : isApplicable ? (
@@ -80,7 +80,7 @@ const CouponCard: React.FC<CouponCardProps> = ({ coupon, onApply, isApplied }) =
             )}
           </p>
           {!isApplied && isApplicable && (
-             <span className="text-[10px] font-black text-blue group-hover:underline">APPLY</span>
+             <span className="text-[9px] font-black text-blue group-hover:underline">APPLY</span>
           )}
         </div>
       </div>

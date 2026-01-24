@@ -103,6 +103,13 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
   const [helpfulReviews, setHelpfulReviews] = useState<Record<string, boolean>>({});
   const [visibleReviews, setVisibleReviews] = useState(5);
   const [showAllPhotos, setShowAllPhotos] = useState(false);
+  const [showAllPromos, setShowAllPromos] = useState(false);
+  const [showAllCoupons, setShowAllCoupons] = useState(false);
+  const [expandedOfferTiers, setExpandedOfferTiers] = useState<Record<string, boolean>>({});
+
+  const toggleOfferTiers = (offerId: string) => {
+    setExpandedOfferTiers(prev => ({ ...prev, [offerId]: !prev[offerId] }));
+  };
 
   const colorImages = React.useMemo(() => {
     const map: Record<string, string> = {};
@@ -1238,60 +1245,113 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     )}
                   </div>
 
+                  {promotions && promotions.length > 0 && (
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#388e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                        </svg>
+                        <h3 className="font-medium text-md text-dark  tracking-tight">Available Offers</h3>
+                      </div>
+                      <div className="space-y-1.5">
+                        {(showAllPromos ? promotions : promotions.slice(0, 3)).map((promo, idx) => {
+                          const isExpanded = expandedOfferTiers[promo.offerId];
+                          const visibleTiers = isExpanded ? promo.tiers : promo.tiers?.slice(0, 3);
+                          
+                          return (
+                            <div key={idx} className="flex items-start gap-2.5">
+                              <div className="mt-1 flex-shrink-0 text-[#388e3c]">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
+                                </svg>
+                              </div>
+                              <div className="flex-grow flex justify-between items-start gap-3">
+                                <div className="min-w-0">
+                                  <p className="text-[14px] text-[#212121] leading-relaxed">
+                                    <span className="font-bold text-[14px] text-gray-800">{promo.name}:</span> <span className="text-[13px] text-gray-600">{promo.description}</span>
+                                    <span className="text-green-600 font-medium ml-1.5 text-[12px]">
+                                      Save {promo.discountType === 'fixed' ? `₹${promo.discountValue}` : `${promo.discountValue}%`} with this offer
+                                    </span>
+                                  </p>
+                                  {promo.type === 'quantity_tiered' && promo.tiers && promo.tiers.length > 0 && (
+                                    <div className="mt-1">
+                                      <ul className="space-y-1">
+                                        {visibleTiers.map((tier: any, tIdx: number) => (
+                                          <li key={tIdx} className="flex items-center gap-1.5 text-[13px] text-gray-500">
+                                            <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+                                            <span>Buy <strong>{tier.minQty}+</strong> items, get <strong>{tier.discountType === 'percentage' ? `${tier.value}%` : `₹${tier.value}`} Off</strong></span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                      {promo.tiers.length > 3 && (
+                                        <button 
+                                          onClick={() => toggleOfferTiers(promo.offerId)}
+                                          className="text-[#2874f0] text-[13px] font-bold mt-1 hover:underline flex items-center gap-1"
+                                        >
+                                          {isExpanded ? 'View Less' : `+ ${promo.tiers.length - 3} More Tiers`}
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                                <button className="text-[#2874f0] text-[13px] font-semibold hover:underline whitespace-nowrap">T&C</button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {promotions.length > 3 && (
+                          <button 
+                            onClick={() => setShowAllPromos(!showAllPromos)}
+                            className="text-[#2874f0] text-[13px] font-bold ml-6.5 mt-1 hover:underline"
+                          >
+                            {showAllPromos ? 'View Less Offers' : `View ${promotions.length - 3} More Offers`}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {coupons && coupons.length > 0 && (
                     <div className="mb-6">
-                      <h3 className="font-medium text-[15px] text-dark mb-3">Available Coupons</h3>
-                      <div className="space-y-3">
-                        {coupons.map((coupon, idx) => (
-                          <div key={idx} className="flex items-center gap-2.5">
-                            <div className="flex-shrink-0 text-blue">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2874f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                        </svg>
+                        <h3 className="font-medium text-md text-dark tracking-tight">Available Coupons</h3>
+                      </div>
+                      <div className="space-y-1.5">
+                        {(showAllCoupons ? coupons : coupons.slice(0, 3)).map((coupon, idx) => (
+                          <div key={idx} className="flex items-start gap-2.5">
+                            <div className="mt-1 flex-shrink-0 text-[#2874f0]">
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
                               </svg>
                             </div>
-                            <p className="text-[14px] text-dark">
-                              <span className="font-medium text-[12px] uppercase bg-blue/5 text-blue px-2 py-0.5 rounded border border-blue/10 mr-2">{coupon.code}</span>
-                              <span className="font-medium">{coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} Off</span> • {coupon.description}
+                            <div className="flex-grow flex justify-between items-start gap-3">
+                              <p className="text-[14px] text-[#212121] leading-relaxed min-w-0">
+                                <span className="font-medium text-[12px] uppercase bg-blue/5 text-[#2874f0] px-1.5 py-0.5 rounded border border-blue/10 mr-1.5">{coupon.code}</span>
+                                <span className="font-medium">{coupon.discountType === 'fixed' ? `₹${coupon.discountValue}` : `${coupon.discountValue}%`} Off</span> • {coupon.description}
+                              </p>
                               <button 
                                 onClick={() => {
                                   navigator.clipboard.writeText(coupon.code);
                                   toast.success("Code copied!");
                                 }}
-                                className="text-blue text-[11px] font-bold uppercase ml-3 hover:underline"
+                                className="text-[#2874f0] text-[13px] font-bold uppercase hover:underline whitespace-nowrap"
                               >
                                 Copy
                               </button>
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {promotions && promotions.length > 0 && (
-                    <div className="mb-6">
-                      <h3 className="font-medium text-base text-dark mb-3">Available Offers</h3>
-                      <div className="space-y-2.5">
-                        {promotions.map((promo, idx) => (
-                          <div key={idx} className="flex items-start gap-2.5 group">
-                            <div className="mt-1 flex-shrink-0">
-                              <div className="text-green">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                  <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z"/>
-                                </svg>
-                              </div>
-                            </div>
-                            <div className="flex flex-col">
-                              <p className="text-[14px] text-dark leading-snug">
-                                <span className="font-bold">{promo.discountType === 'fixed' ? `₹${promo.discountValue}` : `${promo.discountValue}%`} Off</span> on {promo.name}
-                                <span className="text-blue text-xs font-medium ml-2 cursor-pointer hover:underline uppercase tracking-wide">T&C</span>
-                              </p>
-                              <p className="text-[12px] text-gray-500 mt-0.5 line-clamp-1 group-hover:line-clamp-none transition-all duration-300">
-                                {promo.description}
-                              </p>
                             </div>
                           </div>
                         ))}
+                        {coupons.length > 3 && (
+                          <button 
+                            onClick={() => setShowAllCoupons(!showAllCoupons)}
+                            className="text-[#2874f0] text-[13px] font-bold ml-6.5 mt-1 hover:underline"
+                          >
+                            {showAllCoupons ? 'View Less Coupons' : `View ${coupons.length - 3} More Coupons`}
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1466,7 +1526,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                     {product.attributes?.length > 3 && (
                       <button 
                         onClick={() => setShowFullSpecs(!showFullSpecs)}
-                        className="text-blue text-sm font-medium mt-6 hover:underline focus:outline-none flex items-center gap-1"
+                        className="text-blue text-[11px] font-medium mt-6 hover:underline focus:outline-none flex items-center gap-1"
                       >
                         {showFullSpecs ? "View Less Specifications" : "View All Specifications"}
                         <svg 
@@ -1590,7 +1650,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                       {product.description && product.description.split('\n').length > 3 && (
                         <button 
                           onClick={() => setShowFullDescription(!showFullDescription)}
-                          className="text-blue text-sm font-medium mt-4 hover:underline focus:outline-none flex items-center gap-1"
+                          className="text-blue text-sm  mt-4 hover:underline focus:outline-none flex items-center gap-1"
                         >
                           {showFullDescription ? "View Less" : "View More"}
                           <svg 

@@ -266,10 +266,16 @@ const OrderDetail = () => {
                   <span className="text-[#212121]">Total fees</span>
                   <span className="text-[#212121]">₹{(order.shippingFees || 0).toLocaleString()}</span>
                 </div>
-                {order.discountAmount > 0 && (
+                {order.discountAmount !== undefined && order.discountAmount > 0 && (
                   <div className="flex justify-between text-[14px]">
                     <span className="text-[#212121]">Coupon Applied ({order.couponCode})</span>
                     <span className="text-[#26a541] font-medium">- ₹{order.discountAmount.toLocaleString()}</span>
+                  </div>
+                )}
+                {order.offerDiscount !== undefined && order.offerDiscount > 0 && (
+                  <div className="flex justify-between text-[14px]">
+                    <span className="text-[#212121]">Offer Applied ({order.offerCode || 'Offer'})</span>
+                    <span className="text-[#26a541] font-medium">- ₹{order.offerDiscount.toLocaleString()}</span>
                   </div>
                 )}
                 {order.gst > 0 && (

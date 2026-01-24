@@ -14,6 +14,16 @@ type InitialState = {
     maxDiscountAmount?: number;
     minOrderValue?: number;
   } | null;
+  appliedOffer: {
+    offerId: string;
+    offerCode?: string | null;
+    offerName?: string | null;
+    name: string;
+    discountValue: number;
+    discountType: "percentage" | "fixed";
+    type?: string;
+    tiers?: any[];
+  } | null;
 };
 
 export type CartItem = {
@@ -53,6 +63,7 @@ const initialState: InitialState = {
   loading: false,
   error: null,
   appliedCoupon: null,
+  appliedOffer: null,
 };
 
 // Async Thunks
@@ -338,12 +349,19 @@ export const cart = createSlice({
     removeAllItemsFromCart: (state) => {
       state.items = [];
       state.appliedCoupon = null;
+      state.appliedOffer = null;
       if (typeof window !== "undefined") {
         localStorage.setItem("cart", JSON.stringify(state.items));
       }
     },
     removeCoupon: (state) => {
       state.appliedCoupon = null;
+    },
+    applyOffer: (state, action: PayloadAction<InitialState["appliedOffer"]>) => {
+      state.appliedOffer = action.payload;
+    },
+    removeOffer: (state) => {
+      state.appliedOffer = null;
     },
   },
   extraReducers: (builder) => {
@@ -407,23 +425,53 @@ export const selectTotalGst = createSelector([selectCartItems], (items) => {
   }, 0);
 });
 
-export const selectTotalSavings = createSelector([selectCartItems, (state: RootState) => state.cartReducer.appliedCoupon, selectTotalPrice], (items, appliedCoupon, totalPrice) => {
-  const productSavings = items.reduce((total, item) => {
-    const savingsPerItem = Math.max(0, item.price - item.discountedPrice);
-    return total + savingsPerItem * item.quantity;
-  }, 0);
+export const selectOfferDiscount = createSelector(
+  [selectCartItems, (state: RootState) => state.cartReducer.appliedOffer, selectTotalPrice],
+  (items, appliedOffer, totalPrice) => {
+    if (!appliedOffer) return 0;
+    
+    let discountValue = appliedOffer.discountValue;
+    let discountType = appliedOffer.discountType;
 
-  let couponSavings = 0;
-  if (appliedCoupon) {
-    if (appliedCoupon.discountType === "percentage") {
-      couponSavings = (totalPrice * appliedCoupon.discountValue) / 100;
-    } else {
-      couponSavings = appliedCoupon.discountValue;
+    if (appliedOffer.type === 'quantity_tiered' && appliedOffer.tiers) {
+      const totalQty = items.reduce((acc, item) => acc + item.quantity, 0);
+      const applicableTier = [...appliedOffer.tiers]
+        .sort((a, b) => Number(b.minQty) - Number(a.minQty))
+        .find(tier => totalQty >= Number(tier.minQty));
+      
+      if (applicableTier) {
+        discountValue = Number(applicableTier.value);
+        discountType = applicableTier.discountType as "percentage" | "fixed";
+      }
     }
-  }
 
-  return productSavings + couponSavings;
-});
+    if (discountType === "percentage") {
+      return (totalPrice * discountValue) / 100;
+    }
+    return discountValue;
+  }
+);
+
+export const selectTotalSavings = createSelector(
+  [selectCartItems, (state: RootState) => state.cartReducer.appliedCoupon, selectTotalPrice, selectOfferDiscount], 
+  (items, appliedCoupon, totalPrice, offerDiscount) => {
+    const productSavings = items.reduce((total, item) => {
+      const savingsPerItem = Math.max(0, item.price - item.discountedPrice);
+      return total + savingsPerItem * item.quantity;
+    }, 0);
+
+    let couponSavings = 0;
+    if (appliedCoupon) {
+      if (appliedCoupon.discountType === "percentage") {
+        couponSavings = (totalPrice * appliedCoupon.discountValue) / 100;
+      } else {
+        couponSavings = appliedCoupon.discountValue;
+      }
+    }
+
+    return productSavings + couponSavings + offerDiscount;
+  }
+);
 
 export const {
   addItemToCart,
@@ -431,5 +479,7 @@ export const {
   updateCartItemQuantity,
   removeAllItemsFromCart,
   removeCoupon,
+  applyOffer,
+  removeOffer,
 } = cart.actions;
 export default cart.reducer;
