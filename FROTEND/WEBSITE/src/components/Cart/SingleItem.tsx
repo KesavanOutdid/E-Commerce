@@ -90,7 +90,7 @@ const SingleItem = ({
 
         {/* Product Details */}
         <div className="flex-grow flex flex-col">
-          <h3 className="text-dark hover:text-blue ease-out duration-200 line-clamp-1 text-[17px] font-medium">
+          <h3 className="text-dark hover:text-blue ease-out duration-200 line-clamp-1 text-[16px] font-normal">
             <Link href={`/shop-details/${item.productId}`}> {item.title} </Link>
           </h3>
           
@@ -248,7 +248,7 @@ const SingleItem = ({
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"/></svg>
                 </button>
-                <span className="w-10 text-center text-[14px] font-bold text-dark">{item.quantity}</span>
+                <span className="w-10 text-center text-[14px] font-normal text-dark">{item.quantity}</span>
                 <button
                   onClick={() => handleUpdateQuantity(item.quantity + 1)}
                   disabled={item.quantity >= 3}
