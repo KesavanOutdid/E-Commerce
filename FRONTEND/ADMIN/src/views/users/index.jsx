@@ -279,16 +279,19 @@ const Users = () => {
                   </TableCell>
                   <TableCell sx={{ fontSize: '0.95rem' }}>{user.email}</TableCell>
                   <TableCell sx={{ fontSize: '0.95rem' }}>{user.phone || '-'}</TableCell>
-                  <TableCell>
-                    {user.roleNames?.map((roleName, index) => (
-                      <Chip 
-                        key={index} 
-                        label={roleName} 
-                        size="small" 
-                        variant="outlined" 
-                        sx={{ mr: 0.5, fontSize: '0.75rem', fontWeight: 500 }} 
-                      />
-                    ))}
+                  <TableCell sx={{ fontSize: '0.95rem' }}>
+                    {user.roles && user.roles.length > 0 ? (
+                      user.roles.map((roleId, idx) => {
+                        const role = roles.find(r => r.roleId === roleId);
+                        return role ? (
+                          <Typography key={roleId} variant="body2" component="span" sx={{ fontSize: '0.95rem' }}>
+                            {role.roleName}{idx < user.roles.length - 1 ? ', ' : ''}
+                          </Typography>
+                        ) : null;
+                      })
+                    ) : (
+                      '-'
+                    )}
                   </TableCell>
               <TableCell>
                 {getKycChip(user)}

@@ -214,7 +214,6 @@ const OrderDetail = () => {
                                 onChange={(e) => handleStatusUpdate(e.target.value)}
                                 disabled={statusLoading || isOnlinePending}
                             >
-                                <MenuItem value="pending" disabled={isStatusDisabled('pending')}>Pending</MenuItem>
                                 <MenuItem value="packed" disabled={isStatusDisabled('packed')}>Packed</MenuItem>
                                 <MenuItem value="shipped" disabled={isStatusDisabled('shipped')}>Shipped</MenuItem>
                                 <MenuItem value="out_of_delivery" disabled={isStatusDisabled('out_of_delivery')}>Out of Delivery</MenuItem>
