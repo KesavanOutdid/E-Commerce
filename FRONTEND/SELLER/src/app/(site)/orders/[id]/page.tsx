@@ -163,15 +163,30 @@ export default function OrderDetailPage() {
                                                 </div>
                                                 <div className="flex-grow">
                                                     <h3 className="font-semibold text-gray-900 mb-1">{item.productName}</h3>
-                                                    <div className="flex items-center gap-4 text-sm text-gray-600">
-                                                        <span className="flex items-center gap-1">
+                                                    <div className="flex items-center gap-4 text-sm">
+                                                        <span className="flex items-center gap-1 text-gray-600">
                                                             <Icon icon="mdi:package-variant" width={16} height={16} />
                                                             Qty: {item.qty}
                                                         </span>
-                                                        <span className="flex items-center gap-1">
-                                                            <Icon icon="mdi:currency-inr" width={16} height={16} />
-                                                            ₹{Number(item.price).toLocaleString('en-IN')}
-                                                        </span>
+                                                        <div className="flex items-center gap-2">
+                                                            {item.salePrice && item.price !== item.salePrice ? (
+                                                                <>
+                                                                    <span className="flex items-center gap-1 text-gray-400 line-through">
+                                                                        <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                                        ₹{Number(item.price).toLocaleString('en-IN')}
+                                                                    </span>
+                                                                    <span className="flex items-center gap-1 text-green-600 font-semibold">
+                                                                        <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                                        ₹{Number(item.salePrice).toLocaleString('en-IN')}
+                                                                    </span>
+                                                                </>
+                                                            ) : (
+                                                                <span className="flex items-center gap-1 text-gray-600">
+                                                                    <Icon icon="mdi:currency-inr" width={16} height={16} />
+                                                                    ₹{Number(item.price).toLocaleString('en-IN')}
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
@@ -186,31 +201,145 @@ export default function OrderDetailPage() {
                             </div>
 
                             <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                    <Icon icon="mdi:map-marker" width={20} height={20} className="text-primary" />
-                                    Delivery Address
-                                </h2>
-                                <div className="bg-gray-50 rounded-xl p-4">
-                                    <p className="font-semibold text-gray-900 mb-1">{order.deliveryAddress?.name}</p>
-                                    <p className="text-sm text-gray-600">{order.deliveryAddress?.phone}</p>
-                                    <p className="text-sm text-gray-600">{order.deliveryAddress?.email}</p>
-                                    <div className="mt-3 pt-3 border-t border-gray-200">
-                                        <p className="text-sm text-gray-700">
-                                            {order.deliveryAddress?.doorNo}, {order.deliveryAddress?.street}
-                                            {order.deliveryAddress?.landmark && `, ${order.deliveryAddress.landmark}`}
-                                        </p>
-                                        <p className="text-sm text-gray-700">
-                                            {order.deliveryAddress?.city}, {order.deliveryAddress?.district}
-                                        </p>
-                                        <p className="text-sm text-gray-700">
-                                            {order.deliveryAddress?.state} - {order.deliveryAddress?.pincode}
-                                        </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                            <Icon icon="mdi:map-marker" width={20} height={20} className="text-primary" />
+                                            Delivery Address
+                                        </h2>
+                                        <div className="bg-gray-50 rounded-xl p-4">
+                                            <p className="font-semibold text-gray-900 mb-1">{order.deliveryAddress?.name}</p>
+                                            <p className="text-sm text-gray-600">{order.deliveryAddress?.phone}</p>
+                                            <p className="text-sm text-gray-600">{order.deliveryAddress?.email}</p>
+                                            <div className="mt-3 pt-3 border-t border-gray-200">
+                                                <p className="text-sm text-gray-700">
+                                                    {order.deliveryAddress?.doorNo}, {order.deliveryAddress?.street}
+                                                    {order.deliveryAddress?.landmark && `, ${order.deliveryAddress.landmark}`}
+                                                </p>
+                                                <p className="text-sm text-gray-700">
+                                                    {order.deliveryAddress?.city}, {order.deliveryAddress?.district}
+                                                </p>
+                                                <p className="text-sm text-gray-700">
+                                                    {order.deliveryAddress?.state} - {order.deliveryAddress?.pincode}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    {order.items?.[0]?.pickupAddress && (
+                                        <div>
+                                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                                <Icon icon="mdi:package-variant" width={20} height={20} className="text-primary" />
+                                                Pickup Address
+                                            </h2>
+                                            <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                                                <p className="font-semibold text-gray-900 mb-1">{order.items[0].pickupAddress.name}</p>
+                                                <p className="text-sm text-gray-600">{order.items[0].pickupAddress.phone}</p>
+                                                <div className="mt-3 pt-3 border-t border-blue-200">
+                                                    <p className="text-sm text-gray-700">
+                                                        {order.items[0].pickupAddress.addressLine1}
+                                                    </p>
+                                                    {order.items[0].pickupAddress.landmark && (
+                                                        <p className="text-sm text-gray-700">{order.items[0].pickupAddress.landmark}</p>
+                                                    )}
+                                                    <p className="text-sm text-gray-700">
+                                                        {order.items[0].pickupAddress.city}, {order.items[0].pickupAddress.district}
+                                                    </p>
+                                                    <p className="text-sm text-gray-700">
+                                                        {order.items[0].pickupAddress.state} - {order.items[0].pickupAddress.pincode}
+                                                    </p>
+                                                    <p className="text-sm text-gray-700">{order.items[0].pickupAddress.country}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
 
                         <div className="space-y-6">
+                            {(order.couponCode || order.offerCode || order.discountAmount > 0) && (
+                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl p-6 border border-green-200">
+                                    <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                        <Icon icon="mdi:tag-multiple" width={20} height={20} className="text-green-600" />
+                                        Discount Applied
+                                    </h2>
+                                    <div className="space-y-3">
+                                        {order.couponCode && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">Coupon Code</span>
+                                                <span className="text-sm font-bold text-green-600 bg-white px-3 py-1 rounded-lg border border-green-200">
+                                                    {order.couponCode}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {order.offerCode && (
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-600">Offer Code</span>
+                                                <span className="text-sm font-bold text-green-600 bg-white px-3 py-1 rounded-lg border border-green-200">
+                                                    {order.offerCode}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {order.discountAmount > 0 && (
+                                            <div className="flex justify-between items-center pt-2 border-t border-green-200">
+                                                <span className="text-sm font-semibold text-gray-700">Discount Savings</span>
+                                                <span className="text-lg font-bold text-green-600 flex items-center gap-1">
+                                                    <Icon icon="mdi:currency-inr" width={18} height={18} />
+                                                    {Number(order.discountAmount).toLocaleString('en-IN')}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
+                                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                    <Icon icon="mdi:receipt-text" width={20} height={20} className="text-primary" />
+                                    Price Breakdown
+                                </h2>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Total Price</span>
+                                        <span className="text-sm font-semibold text-gray-900">₹{Number(order.totalPrice).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">GST</span>
+                                        <span className="text-sm font-semibold text-gray-900">₹{Number(order.gst).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Subtotal</span>
+                                        <span className="text-sm font-semibold text-gray-900">₹{Number(order.subTotal).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    {order.shippingFees > 0 && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">Shipping Fees</span>
+                                            <span className="text-sm font-semibold text-gray-900">₹{Number(order.shippingFees).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    )}
+                                    {order.codFees > 0 && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-gray-600">COD Fees</span>
+                                            <span className="text-sm font-semibold text-gray-900">₹{Number(order.codFees).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    )}
+                                    {order.discountAmount > 0 && (
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-sm text-green-600">Discount</span>
+                                            <span className="text-sm font-semibold text-green-600">-₹{Number(order.discountAmount).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-center pt-3 border-t-2 border-gray-300">
+                                        <span className="text-base font-bold text-gray-900">Grand Total</span>
+                                        <span className="text-xl font-bold text-primary flex items-center gap-1">
+                                            <Icon icon="mdi:currency-inr" width={20} height={20} />
+                                            {Number(order.grandTotal).toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-100">
                                 <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                                     <Icon icon="mdi:credit-card" width={20} height={20} className="text-primary" />
@@ -261,7 +390,7 @@ export default function OrderDetailPage() {
                                 </div>
                             </div> */}
 
-                            <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
+                            {/* <div className="bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-6 border border-blue-100">
                                 <div className="flex items-start gap-3">
                                     <Icon icon="mdi:information" className="text-blue-600 flex-shrink-0 mt-0.5" width={20} height={20} />
                                     <div className="text-sm text-blue-900">
@@ -271,7 +400,7 @@ export default function OrderDetailPage() {
                                         </p>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
                     </div>
                 </div>
