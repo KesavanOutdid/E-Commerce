@@ -225,8 +225,7 @@ const Checkout = () => {
       couponId: appliedCoupon?.couponId || null,
       offerId: appliedOffer?.offerId || null,
       offerCode: appliedOffer?.offerCode || null,
-      discountAmount: discountAmount,
-      offerDiscount: offerDiscount,
+      discountAmount: discountAmount + offerDiscount,
       grandTotal: totalPrice + totalGst + 150 + (payment === "cod" ? 50 : 0) - discountAmount - offerDiscount,
     };
 

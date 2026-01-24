@@ -27,7 +27,6 @@ class Order {
       couponId: orderData.couponId || null,
       couponCode: orderData.couponCode || null,
       discountAmount: orderData.discountAmount || 0,
-      offerDiscount: orderData.offerDiscount || 0,
       offerId: orderData.offerId || null,
       offerCode: orderData.offerCode || null,
       deliveryAddress: orderData.deliveryAddress,

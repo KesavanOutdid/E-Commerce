@@ -272,12 +272,6 @@ const OrderDetail = () => {
                     <span className="text-[#26a541] font-medium">- ₹{order.discountAmount.toLocaleString()}</span>
                   </div>
                 )}
-                {order.offerDiscount !== undefined && order.offerDiscount > 0 && (
-                  <div className="flex justify-between text-[14px]">
-                    <span className="text-[#212121]">Offer Applied ({order.offerCode || 'Offer'})</span>
-                    <span className="text-[#26a541] font-medium">- ₹{order.offerDiscount.toLocaleString()}</span>
-                  </div>
-                )}
                 {order.gst > 0 && (
                   <div className="flex justify-between text-[14px]">
                     <span className="text-[#212121]">GST</span>

@@ -140,7 +140,7 @@ const SingleItem = ({
             )}
 
             {showAllOffers && (
-              <div className="mt-4 bg-slate-50 border border-black/[0.06] rounded-lg p-5 shadow-sm">
+              <div className="mt-4 bg-slate-50 border border-gray-4 rounded-lg p-5 shadow-sm">
                 <div className="flex items-center gap-2 mb-4 pb-2 border-b border-black/[0.04]">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#212121" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>

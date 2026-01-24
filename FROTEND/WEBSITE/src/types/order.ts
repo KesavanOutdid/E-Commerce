@@ -40,9 +40,6 @@ export interface Order {
   couponId?: string | null;
   couponCode?: string | null;
   discountAmount?: number;
-  offerId?: string | null;
-  offerCode?: string | null;
-  offerDiscount?: number;
   deliveryAddress: {
     name: string;
     phone: string;

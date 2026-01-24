@@ -1246,7 +1246,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   </div>
 
                   {promotions && promotions.length > 0 && (
-                    <div className="mb-6">
+                    <div className="mb-6 border-t border-gray-3 pt-4">
                       <div className="flex items-center gap-2 mb-3">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#388e3c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
@@ -1268,7 +1268,7 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                               <div className="flex-grow flex justify-between items-start gap-3">
                                 <div className="min-w-0">
                                   <p className="text-[14px] text-[#212121] leading-relaxed">
-                                    <span className="font-bold text-[14px] text-gray-800">{promo.name}:</span> <span className="text-[13px] text-gray-600">{promo.description}</span>
+                                    <span className="font-medium text-[14px] text-gray-800">{promo.name}:</span> <span className="text-[13px] text-gray-600">{promo.description}</span>
                                     <span className="text-green-600 font-medium ml-1.5 text-[12px]">
                                       Save {promo.discountType === 'fixed' ? `₹${promo.discountValue}` : `${promo.discountValue}%`} with this offer
                                     </span>
@@ -1312,8 +1312,8 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
                   )}
 
                   {coupons && coupons.length > 0 && (
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-3">
+                    <div className="mb-6 border-t border-gray-3 pt-4 ">
+                      <div className="flex items-center gap-2 mb-3 ">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2874f0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
                         </svg>
