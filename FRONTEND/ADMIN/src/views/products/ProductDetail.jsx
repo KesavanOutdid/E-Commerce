@@ -881,7 +881,7 @@ const ProductDetail = () => {
                                                         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, maxWidth: 400 }}>
                                                             {offer.attributes?.map((attr, ai) => (
                                                                 <Box 
-                                                                    key={ai} 
+                                                                    key={`attr-${ai}`} 
                                                                     sx={{ 
                                                                         display: 'inline-flex', 
                                                                         alignItems: 'center',
@@ -909,18 +909,48 @@ const ProductDetail = () => {
                                                                     </Typography>
                                                                 </Box>
                                                             ))}
-                                                            {!offer.attributes?.length && <Typography variant="caption" color="textSecondary">Standard</Typography>}
+                                                            {offer.specifications?.map((spec, si) => (
+                                                                <Box 
+                                                                    key={`spec-${si}`} 
+                                                                    sx={{ 
+                                                                        display: 'inline-flex', 
+                                                                        alignItems: 'center',
+                                                                        bgcolor: '#f0f4f8',
+                                                                        border: '1px solid #d1d9e0',
+                                                                        borderRadius: '4px',
+                                                                        px: 0.75,
+                                                                        py: 0.25
+                                                                    }}
+                                                                >
+                                                                    <Typography 
+                                                                        variant="caption" 
+                                                                        sx={{ 
+                                                                            fontWeight: 700, 
+                                                                            color: 'primary.dark', 
+                                                                            textTransform: 'uppercase', 
+                                                                            fontSize: '0.6rem',
+                                                                            mr: 0.5
+                                                                        }}
+                                                                    >
+                                                                        {spec.key}:
+                                                                    </Typography>
+                                                                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.primary', fontSize: '0.65rem' }}>
+                                                                        {spec.value}
+                                                                    </Typography>
+                                                                </Box>
+                                                            ))}
+                                                            {(!offer.attributes?.length && !offer.specifications?.length) && <Typography variant="caption" color="textSecondary">Standard</Typography>}
                                                         </Box>
                                                     </TableCell>
                                                     <TableCell align="right">
                                                         <Stack alignItems="flex-end" spacing={0.25}>
                                                             {offer.salePrice && Number(offer.salePrice) > 0 && (
                                                                 <Typography variant="caption" sx={{ textDecoration: 'line-through', color: 'text.secondary' }}>
-                                                                    ₹{offer.price?.toLocaleString('en-IN')}
+                                                                    ₹{(Number(offer.price) || 0).toFixed(2)}
                                                                 </Typography>
                                                             )}
                                                             <Typography variant="subtitle2" fontWeight={700} color="primary.main">
-                                                                ₹{(offer.salePrice && Number(offer.salePrice) > 0 ? offer.salePrice : offer.price)?.toLocaleString('en-IN')}
+                                                                ₹{(Number(offer.salePrice && Number(offer.salePrice) > 0 ? offer.salePrice : offer.price) || 0).toFixed(2)}
                                                             </Typography>
 
                                                         </Stack>

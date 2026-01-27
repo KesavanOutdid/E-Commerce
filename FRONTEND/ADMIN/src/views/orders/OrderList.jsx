@@ -51,82 +51,59 @@ const OrderList = () => {
     }, [search, handleFilterChange]);
 
     const getStatusChip = (status) => {
-        let color = 'default';
-        let bgcolor = '#f5f5f5';
-        let borderColor = '#bdbdbd';
-        let textColor = '#757575';
         let label = status;
+        let color = '#757575'; // default grey
 
         switch (status?.toLowerCase()) {
             case 'pending':
                 label = 'Pending';
-                color = 'warning';
-                bgcolor = '#fff8e1';
-                borderColor = '#ffecb3';
-                textColor = '#f57f17';
+                color = '#ed6c02'; // warning orange
                 break;
             case 'packed':
                 label = 'Packed';
-                color = 'info';
-                bgcolor = '#e0f7fa';
-                borderColor = '#b2ebf2';
-                textColor = '#006064';
+                color = '#0288d1'; // info blue
                 break;
             case 'shipped':
                 label = 'Shipped';
-                color = 'primary';
-                bgcolor = '#e8eaf6';
-                borderColor = '#c5cae9';
-                textColor = '#3f51b5';
+                color = '#2196f3'; // primary blue
                 break;
             case 'out_of_delivery':
                 label = 'Out of Delivery';
-                color = 'secondary';
-                bgcolor = '#f3e5f5';
-                borderColor = '#e1bee7';
-                textColor = '#7b1fa2';
+                color = '#9c27b0'; // secondary purple
                 break;
             case 'delivered':
                 label = 'Delivered';
-                color = 'success';
-                bgcolor = '#e8f5e9';
-                borderColor = '#c8e6c9';
-                textColor = '#2e7d32';
+                color = '#2e7d32'; // success green
                 break;
             case 'cancelled':
                 label = 'Cancelled';
-                color = 'error';
-                bgcolor = '#ffebee';
-                borderColor = '#ffcdd2';
-                textColor = '#d32f2f';
+                color = '#d32f2f'; // error red
                 break;
             case 'returned':
                 label = 'Returned';
-                color = 'default';
-                bgcolor = '#eceff1';
-                borderColor = '#cfd8dc';
-                textColor = '#455a64';
+                color = '#455a64'; 
                 break;
             default:
                 break;
         }
 
         return (
-            <Chip
-                label={label || 'UNKNOWN'}
-                size="small"
-                sx={{
-                    bgcolor: bgcolor,
-                    color: textColor,
-                    fontWeight: 600,
-                    borderRadius: '16px',
-                    border: '1px solid',
-                    borderColor: borderColor,
-                    textTransform: 'uppercase',
-                    fontSize: '0.65rem'
-                }}
-            />
+            <Typography variant="body2" sx={{ fontWeight: 800, textTransform: 'uppercase', color: color }}>
+                {label || 'UNKNOWN'}
+            </Typography>
         );
+    };
+
+    const getPaymentColor = (type) => {
+        switch (type?.toLowerCase()) {
+            case 'cod':
+                return '#1976d2'; // Blue
+            case 'online':
+            case 'razorpay':
+                return '#2e7d32'; // Green
+            default:
+                return '#757575';
+        }
     };
 
     return (
@@ -223,16 +200,13 @@ const OrderList = () => {
                                         </TableCell>
                                         <TableCell align="right">
                                             <Typography fontWeight={500}>
-                                                ₹{order.grandTotal}
+                                                ₹{Number(order.grandTotal).toFixed(2)}
                                             </Typography>
                                         </TableCell>
                                         <TableCell align="center">
-                                            <Chip
-                                                label={order.paymentType || 'COD'}
-                                                size="Medium"
-                                                variant="outlined"
-                                                sx={{ fontSize: '0.75rem' }}
-                                            />
+                                            <Typography variant="body2" sx={{ textTransform: 'uppercase', fontWeight: 700, color: getPaymentColor(order.paymentType || 'COD') }}>
+                                                {order.paymentType || 'COD'}
+                                            </Typography>
                                         </TableCell>
                                         <TableCell align="center">
                                             {getStatusChip(order.orderStatus)}

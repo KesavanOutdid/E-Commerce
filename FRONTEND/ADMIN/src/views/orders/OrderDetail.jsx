@@ -132,19 +132,6 @@ const OrderDetail = () => {
         }
     };
 
-    const getStatusColor = (status) => {
-        switch (status?.toLowerCase()) {
-            case 'pending': return 'warning';
-            case 'packed': return 'info';
-            case 'shipped': return 'primary';
-            case 'out_of_delivery': return 'secondary';
-            case 'delivered': return 'success';
-            case 'cancelled': return 'error';
-            case 'returned': return 'default';
-            default: return 'default';
-        }
-    };
-
     const getStatusLabel = (status) => {
         switch (status?.toLowerCase()) {
             case 'pending': return 'Pending';
@@ -155,6 +142,44 @@ const OrderDetail = () => {
             case 'cancelled': return 'Cancelled';
             case 'returned': return 'Returned';
             default: return status;
+        }
+    };
+
+    const getStatusTextColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'pending': return '#ed6c02';
+            case 'packed': return '#0288d1';
+            case 'shipped': return '#2196f3';
+            case 'out_of_delivery': return '#9c27b0';
+            case 'delivered': return '#2e7d32';
+            case 'cancelled': return '#d32f2f';
+            case 'returned': return '#455a64';
+            default: return '#757575';
+        }
+    };
+
+    const getPaymentTextColor = (type) => {
+        switch (type?.toLowerCase()) {
+            case 'cod': return '#1976d2';
+            case 'online':
+            case 'razorpay': return '#2e7d32';
+            default: return '#757575';
+        }
+    };
+
+    const getPaymentStatusColor = (status) => {
+        switch (status?.toLowerCase()) {
+            case 'completed':
+            case 'paid':
+            case 'success':
+                return '#2e7d32'; // Green
+            case 'pending':
+                return '#ed6c02'; // Orange
+            case 'failed':
+            case 'cancelled':
+                return '#d32f2f'; // Red
+            default:
+                return '#757575';
         }
     };
 
@@ -266,17 +291,16 @@ const OrderDetail = () => {
                                 >
                                     Order Status
                                 </Typography>
-                                <Chip
-                                    label={getStatusLabel(order.orderStatus)}
-                                    color={getStatusColor(order.orderStatus)}
-                                    size="small"
+                                <Typography 
+                                    variant="body2" 
                                     sx={{ 
-                                        fontWeight: 700, 
-                                        borderRadius: '6px',
+                                        fontWeight: 800, 
                                         textTransform: 'uppercase',
-                                        fontSize: '0.7rem'
+                                        color: getStatusTextColor(order.orderStatus)
                                     }}
-                                />
+                                >
+                                    {getStatusLabel(order.orderStatus)}
+                                </Typography>
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Typography 
@@ -291,7 +315,7 @@ const OrderDetail = () => {
                                     Total Amount
                                 </Typography>
                                 <Typography variant="h4" color="primary" sx={{ fontWeight: 700 }}>
-                                    ₹{order.grandTotal}
+                                    ₹{Number(order.grandTotal).toFixed(2)}
                                 </Typography>
                             </Box>
                         </Stack>
@@ -308,25 +332,19 @@ const OrderDetail = () => {
                         <DetailItem label="Order Date" value={new Date(order.createdAt).toLocaleString()} />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
-                        <DetailItem label="Payment Method" value={order.paymentType?.toUpperCase() || 'COD'} />
+                        <DetailItem label="Payment Method" value={
+                            <Typography sx={{ fontWeight: 700, color: getPaymentTextColor(order.paymentType || 'COD'), textTransform: 'uppercase' }}>
+                                {order.paymentType || 'COD'}
+                            </Typography>
+                        } />
                     </Grid>
                     <Grid size={{ xs: 12, md: 4 }}>
                         <DetailItem label="Payment Status" value={
-                            <Typography sx={{ fontWeight: 600 }}>
+                            <Typography sx={{ fontWeight: 600, color: getPaymentStatusColor(order.paymentStatus || 'Pending'), textTransform: 'uppercase' }}>
                                 {order.paymentStatus || 'Pending'}
                             </Typography>
                         } />
                     </Grid>
-                    {/* <Grid size={{ xs: 12, md: 4 }}>
-                        <DetailItem label="Order Status" value={
-                            <Chip 
-                                label={order.orderStatus} 
-                                color={getStatusColor(order.orderStatus)} 
-                                size="small" 
-                                sx={{ fontWeight: 600, textTransform: 'uppercase' }} 
-                            />
-                        } />
-                    </Grid> */}
 
                     {/* Customer Section */}
                     <Grid size={12} sx={{ mt: 2, mb: 1 }}>
@@ -382,21 +400,21 @@ const OrderDetail = () => {
                     <Grid size={12} sx={{ mb: 2, p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                         <Grid container spacing={1}>
                             <Grid size={{ xs: 12, md: 3 }}>
-                                <DetailItem label="Subtotal" value={`₹${order.subTotal}`} />
+                                <DetailItem label="Subtotal" value={`₹${Number(order.subTotal).toFixed(2)}`} />
                             </Grid>
                             <Grid size={{ xs: 12, md: 3 }}>
-                                <DetailItem label="Shipping" value={`₹${order.shippingFees || 0}`} />
+                                <DetailItem label="Shipping" value={`₹${Number(order.shippingFees || 0).toFixed(2)}`} />
                             </Grid>
                             <Grid size={{ xs: 12, md: 3 }}>
-                                <DetailItem label="GST" value={`₹${order.gst || 0}`} />
+                                <DetailItem label="GST" value={`₹${Number(order.gst || 0).toFixed(2)}`} />
                             </Grid>
                             {order.codFees > 0 && (
                                 <Grid size={{ xs: 12, md: 3 }}>
-                                    <DetailItem label="COD Fees" value={`₹${order.codFees}`} />
+                                    <DetailItem label="COD Fees" value={`₹${Number(order.codFees).toFixed(2)}`} />
                                 </Grid>
                             )}
                             <Grid size={{ xs: 12, md: 3 }}>
-                                <DetailItem label="Grand Total" value={`₹${order.grandTotal}`} color="primary.main" />
+                                <DetailItem label="Grand Total" value={`₹${Number(order.grandTotal).toFixed(2)}`} color="primary.main" />
                             </Grid>
                         </Grid>
                     </Grid>
@@ -422,12 +440,17 @@ const OrderDetail = () => {
                                             {order.statusHistory.map((history, index) => (
                                                 <TableRow key={index}>
                                                     <TableCell>
-                                                        <Chip 
-                                                            label={getStatusLabel(history.status)} 
-                                                            color={getStatusColor(history.status)} 
-                                                            size="small" 
-                                                            sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: '0.65rem' }} 
-                                                        />
+                                                        <Typography 
+                                                            variant="body2" 
+                                                            sx={{ 
+                                                                fontWeight: 700, 
+                                                                textTransform: 'uppercase', 
+                                                                fontSize: '0.75rem',
+                                                                color: getStatusTextColor(history.status)
+                                                            }}
+                                                        >
+                                                            {getStatusLabel(history.status)}
+                                                        </Typography>
                                                     </TableCell>
                                                     <TableCell>
                                                         <Typography variant="body2">{history.updatedBy || 'System'}</Typography>
@@ -506,10 +529,10 @@ const OrderDetail = () => {
                                                         </Box>
                                                     </Stack>
                                                 </TableCell>
-                                                <TableCell align="right">₹{item.price}</TableCell>
+                                                <TableCell align="right">₹{Number(item.price).toFixed(2)}</TableCell>
                                                 <TableCell align="center">{item.qty || item.quantity}</TableCell>
                                                 <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                                    ₹{item.totalPrice}
+                                                    ₹{Number(item.totalPrice).toFixed(2)}
                                                 </TableCell>
                                             </TableRow>
                                         );

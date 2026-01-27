@@ -429,15 +429,15 @@ const ProductList = () => {
                                                     return (
                                                         <Stack alignItems="flex-end">
                                                             <Typography variant="body2" sx={{ textDecoration: 'line-through', color: 'text.secondary', fontSize: '0.75rem' }}>
-                                                                ₹{displayPrice?.toLocaleString('en-IN')}
+                                                                ₹{(Number(displayPrice) || 0).toFixed(2)}
                                                             </Typography>
                                                             <Typography variant="subtitle2" color="primary.main" fontWeight={600}>
-                                                                ₹{displaySalePrice?.toLocaleString('en-IN')}
+                                                                ₹{(Number(displaySalePrice) || 0).toFixed(2)}
                                                             </Typography>
                                                         </Stack>
                                                     );
                                                 }
-                                                return `₹${displayPrice?.toLocaleString('en-IN') || '-'}`;
+                                                return `₹${(Number(displayPrice) || 0).toFixed(2)}`;
                                             })()}
                                         </TableCell>
                                         <TableCell align="right">{product.minPriceDetails?.stock ?? (product.stock ?? (product.variants?.[0]?.stock ?? '-'))}</TableCell>
