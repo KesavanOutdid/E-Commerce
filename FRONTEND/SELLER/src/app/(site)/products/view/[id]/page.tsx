@@ -401,19 +401,19 @@ export default function ProductViewPage() {
                                                     )}
 
                                                     {/* Coupons Section */}
-                                                    {selectedVariant.coupons && selectedVariant.coupons.length > 0 && (
+                                                    {selectedVariant.coupons && selectedVariant.coupons.filter((c: any) => c.owner?.type === 'seller' && c.owner?.id === selectedVariant.sellerDocId).length > 0 && (
                                                         <div className="pt-3 border-t border-gray-100">
                                                             <label className="block text-sm font-bold text-black mb-3 flex items-center gap-2">
                                                                 <Icon icon="mdi:ticket-percent" className="text-primary" width={18} height={18} />
-                                                                Available Coupons ({selectedVariant.coupons.length})
+                                                                Available Coupons ({selectedVariant.coupons.filter((c: any) => c.owner?.type === 'seller' && c.owner?.id === selectedVariant.sellerDocId).length})
                                                             </label>
                                                             <div className="space-y-3">
-                                                                {selectedVariant.coupons.map((coupon: any, couponIndex: number) => (
+                                                                {selectedVariant.coupons.filter((c: any) => c.owner?.type === 'seller' && c.owner?.id === selectedVariant.sellerDocId).map((coupon: any, couponIndex: number) => (
                                                                     <div key={couponIndex} className="bg-gradient-to-r from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3">
                                                                         <div className="flex items-start gap-3">
                                                                             {coupon.image && (
                                                                                 <img
-                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${coupon.image}`}
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${Array.isArray(coupon.image) ? coupon.image[0] : coupon.image}`}
                                                                                     alt={coupon.code}
                                                                                     className="w-16 h-16 object-cover rounded-lg border border-orange-300"
                                                                                 />
@@ -469,19 +469,19 @@ export default function ProductViewPage() {
                                                     )}
 
                                                     {/* Offers Section */}
-                                                    {selectedVariant.offers && selectedVariant.offers.length > 0 && (
+                                                    {selectedVariant.offers && selectedVariant.offers.filter((o: any) => o.owner?.type === 'seller' && o.owner?.id === selectedVariant.sellerDocId).length > 0 && (
                                                         <div className="pt-3 border-t border-gray-100">
                                                             <label className="block text-sm font-bold text-black mb-3 flex items-center gap-2">
                                                                 <Icon icon="mdi:tag-multiple" className="text-primary" width={18} height={18} />
-                                                                Active Offers ({selectedVariant.offers.length})
+                                                                Active Offers ({selectedVariant.offers.filter((o: any) => o.owner?.type === 'seller' && o.owner?.id === selectedVariant.sellerDocId).length})
                                                             </label>
                                                             <div className="space-y-3">
-                                                                {selectedVariant.offers.map((offer: any, offerIndex: number) => (
+                                                                {selectedVariant.offers.filter((o: any) => o.owner?.type === 'seller' && o.owner?.id === selectedVariant.sellerDocId).map((offer: any, offerIndex: number) => (
                                                                     <div key={offerIndex} className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3">
                                                                         <div className="flex items-start gap-3">
-                                                                            {offer.image && (
+                                                                            {offer.image && offer.image !== 'null' && (!Array.isArray(offer.image) || (offer.image[0] && offer.image[0] !== 'null')) && (
                                                                                 <img
-                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${offer.image}`}
+                                                                                    src={`${process.env.NEXT_PUBLIC_API_URL}${Array.isArray(offer.image) ? offer.image[0] : offer.image}`}
                                                                                     alt={offer.name}
                                                                                     className="w-16 h-16 object-cover rounded-lg border border-purple-300"
                                                                                 />

@@ -4,11 +4,13 @@ import { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { useProducts } from '@/hooks/useProducts'
+import { authService } from '@/services/authService'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
 import ProductTableSkeleton from '@/app/components/Skeleton/ProductTable'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
+import toast from 'react-hot-toast'
 
 export default function ProductsPage() {
     const router = useRouter()
@@ -24,9 +26,12 @@ export default function ProductsPage() {
     } = useProducts()
     
     const hasFetchedProducts = useRef(false)
+    const hasFetchedKYC = useRef(false)
     const [currentPage, setCurrentPage] = useState(1)
     const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
+    const [kycApproved, setKycApproved] = useState(false)
+    const [kycLoading, setKycLoading] = useState(true)
 
     useEffect(() => {
         if (isLoading) return
@@ -36,11 +41,39 @@ export default function ProductsPage() {
             return
         }
 
+        if (!hasFetchedKYC.current) {
+            fetchKYCStatus()
+            hasFetchedKYC.current = true
+        }
+
         if (!hasFetchedProducts.current) {
             fetchProducts(currentPage, 10)
             hasFetchedProducts.current = true
         }
     }, [isAuthenticated, isLoading, router])
+
+    const fetchKYCStatus = async () => {
+        try {
+            setKycLoading(true)
+            const response = await authService.getKYCStatus()
+            if (response.success) {
+                setKycApproved(response.data.kycApproved || false)
+            }
+        } catch (error: any) {
+            console.error('Error fetching KYC status:', error)
+        } finally {
+            setKycLoading(false)
+        }
+    }
+
+    const handleAddProductClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (!kycApproved) {
+            e.preventDefault()
+            toast.error('Please complete KYC verification to add products', {
+                duration: 4000,
+            })
+        }
+    }
 
     useEffect(() => {
         if (hasFetchedProducts.current) {
@@ -193,7 +226,12 @@ export default function ProductsPage() {
                                         <div className="col-span-12 md:col-span-3 flex justify-end">
                                             <Link
                                                 href="/products/add"
-                                                className="w-full md:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-purple-600 text-white px-6 py-2.5 rounded-lg hover:shadow-lg hover:scale-105 transition-all duration-200 font-semibold">
+                                                onClick={handleAddProductClick}
+                                                className={`w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 ${
+                                                    kycApproved 
+                                                        ? 'bg-gradient-to-r from-primary to-purple-600 text-white hover:shadow-lg hover:scale-105' 
+                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                }`}>
                                                 <Icon icon="mdi:plus-circle" width={20} height={20} />
                                                 Add Product
                                             </Link>
@@ -215,7 +253,12 @@ export default function ProductsPage() {
                                         {!searchQuery && (
                                             <Link
                                                 href="/products/add"
-                                                className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-lg hover:bg-primary/90 transition font-semibold">
+                                                onClick={handleAddProductClick}
+                                                className={`inline-flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition ${
+                                                    kycApproved 
+                                                        ? 'bg-primary text-white hover:bg-primary/90' 
+                                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                }`}>
                                                 <Icon icon="mdi:plus-circle" width={20} height={20} />
                                                 Add Your First Product
                                             </Link>

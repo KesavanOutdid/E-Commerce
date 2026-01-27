@@ -98,7 +98,7 @@
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "/Users/KesavanOutdid/E-Commerce/FRONTEND/SELLER",
+    "outputFileTracingRoot": "/Users/kesavan/Desktop/E-Commerce/FRONTEND/SELLER",
     "experimental": {
       "allowedDevOrigins": [],
       "nodeMiddleware": false,
@@ -177,7 +177,7 @@
       "forceSwcTransforms": false,
       "largePageDataBytes": 128000,
       "turbo": {
-        "root": "/Users/KesavanOutdid/E-Commerce/FRONTEND/SELLER"
+        "root": "/Users/kesavan/Desktop/E-Commerce/FRONTEND/SELLER"
       },
       "typedRoutes": false,
       "typedEnv": false,
@@ -283,7 +283,7 @@
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.ts"
   },
-  "appDir": "/Users/KesavanOutdid/E-Commerce/FRONTEND/SELLER",
+  "appDir": "/Users/kesavan/Desktop/E-Commerce/FRONTEND/SELLER",
   "relativeAppDir": "",
   "files": [
     ".next/routes-manifest.json",

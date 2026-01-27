@@ -72,4 +72,9 @@ export const authService = {
         )
         return response.data
     },
+
+    getKYCStatus: async () => {
+        const response = await axios.get('/api/seller/kyc/status')
+        return response.data
+    },
 }

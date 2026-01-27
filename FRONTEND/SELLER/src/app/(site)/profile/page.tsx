@@ -567,7 +567,7 @@ export default function ProfilePage() {
                                                     )}
                                                 </div>
                                             </div>
-                                            <div>
+                                            {/* <div>
                                                 <label className="block text-xs text-gray-500 mb-1">Store Status</label>
                                                 <div className="flex items-center gap-1.5">
                                                     {user.sellerInfo.isLive ? (
@@ -582,7 +582,7 @@ export default function ProfilePage() {
                                                         </>
                                                     )}
                                                 </div>
-                                            </div>
+                                            </div> */}
                                             <div>
                                                 <label className="block text-xs text-gray-500 mb-1">Onboarding Completed</label>
                                                 <div className="flex items-center gap-1.5">

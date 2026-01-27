@@ -30,7 +30,6 @@ interface User {
     phone: string
     role?: string
     roles: number[]
-    kycApproved?: boolean
     profileImage?: string | null
     addresses?: any[]
     status?: boolean

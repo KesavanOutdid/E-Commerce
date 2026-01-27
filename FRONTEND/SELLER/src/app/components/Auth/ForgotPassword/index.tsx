@@ -1,17 +1,14 @@
 'use client'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
-import Logo from '@/app/components/Layout/Header/Logo'
 import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
 import { Icon } from '@iconify/react/dist/iconify.js'
 
-interface ForgotPasswordProps {
-    onBackToSignIn?: () => void
-    onCloseModal?: () => void
-}
-
-const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) => {
+const ForgotPassword = () => {
+    const router = useRouter()
     const [step, setStep] = useState(1)
     const [email, setEmail] = useState('')
     const [otp, setOtp] = useState('')
@@ -22,6 +19,7 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
     const [loading, setLoading] = useState(false)
     const [showNewPassword, setShowNewPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [otpSent, setOtpSent] = useState(false)
 
     const handleForgotPassword = async (e: any) => {
         e.preventDefault()
@@ -37,7 +35,11 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
             
             if (response.success) {
                 setOtpRef(response.data?.otpRef || response.otpRef)
-                toast.success(response.message || 'OTP sent to your email')
+                setOtpSent(true)
+                toast.success(`OTP sent to ${email} successfully!`, {
+                    duration: 5000,
+                    icon: '✉️'
+                })
                 setStep(2)
             } else {
                 toast.error(response.message || 'Failed to send OTP')
@@ -95,8 +97,8 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
             return
         }
 
-        if (newPassword.length < 8) {
-            toast.error('Password must be at least 8 characters')
+        if (newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters')
             return
         }
 
@@ -110,13 +112,8 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
             const response = await authService.setNewPassword(newPassword, confirmPassword, resetToken)
             
             if (response.success) {
-                toast.success(response.message || 'Password reset successfully')
-                if (onCloseModal) {
-                    onCloseModal()
-                }
-                if (onBackToSignIn) {
-                    onBackToSignIn()
-                }
+                toast.success(response.message || 'Password reset successfully! Please sign in.')
+                router.push('/signin')
             } else {
                 toast.error(response.message || 'Failed to reset password')
             }
@@ -148,95 +145,125 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
     }
 
     return (
-        <>
-            <div className='mb-10 text-center mx-auto inline-block max-w-[160px]'>
-                <Logo />
+        <div className='w-full max-w-lg mx-auto'>
+            <div className='mb-8'>
+                <h1 className='text-3xl font-bold text-gray-900 mb-2'>
+                    {step === 1 && 'Forgot Password'}
+                    {step === 2 && 'Verify OTP'}
+                    {step === 3 && 'Reset Password'}
+                </h1>
+                <p className='text-gray-600'>
+                    {step === 1 && 'Enter your email address and we\'ll send you an OTP to reset your password.'}
+                    {step === 2 && 'Enter the verification code sent to your email.'}
+                    {step === 3 && 'Create a new strong password for your account.'}
+                </p>
             </div>
 
-            <h2 className='mb-3 text-2xl font-bold text-black'>
-                {step === 1 && 'Forgot Password'}
-                {step === 2 && 'Verify OTP'}
-                {step === 3 && 'Reset Password'}
-            </h2>
-            <p className='mb-8 text-base text-gray-600'>
-                {step === 1 && 'Enter your email to receive an OTP'}
-                {step === 2 && 'Enter the OTP sent to your email'}
-                {step === 3 && 'Create a new password for your account'}
-            </p>
-
             {step === 1 && (
-                <form onSubmit={handleForgotPassword}>
-                    <div className='mb-[22px]'>
+                <form onSubmit={handleForgotPassword} className='space-y-6'>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Email <span className="text-red-500">*</span>
                         </label>
                         <input
                             type='email'
-                            placeholder='Enter your email'
+                            placeholder='Enter your email address'
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
                             required
                         />
-                    </div>
-                    <div className='mb-6'>
-                        <button
-                            type='submit'
-                            disabled={loading || !email}
-                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
-                            Send OTP {loading && <Loader />}
-                        </button>
-                    </div>
-                </form>
-            )}
-
-            {step === 2 && (
-                <form onSubmit={handleValidateOTP}>
-                    <div className='mb-[22px]'>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            OTP <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            type='text'
-                            placeholder='Enter 6-digit OTP'
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            maxLength={6}
-                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
-                            required
-                        />
-                    </div>
-                    <div className='mb-6'>
-                        <button
-                            type='submit'
-                            disabled={loading || !otp}
-                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
-                            Verify OTP {loading && <Loader />}
-                        </button>
                     </div>
                     <button
-                        type="button"
-                        onClick={handleResendOTP}
-                        disabled={loading}
-                        className='text-sm text-primary hover:underline disabled:opacity-50'>
-                        Resend OTP
+                        type='submit'
+                        disabled={loading || !email}
+                        className='w-full bg-primary text-white py-3 rounded-lg text-base font-medium border-2 border-primary hover:bg-primary/90 hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+                        {loading ? (
+                            <>
+                                <Loader />
+                                Sending OTP...
+                            </>
+                        ) : (
+                            <>
+                                <Icon icon='mdi:email-fast' width={20} height={20} />
+                                Send OTP
+                            </>
+                        )}
                     </button>
                 </form>
             )}
 
+            {step === 2 && (
+                <>
+                    {otpSent && (
+                        <div className='mb-6 p-4 bg-green-50 border border-green-200 rounded-lg'>
+                            <div className='flex items-start gap-3'>
+                                <Icon icon='mdi:check-circle' width={24} height={24} className='text-green-600 mt-0.5' />
+                                <div className='flex-1'>
+                                    <p className='text-sm font-medium text-green-900'>OTP sent successfully!</p>
+                                    <p className='text-sm text-green-700 mt-1'>
+                                        Please check your email <span className='font-semibold'>{email}</span> for the verification code.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    <form onSubmit={handleValidateOTP} className='space-y-6'>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                OTP <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type='text'
+                                placeholder='Enter 6-digit OTP'
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                maxLength={6}
+                                className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
+                                required
+                            />
+                            <div className='mt-2 flex items-center justify-between'>
+                                <p className='text-sm text-gray-500'>Didn't receive the code?</p>
+                                <button
+                                    type="button"
+                                    onClick={handleResendOTP}
+                                    disabled={loading}
+                                    className='text-sm text-primary hover:underline font-medium disabled:opacity-50'>
+                                    Resend OTP
+                                </button>
+                            </div>
+                        </div>
+                        <button
+                            type='submit'
+                            disabled={loading || !otp}
+                            className='w-full bg-primary text-white py-3 rounded-lg text-base font-medium border-2 border-primary hover:bg-primary/90 hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+                            {loading ? (
+                                <>
+                                    <Loader />
+                                    Verifying...
+                                </>
+                            ) : (
+                                'Verify OTP'
+                            )}
+                        </button>
+                    </form>
+                </>
+            )}
+
             {step === 3 && (
-                <form onSubmit={handleSetNewPassword}>
-                    <div className='mb-[22px]'>
+                <form onSubmit={handleSetNewPassword} className='space-y-6'>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             New Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <input
                                 type={showNewPassword ? 'text' : 'password'}
-                                placeholder='Enter new password'
+                                placeholder='Create a new password'
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                                className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
                                 required
                             />
                             <button
@@ -247,18 +274,19 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
                                 <Icon icon={showNewPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
                             </button>
                         </div>
+                        <p className='mt-2 text-sm text-gray-500'>Password must be at least 6 characters.</p>
                     </div>
-                    <div className='mb-[22px]'>
+                    <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Confirm Password <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
                             <input
                                 type={showConfirmPassword ? 'text' : 'password'}
-                                placeholder='Confirm new password'
+                                placeholder='Re-enter your password'
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                                className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
                                 required
                             />
                             <button
@@ -270,23 +298,31 @@ const ForgotPassword = ({ onBackToSignIn, onCloseModal }: ForgotPasswordProps) =
                             </button>
                         </div>
                     </div>
-                    <div className='mb-6'>
-                        <button
-                            type='submit'
-                            disabled={loading || !newPassword || !confirmPassword}
-                            className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
-                            Reset Password {loading && <Loader />}
-                        </button>
-                    </div>
+                    <button
+                        type='submit'
+                        disabled={loading || !newPassword || !confirmPassword}
+                        className='w-full bg-primary text-white py-3 rounded-lg text-base font-medium border-2 border-primary hover:bg-primary/90 hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+                        {loading ? (
+                            <>
+                                <Loader />
+                                Resetting...
+                            </>
+                        ) : (
+                            'Reset Password'
+                        )}
+                    </button>
                 </form>
             )}
 
-            <button
-                onClick={onBackToSignIn}
-                className='text-base text-primary hover:underline'>
-                Back to Sign In
-            </button>
-        </>
+            <p className='text-center text-gray-600 text-base mt-6'>
+                Remember your password?{' '}
+                <Link 
+                    href='/signin'
+                    className='text-primary hover:underline font-medium'>
+                    Back to Sign In
+                </Link>
+            </p>
+        </div>
     )
 }
 

@@ -6,11 +6,13 @@ import { useAuth } from '@/context/AuthContext'
 import { useProducts } from '@/hooks/useProducts'
 import { useCategories } from '@/hooks/useCategories'
 import { usePickupAddress } from '@/hooks/usePickupAddress'
+import { authService } from '@/services/authService'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import ProductFormSkeleton from '@/app/components/Skeleton/ProductForm'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
+import Loader from '@/app/components/Common/Loader'
 
 interface Variant {
     price: string
@@ -31,6 +33,10 @@ export default function AddProductPage() {
     const { loading: pickupLoading, addresses: pickupAddresses, fetchAddresses } = usePickupAddress()
     const hasFetchedCategories = useRef(false)
     const hasFetchedAddresses = useRef(false)
+    const hasFetchedKYC = useRef(false)
+    
+    const [kycApproved, setKycApproved] = useState(false)
+    const [kycLoading, setKycLoading] = useState(true)
 
     const [formData, setFormData] = useState({
         productName: '',
@@ -74,6 +80,11 @@ export default function AddProductPage() {
             return
         }
 
+        if (!hasFetchedKYC.current) {
+            fetchKYCStatus()
+            hasFetchedKYC.current = true
+        }
+
         if (!hasFetchedCategories.current) {
             fetchMainCategories()
             hasFetchedCategories.current = true
@@ -84,6 +95,32 @@ export default function AddProductPage() {
             hasFetchedAddresses.current = true
         }
     }, [isAuthenticated, isLoading, router])
+
+    const fetchKYCStatus = async () => {
+        try {
+            setKycLoading(true)
+            const response = await authService.getKYCStatus()
+            if (response.success) {
+                setKycApproved(response.data.kycApproved || false)
+                if (!response.data.kycApproved) {
+                    toast.error('Please complete KYC verification to add products', {
+                        duration: 4000,
+                    })
+                    setTimeout(() => {
+                        router.push('/products')
+                    }, 2000)
+                }
+            }
+        } catch (error: any) {
+            console.error('Error fetching KYC status:', error)
+            toast.error('Unable to verify KYC status')
+            setTimeout(() => {
+                router.push('/products')
+            }, 2000)
+        } finally {
+            setKycLoading(false)
+        }
+    }
 
     useEffect(() => {
         if (formData.mainCategoryId) {
@@ -356,6 +393,11 @@ export default function AddProductPage() {
 
         if (!user?.userId) return
 
+        if (!kycApproved) {
+            toast.error('Please complete KYC verification to add products')
+            return
+        }
+
         if (showVariantOnlyMode && existingProduct) {
             const variantFormData = new FormData()
             const variant = variants[0]
@@ -468,7 +510,7 @@ export default function AddProductPage() {
         return variant.images.map(file => URL.createObjectURL(file))
     }
 
-    if (isLoading || categoryLoading) {
+    if (isLoading || categoryLoading || kycLoading) {
         return (
             <>
                 <Breadcrumb pageName="Add Product" />
@@ -485,7 +527,7 @@ export default function AddProductPage() {
         return null
     }
 
-    if (!user?.kycApproved) {
+    if (!kycApproved) {
         return (
             <>
                 <Breadcrumb pageName="Add Product" />

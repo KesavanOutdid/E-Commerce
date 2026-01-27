@@ -4,9 +4,6 @@ import { useEffect, useRef, useState } from 'react'
 import Logo from './Logo'
 import HeaderLink from './Navigation/HeaderLink'
 import MobileHeaderLink from './Navigation/MobileHeaderLink'
-import Signin from '@/app/components/Auth/SignIn'
-import SignUp from '@/app/components/Auth/SignUp'
-import ForgotPassword from '@/app/components/Auth/ForgotPassword'
 import { Icon } from '@iconify/react/dist/iconify.js'
 import { HeaderItem } from '@/app/types/menu'
 import withBasePath from '@/utils/basePath'
@@ -21,15 +18,8 @@ const Header: React.FC = () => {
 
     const [navbarOpen, setNavbarOpen] = useState(false)
     const [sticky, setSticky] = useState(false)
-    const [isSignInOpen, setIsSignInOpen] = useState(false)
-    const [isSignUpOpen, setIsSignUpOpen] = useState(false)
-    const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
     const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false)
 
-    const navbarRef = useRef<HTMLDivElement>(null)
-    const signInRef = useRef<HTMLDivElement>(null)
-    const signUpRef = useRef<HTMLDivElement>(null)
-    const forgotPasswordRef = useRef<HTMLDivElement>(null)
     const mobileMenuRef = useRef<HTMLDivElement>(null)
     const accountDropdownRef = useRef<HTMLDivElement>(null)
 
@@ -52,24 +42,6 @@ const Header: React.FC = () => {
     }
 
     const handleClickOutside = (event: MouseEvent) => {
-        if (
-            signInRef.current &&
-            !signInRef.current.contains(event.target as Node)
-        ) {
-            setIsSignInOpen(false)
-        }
-        if (
-            signUpRef.current &&
-            !signUpRef.current.contains(event.target as Node)
-        ) {
-            setIsSignUpOpen(false)
-        }
-        if (
-            forgotPasswordRef.current &&
-            !forgotPasswordRef.current.contains(event.target as Node)
-        ) {
-            setIsForgotPasswordOpen(false)
-        }
         if (
             mobileMenuRef.current &&
             !mobileMenuRef.current.contains(event.target as Node) &&
@@ -98,15 +70,15 @@ const Header: React.FC = () => {
             window.removeEventListener('scroll', handleScroll)
             document.removeEventListener('mousedown', handleClickOutside)
         }
-    }, [navbarOpen, isSignInOpen, isSignUpOpen, isForgotPasswordOpen])
+    }, [navbarOpen])
 
     useEffect(() => {
-        if (isSignInOpen || isSignUpOpen || isForgotPasswordOpen || navbarOpen) {
+        if (navbarOpen) {
             document.body.style.overflow = 'hidden'
         } else {
             document.body.style.overflow = ''
         }
-    }, [isSignInOpen, isSignUpOpen, isForgotPasswordOpen, navbarOpen])
+    }, [navbarOpen])
 
     const filteredHeaderData = headerData.filter(item => {
         if (!isAuthenticated && (item.label === 'Products' || item.label === 'Orders')) {
@@ -132,16 +104,12 @@ const Header: React.FC = () => {
                             <>
                                 <button
                                     className='hidden lg:block bg-white text-primary border border-white hover:bg-transparent hover:text-white duration-300 px-6 py-2 rounded-lg hover:cursor-pointer font-medium'
-                                    onClick={() => {
-                                        setIsSignInOpen(true)
-                                    }}>
+                                    onClick={() => router.push('/signin')}>
                                     Sign In
                                 </button>
                                 <button
                                     className='hidden lg:block bg-white text-primary text-base font-medium hover:bg-transparent hover:text-white border border-white px-6 py-2 rounded-lg hover:cursor-pointer'
-                                    onClick={() => {
-                                        setIsSignUpOpen(true)
-                                    }}>
+                                    onClick={() => router.push('/signup')}>
                                     Start Selling
                                 </button>
                             </>
@@ -200,91 +168,6 @@ const Header: React.FC = () => {
                                 )}
                             </div>
                         )}
-                        {isSignInOpen && (
-                            <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
-                                <div
-                                    ref={signInRef}
-                                    className='relative mx-auto w-full max-w-md overflow-hidden rounded-lg px-8 pt-14 pb-8 text-center bg-dark_grey/90 backdrop-blur-md bg-white'>
-                                    <button
-                                        onClick={() => setIsSignInOpen(false)}
-                                        className='absolute top-0 right-0 mr-8 mt-8 dark:invert'
-                                        aria-label='Close Sign In Modal'>
-                                        <Icon
-                                            icon='material-symbols:close-rounded'
-                                            width={24}
-                                            height={24}
-                                            className='text-black hover:text-primary inline-block hover:cursor-pointer'
-                                        />
-                                    </button>
-                                    <Signin 
-                                        onSwitchToSignUp={() => {
-                                            setIsSignInOpen(false)
-                                            setIsSignUpOpen(true)
-                                        }}
-                                        onSwitchToForgotPassword={() => {
-                                            setIsSignInOpen(false)
-                                            setIsForgotPasswordOpen(true)
-                                        }}
-                                        onCloseModal={() => setIsSignInOpen(false)}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        {isSignUpOpen && (
-                            <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
-                                <div
-                                    ref={signUpRef}
-                                    className='relative mx-auto bg-white w-full max-w-md overflow-hidden rounded-lg bg-dark_grey/90 backdrop-blur-md px-8 pt-14 pb-8 text-center'>
-                                    <button
-                                        onClick={() => setIsSignUpOpen(false)}
-                                        className='absolute top-0 right-0 mr-8 mt-8 dark:invert'
-                                        aria-label='Close Sign Up Modal'>
-                                        <Icon
-                                            icon='material-symbols:close-rounded'
-                                            width={24}
-                                            height={24}
-                                            className='text-black hover:text-primary inline-block hover:cursor-pointer'
-                                        />
-                                    </button>
-                                    <SignUp 
-                                        onSuccess={() => {
-                                            setIsSignUpOpen(false)
-                                            setIsSignInOpen(true)
-                                        }}
-                                        onSwitchToSignIn={() => {
-                                            setIsSignUpOpen(false)
-                                            setIsSignInOpen(true)
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        )}
-                        {isForgotPasswordOpen && (
-                            <div className='fixed top-0 left-0 w-full h-full bg-black/50 flex items-center justify-center z-50'>
-                                <div
-                                    ref={forgotPasswordRef}
-                                    className='relative mx-auto bg-white w-full max-w-md overflow-hidden rounded-lg bg-dark_grey/90 backdrop-blur-md px-8 pt-14 pb-8 text-center'>
-                                    <button
-                                        onClick={() => setIsForgotPasswordOpen(false)}
-                                        className='absolute top-0 right-0 mr-8 mt-8 dark:invert'
-                                        aria-label='Close Forgot Password Modal'>
-                                        <Icon
-                                            icon='material-symbols:close-rounded'
-                                            width={24}
-                                            height={24}
-                                            className='text-black hover:text-primary inline-block hover:cursor-pointer'
-                                        />
-                                    </button>
-                                    <ForgotPassword 
-                                        onBackToSignIn={() => {
-                                            setIsForgotPasswordOpen(false)
-                                            setIsSignInOpen(true)
-                                        }}
-                                        onCloseModal={() => setIsForgotPasswordOpen(false)}
-                                    />
-                                </div>
-                            </div>
-                        )}
                         <button
                             onClick={() => setNavbarOpen(!navbarOpen)}
                             className='block lg:hidden p-2 rounded-lg'
@@ -328,7 +211,7 @@ const Header: React.FC = () => {
                                     <button
                                         className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
                                         onClick={() => {
-                                            setIsSignInOpen(true)
+                                            router.push('/signin')
                                             setNavbarOpen(false)
                                         }}>
                                         Sign In
@@ -336,7 +219,7 @@ const Header: React.FC = () => {
                                     <button
                                         className='bg-primary text-white px-4 py-2 rounded-lg border  border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out'
                                         onClick={() => {
-                                            setIsSignUpOpen(true)
+                                            router.push('/signup')
                                             setNavbarOpen(false)
                                         }}>
                                         Start Selling

@@ -24,9 +24,14 @@ axiosInstance.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('seller_token')
-            localStorage.removeItem('seller_user')
-            window.location.href = '/signin'
+            const currentPath = typeof window !== 'undefined' ? window.location.pathname.replace(/\/$/, '') : ''
+            const isAuthPage = currentPath === '/signin' || currentPath === '/signup' || currentPath === '/forgot-password'
+            
+            if (!isAuthPage) {
+                localStorage.removeItem('seller_token')
+                localStorage.removeItem('seller_user')
+                window.location.href = '/signin'
+            }
         }
         return Promise.reject(error)
     }

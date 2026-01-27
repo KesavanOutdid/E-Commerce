@@ -35,7 +35,7 @@ interface Coupon {
         ids: string[]
     }
     status: boolean
-    image?: string
+    image?: string | string[]
 }
 
 interface Offer {
@@ -340,7 +340,7 @@ export default function PromotionsPage() {
             } else {
                 response = await promotionService.deleteOffer(deleteConfirm.id)
             }
-            
+
             if (response.success) {
                 toast.success(`${activeTab === 'coupons' ? 'Coupon' : 'Offer'} deleted successfully`)
                 setDeleteConfirm(null)
@@ -441,14 +441,21 @@ export default function PromotionsPage() {
                                     </Link>
                                     <div className="w-full relative overflow-hidden rounded-xl transition-all duration-300 bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg">
                                         <div className="px-4 py-4">
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 rounded-lg bg-white/20">
-                                                    <Icon icon="mdi:tag-multiple" width={20} height={20} />
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="p-2 rounded-lg bg-white/20">
+                                                        <Icon icon={activeTab === 'offers' ? 'mdi:offer' : 'mdi:ticket-percent'} width={20} height={20} />
+                                                    </div>
+                                                    <div className="text-left">
+                                                        <span className="font-semibold block">
+                                                            {activeTab === 'offers' ? 'Offers' : 'Coupons'}
+                                                        </span>
+                                                        <span className="text-xs opacity-80">Active Section</span>
+                                                    </div>
                                                 </div>
-                                                <div className="text-left">
-                                                    <span className="font-semibold block">Promotions</span>
-                                                    <span className="text-xs opacity-80">Active Section</span>
-                                                </div>
+                                                <span className="px-3 py-1.5 rounded-full text-sm font-bold bg-white/25 text-white">
+                                                    {activeTab === 'offers' ? offers.length : coupons.length}
+                                                </span>
                                             </div>
                                         </div>
                                         <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-50"></div>
@@ -473,21 +480,19 @@ export default function PromotionsPage() {
                                     <div className="flex gap-2 border-b border-gray-200">
                                         <button
                                             onClick={() => setActiveTab('offers')}
-                                            className={`px-6 py-3 font-medium transition-all ${
-                                                activeTab === 'offers'
-                                                    ? 'text-primary border-b-2 border-primary'
-                                                    : 'text-gray-500 hover:text-gray-700'
-                                            }`}>
+                                            className={`px-6 py-3 font-medium transition-all ${activeTab === 'offers'
+                                                ? 'text-primary border-b-2 border-primary'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                                }`}>
                                             <Icon icon="mdi:offer" width={20} height={20} className="inline mr-2" />
                                             Offers ({offers.length})
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('coupons')}
-                                            className={`px-6 py-3 font-medium transition-all ${
-                                                activeTab === 'coupons'
-                                                    ? 'text-primary border-b-2 border-primary'
-                                                    : 'text-gray-500 hover:text-gray-700'
-                                            }`}>
+                                            className={`px-6 py-3 font-medium transition-all ${activeTab === 'coupons'
+                                                ? 'text-primary border-b-2 border-primary'
+                                                : 'text-gray-500 hover:text-gray-700'
+                                                }`}>
                                             <Icon icon="mdi:ticket-percent" width={20} height={20} className="inline mr-2" />
                                             Coupons ({coupons.length})
                                         </button>
@@ -496,11 +501,11 @@ export default function PromotionsPage() {
 
                                 {currentItems.length === 0 ? (
                                     <div className="text-center py-12">
-                                        <Icon 
-                                            icon={activeTab === 'coupons' ? 'mdi:ticket-percent' : 'mdi:offer'} 
-                                            width={64} 
-                                            height={64} 
-                                            className="mx-auto text-gray-300 mb-4" 
+                                        <Icon
+                                            icon={activeTab === 'coupons' ? 'mdi:ticket-percent' : 'mdi:offer'}
+                                            width={64}
+                                            height={64}
+                                            className="mx-auto text-gray-300 mb-4"
                                         />
                                         <p className="text-gray-500 mb-4">No {activeTab} created yet</p>
                                         <button
@@ -514,20 +519,32 @@ export default function PromotionsPage() {
                                         {activeTab === 'coupons' ? (
                                             coupons.map((coupon) => (
                                                 <div key={coupon._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                                                    <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex gap-4 mb-4">
+                                                        {coupon.image ? (
+                                                            <img
+                                                                src={`${process.env.NEXT_PUBLIC_API_URL}${Array.isArray(coupon.image) ? coupon.image[0] : coupon.image}`}
+                                                                alt={coupon.code}
+                                                                className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm flex-shrink-0"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200 flex-shrink-0">
+                                                                <Icon icon="mdi:image-off" className="text-gray-400" width={24} height={24} />
+                                                            </div>
+                                                        )}
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 <h3 className="text-lg font-bold text-black">{coupon.code}</h3>
-                                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                                    coupon.status ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                                                }`}>
-                                                                    {coupon.status ? 'Active' : 'Inactive'}
-                                                                </span>
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{coupon.description}</p>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2 mb-4">
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <span className={`text-xs px-2 py-1 rounded ${coupon.status ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                                                }`}>
+                                                                {coupon.status ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </div>
                                                         <div className="flex items-center gap-2 text-sm">
                                                             <Icon icon="mdi:percent" width={16} height={16} className="text-primary" />
                                                             <span className="text-gray-700">
@@ -566,20 +583,32 @@ export default function PromotionsPage() {
                                         ) : (
                                             offers.map((offer) => (
                                                 <div key={offer._id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition">
-                                                    <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex gap-4 mb-4">
+                                                        {offer.image ? (
+                                                            <img
+                                                                src={`${process.env.NEXT_PUBLIC_API_URL}${offer.image}`}
+                                                                alt={offer.name}
+                                                                className="w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm flex-shrink-0"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg flex items-center justify-center border border-gray-200 flex-shrink-0">
+                                                                <Icon icon="mdi:image-off" className="text-gray-400" width={24} height={24} />
+                                                            </div>
+                                                        )}
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2 mb-2">
                                                                 <h3 className="text-lg font-bold text-black">{offer.name}</h3>
-                                                                <span className={`text-xs px-2 py-1 rounded ${
-                                                                    offer.status ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
-                                                                }`}>
-                                                                    {offer.status ? 'Active' : 'Inactive'}
-                                                                </span>
                                                             </div>
                                                             <p className="text-sm text-gray-600 mb-2">{offer.description}</p>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-2 mb-4">
+                                                        <div className="flex items-center gap-2 text-sm">
+                                                            <span className={`text-xs px-2 py-1 rounded ${offer.status ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+                                                                }`}>
+                                                                {offer.status ? 'Active' : 'Inactive'}
+                                                            </span>
+                                                        </div>
                                                         <div className="flex items-center gap-2 text-sm">
                                                             <Icon icon="mdi:tag" width={16} height={16} className="text-primary" />
                                                             <span className="text-gray-700">
@@ -637,7 +666,7 @@ export default function PromotionsPage() {
                                 <Icon icon="material-symbols:close-rounded" width={24} height={24} />
                             </button>
                         </div>
-                        
+
                         <form onSubmit={activeTab === 'coupons' ? handleSubmitCoupon : handleSubmitOffer} className="p-6 space-y-4">
                             {activeTab === 'coupons' ? (
                                 <>

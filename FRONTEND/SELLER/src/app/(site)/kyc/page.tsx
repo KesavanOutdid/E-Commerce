@@ -55,14 +55,64 @@ export default function KYCPage() {
     const [logoPreview, setLogoPreview] = useState<string>('')
     const [isEditing, setIsEditing] = useState(false)
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const [validationErrors, setValidationErrors] = useState({
+        gstin: '',
+        panNumber: '',
+        accountNumber: '',
+        ifscCode: '',
+    })
+
+    const validateGSTIN = (gstin: string): string => {
+        if (!gstin) return 'GSTIN is required (15 characters)'
+        if (gstin.length !== 15) return 'GSTIN must be exactly 15 characters'
+        const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/
+        if (!gstinRegex.test(gstin)) {
+            return 'Invalid GSTIN format (e.g., 29ABCDE1234F1Z5)'
+        }
+        return ''
+    }
+
+    const validatePAN = (pan: string): string => {
+        if (!pan) return 'PAN Number is required (10 characters)'
+        if (pan.length !== 10) return 'PAN Number must be exactly 10 characters'
+        const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/
+        if (!panRegex.test(pan)) {
+            return 'Invalid PAN format (e.g., ABCDE1234F)'
+        }
+        return ''
+    }
+
+    const validateAccountNumber = (accountNumber: string): string => {
+        if (!accountNumber) return 'Account Number is required (9-18 digits)'
+        const accountRegex = /^[0-9]{9,18}$/
+        if (!accountRegex.test(accountNumber)) {
+            return 'Account Number must be 9-18 digits'
+        }
+        return ''
+    }
+
+    const validateIFSC = (ifsc: string): string => {
+        if (!ifsc) return 'IFSC Code is required (11 characters)'
+        if (ifsc.length !== 11) return 'IFSC Code must be exactly 11 characters'
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/
+        if (!ifscRegex.test(ifsc)) {
+            return 'Invalid IFSC format (e.g., SBIN0001234)'
+        }
+        return ''
+    }
 
     const isFormValid = () => {
+        const gstinError = validateGSTIN(formData.gstin)
+        const panError = validatePAN(formData.panNumber)
+        const accountError = validateAccountNumber(formData.accountNumber)
+        const ifscError = validateIFSC(formData.ifscCode)
+
         return (
             formData.shopName.trim() !== '' &&
-            formData.gstin.trim() !== '' &&
-            formData.panNumber.trim() !== '' &&
-            formData.accountNumber.trim() !== '' &&
-            formData.ifscCode.trim() !== '' &&
+            !gstinError &&
+            !panError &&
+            !accountError &&
+            !ifscError &&
             formData.accountHolderName.trim() !== '' &&
             formData.bankName.trim() !== '' &&
             formData.shopAddress.doorNo.trim() !== '' &&
@@ -171,6 +221,23 @@ export default function KYCPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        const gstinError = validateGSTIN(formData.gstin)
+        const panError = validatePAN(formData.panNumber)
+        const accountError = validateAccountNumber(formData.accountNumber)
+        const ifscError = validateIFSC(formData.ifscCode)
+
+        setValidationErrors({
+            gstin: gstinError,
+            panNumber: panError,
+            accountNumber: accountError,
+            ifscCode: ifscError,
+        })
+
+        if (gstinError || panError || accountError || ifscError) {
+            toast.error('Please fix validation errors before submitting')
+            return
+        }
+
         const submitData = new FormData()
         submitData.append('shopName', formData.shopName)
         submitData.append('gstin', formData.gstin)
@@ -198,12 +265,19 @@ export default function KYCPage() {
         if (result) {
             setIsEditing(false)
             setShopLogo(null)
+            router.push('/profile')
         }
     }
 
     const handleCancel = () => {
         setIsEditing(false)
         setShopLogo(null)
+        setValidationErrors({
+            gstin: '',
+            panNumber: '',
+            accountNumber: '',
+            ifscCode: '',
+        })
         if (user?.sellerInfo) {
             const resetData = {
                 shopName: user.sellerInfo.shopName || '',
@@ -356,14 +430,25 @@ export default function KYCPage() {
                                         {isKYCApproved && !isEditing ? (
                                             <p className="text-sm text-black font-semibold">{formData.gstin || 'N/A'}</p>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                value={formData.gstin}
-                                                onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-                                                placeholder="Enter GSTIN"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={formData.gstin}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.toUpperCase()
+                                                        setFormData({ ...formData, gstin: value })
+                                                        setValidationErrors({ ...validationErrors, gstin: validateGSTIN(value) })
+                                                    }}
+                                                    onBlur={(e) => setValidationErrors({ ...validationErrors, gstin: validateGSTIN(e.target.value) })}
+                                                    placeholder="29ABCDE1234F1Z5"
+                                                    maxLength={15}
+                                                    className={`w-full rounded-md border ${validationErrors.gstin ? 'border-red-500' : 'border-gray-300'} bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary`}
+                                                    required
+                                                />
+                                                {validationErrors.gstin && (
+                                                    <p className="text-xs text-red-500 mt-1">{validationErrors.gstin}</p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                     <div>
@@ -373,14 +458,25 @@ export default function KYCPage() {
                                         {isKYCApproved && !isEditing ? (
                                             <p className="text-sm text-black font-semibold">{formData.panNumber || 'N/A'}</p>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                value={formData.panNumber}
-                                                onChange={(e) => setFormData({ ...formData, panNumber: e.target.value })}
-                                                placeholder="Enter PAN Number"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={formData.panNumber}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.toUpperCase()
+                                                        setFormData({ ...formData, panNumber: value })
+                                                        setValidationErrors({ ...validationErrors, panNumber: validatePAN(value) })
+                                                    }}
+                                                    onBlur={(e) => setValidationErrors({ ...validationErrors, panNumber: validatePAN(e.target.value) })}
+                                                    placeholder="ABCDE1234F"
+                                                    maxLength={10}
+                                                    className={`w-full rounded-md border ${validationErrors.panNumber ? 'border-red-500' : 'border-gray-300'} bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary`}
+                                                    required
+                                                />
+                                                {validationErrors.panNumber && (
+                                                    <p className="text-xs text-red-500 mt-1">{validationErrors.panNumber}</p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                     </div>
@@ -542,14 +638,25 @@ export default function KYCPage() {
                                         {isKYCApproved && !isEditing ? (
                                             <p className="text-sm text-black font-semibold">{formData.accountNumber || 'N/A'}</p>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                value={formData.accountNumber}
-                                                onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                                                placeholder="Enter Account Number"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={formData.accountNumber}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.replace(/\D/g, '')
+                                                        setFormData({ ...formData, accountNumber: value })
+                                                        setValidationErrors({ ...validationErrors, accountNumber: validateAccountNumber(value) })
+                                                    }}
+                                                    onBlur={(e) => setValidationErrors({ ...validationErrors, accountNumber: validateAccountNumber(e.target.value) })}
+                                                    placeholder="9-18 digit account number"
+                                                    maxLength={18}
+                                                    className={`w-full rounded-md border ${validationErrors.accountNumber ? 'border-red-500' : 'border-gray-300'} bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary`}
+                                                    required
+                                                />
+                                                {validationErrors.accountNumber && (
+                                                    <p className="text-xs text-red-500 mt-1">{validationErrors.accountNumber}</p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                     <div>
@@ -559,14 +666,25 @@ export default function KYCPage() {
                                         {isKYCApproved && !isEditing ? (
                                             <p className="text-sm text-black font-semibold">{formData.ifscCode || 'N/A'}</p>
                                         ) : (
-                                            <input
-                                                type="text"
-                                                value={formData.ifscCode}
-                                                onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
-                                                placeholder="Enter IFSC Code"
-                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                required
-                                            />
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    value={formData.ifscCode}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value.toUpperCase()
+                                                        setFormData({ ...formData, ifscCode: value })
+                                                        setValidationErrors({ ...validationErrors, ifscCode: validateIFSC(value) })
+                                                    }}
+                                                    onBlur={(e) => setValidationErrors({ ...validationErrors, ifscCode: validateIFSC(e.target.value) })}
+                                                    placeholder="SBIN0001234"
+                                                    maxLength={11}
+                                                    className={`w-full rounded-md border ${validationErrors.ifscCode ? 'border-red-500' : 'border-gray-300'} bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary`}
+                                                    required
+                                                />
+                                                {validationErrors.ifscCode && (
+                                                    <p className="text-xs text-red-500 mt-1">{validationErrors.ifscCode}</p>
+                                                )}
+                                            </>
                                         )}
                                     </div>
                                     <div>

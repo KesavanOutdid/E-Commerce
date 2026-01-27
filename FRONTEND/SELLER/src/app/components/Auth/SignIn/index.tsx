@@ -4,26 +4,18 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 import SocialSignIn from '../SocialSignIn'
-import Logo from '@/app/components/Layout/Header/Logo'
 import Loader from '@/app/components/Common/Loader'
 import { authService } from '@/services/authService'
 import { useAuth } from '@/context/AuthContext'
 import { Icon } from '@iconify/react/dist/iconify.js'
 
-interface SigninProps {
-    onSwitchToSignUp?: () => void
-    onSwitchToForgotPassword?: () => void
-    onCloseModal?: () => void
-}
-
-const Signin = ({ onSwitchToSignUp, onSwitchToForgotPassword, onCloseModal }: SigninProps) => {
+const Signin = () => {
     const router = useRouter()
     const { login } = useAuth()
 
     const [loginData, setLoginData] = useState({
         email: '',
         password: '',
-        checkboxToggle: false,
     })
     const [loading, setLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
@@ -50,14 +42,10 @@ const Signin = ({ onSwitchToSignUp, onSwitchToForgotPassword, onCloseModal }: Si
                     phone: response.data.phone,
                     roles: response.data.roles,
                     roleNames: response.data.roleNames,
-                    kycApproved: response.data.kycApproved,
                 }
                 
                 login(response.data.accessToken, userData)
                 toast.success('Login successful')
-                if (onCloseModal) {
-                    onCloseModal()
-                }
                 router.push('/')
             } else {
                 toast.error(response.message || 'Login failed')
@@ -71,84 +59,98 @@ const Signin = ({ onSwitchToSignUp, onSwitchToForgotPassword, onCloseModal }: Si
     }
 
     return (
-        <>
-            <div className='mb-10 text-center mx-auto inline-block max-w-[160px]'>
-                <Logo />
+        <div className='w-full max-w-lg mx-auto'>
+            <div className='mb-8'>
+                <h1 className='text-3xl font-bold text-gray-900 mb-2'>Sign In</h1>
+                <p className='text-gray-600'>Welcome back! Please sign in to your account.</p>
             </div>
 
             <SocialSignIn />
 
-            <span className="z-1 relative my-8 block text-center before:content-[''] before:absolute before:h-px before:w-[40%] before:bg-black/20 before:left-0 before:top-3 after:content-[''] after:absolute after:h-px after:w-[40%] after:bg-black/20 after:top-3 after:right-0">
-                <span className='text-body-secondary relative z-10 inline-block px-3 text-base text-black'>
-                    OR
-                </span>
-            </span>
-
-            <form onSubmit={loginUser}>
-                <div className='mb-[22px]'>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Email <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                        type='email'
-                        placeholder='Email'
-                        value={loginData.email}
-                        onChange={(e) =>
-                            setLoginData({ ...loginData, email: e.target.value })
-                        }
-                        className='w-full rounded-md border border-solid bg-transparent px-5 py-3 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
-                        required
-                    />
+            <div className="relative my-8">
+                <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
                 </div>
-                <div className='mb-[22px]'>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Password <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative">
+                <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-gray-500">OR</span>
+                </div>
+            </div>
+
+            <form onSubmit={loginUser} className='space-y-6'>
+                <div className='grid grid-cols-1 gap-4'>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Email <span className="text-red-500">*</span>
+                        </label>
                         <input
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder='Password'
-                            value={loginData.password}
+                            type='email'
+                            placeholder='Enter your email'
+                            value={loginData.email}
                             onChange={(e) =>
-                                setLoginData({ ...loginData, password: e.target.value })
+                                setLoginData({ ...loginData, email: e.target.value })
                             }
-                            className='w-full rounded-md border border-solid bg-transparent px-5 py-3 pr-12 text-base text-dark outline-hidden transition border-gray-200 placeholder:text-black/30 focus:border-primary focus-visible:shadow-none text-black'
+                            className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
                             required
                         />
-                        <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
-                        >
-                            <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
-                        </button>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Password <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder='Enter your password'
+                                value={loginData.password}
+                                onChange={(e) =>
+                                    setLoginData({ ...loginData, password: e.target.value })
+                                }
+                                className='w-full rounded-lg border border-gray-300 bg-white px-4 py-3 pr-12 text-base text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400'
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-primary transition"
+                            >
+                                <Icon icon={showPassword ? 'mdi:eye-off' : 'mdi:eye'} width={20} height={20} />
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className='mb-9'>
-                    <button
-                        type='submit'
-                        disabled={loading || !loginData.email || !loginData.password}
-                        className='bg-primary w-full py-3 rounded-lg text-18 font-medium border text-white border-primary hover:text-primary hover:bg-transparent hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed'>
-                        Sign In {loading && <Loader />}
-                    </button>
+
+                <div className='flex items-center justify-end'>
+                    <Link 
+                        href='/forgot-password'
+                        className='text-sm text-primary hover:underline font-medium'>
+                        Forgot Password?
+                    </Link>
                 </div>
+
+                <button
+                    type='submit'
+                    disabled={loading || !loginData.email || !loginData.password}
+                    className='w-full bg-primary text-white py-3 rounded-lg text-base font-medium border-2 border-primary hover:bg-primary/90 hover:cursor-pointer transition duration-300 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2'>
+                    {loading ? (
+                        <>
+                            <Loader />
+                            Signing In...
+                        </>
+                    ) : (
+                        'Sign In'
+                    )}
+                </button>
             </form>
 
-            <button
-                type="button"
-                onClick={onSwitchToForgotPassword}
-                className='mb-2 inline-block text-base text-primary hover:underline'>
-                Forgot Password?
-            </button>
-            <p className='text-body-secondary text-black text-base'>
+            <p className='text-center text-gray-600 text-base mt-6'>
                 Not a member yet?{' '}
-                <button 
-                    onClick={onSwitchToSignUp}
-                    className='text-primary hover:underline'>
+                <Link 
+                    href='/signup'
+                    className='text-primary hover:underline font-medium'>
                     Sign Up
-                </button>
+                </Link>
             </p>
-        </>
+        </div>
     )
 }
 
