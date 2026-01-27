@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Box,
-    Button,
     Grid,
     IconButton,
     InputAdornment,
@@ -11,11 +10,9 @@ import {
     TableCell,
     TableContainer,
     TableHead,
-    TablePagination,
     TableRow,
     TextField,
     Typography,
-    Chip,
     Stack,
     CircularProgress,
     MenuItem,
@@ -24,10 +21,9 @@ import {
     InputLabel,
     Pagination
 } from '@mui/material';
-import { IconSearch, IconEye, IconFilter } from '@tabler/icons-react';
+import { IconSearch, IconEye } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import { useOrders } from '../../hooks/orders/useOrders';
-import { gridSpacing } from 'store/constant';
 
 const OrderList = () => {
     const navigate = useNavigate();

@@ -29,7 +29,7 @@ import {
     Select,
     MenuItem
 } from '@mui/material';
-import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconTag, IconCurrencyRupee, IconCube, IconCheck, IconX, IconBuildingStore, IconPlus, IconUpload, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconArrowLeft, IconEdit, IconTrash, IconChevronDown, IconChevronUp, IconChevronLeft, IconChevronRight, IconTag, IconCurrencyRupee, IconCheck, IconX, IconBuildingStore, IconPlus, IconUpload, IconDeviceFloppy } from '@tabler/icons-react';
 
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
@@ -47,7 +47,6 @@ const ProductDetail = () => {
 
     const [product, setProduct] = useState(null);
     const [variants, setVariants] = useState([]);
-    const [minPriceVariant, setMinPriceVariant] = useState(null);
     const [loading, setLoading] = useState(true);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [imageErrors, setImageErrors] = useState({});
@@ -116,8 +115,6 @@ const ProductDetail = () => {
 
                 setProduct(productData);
                 setVariants(variantData);
-                // Use the correct field from backend
-                setMinPriceVariant(productData.minPriceDetails || response.data.data.minPriceVariant || null);
                 setSelectedImageIndex(0);
             }
         } catch (error) {
@@ -195,7 +192,7 @@ const ProductDetail = () => {
         }
     };
 
-    const handleListProduct = async (variant = null) => {
+    const handleListProduct = useCallback(async (variant = null) => {
         setDialogMode('list');
         
         // Handle case where variant is an event or null
@@ -247,7 +244,7 @@ const ProductDetail = () => {
         setVariantImages([]);
         setVariantPreviewImages([]);
         setAddVariantDialogOpen(true);
-    };
+    }, [product, pickupAddresses]);
 
     // Auto-open listing dialog if navigated from list with state
     useEffect(() => {
@@ -256,7 +253,7 @@ const ProductDetail = () => {
             // Clear state so it doesn't reopen
             navigate(location.pathname, { replace: true, state: {} });
         }
-    }, [location.state, product, pickupAddresses, navigate, location.pathname]);
+    }, [location.state, product, pickupAddresses, navigate, location.pathname, handleListProduct]);
 
     const handleDelete = async () => {
         const result = await Swal.fire({

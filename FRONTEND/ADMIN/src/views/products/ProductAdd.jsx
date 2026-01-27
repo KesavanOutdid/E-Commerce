@@ -1,5 +1,5 @@
 // Product Add and Edit View
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
     Box,
@@ -377,7 +377,7 @@ const ProductAdd = () => {
             };
             fetchProduct();
         }
-    }, [id, isEdit]);
+    }, [id, isEdit, fetchSubCategories]);
 
     // Normalize IDs: If existing product has ObjectId keys, convert them to UUIDs using the loaded categories
     useEffect(() => {
@@ -395,7 +395,7 @@ const ProductAdd = () => {
                 fetchSubCategories(selectedCat.categoryId);
             }
         }
-    }, [mainCategories, formData.mainCategoryId, isEdit]);
+    }, [mainCategories, formData.mainCategoryId, isEdit, fetchSubCategories]);
 
     // Normalize SubCategory ID
     useEffect(() => {
@@ -434,9 +434,9 @@ const ProductAdd = () => {
                 }));
             }
         }
-    }, [pickupAddresses, isEdit, formData.variants.length]); // Only run when addresses load or variant count changes during initial load
+    }, [pickupAddresses, isEdit, formData.variants]); // Only run when addresses load or variant count changes during initial load
 
-    const fetchSubCategories = async (parentId) => {
+    const fetchSubCategories = useCallback(async (parentId) => {
         try {
             // Need an endpoint to get subs by parent. 
             // `categoryController.js` has `getSubcategoriesByParent` at `/categories/sub/parent/:parentId`? 
@@ -475,7 +475,7 @@ const ProductAdd = () => {
             console.error("Error fetching subcategories", error);
             setSubCategories([]);
         }
-    };
+    }, []);
 
     const handleMainCategoryChange = (e) => {
         const value = e.target.value;

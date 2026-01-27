@@ -3,9 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
     Box,
     Button,
-    CardContent,
     Grid2 as Grid,
-    IconButton,
     Stack,
     Table,
     TableBody,
@@ -14,9 +12,7 @@ import {
     TableHead,
     TableRow,
     Typography,
-    Chip,
     CircularProgress,
-    Divider,
     MenuItem,
     Select,
     FormControl,
@@ -25,17 +21,9 @@ import {
 } from '@mui/material';
 import {
     IconArrowLeft,
-    IconCurrencyRupee,
     IconTruckDelivery,
-    IconCalendar,
-    IconMapPin,
-    IconCreditCard,
     IconUser,
-    IconPhone,
-    IconMail,
-    IconBuildingStore,
-    IconPackage,
-    IconBarcode
+    IconBuildingStore
 } from '@tabler/icons-react';
 import MainCard from 'ui-component/cards/MainCard';
 import axios from '../../utils/axiosInstance';
