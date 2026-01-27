@@ -5,7 +5,6 @@ import {
   CardContent,
   Stack,
   Typography,
-  Button,
   Select,
   MenuItem,
   FormControl,
@@ -161,6 +160,15 @@ export default function Dashboard() {
         xaxis: {
           categories: stats.charts.revenueChart.map(d => d._id),
           labels: {
+            formatter: (val) => {
+              if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const date = new Date(val);
+                if (!isNaN(date.getTime())) {
+                  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }
+              }
+              return val;
+            },
             style: { fontSize: '12px', fontWeight: 500, colors: '#757575' }
           }
         },
@@ -200,6 +208,15 @@ export default function Dashboard() {
         xaxis: {
           categories: stats.charts.revenueChart.map(d => d._id),
           labels: {
+            formatter: (val) => {
+              if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                const date = new Date(val);
+                if (!isNaN(date.getTime())) {
+                  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                }
+              }
+              return val;
+            },
             style: { fontSize: '12px', fontWeight: 500, colors: '#757575' }
           }
         },
@@ -222,61 +239,6 @@ export default function Dashboard() {
       ]
     };
   }, [stats?.charts?.revenueChart]);
-
-  const usersChartData = useMemo(() => {
-    if (!stats?.userStats?.roleDistribution || stats.userStats.roleDistribution.length === 0) {
-      return { options: {}, series: [] };
-    }
-
-    const colors = ['#667eea', '#f093fb', '#fca311', '#06ffa5', '#ff6b6b', '#4ecdc4'];
-    
-    return {
-      options: {
-        chart: { type: 'donut', toolbar: { show: false } },
-        labels: stats.userStats.roleDistribution.map(r => r.roleName || 'Unknown'),
-        colors: colors.slice(0, stats.userStats.roleDistribution.length),
-        dataLabels: {
-          enabled: true,
-          formatter: (val) => `${val.toFixed(1)}%`
-        },
-        legend: {
-          position: 'bottom',
-          fontSize: '12px'
-        },
-        tooltip: { y: { formatter: val => `${val} users` } }
-      },
-      series: stats.userStats.roleDistribution.map(r => r.count)
-    };
-  }, [stats?.userStats?.roleDistribution]);
-
-  const topProductsChartData = useMemo(() => {
-    if (!stats?.topPerformers?.bestProducts) return { options: {}, series: [] };
-
-    const top5 = stats.topPerformers.bestProducts.slice(0, 5);
-
-    return {
-      options: {
-        chart: { type: 'bar', toolbar: { show: false } },
-        xaxis: {
-          categories: top5.map(p => p.productName?.substring(0, 15) || 'Unknown'),
-          labels: { style: { fontSize: '11px' } }
-        },
-        colors: ['#667eea'],
-        plotOptions: { bar: { columnWidth: '50%', borderRadius: 6 } },
-        dataLabels: { enabled: false },
-        grid: { borderColor: '#f1f1f1' },
-        tooltip: {
-          y: { formatter: val => `₹${val.toLocaleString('en-IN')}` }
-        }
-      },
-      series: [
-        {
-          name: 'Sales',
-          data: top5.map(p => p.totalSales)
-        }
-      ]
-    };
-  }, [stats?.topPerformers?.bestProducts]);
 
   const topSellersChartData = useMemo(() => {
     if (!stats?.topPerformers?.bestSellers) return { options: {}, series: [] };
