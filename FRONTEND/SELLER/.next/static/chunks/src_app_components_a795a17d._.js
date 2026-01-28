@@ -315,7 +315,7 @@ const ContactForm = ()=>{
         setShowError(false);
         setErrorMessage('');
         try {
-            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://192.168.0.23:5656")}/api/contact/seller`, {
+            const response = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].post(`${("TURBOPACK compile-time value", "http://192.168.0.39:5000")}/api/contact/seller`, {
                 firstName: formData.firstname,
                 lastName: formData.lastname,
                 email: formData.email,
@@ -655,7 +655,7 @@ const ContactForm = ()=>{
         columnNumber: 9
     }, this);
 };
-_s(ContactForm, "6je2Q8nyehJa/Kn7881XU1edQQI=");
+_s(ContactForm, "LvWyjntshqjvq1pydohHVmg/N9M=");
 _c = ContactForm;
 const __TURBOPACK__default__export__ = ContactForm;
 var _c;

@@ -8,7 +8,7 @@ import { removeAllItemsFromCart, selectTotalPrice } from "@/redux/features/cart-
 import { logout } from "@/redux/features/auth-slice";
 import Image from "next/image";
 import Sidebar from "./Sidebar";
-import { API_ENDPOINTS, API_BASE_URL } from "@/lib/api";
+import { API_ENDPOINTS, API_BASE_URL, SELLER_URL } from "@/lib/api";
 import { Category } from "@/types/category";
 
 import { removeAllItemsFromWishlist, setWishlist } from "@/redux/features/wishlist-slice";
@@ -499,7 +499,9 @@ const Header = () => {
 
             {/* Become a Seller */}
             <Link
-              href="#"
+              href={SELLER_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden xl:flex items-center gap-2 border border-transparent hover:border-white p-1 px-2 rounded-sm transition-all"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">

@@ -156,7 +156,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.23:5656"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.39:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -172,9 +172,13 @@ axiosInstance.interceptors.request.use((config)=>{
 });
 axiosInstance.interceptors.response.use((response)=>response, (error)=>{
     if (error.response?.status === 401) {
-        localStorage.removeItem('seller_token');
-        localStorage.removeItem('seller_user');
-        window.location.href = '/signin';
+        const currentPath = ("TURBOPACK compile-time truthy", 1) ? window.location.pathname.replace(/\/$/, '') : ("TURBOPACK unreachable", undefined);
+        const isAuthPage = currentPath === '/signin' || currentPath === '/signup' || currentPath === '/forgot-password';
+        if (!isAuthPage) {
+            localStorage.removeItem('seller_token');
+            localStorage.removeItem('seller_user');
+            window.location.href = '/signin';
+        }
     }
     return Promise.reject(error);
 });
@@ -1048,7 +1052,7 @@ const SignUp = ()=>{
         columnNumber: 9
     }, this);
 };
-_s(SignUp, "B9rDUhAl+iQfRH8VcW6Fn0sbgyc=", false, function() {
+_s(SignUp, "mRrPOfcOAQXLccOpGfKDSFw1Htg=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"]
     ];

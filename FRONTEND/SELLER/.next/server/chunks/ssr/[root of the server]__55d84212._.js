@@ -247,7 +247,7 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-ssr] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.23:5656"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.39:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -263,9 +263,13 @@ axiosInstance.interceptors.request.use((config)=>{
 });
 axiosInstance.interceptors.response.use((response)=>response, (error)=>{
     if (error.response?.status === 401) {
-        localStorage.removeItem('seller_token');
-        localStorage.removeItem('seller_user');
-        window.location.href = '/signin';
+        const currentPath = ("TURBOPACK compile-time falsy", 0) ? ("TURBOPACK unreachable", undefined) : '';
+        const isAuthPage = currentPath === '/signin' || currentPath === '/signup' || currentPath === '/forgot-password';
+        if ("TURBOPACK compile-time truthy", 1) {
+            localStorage.removeItem('seller_token');
+            localStorage.removeItem('seller_user');
+            window.location.href = '/signin';
+        }
     }
     return Promise.reject(error);
 });
