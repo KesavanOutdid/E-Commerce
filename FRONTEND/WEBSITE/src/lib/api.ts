@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.57:5000";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://192.168.0.39:5000";
 
 export const API_ENDPOINTS = {
   CATEGORIES: `${API_BASE_URL}/api/categories`,

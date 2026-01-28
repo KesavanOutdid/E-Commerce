@@ -299,7 +299,7 @@ const Header = () => {
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-grow max-w-[800px] relative" ref={suggestionsRef}>
+          <div className="flex-grow max-w-[600px] relative" ref={suggestionsRef}>
             <form className="relative w-full h-10 shadow-sm" onSubmit={handleSearchSubmit}>
               {/* Search Icon */}
               <svg
@@ -495,6 +495,18 @@ const Header = () => {
                 </svg>
               </div>
               <span className="text-[13px] font-medium mb-0.5 hidden sm:block ml-1">Contact</span>
+            </Link>
+
+            {/* Become a Seller */}
+            <Link
+              href="#"
+              className="hidden xl:flex items-center gap-2 border border-transparent hover:border-white p-1 px-2 rounded-sm transition-all"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+              </svg>
+              <span className="text-[15px] font-medium leading-tight">Become a Seller</span>
             </Link>
           </div>
         </div>
