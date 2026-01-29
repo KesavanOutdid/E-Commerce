@@ -1,5 +1,6 @@
 const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
+const NotificationService = require('../../../services/notificationService');
 
 async function requestKyc(req, res) {
   try {
@@ -102,6 +103,9 @@ async function requestKyc(req, res) {
     }
 
     sellerInfo = await Seller.findByUserId(userId);
+
+    // Notify Admin about new KYC request
+    await NotificationService.notifyAdminKYCRequest(userId, shopName);
 
     return res.status(200).json({
       success: true,

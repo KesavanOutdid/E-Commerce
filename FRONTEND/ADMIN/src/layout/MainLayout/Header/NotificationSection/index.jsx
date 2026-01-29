@@ -17,11 +17,13 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
+import Badge from '@mui/material/Badge';
 
 // project imports
 import MainCard from 'ui-component/cards/MainCard';
 import Transitions from 'ui-component/extended/Transitions';
 import NotificationList from './NotificationList';
+import useNotifications from 'hooks/useNotifications';
 
 // assets
 import { IconBell } from '@tabler/icons-react';
@@ -51,6 +53,7 @@ const status = [
 export default function NotificationSection() {
   const theme = useTheme();
   const downMD = useMediaQuery(theme.breakpoints.down('md'));
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
 
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
@@ -105,7 +108,9 @@ export default function NotificationSection() {
           onClick={handleToggle}
           color="inherit"
         >
-          <IconBell stroke={1.5} size="20px" />
+          <Badge badgeContent={unreadCount} color="error">
+            <IconBell stroke={1.5} size="20px" />
+          </Badge>
         </Avatar>
       </Box>
       <Popper
@@ -136,11 +141,20 @@ export default function NotificationSection() {
                           <Grid>
                             <Stack direction="row" spacing={2}>
                               <Typography variant="subtitle1">All Notification</Typography>
-                              <Chip size="small" label="01" sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
+                              <Chip size="small" label={unreadCount.toString().padStart(2, '0')} sx={{ color: 'background.default', bgcolor: 'warning.dark' }} />
                             </Stack>
                           </Grid>
                           <Grid>
-                            <Typography component={Link} to="#" variant="subtitle2" color="primary">
+                            <Typography 
+                              component={Link} 
+                              to="#" 
+                              variant="subtitle2" 
+                              color="primary"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                markAllAsRead();
+                              }}
+                            >
                               Mark as all read
                             </Typography>
                           </Grid>
@@ -178,7 +192,7 @@ export default function NotificationSection() {
                               <Divider sx={{ my: 0 }} />
                             </Grid>
                           </Grid>
-                          <NotificationList />
+                          <NotificationList notifications={notifications} markAsRead={markAsRead} />
                         </Box>
                       </Grid>
                     </Grid>

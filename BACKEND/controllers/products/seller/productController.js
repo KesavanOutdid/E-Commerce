@@ -6,6 +6,7 @@ const User = require('../../../models/User');
 const Seller = require('../../../models/Seller');
 const Offer = require('../../../models/Offer');
 const Coupon = require('../../../models/Coupon');
+const NotificationService = require('../../../services/notificationService');
 const { deleteCachePattern, deleteCache } = require('../../../services/redisService');
 const { slugify } = require('../../../utils/help');
 const { ObjectId } = require('mongodb');
@@ -275,6 +276,9 @@ exports.createProduct = async (req, res) => {
         }
 
         await deleteCachePattern('products:list:*');
+
+        // Notify Admin about new product for approval
+        await NotificationService.notifyAdminProductApproval(masterProduct.productId, productName, req.userId || userId);
 
         res.status(201).json({
             success: true,
