@@ -12,7 +12,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.23:5656"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.40:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -1712,7 +1712,7 @@ function ProductsPage() {
                                                                                                 className: "relative flex-shrink-0",
                                                                                                 children: [
                                                                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.23:5656")}${firstVariantImage}`,
+                                                                                                        src: `${("TURBOPACK compile-time value", "http://192.168.0.40:5000")}${firstVariantImage}`,
                                                                                                         alt: product.productName,
                                                                                                         className: "w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
                                                                                                     }, void 0, false, {
@@ -2245,7 +2245,7 @@ function ProductsPage() {
         ]
     }, void 0, true);
 }
-_s(ProductsPage, "EQgA4SBsdnDJMv6mVgIkMGHODJI=", false, function() {
+_s(ProductsPage, "8Ao5NNBNVcvR20xpkmGDjs6+O4Y=", false, function() {
     return [
         __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navigation$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRouter"],
         __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$context$2f$AuthContext$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useAuth"],

@@ -12,7 +12,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.23:5656"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.40:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -1189,7 +1189,7 @@ function OrderDetailPage() {
                                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                                             className: "flex-shrink-0",
                                                                             children: item.images && item.images.length > 0 ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.23:5656")}${item.images[0]}`,
+                                                                                src: `${("TURBOPACK compile-time value", "http://192.168.0.40:5000")}${item.images[0]}`,
                                                                                 alt: item.productName,
                                                                                 className: "w-20 h-20 object-cover rounded-lg border-2 border-gray-200"
                                                                             }, void 0, false, {

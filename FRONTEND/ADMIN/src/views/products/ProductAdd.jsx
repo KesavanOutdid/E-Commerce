@@ -93,6 +93,18 @@ const ProductAdd = () => {
         ]
     });
 
+    const fetchSubCategories = useCallback(async (parentId) => {
+        try {
+            const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(parentId));
+            if (response.data.success) {
+                setSubCategories(response.data.data || []);
+            }
+        } catch (error) {
+            console.error("Error fetching subcategories", error);
+            setSubCategories([]);
+        }
+    }, []);
+
     // Search Products for Auto-fill
     useEffect(() => {
         const searchProducts = async () => {
@@ -244,6 +256,7 @@ const ProductAdd = () => {
                         existingImages: []
                     };
 
+                    // Show existing variants + one new admin variant for listing if none exist
                     setFormData(prev => ({
                         ...prev,
                         productName: fullProduct.productName,
@@ -256,8 +269,7 @@ const ProductAdd = () => {
                         warranty: fullProduct.warranty || '',
                         attributes: masterAttributes,
                         specifications: customSpecs,
-                        // Show existing variants + one new admin variant for listing
-                        variants: existingVariants.length > 0 ? [...existingVariants, adminVariant] : [adminVariant]
+                        variants: existingVariants.length > 0 ? existingVariants : [adminVariant]
                     }));
                 }
             }
@@ -436,47 +448,6 @@ const ProductAdd = () => {
         }
     }, [pickupAddresses, isEdit, formData.variants]); // Only run when addresses load or variant count changes during initial load
 
-    const fetchSubCategories = useCallback(async (parentId) => {
-        try {
-            // Need an endpoint to get subs by parent. 
-            // `categoryController.js` has `getSubcategoriesByParent` at `/categories/sub/parent/:parentId`? 
-            // Using logic from `useCategoryDetail`? No, that's detail.
-            // Let's check `categoryRoutes.js` (implied). I didn't see `categoryRoutes.js` but `categoryController.js` has `getSubcategoriesByParent`.
-            // In `apiConfig.js`, `CATEGORIES` doesn't have `GET_BY_PARENT`.
-            // User `d:\2912\E-Commerce\BACKEND\routes\categories\categoryRoutes.js` likely maps it.
-            // I'll assume a standard route or query. 
-            // Ideally: `/categories/main/${parentId}/subcategories` or similar.
-            // However, looking at `apiConfig.js`: `GET_ALL: '/categories/main'`
-            // I'll guess I might need to filter client-side or add a route. 
-            // Wait, `CategoryDetail.jsx` uses `useCategoryDetail` which fetches detail.
-            // I'll try to use the Backend Controller method `getSubcategoriesByParent`. 
-            // I'll optimistically assume `/api/categories/sub/parent/:parentId` exists or I can add it.
-            // Wait, I cannot touch backend.
-            // The existing `GET_ALL` for categories likely only returns main categories.
-            // I need to find how to get subcategories.
-
-            // Checking `categoryController.js` export `getSubcategoriesByParent`.
-            // This function exists. It is likely mounted.
-            // I'll verify routes if I can, but I can't touch backend.
-            // I'll check `apiConfig` again.
-            // `apiConfig` doesn't list it explicitly.
-
-            // Workaround: If I can't verify the route, I'll assume `/categories/sub` gets all and I filter? Risky if many.
-            // Or `/categories/main/${parentId}` -> does it return subcategories?
-            // `CategoryDetail.jsx` fetches `API_ENDPOINTS.CATEGORIES.GET_BY_ID`.
-            // In `categoryController.js`, `getSubcategoriesByParent` is separate.
-
-            // Let's guess the route is `/categories/sub/parent/${parentId}`.
-            const response = await axios.get(API_ENDPOINTS.CATEGORIES.GET_SUB_BY_PARENT(parentId));
-            if (response.data.success) {
-                setSubCategories(response.data.data || []);
-            }
-        } catch (error) {
-            console.error("Error fetching subcategories", error);
-            setSubCategories([]);
-        }
-    }, []);
-
     const handleMainCategoryChange = (e) => {
         const value = e.target.value;
         setFormData(prev => ({ ...prev, mainCategoryId: value, subCategoryId: '' }));
@@ -501,22 +472,13 @@ const ProductAdd = () => {
         setFormData(prev => ({
             ...prev,
             subCategoryId: value,
-            attributes: newAttributes, // Assign to Master Attributes
-            specifications: (prev.specifications || []).map(s => ({ ...s, value: '' })), // Reset custom spec values
+            attributes: newAttributes, // Keep for logic but UI is removed
             variants: (prev.variants || []).map(v => ({
                 ...v,
                 attributes: [...newAttributes], // Assign category attributes to variants by default
                 specifications: (v.specifications || []).map(s => ({ ...s, value: '' })) // Reset variant spec values
             }))
         }));
-    };
-
-    const handleAttributeChange = (index, value) => {
-        setFormData(prev => {
-            const newAttrs = [...prev.attributes];
-            newAttrs[index] = { ...newAttrs[index], value };
-            return { ...prev, attributes: newAttrs };
-        });
     };
 
     const handleSubmitPickupAddress = async () => {
@@ -592,10 +554,8 @@ const ProductAdd = () => {
                 value: ''
             }));
 
-            // Try to get specifications from master specifications first, then first variant
-            const sourceSpecs = (prev.specifications && prev.specifications.length > 0)
-                ? prev.specifications
-                : (prev.variants[0]?.specifications || []);
+            // Try to get specifications from first variant
+            const sourceSpecs = (prev.variants[0]?.specifications || []);
 
             const baseSpecs = sourceSpecs.map(spec => ({
                 ...spec,
@@ -649,10 +609,10 @@ const ProductAdd = () => {
     const handleAddSpec = () => {
         setFormData(prev => ({
             ...prev,
-            specifications: [...prev.specifications, { key: '', value: '' }],
+            specifications: [...(prev.specifications || []), { key: '', value: '' }],
             variants: prev.variants.map(v => ({
                 ...v,
-                specifications: [...v.specifications, { key: '', value: '' }]
+                specifications: [...(v.specifications || []), { key: '', value: '' }]
             }))
         }));
     };
@@ -764,19 +724,14 @@ const ProductAdd = () => {
         data.append('highlights', JSON.stringify(formData.highlights));
 
         // Map attributes to specifications for the master product
-        const categorySpecs = (formData.attributes || [])
-            .filter(attr => attr.value)
-            .map(attr => ({
-                key: attr.name,
-                value: attr.value
-            }));
+        // We only include custom specifications here (master attributes removed as requested)
         const customSpecs = (formData.specifications || [])
             .filter(spec => spec.key && spec.value)
             .map(spec => ({
                 key: spec.key,
                 value: spec.value
             }));
-        data.append('specifications', JSON.stringify([...categorySpecs, ...customSpecs]));
+        data.append('specifications', JSON.stringify(customSpecs));
 
         data.append('warranty', formData.warranty);
 
@@ -788,10 +743,10 @@ const ProductAdd = () => {
 
         // Variants - send as JSON string with imageIndices
         const variantsWithIndices = formData.variants.map((v, index) => {
-            const { images, previewImages, ...vData } = v;
+            const { images, previewImages, attributes, ...vData } = v;
 
             // Map variant attributes and specs
-            const vCategorySpecs = (v.attributes || [])
+            const vCategorySpecs = (attributes || [])
                 .filter(attr => attr.value)
                 .map(attr => ({ key: attr.name, value: attr.value }));
 
@@ -1004,28 +959,6 @@ const ProductAdd = () => {
                                     ))}
                                 </TextField>
                             </Grid>
-
-                            {/* Master Attributes */}
-                            {formData.attributes && formData.attributes.length > 0 && (
-                                <Grid item xs={12}>
-                                    <Typography variant="caption" sx={{ mb: 1, display: 'block', fontWeight: 600 }}>Master Specifications (Default for all variants):</Typography>
-                                    <Grid container spacing={2}>
-                                        {formData.attributes.map((attr, index) => (
-                                            <Grid item xs={12} md={4} key={index}>
-                                                <TextField
-                                                    fullWidth
-                                                    label={attr.name}
-                                                    placeholder={`Enter ${attr.name}`}
-                                                    value={attr.value}
-                                                    onChange={(e) => handleAttributeChange(index, e.target.value)}
-                                                    required={attr.required}
-                                                    size="small"
-                                                />
-                                            </Grid>
-                                        ))}
-                                    </Grid>
-                                </Grid>
-                            )}
 
                             {/* Additional Specifications */}
                             <Grid item xs={12}>
