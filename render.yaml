@@ -25,11 +25,6 @@ services:
           type: redis
           name: cache
           property: port
-      - key: REDIS_PASSWORD
-        fromService:
-          type: redis
-          name: cache
-          property: password
 
   - type: redis
     name: cache
