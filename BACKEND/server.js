@@ -9,6 +9,7 @@ const { setupSwagger } = require('./config/swagger');
 const { connectRedis, closeRedis } = require('./services/redisService');
 const { verifyEmailConnection } = require('./services/emailService');
 const { startEmailJobService } = require('./services/emailJobService');
+const StockJobService = require('./services/stockJobService');
 const { seedDatabase } = require('./scripts/seedData');
 const logger = require('./utils/logger');
 
@@ -60,6 +61,7 @@ const contactRoutes = require('./routes/contact/contactRoutes');
 const newsletterRoutes = require('./routes/newsletter/newsletterRoutes');
 const searchRoutes = require('./routes/search/searchRoutes');
 const reviewRoutes = require('./routes/reviews/reviewRoutes');
+const notificationRoutes = require('./routes/notifications/notificationRoutes');
 const adminPromotionRoutes = require('./routes/promotions/admin/adminPromotionRoutes');
 const sellerPromotionRoutes = require('./routes/promotions/seller/sellerPromotionRoutes');
 const websitePromotionRoutes = require('./routes/promotions/website/websitePromotionRoutes');
@@ -85,6 +87,7 @@ app.use('/api/contact', contactRoutes);
 app.use('/api/newsletter', newsletterRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 /* -------------------- Health & Root -------------------- */
 app.get('/', (req, res) => {
@@ -140,6 +143,13 @@ async function startServer() {
       logger.info('✓ Email job service started');
     } catch (error) {
       logger.warn('Email job service failed to start.');
+    }
+
+    try {
+      StockJobService.start();
+      logger.info('✓ Stock job service started');
+    } catch (error) {
+      logger.warn('Stock job service failed to start.');
     }
 
     app.listen(PORT, () => {
