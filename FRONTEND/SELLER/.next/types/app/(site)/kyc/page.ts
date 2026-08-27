@@ -1,4 +1,4 @@
-// File: D:\E-Commerce\FRONTEND\SELLER\src\app\(site)\kyc\page.tsx
+// File: D:\2912\E-Commerce\FRONTEND\SELLER\src\app\(site)\kyc\page.tsx
 import * as entry from '../../../../../src/app/(site)/kyc/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

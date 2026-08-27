@@ -37,7 +37,7 @@ const defaultAdmin = {
   email: 'admin@gmail.com',
   phone: null,
   password: 'admin123',
-  roles: [1],
+  roles: [1, 2, 3],
   profileImage: null,
   addresses: [],
   status: true,
@@ -74,7 +74,11 @@ async function seedDatabase(db) {
       console.log('📧 Email: admin@gmail.com');
       console.log('🔑 Password: admin123');
     } else {
-      console.log('⚠️  Admin user already exists, skipping...');
+      await usersCollection.updateOne(
+        { email: 'admin@gmail.com' },
+        { $set: { roles: [1, 2, 3] } }
+      );
+      console.log('✅ Admin user updated with full roles [1, 2, 3]');
     }
 
     // Seed/Update Admin Permissions

@@ -1,0 +1,7 @@
+{
+  "/(site)/(pages)/cart/page": "app/(site)/(pages)/cart/page.js",
+  "/(site)/(pages)/shop-details/[id]/page": "app/(site)/(pages)/shop-details/[id]/page.js",
+  "/(site)/(pages)/shop/page": "app/(site)/(pages)/shop/page.js",
+  "/(site)/(pages)/signin/page": "app/(site)/(pages)/signin/page.js",
+  "/(site)/page": "app/(site)/page.js"
+}

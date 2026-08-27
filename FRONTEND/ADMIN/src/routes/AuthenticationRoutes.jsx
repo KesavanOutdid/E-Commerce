@@ -15,8 +15,16 @@ const AuthenticationRoutes = {
   element: <MinimalLayout />,
   children: [
     {
+      path: 'login',
+      element: <LoginPage />
+    },
+    {
       path: 'pages/login',
       element: <LoginPage />
+    },
+    {
+      path: 'register',
+      element: <RegisterPage />
     },
     {
       path: 'pages/register',

@@ -115,7 +115,7 @@ __turbopack_context__.s({
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-ssr] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.40:5000"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.11:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -521,7 +521,7 @@ function ProfilePage() {
             };
             setFormData(initialData);
             setOriginalData(initialData);
-            setImagePreview(data.profileImage ? `${"TURBOPACK compile-time value", "http://192.168.0.40:5000"}${data.profileImage}` : '');
+            setImagePreview(data.profileImage ? `${"TURBOPACK compile-time value", "http://192.168.0.11:5000"}${data.profileImage}` : '');
         }
     }, [
         profile,
@@ -586,7 +586,7 @@ function ProfilePage() {
                 profileImage: profile.profileImage || '',
                 addresses: profile.addresses || []
             });
-            setImagePreview(profile.profileImage ? `${"TURBOPACK compile-time value", "http://192.168.0.40:5000"}${profile.profileImage}` : '');
+            setImagePreview(profile.profileImage ? `${"TURBOPACK compile-time value", "http://192.168.0.11:5000"}${profile.profileImage}` : '');
         }
     };
     const handleAddressChange = (index, field, value)=>{
@@ -1575,7 +1575,7 @@ function ProfilePage() {
                                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                                         className: "w-24 h-24 rounded-lg overflow-hidden border-3 border-primary shadow-lg flex-shrink-0 bg-white",
                                                         children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                            src: `${("TURBOPACK compile-time value", "http://192.168.0.40:5000")}${user.sellerInfo.shopLogo}`,
+                                                            src: `${("TURBOPACK compile-time value", "http://192.168.0.11:5000")}${user.sellerInfo.shopLogo}`,
                                                             alt: "Shop Logo",
                                                             className: "w-full h-full object-contain p-1"
                                                         }, void 0, false, {

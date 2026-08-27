@@ -13,7 +13,7 @@ export const useOrders = () => {
         setLoading(true)
         try {
             const response = await orderService.getSellerOrders(page, limit)
-            if (response.success) {
+            if (response && response.success) {
                 const ordersList = response.data || []
                 const pagination = response.pagination || {}
                 
@@ -22,12 +22,21 @@ export const useOrders = () => {
                 setTotalOrders(pagination.total || ordersList.length)
                 return response
             } else {
-                toast.error(response.message || 'Failed to fetch orders')
+                setOrders([])
+                setTotalPages(0)
+                setTotalOrders(0)
+                toast.error(response?.message || 'Failed to fetch orders')
                 return null
             }
         } catch (error: any) {
             console.error('Fetch orders error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to fetch orders')
+            setOrders([])
+            setTotalPages(0)
+            setTotalOrders(0)
+            const message = error.response?.data?.message || error.message || 'Failed to fetch orders'
+            if (error.response?.status !== 401) {
+                toast.error(message)
+            }
             return null
         } finally {
             setLoading(false)
@@ -38,15 +47,18 @@ export const useOrders = () => {
         setLoading(true)
         try {
             const response = await orderService.getOrderById(orderId)
-            if (response.success) {
+            if (response && response.success) {
                 return response.data
             } else {
-                toast.error(response.message || 'Failed to fetch order details')
+                toast.error(response?.message || 'Failed to fetch order details')
                 return null
             }
         } catch (error: any) {
             console.error('Fetch order error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to fetch order details')
+            const message = error.response?.data?.message || error.message || 'Failed to fetch order details'
+            if (error.response?.status !== 401) {
+                toast.error(message)
+            }
             return null
         } finally {
             setLoading(false)
@@ -57,7 +69,7 @@ export const useOrders = () => {
         setLoading(true)
         try {
             const response = await orderService.searchOrders(search, page, limit)
-            if (response.success) {
+            if (response && response.success) {
                 const ordersList = response.data || []
                 const pagination = response.pagination || {}
                 
@@ -66,12 +78,21 @@ export const useOrders = () => {
                 setTotalOrders(pagination.total || ordersList.length)
                 return response
             } else {
-                toast.error(response.message || 'Failed to search orders')
+                setOrders([])
+                setTotalPages(0)
+                setTotalOrders(0)
+                toast.error(response?.message || 'Failed to search orders')
                 return null
             }
         } catch (error: any) {
             console.error('Search orders error:', error)
-            toast.error(error.response?.data?.message || error.message || 'Failed to search orders')
+            setOrders([])
+            setTotalPages(0)
+            setTotalOrders(0)
+            const message = error.response?.data?.message || error.message || 'Failed to search orders'
+            if (error.response?.status !== 401) {
+                toast.error(message)
+            }
             return null
         } finally {
             setLoading(false)

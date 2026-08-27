@@ -1,4 +1,4 @@
-// File: D:\E-Commerce\FRONTEND\SELLER\src\app\api\data\route.ts
+// File: D:\2912\E-Commerce\FRONTEND\SELLER\src\app\api\data\route.ts
 import * as entry from '../../../../../src/app/api/data/route.js'
 import type { NextRequest } from 'next/server.js'
 

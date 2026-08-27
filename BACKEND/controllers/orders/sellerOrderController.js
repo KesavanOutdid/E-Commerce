@@ -2,7 +2,7 @@ const Order = require('../../models/Order');
 const Product = require('../../models/Product');
 const ProductVariant = require('../../models/ProductVariant');
 const User = require('../../models/User');
-//user
+const { ObjectId } = require('mongodb');
 
 const enrichOrderWithSellerDetails = async (order) => {
     if (!order.items || order.items.length === 0) return order;
@@ -95,9 +95,11 @@ exports.getSellerOrders = async (req, res) => {
             });
         }
 
-        const sellerVariants = await ProductVariant.collection().find({
-            sellerId: sellerId
-        }).toArray();
+        const sellerQuery = ObjectId.isValid(sellerId)
+            ? { $or: [{ sellerId: sellerId }, { sellerId: new ObjectId(sellerId) }] }
+            : { sellerId: sellerId };
+
+        const sellerVariants = await ProductVariant.collection().find(sellerQuery).toArray();
 
         if (!sellerVariants || sellerVariants.length === 0) {
             return res.status(200).json({
@@ -123,7 +125,7 @@ exports.getSellerOrders = async (req, res) => {
             .limit(limit)
             .toArray();
 
-        if (orders.length === 0) {
+        if (!orders || orders.length === 0) {
             return res.status(200).json({
                 success: true,
                 message: 'No orders found for your products yet',
@@ -146,7 +148,7 @@ exports.getSellerOrders = async (req, res) => {
             orders.map(async (order) => {
                 const filteredOrder = {
                     ...order,
-                    items: order.items.filter(item => variantIds.includes(item.variantId))
+                    items: (order.items || []).filter(item => variantIds.includes(item.variantId))
                 };
                 return await enrichOrderWithSellerDetails(filteredOrder);
             })
@@ -191,9 +193,11 @@ exports.getSellerOrderDetail = async (req, res) => {
             });
         }
 
-        const sellerVariants = await ProductVariant.collection().find({
-            sellerId: sellerId
-        }).toArray();
+        const sellerQuery = ObjectId.isValid(sellerId)
+            ? { $or: [{ sellerId: sellerId }, { sellerId: new ObjectId(sellerId) }] }
+            : { sellerId: sellerId };
+
+        const sellerVariants = await ProductVariant.collection().find(sellerQuery).toArray();
 
         if (!sellerVariants || sellerVariants.length === 0) {
             return res.status(404).json({
@@ -213,7 +217,7 @@ exports.getSellerOrderDetail = async (req, res) => {
             });
         }
 
-        const sellerItems = order.items.filter(item => variantIds.includes(item.variantId));
+        const sellerItems = (order.items || []).filter(item => variantIds.includes(item.variantId));
 
         if (sellerItems.length === 0) {
             return res.status(404).json({
@@ -258,9 +262,11 @@ exports.searchSellerOrders = async (req, res) => {
             });
         }
 
-        const sellerVariants = await ProductVariant.collection().find({
-            sellerId: sellerId
-        }).toArray();
+        const sellerQuery = ObjectId.isValid(sellerId)
+            ? { $or: [{ sellerId: sellerId }, { sellerId: new ObjectId(sellerId) }] }
+            : { sellerId: sellerId };
+
+        const sellerVariants = await ProductVariant.collection().find(sellerQuery).toArray();
 
         if (!sellerVariants || sellerVariants.length === 0) {
             return res.status(200).json({
@@ -310,15 +316,15 @@ exports.searchSellerOrders = async (req, res) => {
 
         const result = await Order.collection().aggregate(pipeline).toArray();
 
-        const orders = result[0].data || [];
-        const total = result[0].totalCount[0]?.count || 0;
+        const orders = result[0]?.data || [];
+        const total = result[0]?.totalCount[0]?.count || 0;
         const totalPages = Math.ceil(total / limit);
 
         const filteredOrders = await Promise.all(
             orders.map(async (order) => {
                 const filteredOrder = {
                     ...order,
-                    items: order.items.filter(item => variantIds.includes(item.variantId))
+                    items: (order.items || []).filter(item => variantIds.includes(item.variantId))
                 };
                 return await enrichOrderWithSellerDetails(filteredOrder);
             })

@@ -12,7 +12,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/axios/lib/axios.js [app-client] (ecmascript)");
 ;
 const axiosInstance = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].create({
-    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.40:5000"),
+    baseURL: ("TURBOPACK compile-time value", "http://192.168.0.11:5000"),
     headers: {
         'Content-Type': 'application/json'
     }
@@ -97,7 +97,7 @@ const useOrders = ()=>{
         setLoading(true);
         try {
             const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$orderService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["orderService"].getSellerOrders(page, limit);
-            if (response.success) {
+            if (response && response.success) {
                 const ordersList = response.data || [];
                 const pagination = response.pagination || {};
                 setOrders(ordersList);
@@ -105,12 +105,21 @@ const useOrders = ()=>{
                 setTotalOrders(pagination.total || ordersList.length);
                 return response;
             } else {
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Failed to fetch orders');
+                setOrders([]);
+                setTotalPages(0);
+                setTotalOrders(0);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response?.message || 'Failed to fetch orders');
                 return null;
             }
         } catch (error) {
             console.error('Fetch orders error:', error);
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.response?.data?.message || error.message || 'Failed to fetch orders');
+            setOrders([]);
+            setTotalPages(0);
+            setTotalOrders(0);
+            const message = error.response?.data?.message || error.message || 'Failed to fetch orders';
+            if (error.response?.status !== 401) {
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(message);
+            }
             return null;
         } finally{
             setLoading(false);
@@ -120,15 +129,18 @@ const useOrders = ()=>{
         setLoading(true);
         try {
             const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$orderService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["orderService"].getOrderById(orderId);
-            if (response.success) {
+            if (response && response.success) {
                 return response.data;
             } else {
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Failed to fetch order details');
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response?.message || 'Failed to fetch order details');
                 return null;
             }
         } catch (error) {
             console.error('Fetch order error:', error);
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.response?.data?.message || error.message || 'Failed to fetch order details');
+            const message = error.response?.data?.message || error.message || 'Failed to fetch order details';
+            if (error.response?.status !== 401) {
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(message);
+            }
             return null;
         } finally{
             setLoading(false);
@@ -138,7 +150,7 @@ const useOrders = ()=>{
         setLoading(true);
         try {
             const response = await __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$services$2f$orderService$2e$ts__$5b$app$2d$client$5d$__$28$ecmascript$29$__["orderService"].searchOrders(search, page, limit);
-            if (response.success) {
+            if (response && response.success) {
                 const ordersList = response.data || [];
                 const pagination = response.pagination || {};
                 setOrders(ordersList);
@@ -146,12 +158,21 @@ const useOrders = ()=>{
                 setTotalOrders(pagination.total || ordersList.length);
                 return response;
             } else {
-                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response.message || 'Failed to search orders');
+                setOrders([]);
+                setTotalPages(0);
+                setTotalOrders(0);
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(response?.message || 'Failed to search orders');
                 return null;
             }
         } catch (error) {
             console.error('Search orders error:', error);
-            __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(error.response?.data?.message || error.message || 'Failed to search orders');
+            setOrders([]);
+            setTotalPages(0);
+            setTotalOrders(0);
+            const message = error.response?.data?.message || error.message || 'Failed to search orders';
+            if (error.response?.status !== 401) {
+                __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$react$2d$hot$2d$toast$2f$dist$2f$index$2e$mjs__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].error(message);
+            }
             return null;
         } finally{
             setLoading(false);
@@ -1551,7 +1572,7 @@ function OrdersPage() {
                                                                                             className: "relative flex-shrink-0",
                                                                                             children: [
                                                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("img", {
-                                                                                                    src: `${("TURBOPACK compile-time value", "http://192.168.0.40:5000")}${order.items[0].images[0]}`,
+                                                                                                    src: `${("TURBOPACK compile-time value", "http://192.168.0.11:5000")}${order.items[0].images[0]}`,
                                                                                                     alt: order.items[0].productName,
                                                                                                     className: "w-14 h-14 object-cover rounded-lg border border-gray-200 shadow-sm"
                                                                                                 }, void 0, false, {

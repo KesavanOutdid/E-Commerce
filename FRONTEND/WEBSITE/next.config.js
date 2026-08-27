@@ -5,13 +5,19 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "192.168.0.37",
-        port: "9000",
+        hostname: "192.158.0.11",
+        port: "5000",
         pathname: "/uploads/**",
       },
       {
         protocol: "http",
-        hostname: "192.168.0.37",
+        hostname: "192.168.0.11",
+        port: "5000",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
         port: "5000",
         pathname: "/uploads/**",
       },
@@ -19,9 +25,6 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 };
 

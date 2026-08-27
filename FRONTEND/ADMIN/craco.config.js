@@ -12,22 +12,8 @@ module.exports = {
   webpack: {
     configure: (webpackConfig, { env }) => {
       if (env === 'development') {
-        webpackConfig.devtool = 'eval-cheap-module-source-map';
-        
-        webpackConfig.optimization = {
-          ...webpackConfig.optimization,
-          removeAvailableModules: false,
-          removeEmptyChunks: false,
-          splitChunks: false,
-        };
-
-        webpackConfig.output = {
-          ...webpackConfig.output,
-          pathinfo: false,
-        };
-
-        webpackConfig.performance = {
-          hints: false,
+        webpackConfig.snapshot = {
+          managedPaths: [/(node_modules)/]
         };
       }
 

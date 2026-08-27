@@ -1,13 +1,16 @@
 const nodemailer = require('nodemailer');
 const logger = require('../utils/logger');
 
+const emailUser = process.env.EMAIL_USER || "info@outdidunified.com";
+const emailPass = (process.env.EMAIL_PASS || "").replace(/\s+/g, '');
+
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    host: process.env.EMAIL_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.EMAIL_PORT || "465"),
+    secure: process.env.EMAIL_SECURE !== "false",
     auth: {
-        user: process.env.EMAIL_USER || "info@outdidunified.com",
-        pass: process.env.EMAIL_PASS || "yylh zjwo psvr slqb",
+        user: emailUser,
+        pass: emailPass,
     },
 });
 
@@ -17,15 +20,24 @@ const verifyEmailConnection = async () => {
         logger.info('Email service is ready to send emails');
         return true;
     } catch (error) {
-        logger.error('Email service connection error:', error);
+        logger.warn('Email service connection warning (check EMAIL_USER / EMAIL_PASS in .env):', error.message);
         return false;
     }
+};
+
+const isAuthError = (errorMsg) => {
+    return errorMsg && (
+        errorMsg.includes('535') ||
+        errorMsg.includes('Invalid login') ||
+        errorMsg.includes('BadCredentials') ||
+        errorMsg.includes('Username and Password not accepted')
+    );
 };
 
 const sendEmail = async (to, subject, html, text = '') => {
     try {
         const mailOptions = {
-            from: process.env.EMAIL_USER || "info@outdidunified.com",
+            from: `"${process.env.EMAIL_FROM_NAME || 'E-Commerce'}" <${emailUser}>`,
             to,
             subject,
             html,
@@ -36,7 +48,11 @@ const sendEmail = async (to, subject, html, text = '') => {
         logger.info(`Email sent successfully to ${to}: ${info.messageId}`);
         return { success: true, messageId: info.messageId };
     } catch (error) {
-        logger.error(`Failed to send email to ${to}:`, error);
+        if (isAuthError(error.message)) {
+            logger.warn(`Email authentication failed for ${to}. Please update EMAIL_PASS in BACKEND/.env with a valid Google App Password.`);
+        } else {
+            logger.error(`Failed to send email to ${to}:`, error.message);
+        }
         return { success: false, error: error.message };
     }
 };
@@ -88,24 +104,22 @@ const sendOrderStatusUpdate = async (userEmail, orderId, status) => {
 
 const sendEmailWithRetry = async (to, subject, html, text = '', retries = 3) => {
     for (let attempt = 1; attempt <= retries; attempt++) {
-        try {
-            const result = await sendEmail(to, subject, html, text);
-            if (result.success) {
-                logger.info(`Email sent successfully to ${to} on attempt ${attempt}`);
-                return result;
-            }
-            logger.warn(`Email attempt ${attempt} failed for ${to}`);
-        } catch (error) {
-            logger.error(`Email attempt ${attempt} error for ${to}:`, error);
+        const result = await sendEmail(to, subject, html, text);
+        if (result.success) {
+            return result;
         }
         
+        // Don't retry if credentials are wrong
+        if (result.error && isAuthError(result.error)) {
+            break;
+        }
+
         if (attempt < retries) {
             await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
         }
     }
     
-    logger.error(`Failed to send email to ${to} after ${retries} attempts`);
-    return { success: false, error: 'Max retries exceeded' };
+    return { success: false, error: 'Email send failed' };
 };
 
 const sendOtpEmail = async (to, otpCode, purpose = 'verification') => {

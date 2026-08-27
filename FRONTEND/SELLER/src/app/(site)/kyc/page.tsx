@@ -7,6 +7,7 @@ import { useKYC } from '@/hooks/useKYC'
 import Breadcrumb from '@/app/components/Common/Breadcrumb'
 import Loader from '@/app/components/Common/Loader'
 import { Icon } from '@iconify/react/dist/iconify.js'
+import toast from 'react-hot-toast'
 
 export default function KYCPage() {
     const router = useRouter()
