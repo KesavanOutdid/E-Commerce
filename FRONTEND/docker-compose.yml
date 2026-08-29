@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  # Next.js Web Storefront Service
+  website:
+    build:
+      context: ./WEBSITE
+      dockerfile: Dockerfile
+    container_name: frontend-website
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+      - NEXT_PUBLIC_SELLER_URL=${NEXT_PUBLIC_SELLER_URL:-http://localhost:3003}
+
+  # React Admin Panel Service
+  admin:
+    build:
+      context: ./ADMIN
+      dockerfile: Dockerfile
+    container_name: frontend-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5000/api}
+
+  # Next.js Seller Dashboard Service
+  seller:
+    build:
+      context: ./SELLER
+      dockerfile: Dockerfile
+    container_name: frontend-seller
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}

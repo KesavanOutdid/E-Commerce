@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-admin-standalone
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5000/api}

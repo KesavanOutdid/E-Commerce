@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  website:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ecommerce-website-standalone
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+      - NEXT_PUBLIC_SELLER_URL=${NEXT_PUBLIC_SELLER_URL:-http://localhost:3003}

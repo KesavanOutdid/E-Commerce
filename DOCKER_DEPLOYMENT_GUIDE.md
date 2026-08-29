@@ -22,12 +22,43 @@ This document details how to run the entire E-Commerce microservice suite locall
 ### 1. Prerequisite
 Ensure [Docker Desktop](https://www.docker.com/products/docker-desktop/) is installed and running.
 
-### 2. Launch All Microservices
-Run the following command from the project root directory:
+### 2. Launch All Microservices (Full Stack)
+Run from the root directory:
 
 ```bash
 docker compose up --build -d
 ```
+
+---
+
+### 3. Launch Services Individually (Standalone Mode)
+You can also run any microservice independently by navigating into its folder:
+
+- **All Frontend Apps Together (Website, Admin, Seller)**:
+  ```bash
+  cd FRONTEND
+  docker compose up --build -d
+  ```
+- **Backend & Redis**:
+  ```bash
+  cd BACKEND
+  docker compose up --build -d
+  ```
+- **Website Storefront**:
+  ```bash
+  cd FRONTEND/WEBSITE
+  docker compose up --build -d
+  ```
+- **Admin Dashboard**:
+  ```bash
+  cd FRONTEND/ADMIN
+  docker compose up --build -d
+  ```
+- **Seller Dashboard**:
+  ```bash
+  cd FRONTEND/SELLER
+  docker compose up --build -d
+  ```
 
 ### 3. Check Container Status
 ```bash
@@ -70,12 +101,16 @@ All JWT token handling is centralized in `BACKEND/utils/jwtUtils.js` and enforce
 - `JWT_SECRET`: Secret key used for signing & verifying JWT bearer tokens.
 - `JWT_EXPIRES_IN`: Expiration time (default: `24h`).
 
-To customize secrets, create a `.env` file in the root or `BACKEND/` folder:
-```env
-JWT_SECRET=your-secure-production-jwt-secret
-JWT_EXPIRES_IN=24h
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/
-```
+### Environment File References (`.env.example` Templates)
+The following template files document all environment variables for each component:
+- **Root Full Stack**: [.env.example](file:///d:/2912/E-Commerce/.env.example)
+- **Backend API**: [BACKEND/.env.example](file:///d:/2912/E-Commerce/BACKEND/.env.example)
+- **Unified Frontend**: [FRONTEND/.env.example](file:///d:/2912/E-Commerce/FRONTEND/.env.example)
+- **Website Storefront**: [FRONTEND/WEBSITE/.env.example](file:///d:/2912/E-Commerce/FRONTEND/WEBSITE/.env.example)
+- **Admin Dashboard**: [FRONTEND/ADMIN/.env.example](file:///d:/2912/E-Commerce/FRONTEND/ADMIN/.env.example)
+- **Seller Dashboard**: [FRONTEND/SELLER/.env.example](file:///d:/2912/E-Commerce/FRONTEND/SELLER/.env.example)
+
+To customize secrets for Docker, simply create a `.env` file in the root or service directory based on the `.env.example` template.
 
 ---
 
