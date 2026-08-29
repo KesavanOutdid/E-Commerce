@@ -10,7 +10,7 @@ info:
 servers:
   - url: http://localhost:9000
     description: Local server
-  - url: http://192.168.0.40:9000
+  - url: http://192.168.0.14:5000
     description: Network Access (LAN)
   - url: http://172.29.240.1:9000
     description: Network Access (WSL)

@@ -28,10 +28,6 @@ const SingleItem = ({ item }) => {
 
   const handleUpdateQuantity = async (newQty: number) => {
     if (newQty < 1) return;
-    if (newQty > 3) {
-      toast.error("Maximum 3 items allowed");
-      return;
-    }
     if (isAuthenticated && accessToken) {
       const totalPrice = item.discountedPrice * newQty;
       const gst = 0; // Following the pattern in cart-slice.ts
@@ -84,13 +80,21 @@ const SingleItem = ({ item }) => {
             >
               -
             </button>
-            <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
+            <input
+              type="number"
+              min="1"
+              value={item.quantity}
+              onChange={(e) => {
+                const val = parseInt(e.target.value);
+                if (!isNaN(val) && val >= 1) {
+                  handleUpdateQuantity(val);
+                }
+              }}
+              className="text-sm font-medium w-12 text-center outline-none border border-gray-200 rounded py-0.5"
+            />
             <button 
               onClick={() => handleUpdateQuantity(item.quantity + 1)}
-              disabled={item.quantity >= 3}
-              className={`w-7 h-7 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-dark ${
-                item.quantity >= 3 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className="w-7 h-7 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-dark"
             >
               +
             </button>

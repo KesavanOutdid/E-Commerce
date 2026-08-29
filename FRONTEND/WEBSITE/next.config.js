@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: 'standalone',
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -11,7 +12,7 @@ const nextConfig = {
       },
       {
         protocol: "http",
-        hostname: "192.168.0.11",
+        hostname: "192.168.0.14",
         port: "5000",
         pathname: "/uploads/**",
       },

@@ -48,6 +48,8 @@ export type CartItem = {
   slug?: string;
   mainCategoryId?: string;
   subCategoryId?: string;
+  variantType?: string;
+  pricingSlabs?: any[];
 };
 
 const getInitialCart = (): CartItem[] => {
@@ -87,6 +89,8 @@ export const fetchCart = createAsyncThunk(
           price: parseFloat(item.price),
           discountedPrice: item.salePrice ? parseFloat(item.salePrice) : parseFloat(item.price),
           quantity: item.qty,
+          variantType: item.variantType,
+          pricingSlabs: item.pricingSlabs,
           gst: item.gst || 0,
           subTotal: item.subTotal || (parseFloat(item.salePrice || item.price) * item.qty),
           imgs: {
@@ -237,6 +241,8 @@ export const addToCart = createAsyncThunk(
       price: item.price,
       discountedPrice: item.discountedPrice || item.price,
       quantity: item.quantity || 1,
+      variantType: item.variantType || item.minPriceDetails?.variantType,
+      pricingSlabs: item.pricingSlabs || item.minPriceDetails?.pricingSlabs,
       imgs: item.imgs,
       mainCategoryId: item.mainCategoryId,
       subCategoryId: item.subCategoryId,
@@ -409,11 +415,32 @@ export const cart = createSlice({
   },
 });
 
+export const getRollUnitPrice = (pricingSlabs: any[] | undefined, quantity: number, fallbackPrice: number): number => {
+  if (!pricingSlabs || pricingSlabs.length === 0) return fallbackPrice;
+  const qty = Number(quantity);
+  const matchingSlab = pricingSlabs.find((slab: any) => {
+    const min = parseFloat(slab.minQty) || 0;
+    const max = slab.maxQty ? parseFloat(slab.maxQty) : Infinity;
+    return qty >= min && qty <= max;
+  });
+  if (matchingSlab && matchingSlab.pricePerPiece) {
+    return parseFloat(matchingSlab.pricePerPiece);
+  }
+  if (pricingSlabs[0]?.pricePerPiece) {
+    return parseFloat(pricingSlabs[0].pricePerPiece);
+  }
+  return fallbackPrice;
+};
+
 export const selectCartItems = (state: RootState) => state.cartReducer.items;
 
 export const selectTotalPrice = createSelector([selectCartItems], (items) => {
   return items.reduce((total, item) => {
-    return total + item.discountedPrice * item.quantity;
+    let unitPrice = item.discountedPrice;
+    if (item.variantType === 'roll' && item.pricingSlabs && item.pricingSlabs.length > 0) {
+      unitPrice = getRollUnitPrice(item.pricingSlabs, item.quantity, item.discountedPrice);
+    }
+    return total + unitPrice * item.quantity;
   }, 0);
 });
 

@@ -424,10 +424,18 @@ exports.updateItemQty = async (req, res) => {
       });
     }
 
-    if (product.stock < qty) {
+    let availableStock = product.stock || 0;
+    if (variantId) {
+      const variant = await ProductVariant.findById(variantId);
+      if (variant) {
+        availableStock = variant.stock !== undefined ? variant.stock : availableStock;
+      }
+    }
+
+    if (availableStock > 0 && availableStock < qty) {
       return res.status(400).json({ 
         success: false, 
-        message: `Only ${product.stock} items available in stock` 
+        message: `Only ${availableStock} items available in stock` 
       });
     }
 

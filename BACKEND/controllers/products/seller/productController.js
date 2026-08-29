@@ -263,6 +263,8 @@ exports.createProduct = async (req, res) => {
                 productId: masterProduct.productId,
                 sellerId: req.userId || userId,
                 attributes: [...(attributes || []), ...(variantData.attributes || [])],
+                variantType: variantData.variantType || 'single',
+                pricingSlabs: variantData.pricingSlabs || [],
                 price: parseFloat(variantData.price) || 0,
                 salePrice: variantData.salePrice ? parseFloat(variantData.salePrice) : null,
                 stock: parseInt(variantData.stock) || 0,
@@ -276,6 +278,7 @@ exports.createProduct = async (req, res) => {
         }
 
         await deleteCachePattern('products:list:*');
+        await deleteCachePattern('products:detail:*');
 
         // Notify Admin about new product for approval
         await NotificationService.notifyAdminProductApproval(masterProduct.productId, productName, req.userId || userId);
@@ -432,6 +435,8 @@ exports.updateProduct = async (req, res) => {
                     const vData = parsedVariants[i];
                     if (vData.variantId) {
                         const variantUpdateData = {
+                            variantType: vData.variantType !== undefined ? vData.variantType : undefined,
+                            pricingSlabs: vData.pricingSlabs !== undefined ? vData.pricingSlabs : undefined,
                             price: vData.price !== undefined ? parseFloat(vData.price) : undefined,
                             salePrice: vData.salePrice !== undefined ? parseFloat(vData.salePrice) : undefined,
                             stock: vData.stock !== undefined ? parseInt(vData.stock) : undefined,
@@ -464,6 +469,7 @@ exports.updateProduct = async (req, res) => {
             }
 
             await deleteCachePattern('products:list:*');
+            await deleteCachePattern('products:detail:*');
             return res.status(200).json({ success: true, message: 'Master product and its variants updated successfully' });
         }
 
@@ -478,7 +484,14 @@ exports.updateProduct = async (req, res) => {
                 try { attributes = JSON.parse(attributes); } catch (e) { attributes = undefined; }
             }
 
+            let { variantType, pricingSlabs } = req.body;
+            if (typeof pricingSlabs === 'string') {
+                try { pricingSlabs = JSON.parse(pricingSlabs); } catch (e) { pricingSlabs = undefined; }
+            }
+
             const variantUpdateData = {
+                variantType: variantType !== undefined ? variantType : undefined,
+                pricingSlabs: pricingSlabs !== undefined ? pricingSlabs : undefined,
                 attributes: attributes !== undefined ? attributes : undefined,
                 price: price !== undefined ? parseFloat(price) : undefined,
                 salePrice: salePrice !== undefined ? parseFloat(salePrice) : undefined,
@@ -664,10 +677,21 @@ exports.addVariant = async (req, res) => {
             ? req.files.map(file => `/uploads/products/${file.filename}`)
             : []; // If no images uploaded, variant might have no images (or we could default to master images if master had any)
 
+        let { variantType, pricingSlabs } = req.body;
+        if (typeof pricingSlabs === 'string') {
+            try {
+                pricingSlabs = JSON.parse(pricingSlabs);
+            } catch (e) {
+                pricingSlabs = [];
+            }
+        }
+
         const variant = await ProductVariant.create({
             productId: masterProduct.productId,
             sellerId: req.userId,
             attributes: parsedAttributes || [],
+            variantType: variantType || 'single',
+            pricingSlabs: pricingSlabs || [],
             price: parseFloat(price) || 0,
             salePrice: salePrice ? parseFloat(salePrice) : null,
             stock: parseInt(stock) || 0,
@@ -678,6 +702,7 @@ exports.addVariant = async (req, res) => {
         });
 
         await deleteCachePattern('products:list:*');
+        await deleteCachePattern('products:detail:*');
 
         res.status(201).json({
             success: true,

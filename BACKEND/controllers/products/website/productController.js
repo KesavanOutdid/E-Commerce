@@ -8,8 +8,7 @@ const Coupon = require('../../../models/Coupon');
 const { ObjectId } = require('mongodb');
 const { getCache, setCache } = require('../../../services/redisService');
 const { getDB } = require('../../../config/db');
-const jwt = require('jsonwebtoken');
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-this';
+const { verifyToken } = require('../../../utils/jwtUtils');
 
 // Helper to get applicable offers and coupons for products or variants
 const getApplicablePromotions = async (items, activeOffers = null, activeCoupons = null) => {
@@ -106,7 +105,7 @@ const getUserIdFromRequest = (req) => {
   const token = authHeader.split(' ')[1];
   if (!token) return null;
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = verifyToken(token);
     return decoded.userId;
   } catch (err) {
     return null;
@@ -173,6 +172,8 @@ const getProductAggregationPipeline = (matchQuery, skip, limitNum, sortOptions =
               salePrice: 1,
               stock: 1,
               deliveryDays: 1,
+              variantType: 1,
+              pricingSlabs: 1,
               sellerId: 1,
               sellerDocId: "$seller._id",
               variantId: 1,

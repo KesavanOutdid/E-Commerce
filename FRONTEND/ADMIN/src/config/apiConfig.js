@@ -1,4 +1,14 @@
-export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.0.11:5000/api';
+const getDynamicApiUrl = () => {
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  if (typeof window !== 'undefined') {
+    return `${window.location.protocol}//${window.location.hostname}:5000/api`;
+  }
+  return 'http://localhost:5000/api';
+};
+
+export const API_BASE_URL = getDynamicApiUrl();
 export const BASE_URL = API_BASE_URL.replace('/api', '');
 
 export const API_ENDPOINTS = {

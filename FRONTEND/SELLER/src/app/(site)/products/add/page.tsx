@@ -14,7 +14,16 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import Loader from '@/app/components/Common/Loader'
 
+interface PricingSlab {
+    minQty: string
+    maxQty: string
+    pricePerPiece: string
+    totalPrice: string
+}
+
 interface Variant {
+    variantType: 'single' | 'roll'
+    pricingSlabs: PricingSlab[]
     price: string
     salePrice: string
     stock: string
@@ -55,6 +64,10 @@ export default function AddProductPage() {
     const [masterImages, setMasterImages] = useState<File[]>([])
     const [masterImagePreviews, setMasterImagePreviews] = useState<string[]>([])
     const [variants, setVariants] = useState<Variant[]>([{
+        variantType: 'single',
+        pricingSlabs: [
+            { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+        ],
         price: '',
         salePrice: '',
         stock: '',
@@ -152,6 +165,10 @@ export default function AddProductPage() {
                         })))
                     } else {
                         setVariants([{
+                            variantType: 'single',
+                            pricingSlabs: [
+                                { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                            ],
                             price: '',
                             salePrice: '',
                             stock: '',
@@ -266,6 +283,10 @@ export default function AddProductPage() {
 
     const addVariantToList = () => {
         setVariants([...variants, {
+            variantType: 'single',
+            pricingSlabs: [
+                { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+            ],
             price: '',
             salePrice: '',
             stock: '',
@@ -275,6 +296,60 @@ export default function AddProductPage() {
             imageIndices: [],
             images: []
         }])
+    }
+
+    const addSlab = (variantIndex: number) => {
+        setVariants(prev => prev.map((variant, vIdx) => {
+            if (vIdx !== variantIndex) return variant
+            const slabs = variant.pricingSlabs || []
+            const lastSlab = slabs[slabs.length - 1]
+            let nextMin = ''
+            if (lastSlab && lastSlab.maxQty) {
+                const parsedMax = parseInt(lastSlab.maxQty)
+                if (!isNaN(parsedMax)) {
+                    nextMin = (parsedMax + 1).toString()
+                }
+            }
+            return {
+                ...variant,
+                pricingSlabs: [...slabs, { minQty: nextMin, maxQty: '', pricePerPiece: '', totalPrice: '0' }]
+            }
+        }))
+    }
+
+    const removeSlab = (variantIndex: number, slabIndex: number) => {
+        setVariants(prev => prev.map((variant, vIdx) => {
+            if (vIdx !== variantIndex) return variant
+            const slabs = (variant.pricingSlabs || []).filter((_, sIdx) => sIdx !== slabIndex)
+            return { ...variant, pricingSlabs: slabs }
+        }))
+    }
+
+    const updateSlab = (variantIndex: number, slabIndex: number, field: keyof PricingSlab, value: string) => {
+        setVariants(prev => prev.map((variant, vIdx) => {
+            if (vIdx !== variantIndex) return variant
+            const updatedSlabs = (variant.pricingSlabs || []).map((slab, sIdx) => {
+                if (sIdx !== slabIndex) return slab
+                const newSlab = { ...slab, [field]: value }
+                
+                const min = parseFloat(newSlab.minQty) || 0
+                const ppp = parseFloat(newSlab.pricePerPiece) || 0
+                newSlab.totalPrice = (min * ppp).toFixed(2)
+                return newSlab
+            })
+
+            // Automatically set main variant price to first slab's pricePerPiece if roll type
+            let autoPrice = variant.price
+            if (variant.variantType === 'roll' && updatedSlabs.length > 0) {
+                autoPrice = updatedSlabs[0].pricePerPiece || '0'
+            }
+
+            return {
+                ...variant,
+                pricingSlabs: updatedSlabs,
+                price: variant.variantType === 'roll' ? autoPrice : variant.price
+            }
+        }))
     }
 
     const removeVariant = (index: number) => {
@@ -361,7 +436,9 @@ export default function AddProductPage() {
 
     const isFormValid = () => {
         const validateVariant = (v: Variant) => {
-            const priceValid = v.price.trim() !== ''
+            const priceValid = v.variantType === 'roll'
+                ? (v.pricingSlabs && v.pricingSlabs.length > 0 && v.pricingSlabs.every(s => s.minQty.trim() !== '' && s.pricePerPiece.trim() !== ''))
+                : v.price.trim() !== ''
             const stockValid = v.stock.trim() !== ''
             const imagesValid = v.images.length > 0
             
@@ -402,8 +479,14 @@ export default function AddProductPage() {
             const variantFormData = new FormData()
             const variant = variants[0]
 
-            variantFormData.append('price', variant.price)
-            if (variant.salePrice) variantFormData.append('salePrice', variant.salePrice)
+            variantFormData.append('variantType', variant.variantType || 'single')
+            if (variant.variantType === 'roll' && variant.pricingSlabs) {
+                variantFormData.append('pricingSlabs', JSON.stringify(variant.pricingSlabs))
+                variantFormData.append('price', variant.pricingSlabs[0]?.pricePerPiece || variant.price || '0')
+            } else {
+                variantFormData.append('price', variant.price)
+                if (variant.salePrice) variantFormData.append('salePrice', variant.salePrice)
+            }
             variantFormData.append('stock', variant.stock)
             variantFormData.append('deliveryDays', variant.deliveryDays)
             if (variant.pickupAddress) variantFormData.append('pickupAddress', variant.pickupAddress)
@@ -470,8 +553,10 @@ export default function AddProductPage() {
         }
 
         const variantsData = variants.map(variant => ({
-            price: parseFloat(variant.price),
-            salePrice: variant.salePrice ? parseFloat(variant.salePrice) : null,
+            variantType: variant.variantType || 'single',
+            pricingSlabs: variant.variantType === 'roll' ? variant.pricingSlabs : [],
+            price: variant.variantType === 'roll' ? (parseFloat(variant.pricingSlabs[0]?.pricePerPiece) || parseFloat(variant.price) || 0) : parseFloat(variant.price),
+            salePrice: variant.variantType === 'roll' ? null : (variant.salePrice ? parseFloat(variant.salePrice) : null),
             stock: parseInt(variant.stock),
             deliveryDays: parseInt(variant.deliveryDays) || 3,
             pickupAddress: variant.pickupAddress || null,
@@ -909,65 +994,91 @@ export default function AddProductPage() {
                                                         type="button"
                                                         onClick={() => removeVariant(variantIndex)}
                                                         className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors">
-                                                        <Icon icon="mdi:delete" width={18} height={18} />
+                                                <Icon icon="mdi:delete" width={18} height={18} />
                                                     </button>
                                                 )}
                                             </div>
 
                                             <div className="space-y-4">
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                            Price (₹) <span className="text-red-500">*</span>
+                                                {/* Variant Type Selector */}
+                                                <div className="bg-white p-3 rounded-lg border border-gray-200">
+                                                    <label className="block text-xs font-semibold text-gray-700 mb-2">
+                                                        Variant Type <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <div className="flex items-center gap-4">
+                                                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-800">
+                                                            <input
+                                                                type="radio"
+                                                                name={`add_variantType_${variantIndex}`}
+                                                                value="single"
+                                                                checked={(variant.variantType || 'single') === 'single'}
+                                                                onChange={() => updateVariant(variantIndex, 'variantType', 'single')}
+                                                                className="text-primary focus:ring-primary h-4 w-4"
+                                                            />
+                                                            Single Unit Pricing
                                                         </label>
-                                                        <input
-                                                            type="number"
-                                                            value={variant.price}
-                                                            onChange={(e) => updateVariant(variantIndex, 'price', e.target.value)}
-                                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                            Sale Price (₹)
+                                                        <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-gray-800">
+                                                            <input
+                                                                type="radio"
+                                                                name={`add_variantType_${variantIndex}`}
+                                                                value="roll"
+                                                                checked={variant.variantType === 'roll'}
+                                                                onChange={() => {
+                                                                    const firstSlabPrice = variant.pricingSlabs?.[0]?.pricePerPiece || variant.price
+                                                                    updateVariant(variantIndex, 'variantType', 'roll')
+                                                                    if (firstSlabPrice) {
+                                                                        updateVariant(variantIndex, 'price', firstSlabPrice)
+                                                                    }
+                                                                }}
+                                                                className="text-primary focus:ring-primary h-4 w-4"
+                                                            />
+                                                            Roll / Slab Pricing (Bulk Tiers)
                                                         </label>
-                                                        <input type="number" value={variant.salePrice} onChange={(e) => updateVariant(variantIndex, 'salePrice', e.target.value)}
-                                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        />
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                            Stock <span className="text-red-500">*</span>
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={variant.stock}
-                                                            onChange={(e) => updateVariant(variantIndex, 'stock', e.target.value)}
-                                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        {variant.salePrice && parseFloat(variant.salePrice) > 0 && commissionPercentage > 0 && (
-                                                            <div className="col-span-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                                                                <div className="flex items-start gap-2">
-                                                                    <Icon icon="mdi:information-outline" className="text-blue-600 mt-0.5" width={16} height={16} />
-                                                                    <div className="flex-1">
-                                                                        <p className="text-xs text-blue-900 font-medium mb-1">
-                                                                            Platform Commission: <strong>{commissionPercentage}%</strong>
-                                                                        </p>
-                                                                        <p className="text-xs text-blue-700">
-                                                                            The platform will deduct {commissionPercentage}% from each sale. Commission breakdown is displayed below the sale price for each variant.
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
+                                                </div>
+
+                                                {(variant.variantType || 'single') === 'single' ? (
+                                                    <>
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                                    Price (₹) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={variant.price}
+                                                                    onChange={(e) => updateVariant(variantIndex, 'price', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                    required
+                                                                />
                                                             </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                                    Sale Price (₹)
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={variant.salePrice}
+                                                                    onChange={(e) => updateVariant(variantIndex, 'salePrice', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                                    Stock <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={variant.stock}
+                                                                    onChange={(e) => updateVariant(variantIndex, 'stock', e.target.value)}
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </div>
+
                                                         {variant.salePrice && parseFloat(variant.salePrice) > 0 && commissionPercentage > 0 && (
-                                                            <div className="col-span-6 p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
+                                                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg space-y-1">
                                                                 <div className="flex justify-between items-center text-xs">
                                                                     <span className="text-gray-600">Sale Price:</span>
                                                                     <span className="font-semibold text-gray-900">₹{parseFloat(variant.salePrice).toFixed(2)}</span>
@@ -982,22 +1093,148 @@ export default function AddProductPage() {
                                                                 </div>
                                                             </div>
                                                         )}
+                                                    </>
+                                                ) : (
+                                                    /* Roll / Slab Pricing Table */
+                                                    <div className="bg-white p-4 rounded-lg border border-gray-200 space-y-3">
+                                                        <div className="flex items-center justify-between">
+                                                            <div>
+                                                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide">Roll Quantity Slabs & Pricing</h4>
+                                                                <p className="text-[11px] text-gray-500">Define price per piece for quantity slabs (e.g. 50-100 pcs, 100-500 pcs, Above 500 pcs). Total price is auto-calculated.</p>
+                                                            </div>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => addSlab(variantIndex)}
+                                                                className="px-2.5 py-1 text-xs bg-primary/10 text-primary hover:bg-primary/20 rounded-md font-medium flex items-center gap-1 transition">
+                                                                <Icon icon="mdi:plus" width={14} height={14} />
+                                                                Add Slab
+                                                            </button>
+                                                        </div>
+
+                                                        <div className="overflow-x-auto">
+                                                            <table className="w-full text-left text-xs border-collapse">
+                                                                <thead>
+                                                                    <tr className="bg-gray-50 border-b border-gray-200 text-gray-700">
+                                                                        <th className="py-2 px-3 font-semibold">Min Qty <span className="text-red-500">*</span></th>
+                                                                        <th className="py-2 px-3 font-semibold">Max Qty (Leave blank for Above)</th>
+                                                                        <th className="py-2 px-3 font-semibold">Price Per Piece (₹) <span className="text-red-500">*</span></th>
+                                                                        <th className="py-2 px-3 font-semibold">Total Price (₹) (Auto)</th>
+                                                                        <th className="py-2 px-3 font-semibold text-right">Action</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody className="divide-y divide-gray-100">
+                                                                    {(variant.pricingSlabs || []).map((slab, slabIdx) => {
+                                                                        const min = parseFloat(slab.minQty) || 0
+                                                                        const max = parseFloat(slab.maxQty) || 0
+                                                                        const ppp = parseFloat(slab.pricePerPiece) || 0
+                                                                        const minTotal = min * ppp
+                                                                        const maxTotal = max > 0 ? max * ppp : 0
+
+                                                                        return (
+                                                                            <tr key={slabIdx} className="hover:bg-gray-50/50">
+                                                                                <td className="py-2 px-3">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={slab.minQty}
+                                                                                        onChange={(e) => updateSlab(variantIndex, slabIdx, 'minQty', e.target.value)}
+                                                                                        placeholder="50"
+                                                                                        className="w-24 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="py-2 px-3">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        value={slab.maxQty}
+                                                                                        onChange={(e) => updateSlab(variantIndex, slabIdx, 'maxQty', e.target.value)}
+                                                                                        placeholder="100 (or Above)"
+                                                                                        className="w-32 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="py-2 px-3">
+                                                                                    <input
+                                                                                        type="number"
+                                                                                        step="0.01"
+                                                                                        value={slab.pricePerPiece}
+                                                                                        onChange={(e) => updateSlab(variantIndex, slabIdx, 'pricePerPiece', e.target.value)}
+                                                                                        placeholder="10.00"
+                                                                                        className="w-28 rounded border border-gray-300 px-2 py-1 text-xs outline-none focus:border-primary"
+                                                                                    />
+                                                                                </td>
+                                                                                <td className="py-2 px-3 font-semibold text-gray-900">
+                                                                                    {ppp > 0 ? (
+                                                                                        maxTotal > 0 ? (
+                                                                                            <span>₹{minTotal.toFixed(2)} - ₹{maxTotal.toFixed(2)}</span>
+                                                                                        ) : (
+                                                                                            <span>₹{minTotal.toFixed(2)}+ (Min)</span>
+                                                                                        )
+                                                                                    ) : (
+                                                                                        <span className="text-gray-400">₹0.00</span>
+                                                                                    )}
+                                                                                </td>
+                                                                                <td className="py-2 px-3 text-right">
+                                                                                    {(variant.pricingSlabs || []).length > 1 && (
+                                                                                        <button
+                                                                                            type="button"
+                                                                                            onClick={() => removeSlab(variantIndex, slabIdx)}
+                                                                                            className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition">
+                                                                                            <Icon icon="mdi:close" width={16} height={16} />
+                                                                                        </button>
+                                                                                    )}
+                                                                                </td>
+                                                                            </tr>
+                                                                        )
+                                                                    })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+
+                                                        <div className="pt-3 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-gray-50/70 p-3 rounded-lg">
+                                                            <div>
+                                                                <label className="block text-xs font-semibold text-gray-800 mb-1">
+                                                                    Variant Stock (Applies to all slabs) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={variant.stock}
+                                                                    onChange={(e) => updateVariant(variantIndex, 'stock', e.target.value)}
+                                                                    placeholder="e.g. 5000"
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-black outline-none transition focus:border-primary"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                            <div>
+                                                                <label className="block text-xs font-semibold text-gray-800 mb-1">
+                                                                    Delivery Days (Applies to all slabs) <span className="text-red-500">*</span>
+                                                                </label>
+                                                                <input
+                                                                    type="number"
+                                                                    value={variant.deliveryDays}
+                                                                    onChange={(e) => updateVariant(variantIndex, 'deliveryDays', e.target.value)}
+                                                                    placeholder="e.g. 3"
+                                                                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs text-black outline-none transition focus:border-primary"
+                                                                    required
+                                                                />
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )}
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-gray-700 mb-1.5">
-                                                            Delivery Days
-                                                        </label>
-                                                        <input
-                                                            type="number"
-                                                            value={variant.deliveryDays}
-                                                            onChange={(e) => updateVariant(variantIndex, 'deliveryDays', e.target.value)}
-                                                            className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
-                                                        />
-                                                    </div>
-                                                    <div>
+                                                    {(variant.variantType || 'single') === 'single' && (
+                                                        <div>
+                                                            <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                                                                Delivery Days <span className="text-red-500">*</span>
+                                                            </label>
+                                                            <input
+                                                                type="number"
+                                                                value={variant.deliveryDays}
+                                                                onChange={(e) => updateVariant(variantIndex, 'deliveryDays', e.target.value)}
+                                                                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-black outline-none transition focus:border-primary"
+                                                                required
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <div className={(variant.variantType || 'single') === 'roll' ? "col-span-2" : ""}>
                                                         <label className="block text-xs font-medium text-gray-700 mb-1.5">
                                                             Pickup Address
                                                         </label>

@@ -4,6 +4,7 @@ const basePath = '';
 // const basePath = '/si-education';
 
 const nextConfig: NextConfig = {
+    output: 'standalone',
     /* config options here */
     trailingSlash: true,
     basePath,

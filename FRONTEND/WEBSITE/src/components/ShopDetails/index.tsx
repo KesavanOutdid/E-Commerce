@@ -1229,21 +1229,78 @@ const ShopDetails = ({ productId }: { productId?: string }) => {
 
 
 
-                  <div className="flex items-center gap-3 mb-4.5">
-                    <h3 className="font-bold text-2xl text-dark">
-                      ₹{product.discountedPrice}
-                    </h3>
-                    {product.price > product.discountedPrice && (
-                      <div className="flex items-center gap-2">
-                        <span className="line-through text-gray-400 text-base">
-                          ₹{product.price}
-                        </span>
-                        <span className="text-green-600 text-sm font-normal">
-                          {Math.round(((product.price - product.discountedPrice) / product.price) * 100)}% off
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {(() => {
+                    const activeVariant = selectedVariant || product?.minPriceDetails;
+                    const isRollVariant = activeVariant?.variantType === 'roll';
+                    const slabs = activeVariant?.pricingSlabs || [];
+
+                    return (
+                      <>
+                        <div className="flex items-center gap-3 mb-4.5">
+                          <h3 className="font-bold text-2xl text-dark">
+                            ₹{product.discountedPrice}
+                            {isRollVariant && <span className="text-sm font-normal text-gray-500 ml-1.5">(Per piece / Slab Pricing)</span>}
+                          </h3>
+                          {product.price > product.discountedPrice && !isRollVariant && (
+                            <div className="flex items-center gap-2">
+                              <span className="line-through text-gray-400 text-base">
+                                ₹{product.price}
+                              </span>
+                              <span className="text-green-600 text-sm font-normal">
+                                {Math.round(((product.price - product.discountedPrice) / product.price) * 100)}% off
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Roll / Slab Pricing Table */}
+                        {isRollVariant && slabs.length > 0 && (
+                          <div className="mb-6 p-4 rounded-xl bg-blue/5 border border-blue/20">
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <span className="bg-blue text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                Roll Quantity Slab Pricing
+                              </span>
+                              <span className="text-xs text-gray-500">Price per piece decreases as quantity increases</span>
+                            </div>
+                            <div className="overflow-x-auto">
+                              <table className="w-full text-left text-xs border-collapse bg-white rounded-lg overflow-hidden border border-gray-200">
+                                <thead>
+                                  <tr className="bg-gray-50 border-b border-gray-200 text-gray-700">
+                                    <th className="py-2.5 px-3 font-semibold">Quantity Slab</th>
+                                    <th className="py-2.5 px-3 font-semibold">Price Per Piece</th>
+                                    <th className="py-2.5 px-3 font-semibold text-right">Total Price (Auto)</th>
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                  {slabs.map((slab: any, idx: number) => {
+                                    const min = parseFloat(slab.minQty) || 0;
+                                    const max = parseFloat(slab.maxQty) || 0;
+                                    const ppp = parseFloat(slab.pricePerPiece) || 0;
+                                    const minTotal = min * ppp;
+                                    const maxTotal = max > 0 ? max * ppp : 0;
+
+                                    return (
+                                      <tr key={idx} className="hover:bg-blue/5 transition-colors">
+                                        <td className="py-2.5 px-3 font-medium text-dark">
+                                          {max > 0 ? `${min} - ${max} pcs` : `${min}+ pcs (Above)`}
+                                        </td>
+                                        <td className="py-2.5 px-3 font-bold text-blue">
+                                          ₹{ppp.toFixed(2)} / pc
+                                        </td>
+                                        <td className="py-2.5 px-3 font-semibold text-right text-gray-900">
+                                          {maxTotal > 0 ? `₹${minTotal.toFixed(2)} - ₹${maxTotal.toFixed(2)}` : `₹${minTotal.toFixed(2)}+`}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
 
                   {promotions && promotions.length > 0 && (
                     <div className="mb-6 border-t border-gray-3 pt-4">

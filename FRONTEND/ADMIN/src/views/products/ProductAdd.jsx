@@ -79,6 +79,10 @@ const ProductAdd = () => {
         variants: [
             {
                 sellerName: 'Admin',
+                variantType: 'single',
+                pricingSlabs: [
+                    { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                ],
                 price: '',
                 salePrice: '',
                 stock: '',
@@ -228,6 +232,15 @@ const ProductAdd = () => {
                         variantId: v.variantId,
                         sellerName: v.sellerName || 'Seller',
                         roleId: v.roleId || 2,
+                        variantType: v.variantType || 'single',
+                        pricingSlabs: (v.pricingSlabs && v.pricingSlabs.length > 0) ? v.pricingSlabs.map(s => ({
+                            minQty: String(s.minQty || ''),
+                            maxQty: String(s.maxQty || ''),
+                            pricePerPiece: String(s.pricePerPiece || ''),
+                            totalPrice: String(s.totalPrice || '0')
+                        })) : [
+                            { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                        ],
                         price: v.price,
                         salePrice: v.salePrice || '',
                         stock: v.stock,
@@ -244,6 +257,10 @@ const ProductAdd = () => {
                     const adminVariant = {
                         sellerName: 'Admin',
                         roleId: 1,
+                        variantType: 'single',
+                        pricingSlabs: [
+                            { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                        ],
                         price: '',
                         salePrice: '',
                         stock: '',
@@ -354,6 +371,15 @@ const ProductAdd = () => {
                             variants: variants.length > 0 ? variants.map(v => ({
                                 variantId: v.variantId,
                                 sellerName: v.sellerName || 'Admin',
+                                variantType: v.variantType || 'single',
+                                pricingSlabs: (v.pricingSlabs && v.pricingSlabs.length > 0) ? v.pricingSlabs.map(s => ({
+                                    minQty: String(s.minQty || ''),
+                                    maxQty: String(s.maxQty || ''),
+                                    pricePerPiece: String(s.pricePerPiece || ''),
+                                    totalPrice: String(s.totalPrice || '0')
+                                })) : [
+                                    { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                                ],
                                 price: v.price,
                                 salePrice: v.salePrice || '',
                                 stock: v.stock,
@@ -366,6 +392,10 @@ const ProductAdd = () => {
                                 existingImages: v.images || []
                             })) : [{
                                 sellerName: 'Admin',
+                                variantType: 'single',
+                                pricingSlabs: [
+                                    { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                                ],
                                 price: product.price || '',
                                 salePrice: product.salePrice || '',
                                 stock: product.stock || '',
@@ -569,6 +599,10 @@ const ProductAdd = () => {
                     {
                         sellerName: 'Admin',
                         roleId: 1, // Explicitly set as Admin
+                        variantType: 'single',
+                        pricingSlabs: [
+                            { minQty: '', maxQty: '', pricePerPiece: '', totalPrice: '0' }
+                        ],
                         price: '',
                         salePrice: '',
                         stock: '',
@@ -598,6 +632,51 @@ const ProductAdd = () => {
         const updatedVariants = [...formData.variants];
         updatedVariants[index][field] = value;
         setFormData(prev => ({ ...prev, variants: updatedVariants }));
+    };
+
+    const addSlab = (variantIndex) => {
+        setFormData(prev => {
+            const updatedVariants = [...prev.variants];
+            const slabs = updatedVariants[variantIndex].pricingSlabs || [];
+            const lastSlab = slabs[slabs.length - 1];
+            let nextMin = '';
+            if (lastSlab && lastSlab.maxQty) {
+                const parsedMax = parseInt(lastSlab.maxQty);
+                if (!isNaN(parsedMax)) {
+                    nextMin = String(parsedMax + 1);
+                }
+            }
+            updatedVariants[variantIndex].pricingSlabs = [...slabs, { minQty: nextMin, maxQty: '', pricePerPiece: '', totalPrice: '0' }];
+            return { ...prev, variants: updatedVariants };
+        });
+    };
+
+    const removeSlab = (variantIndex, slabIndex) => {
+        setFormData(prev => {
+            const updatedVariants = [...prev.variants];
+            const slabs = (updatedVariants[variantIndex].pricingSlabs || []).filter((_, sIdx) => sIdx !== slabIndex);
+            updatedVariants[variantIndex].pricingSlabs = slabs;
+            return { ...prev, variants: updatedVariants };
+        });
+    };
+
+    const updateSlab = (variantIndex, slabIndex, field, value) => {
+        setFormData(prev => {
+            const updatedVariants = [...prev.variants];
+            const slabs = (updatedVariants[variantIndex].pricingSlabs || []).map((slab, sIdx) => {
+                if (sIdx !== slabIndex) return slab;
+                const newSlab = { ...slab, [field]: value };
+                const min = parseFloat(newSlab.minQty) || 0;
+                const ppp = parseFloat(newSlab.pricePerPiece) || 0;
+                newSlab.totalPrice = (min * ppp).toFixed(2);
+                return newSlab;
+            });
+            updatedVariants[variantIndex].pricingSlabs = slabs;
+            if (updatedVariants[variantIndex].variantType === 'roll' && slabs.length > 0) {
+                updatedVariants[variantIndex].price = slabs[0].pricePerPiece || '0';
+            }
+            return { ...prev, variants: updatedVariants };
+        });
     };
 
     const handleVariantAttributeChange = (vIndex, aIndex, value) => {
@@ -690,7 +769,12 @@ const ProductAdd = () => {
         // Validate variants
         for (let i = 0; i < formData.variants.length; i++) {
             const v = formData.variants[i];
-            if (!v.price || !v.stock) {
+            if (v.variantType === 'roll') {
+                if (!v.pricingSlabs || v.pricingSlabs.length === 0 || v.pricingSlabs.some(s => !s.minQty || !s.pricePerPiece)) {
+                    Swal.fire('Error', `Please fill in Min Qty and Price Per Piece for all slabs in Variant ${i + 1}`, 'error');
+                    return;
+                }
+            } else if (!v.price || !v.stock) {
                 Swal.fire('Error', `Please fill in Price and Stock for Variant ${i + 1}`, 'error');
                 return;
             }
@@ -754,8 +838,15 @@ const ProductAdd = () => {
                 .filter(spec => spec.key && spec.value)
                 .map(spec => ({ key: spec.key, value: spec.value }));
 
+            const isRoll = v.variantType === 'roll';
+            const rollPrice = isRoll ? (parseFloat(v.pricingSlabs?.[0]?.pricePerPiece) || parseFloat(v.price) || 0) : parseFloat(v.price);
+
             return {
                 ...vData,
+                variantType: v.variantType || 'single',
+                pricingSlabs: isRoll ? v.pricingSlabs : [],
+                price: rollPrice,
+                salePrice: isRoll ? null : v.salePrice,
                 specifications: [...vCategorySpecs, ...vCustomSpecs],
                 // Ensure pickupAddress is just the ID if it's an object
                 pickupAddress: v.pickupAddress?.id || v.pickupAddress?._id || v.pickupAddress,
@@ -1027,53 +1118,207 @@ const ProductAdd = () => {
                                     </Stack>
 
                                     <Grid container spacing={2}>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Price"
-                                                type="number"
-                                                value={variant.price}
-                                                onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
-                                                required
-                                                size="small"
-                                                disabled={!isAdminVariant}
-                                            />
+                                        <Grid item xs={12}>
+                                            <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>Variant Type</Typography>
+                                            <Stack direction="row" spacing={3}>
+                                                <FormControlLabel
+                                                    control={
+                                                        <input
+                                                            type="radio"
+                                                            name={`admin_vType_${vIndex}`}
+                                                            checked={(variant.variantType || 'single') === 'single'}
+                                                            disabled={!isAdminVariant}
+                                                            onChange={() => handleVariantChange(vIndex, 'variantType', 'single')}
+                                                            style={{ accentColor: '#1976d2', width: 18, height: 18 }}
+                                                        />
+                                                    }
+                                                    label={<Typography variant="body2">Single Unit Pricing</Typography>}
+                                                />
+                                                <FormControlLabel
+                                                    control={
+                                                        <input
+                                                            type="radio"
+                                                            name={`admin_vType_${vIndex}`}
+                                                            checked={variant.variantType === 'roll'}
+                                                            disabled={!isAdminVariant}
+                                                            onChange={() => {
+                                                                handleVariantChange(vIndex, 'variantType', 'roll');
+                                                                if (variant.pricingSlabs?.[0]?.pricePerPiece) {
+                                                                    handleVariantChange(vIndex, 'price', variant.pricingSlabs[0].pricePerPiece);
+                                                                }
+                                                            }}
+                                                            style={{ accentColor: '#1976d2', width: 18, height: 18 }}
+                                                        />
+                                                    }
+                                                    label={<Typography variant="body2">Roll / Slab Pricing (Bulk Tiers)</Typography>}
+                                                />
+                                            </Stack>
                                         </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Sale Price"
-                                                type="number"
-                                                value={variant.salePrice}
-                                                onChange={(e) => handleVariantChange(vIndex, 'salePrice', e.target.value)}
-                                                size="small"
-                                                disabled={!isAdminVariant}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Stock"
-                                                type="number"
-                                                value={variant.stock}
-                                                onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
-                                                required
-                                                size="small"
-                                                disabled={!isAdminVariant}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} md={3}>
-                                            <TextField
-                                                fullWidth
-                                                label="Delivery Days"
-                                                type="number"
-                                                value={variant.deliveryDays}
-                                                onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
-                                                required
-                                                size="small"
-                                                disabled={!isAdminVariant}
-                                            />
-                                        </Grid>
+
+                                        {(variant.variantType || 'single') === 'single' ? (
+                                            <>
+                                                <Grid item xs={12} md={3}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Price"
+                                                        type="number"
+                                                        value={variant.price}
+                                                        onChange={(e) => handleVariantChange(vIndex, 'price', e.target.value)}
+                                                        required
+                                                        size="small"
+                                                        disabled={!isAdminVariant}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={3}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Sale Price"
+                                                        type="number"
+                                                        value={variant.salePrice}
+                                                        onChange={(e) => handleVariantChange(vIndex, 'salePrice', e.target.value)}
+                                                        size="small"
+                                                        disabled={!isAdminVariant}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={3}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Stock"
+                                                        type="number"
+                                                        value={variant.stock}
+                                                        onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
+                                                        required
+                                                        size="small"
+                                                        disabled={!isAdminVariant}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={3}>
+                                                    <TextField
+                                                        fullWidth
+                                                        label="Delivery Days"
+                                                        type="number"
+                                                        value={variant.deliveryDays}
+                                                        onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
+                                                        required
+                                                        size="small"
+                                                        disabled={!isAdminVariant}
+                                                    />
+                                                </Grid>
+                                            </>
+                                        ) : (
+                                            <Grid item xs={12}>
+                                                <Paper variant="outlined" sx={{ p: 2, bgcolor: '#fff' }}>
+                                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1.5 }}>
+                                                        <Box>
+                                                            <Typography variant="subtitle2" fontWeight={700}>Roll Quantity Slabs & Pricing</Typography>
+                                                            <Typography variant="caption" color="text.secondary">Define price per piece for quantity slabs. Total price is calculated automatically.</Typography>
+                                                        </Box>
+                                                        {isAdminVariant && (
+                                                            <Button size="small" variant="contained" startIcon={<IconPlus size={16} />} onClick={() => addSlab(vIndex)}>
+                                                                Add Slab
+                                                            </Button>
+                                                        )}
+                                                    </Stack>
+
+                                                    <Box sx={{ overflowX: 'auto' }}>
+                                                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8125rem' }}>
+                                                            <thead>
+                                                                <tr style={{ borderBottom: '1px solid #e0e0e0', textAlign: 'left', backgroundColor: '#f9f9f9' }}>
+                                                                    <th style={{ padding: '8px' }}>Min Qty *</th>
+                                                                    <th style={{ padding: '8px' }}>Max Qty (blank for Above)</th>
+                                                                    <th style={{ padding: '8px' }}>Price Per Piece (₹) *</th>
+                                                                    <th style={{ padding: '8px' }}>Total Price (₹) (Auto)</th>
+                                                                    <th style={{ padding: '8px', textAlign: 'right' }}>Action</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {(variant.pricingSlabs || []).map((slab, sIdx) => {
+                                                                    const min = parseFloat(slab.minQty) || 0;
+                                                                    const max = parseFloat(slab.maxQty) || 0;
+                                                                    const ppp = parseFloat(slab.pricePerPiece) || 0;
+                                                                    const minTotal = min * ppp;
+                                                                    const maxTotal = max > 0 ? max * ppp : 0;
+
+                                                                    return (
+                                                                        <tr key={sIdx} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                                                                            <td style={{ padding: '8px' }}>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={slab.minQty}
+                                                                                    disabled={!isAdminVariant}
+                                                                                    onChange={(e) => updateSlab(vIndex, sIdx, 'minQty', e.target.value)}
+                                                                                    style={{ width: '80px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                                                                />
+                                                                            </td>
+                                                                            <td style={{ padding: '8px' }}>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    value={slab.maxQty}
+                                                                                    disabled={!isAdminVariant}
+                                                                                    onChange={(e) => updateSlab(vIndex, sIdx, 'maxQty', e.target.value)}
+                                                                                    placeholder="Above"
+                                                                                    style={{ width: '110px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                                                                />
+                                                                            </td>
+                                                                            <td style={{ padding: '8px' }}>
+                                                                                <input
+                                                                                    type="number"
+                                                                                    step="0.01"
+                                                                                    value={slab.pricePerPiece}
+                                                                                    disabled={!isAdminVariant}
+                                                                                    onChange={(e) => updateSlab(vIndex, sIdx, 'pricePerPiece', e.target.value)}
+                                                                                    style={{ width: '100px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+                                                                                />
+                                                                            </td>
+                                                                            <td style={{ padding: '8px', fontWeight: 600 }}>
+                                                                                {ppp > 0 ? (
+                                                                                    maxTotal > 0 ? `₹${minTotal.toFixed(2)} - ₹${maxTotal.toFixed(2)}` : `₹${minTotal.toFixed(2)}+ (Min)`
+                                                                                ) : '₹0.00'}
+                                                                            </td>
+                                                                            <td style={{ padding: '8px', textAlign: 'right' }}>
+                                                                                {isAdminVariant && (variant.pricingSlabs || []).length > 1 && (
+                                                                                    <IconButton size="small" color="error" onClick={() => removeSlab(vIndex, sIdx)}>
+                                                                                        <IconX size={16} />
+                                                                                    </IconButton>
+                                                                                )}
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                            </tbody>
+                                                        </table>
+                                                    </Box>
+
+                                                    <Box sx={{ mt: 2, pt: 1.5, borderTop: '1px border-dashed #e0e0e0' }}>
+                                                        <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', display: 'block', mb: 1 }}>
+                                                            Variant Stock & Delivery (Applies to all slabs)
+                                                        </Typography>
+                                                        <Stack direction="row" spacing={2}>
+                                                            <TextField
+                                                                label="Stock (All Slabs)"
+                                                                type="number"
+                                                                value={variant.stock}
+                                                                onChange={(e) => handleVariantChange(vIndex, 'stock', e.target.value)}
+                                                                required
+                                                                size="small"
+                                                                disabled={!isAdminVariant}
+                                                                sx={{ width: 180 }}
+                                                            />
+                                                            <TextField
+                                                                label="Delivery Days (All Slabs)"
+                                                                type="number"
+                                                                value={variant.deliveryDays}
+                                                                onChange={(e) => handleVariantChange(vIndex, 'deliveryDays', e.target.value)}
+                                                                required
+                                                                size="small"
+                                                                disabled={!isAdminVariant}
+                                                                sx={{ width: 180 }}
+                                                            />
+                                                        </Stack>
+                                                    </Box>
+                                                </Paper>
+                                            </Grid>
+                                        )}
                                         <Grid item xs={12}>
                                             <Autocomplete
                                                 options={pickupAddresses}

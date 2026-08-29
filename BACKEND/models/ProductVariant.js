@@ -13,6 +13,13 @@ class ProductVariant {
       productId: data.productId, // Link to Master Product
       sellerId: ObjectId.isValid(data.sellerId) ? new ObjectId(data.sellerId) : data.sellerId,
       attributes: data.attributes || [], // e.g., [{name: "Color", value: "Red"}]
+      variantType: data.variantType || 'single', // 'single' or 'roll'
+      pricingSlabs: Array.isArray(data.pricingSlabs) ? data.pricingSlabs.map(slab => ({
+        minQty: parseInt(slab.minQty) || 0,
+        maxQty: (slab.maxQty !== undefined && slab.maxQty !== null && slab.maxQty !== '') ? parseInt(slab.maxQty) : null,
+        pricePerPiece: parseFloat(slab.pricePerPiece) || 0,
+        totalPrice: parseFloat(slab.totalPrice) || ((parseInt(slab.minQty) || 0) * (parseFloat(slab.pricePerPiece) || 0))
+      })) : [],
       price: parseFloat(data.price) || 0,
       salePrice: data.salePrice ? parseFloat(data.salePrice) : null,
       stock: parseInt(data.stock) || 0,

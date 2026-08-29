@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # In-Memory Cache Service
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Node.js Backend API Service
+  backend:
+    build:
+      context: ./BACKEND
+      dockerfile: Dockerfile
+    container_name: ecommerce-backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-your-production-jwt-secret-key-must-be-strong}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
+      - MONGODB_URI=${MONGODB_URI:-mongodb+srv://outdid:outdid@cluster0.t16a63a.mongodb.net/}
+      - DB_NAME=${DB_NAME:-e-Commerce}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - EMAIL_USER=${EMAIL_USER:-info@outdidunified.com}
+      - EMAIL_PASS=${EMAIL_PASS:-yylh zjwo psvr slqb}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-rzp_test_oHoZ3Q1fF6pYEI}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-Q9FQHLJGtA8knQPOmdTr7vpK}
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+
+  # Next.js Web Storefront Service
+  website:
+    build:
+      context: ./FRONTEND/WEBSITE
+      dockerfile: Dockerfile
+    container_name: ecommerce-website
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+      - NEXT_PUBLIC_SELLER_URL=${NEXT_PUBLIC_SELLER_URL:-http://localhost:3003}
+    depends_on:
+      - backend
+
+  # React Admin Panel Service
+  admin:
+    build:
+      context: ./FRONTEND/ADMIN
+      dockerfile: Dockerfile
+    container_name: ecommerce-admin
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5000/api}
+    depends_on:
+      - backend
+
+  # Next.js Seller Dashboard Service
+  seller:
+    build:
+      context: ./FRONTEND/SELLER
+      dockerfile: Dockerfile
+    container_name: ecommerce-seller
+    restart: unless-stopped
+    ports:
+      - "3003:3003"
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:5000}
+    depends_on:
+      - backend
+
+volumes:
+  redis_data:
+  backend_uploads:
+  backend_logs:

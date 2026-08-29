@@ -46,10 +46,6 @@ const SingleItem = ({
 
   const handleUpdateQuantity = async (newQty: number) => {
     if (newQty < 1) return;
-    if (newQty > 3) {
-      toast.error("Maximum 3 items allowed");
-      return;
-    }
     if (isAuthenticated && accessToken) {
       const totalPrice = item.discountedPrice * newQty;
       const gst = 0;
@@ -248,11 +244,21 @@ const SingleItem = ({
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"/></svg>
                 </button>
-                <span className="w-10 text-center text-[14px] font-normal text-dark">{item.quantity}</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={item.quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 1) {
+                      handleUpdateQuantity(val);
+                    }
+                  }}
+                  className="w-16 text-center text-[14px] font-semibold text-dark outline-none bg-white py-1"
+                />
                 <button
                   onClick={() => handleUpdateQuantity(item.quantity + 1)}
-                  disabled={item.quantity >= 3}
-                  className="w-8 h-8 flex items-center justify-center bg-gray-2 hover:bg-gray-3 text-dark disabled:opacity-30 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center bg-gray-2 hover:bg-gray-3 text-dark transition-colors"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 5v14M5 12h14"/></svg>
                 </button>
