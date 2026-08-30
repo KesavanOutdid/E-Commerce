@@ -18,11 +18,20 @@ const nextConfig = {
       },
       {
         protocol: "http",
+        hostname: "192.168.1.82",
+        port: "5000",
+        pathname: "/uploads/**",
+      },
+      {
+        protocol: "http",
         hostname: "localhost",
         port: "5000",
         pathname: "/uploads/**",
       },
     ],
+  },
+  turbopack: {
+    root: __dirname,
   },
   typescript: {
     ignoreBuildErrors: true,

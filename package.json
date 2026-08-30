@@ -1,0 +1,25 @@
+{
+  "name": "e-commerce-fullstack",
+  "version": "1.0.0",
+  "description": "Multi-Vendor E-Commerce Platform Orchestrator",
+  "main": "start-all.js",
+  "scripts": {
+    "start": "node start-all.js",
+    "dev": "node start-all.js",
+    "backend": "npm --prefix BACKEND run dev",
+    "admin": "npm --prefix FRONTEND/ADMIN start",
+    "seller": "npm --prefix FRONTEND/SELLER run dev",
+    "website": "npm --prefix FRONTEND/WEBSITE run dev",
+    "install:all": "npm --prefix BACKEND install && npm --prefix FRONTEND/ADMIN install --legacy-peer-deps && npm --prefix FRONTEND/SELLER install --legacy-peer-deps && npm --prefix FRONTEND/WEBSITE install --legacy-peer-deps"
+  },
+  "keywords": [
+    "e-commerce",
+    "fullstack",
+    "nextjs",
+    "react",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "ISC"
+}

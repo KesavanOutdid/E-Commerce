@@ -33,17 +33,19 @@ E-Commerce/
 
 ## ⚡ Quick Start: 3 Ways to Run
 
-### Option 1: Run Full Stack with Docker (Recommended) 🐳
-To launch the entire platform (Backend API, Redis Cache, Customer Website, Admin Panel, and Seller Dashboard) in one command:
+### Option 1: Run All Services at Once Locally (Fastest) ⚡
+To start the Backend API, Admin Dashboard, Customer Website, and Seller Dashboard all together with one command:
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd E-Commerce
-
-# Start all microservices in background
-docker compose up --build -d
+# In the root project folder:
+npm start
+# OR double-click: run-all.bat
+# OR run in PowerShell: .\run-all.ps1
 ```
+
+---
+
+### Option 2: Run Full Stack with Docker 🐳
 
 #### Access Links:
 - 🛍 **Customer Website**: [http://localhost:3002](http://localhost:3002)

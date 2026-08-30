@@ -28,10 +28,16 @@ coverage/
 *.swo
 *~
 
-# Build outputs
+# Build outputs & Next.js
 dist/
 build/
+.next/
+**/.next/
+out/
+**/out/
+**/node_modules/
 
 # zen
 .zenflow
 .zencoder
+
